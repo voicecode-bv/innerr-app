@@ -1,6 +1,16 @@
 import { createRouter, createWebHistory, createMemoryHistory, type RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '@/spa/stores/auth';
+import { usePlatform } from '@/spa/composables/usePlatform';
 import { api } from '@/spa/http/apiClient';
+
+declare module 'vue-router' {
+    interface RouteMeta {
+        auth?: boolean;
+        guest?: boolean;
+        onboarded?: boolean;
+        iosOnly?: boolean;
+    }
+}
 
 const isNative = typeof window !== 'undefined' && '__nativephp' in window;
 
@@ -176,6 +186,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/spa/pages/Settings/DefaultCircles.vue'),
         meta: { auth: true, onboarded: true },
     },
+    {
+        path: '/settings/apple-subscriptions',
+        name: 'spa.settings.apple-subscriptions',
+        component: () => import('@/spa/pages/Settings/AppleSubscriptions.vue'),
+        meta: { auth: true, onboarded: true, iosOnly: true },
+    },
 
     // Catch-all → login
     {
@@ -189,7 +205,7 @@ export const router = createRouter({
     routes,
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
     const auth = useAuthStore();
 
     if (to.meta.auth && !auth.user) {
@@ -202,6 +218,14 @@ router.beforeEach((to) => {
 
     if (to.meta.onboarded && auth.user && !auth.user.onboarded) {
         return { name: 'spa.onboarding.intro' };
+    }
+
+    if (to.meta.iosOnly) {
+        const { isIos, ensureDetected } = usePlatform();
+        await ensureDetected();
+        if (!isIos.value) {
+            return { name: 'spa.settings' };
+        }
     }
 });
 

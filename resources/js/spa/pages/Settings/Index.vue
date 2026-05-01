@@ -7,11 +7,13 @@ import IconTile from '@/components/IconTile.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import ListItem from '@/spa/components/ListItem.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { usePlatform } from '@/spa/composables/usePlatform';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { externalApi } from '@/spa/http/externalApi';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 import circleIcon from '../../../../svg/doodle-icons/circle.svg';
+import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import globeIcon from '../../../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
@@ -22,6 +24,7 @@ const { t } = useTranslations();
 const i18n = useI18nStore();
 const auth = useAuthStore();
 const router = useRouter();
+const { isIos } = usePlatform();
 
 const currentLocale = computed(() => i18n.locale);
 
@@ -121,6 +124,12 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         <ListItem :to="{ name: 'spa.settings.notifications' }">
                             <template #leading><IconTile :icon="bellIcon" size="sm" tone="sage" /></template>
                             {{ t('Push notifications') }}
+                        </ListItem>
+                    </li>
+                    <li v-if="isIos">
+                        <ListItem :to="{ name: 'spa.settings.apple-subscriptions' }">
+                            <template #leading><IconTile :icon="crownIcon" size="sm" tone="sage" /></template>
+                            {{ t('Subscription') }}
                         </ListItem>
                     </li>
                     <li>

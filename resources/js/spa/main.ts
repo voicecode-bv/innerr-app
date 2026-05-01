@@ -6,6 +6,7 @@ import App from '@/spa/App.vue';
 import { router } from '@/spa/router';
 import { ApiError, NetworkError, configureApiClient } from '@/spa/http/apiClient';
 import { configureExternalApi } from '@/spa/http/externalApi';
+import { usePlatform } from '@/spa/composables/usePlatform';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
@@ -37,6 +38,10 @@ async function bootstrap(): Promise<void> {
 
     const initialLocale = inferInitialLocale();
     await i18n.load(initialLocale);
+
+    // Trigger NativePHP platform-detectie zo vroeg mogelijk zodat iOS-only
+    // routes en links direct kunnen renderen zonder flicker.
+    usePlatform().ensureDetected().catch(() => null);
 
     // Lees token uit Keychain (of localStorage-fallback) zodat externalApi al
     // een Bearer kan sturen vóór de BFF bootstrap-call. Voorkomt uitloggen

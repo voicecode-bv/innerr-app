@@ -49,6 +49,12 @@ class NativeServiceProvider extends ServiceProvider
             PackageInfoServiceProvider::class,
             BrowserServiceProvider::class,
             NetworkServiceProvider::class,
+            \Developernauts\NativephpInappPurchases\NativephpInappPurchasesServiceProvider::class,
+            \Native\Mobile\Providers\SystemServiceProvider::class,
+            \Native\Mobile\Providers\DeviceServiceProvider::class,
+        
+        
+        
 
         ];
     }
