@@ -192,6 +192,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/spa/pages/Settings/AppleSubscriptions.vue'),
         meta: { auth: true, onboarded: true, iosOnly: true },
     },
+    {
+        path: '/settings/google-subscriptions',
+        name: 'spa.settings.google-subscriptions',
+        component: () => import('@/spa/pages/Settings/GoogleSubscriptions.vue'),
+        meta: { auth: true, onboarded: true, androidOnly: true },
+    },
 
     // Catch-all → login
     {

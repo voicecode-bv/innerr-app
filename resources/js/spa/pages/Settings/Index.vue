@@ -24,7 +24,7 @@ const { t } = useTranslations();
 const i18n = useI18nStore();
 const auth = useAuthStore();
 const router = useRouter();
-const { isIos } = usePlatform();
+const { isIos, isAndroid } = usePlatform();
 
 const currentLocale = computed(() => i18n.locale);
 
@@ -128,6 +128,12 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                     </li>
                     <li v-if="isIos">
                         <ListItem :to="{ name: 'spa.settings.apple-subscriptions' }">
+                            <template #leading><IconTile :icon="crownIcon" size="sm" tone="sage" /></template>
+                            {{ t('Subscription') }}
+                        </ListItem>
+                    </li>
+                    <li v-if="isAndroid">
+                        <ListItem :to="{ name: 'spa.settings.google-subscriptions' }">
                             <template #leading><IconTile :icon="crownIcon" size="sm" tone="sage" /></template>
                             {{ t('Subscription') }}
                         </ListItem>
