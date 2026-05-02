@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { Browser } from '@nativephp/mobile';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
+import Confetti from '@/components/Confetti.vue';
 import IconTile from '@/components/IconTile.vue';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useI18nStore } from '@/spa/stores/i18n';
 import {
     products as fetchProducts,
@@ -16,6 +19,7 @@ import {
 } from '../../../../../vendor/developernauts/nativephp-inapp-purchases/resources/js/index.js';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import diamondIcon from '../../../../svg/doodle-icons/diamond.svg';
+import sparkleIcon from '../../../../svg/doodle-icons/star.svg';
 
 type Product = {
     id: string;
@@ -65,15 +69,17 @@ const router = useRouter();
 const productList = ref<Product[]>([]);
 const entitlements = ref<Entitlement[]>([]);
 const isPremium = ref(false);
+const showConfetti = ref(false);
 const isLoading = ref(true);
 const purchasingId = ref<string | null>(null);
 const isRestoring = ref(false);
 const message = ref<string | null>(null);
 const errorMessage = ref<string | null>(null);
 const debugRaw = ref<string | null>(null);
+const purchaseDebug = ref<{ label: string; outcome: 'success' | 'cancelled' | 'error'; payload: string } | null>(null);
 const selectedPeriod = ref<Record<'pro' | 'plus', 'monthly' | 'yearly'>>({
-    pro: 'yearly',
-    plus: 'yearly',
+    pro: 'monthly',
+    plus: 'monthly',
 });
 
 const termsUrl = computed(() =>
@@ -124,13 +130,13 @@ type MessageResponse = { message?: string };
 async function loadProducts(): Promise<void> {
     try {
         const result = (await fetchProducts(PRODUCT_IDS)) as ProductsResponse;
-        // eslint-disable-next-line no-console
+         
         console.log('[AppleSubscriptions] products result', result);
         debugRaw.value = JSON.stringify(result, null, 2);
         productList.value = result.products ?? [];
     } catch (err) {
         const e = err as { code?: string; message?: string; data?: unknown };
-        // eslint-disable-next-line no-console
+         
         console.error('[AppleSubscriptions] products error', e);
         debugRaw.value = JSON.stringify({ code: e.code, message: e.message, data: e.data }, null, 2);
         const code = e.code ? ` (${e.code})` : '';
@@ -152,17 +158,41 @@ async function purchase(productId: string): Promise<void> {
     if (purchasingId.value) {
         return;
     }
+
     clearStatus();
+    purchaseDebug.value = null;
     purchasingId.value = productId;
+    const startedAt = new Date().toISOString();
+
     try {
-        const result = (await buyProduct(productId)) as MessageResponse;
-        message.value = result.message ?? t('Purchase successful.');
+        const result = (await buyProduct(productId)) as Record<string, unknown>;
+         
+        console.log('[AppleSubscriptions] purchase result', result);
+        message.value = (result.message as string | undefined) ?? t('Purchase successful.');
+        purchaseDebug.value = {
+            label: t('Purchase debug — :id', { id: productId }),
+            outcome: 'success',
+            payload: JSON.stringify({ startedAt, productId, result }, null, 2),
+        };
         await refreshEntitlement();
     } catch (err) {
-        const e = err as { code?: string; message?: string };
+        const e = err as { code?: string; message?: string; status?: number; data?: unknown };
+         
+        console.error('[AppleSubscriptions] purchase error', e);
+        purchaseDebug.value = {
+            label: t('Purchase debug — :id', { id: productId }),
+            outcome: e.code === 'user_cancelled' ? 'cancelled' : 'error',
+            payload: JSON.stringify(
+                { startedAt, productId, code: e.code, message: e.message, status: e.status, data: e.data },
+                null,
+                2,
+            ),
+        };
+
         if (e.code === 'user_cancelled') {
             return;
         }
+
         errorMessage.value = e.message ?? t('Purchase failed.');
     } finally {
         purchasingId.value = null;
@@ -173,17 +203,41 @@ async function restore(): Promise<void> {
     if (isRestoring.value) {
         return;
     }
+
     clearStatus();
+    purchaseDebug.value = null;
     isRestoring.value = true;
+    const startedAt = new Date().toISOString();
+
     try {
-        const result = (await restorePurchases()) as MessageResponse;
-        message.value = result.message ?? t('Purchases restored.');
+        const result = (await restorePurchases()) as Record<string, unknown>;
+         
+        console.log('[AppleSubscriptions] restore result', result);
+        message.value = (result.message as string | undefined) ?? t('Purchases restored.');
+        purchaseDebug.value = {
+            label: t('Restore debug'),
+            outcome: 'success',
+            payload: JSON.stringify({ startedAt, result }, null, 2),
+        };
         await refreshEntitlement();
     } catch (err) {
-        const e = err as { code?: string; message?: string };
+        const e = err as { code?: string; message?: string; status?: number; data?: unknown };
+         
+        console.error('[AppleSubscriptions] restore error', e);
+        purchaseDebug.value = {
+            label: t('Restore debug'),
+            outcome: e.code === 'user_cancelled' ? 'cancelled' : 'error',
+            payload: JSON.stringify(
+                { startedAt, code: e.code, message: e.message, status: e.status, data: e.data },
+                null,
+                2,
+            ),
+        };
+
         if (e.code === 'user_cancelled') {
             return;
         }
+
         errorMessage.value = e.message ?? t('Restore failed.');
     } finally {
         isRestoring.value = false;
@@ -208,19 +262,50 @@ function yearlySavings(tier: Tier): number | null {
     if (!tier.monthly?.price || !tier.yearly?.price) {
         return null;
     }
+
     const monthlyTotal = tier.monthly.price * 12;
+
     if (monthlyTotal <= 0) {
         return null;
     }
+
     const saved = ((monthlyTotal - tier.yearly.price) / monthlyTotal) * 100;
+
     return Math.max(0, Math.round(saved));
+}
+
+function formatSubscriptionLabel(productId: string): string {
+    const tierMap: Record<string, string> = {
+        pro: t('Familie+'),
+        plus: t('Gezin'),
+    };
+    const periodMap: Record<string, string> = {
+        monthly: t('Monthly'),
+        yearly: t('Yearly'),
+    };
+
+    const parts = productId.toLowerCase().split('_');
+    const tierLabel = parts.map((part) => tierMap[part]).find(Boolean);
+    const periodLabel = parts.map((part) => periodMap[part]).find(Boolean);
+
+    if (tierLabel && periodLabel) {
+        return `${tierLabel} · ${periodLabel}`;
+    }
+
+    if (tierLabel) {
+        return tierLabel;
+    }
+
+    return productId;
 }
 
 function monthlyEquivalent(tier: Tier): string | null {
     if (!tier.yearly) {
         return null;
     }
+
     const perMonth = tier.yearly.price / 12;
+
     try {
         return new Intl.NumberFormat(i18n.locale === 'nl' ? 'nl-NL' : 'en-US', {
             style: 'currency',
@@ -232,6 +317,25 @@ function monthlyEquivalent(tier: Tier): string | null {
     }
 }
 
+watch(isPremium, (value, previous) => {
+    if (value && !previous) {
+        showConfetti.value = true;
+    }
+});
+
+const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
+const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
+
+async function refresh(): Promise<void> {
+    clearStatus();
+    await Promise.all([loadProducts(), refreshEntitlement()]);
+}
+
+const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: refresh,
+    containerRef,
+});
+
 onMounted(async () => {
     isLoading.value = true;
     await Promise.all([loadProducts(), refreshEntitlement()]);
@@ -240,7 +344,9 @@ onMounted(async () => {
 </script>
 
 <template>
-    <AppLayout :title="t('Subscription')">
+    <AppLayout ref="layout" :title="t('Subscription')">
+        <Confetti :active="showConfetti" />
+
         <template #header-left>
             <button class="flex items-center text-teal dark:text-sand-300" @click="goBack">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
@@ -250,38 +356,68 @@ onMounted(async () => {
         </template>
 
         <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]">
-            <div class="relative space-y-4 px-4 pt-4 pb-24">
-                <SurfaceCard v-if="isPremium">
-                    <h3 class="flex items-center gap-3 text-sm font-semibold text-sand-900 dark:text-sand-100">
-                        <IconTile :icon="crownIcon" size="sm" tone="sage" />
-                        {{ t('You are a premium member') }}
-                    </h3>
-                    <p class="mt-3 text-sm text-sand-700 dark:text-sand-300">
-                        {{ t('Thanks for supporting Innerr. Enjoy all premium features.') }}
-                    </p>
-                    <p
-                        v-if="activeEntitlement?.productId"
-                        class="mt-2 text-xs text-sand-500 dark:text-sand-400"
-                    >
-                        {{ activeEntitlement.productId }}
-                    </p>
-                    <p
-                        v-if="activeEntitlement?.expirationDate"
-                        class="text-xs text-sand-500 dark:text-sand-400"
-                    >
-                        {{ t('Renews on :date', { date: new Date(activeEntitlement.expirationDate).toLocaleDateString() }) }}
-                    </p>
+            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
 
-                    <Button
-                        variant="secondary"
-                        size="md"
-                        block
-                        class="mt-4"
-                        @click="openExternal(MANAGE_SUBSCRIPTIONS_URL)"
-                    >
-                        {{ t('Manage subscription') }}
-                    </Button>
-                </SurfaceCard>
+            <div class="relative space-y-4 px-4 pt-4 pb-24">
+                <section
+                    v-if="isPremium"
+                    class="premium-hero relative overflow-hidden rounded-2xl bg-gradient-to-br from-sage-200 via-sand-100 to-sand-200 p-6 text-center shadow-sm dark:from-sage-900/50 dark:via-sand-800/60 dark:to-sand-900/60"
+                >
+                    <span aria-hidden="true" class="premium-glow pointer-events-none absolute inset-0" />
+
+                    <span aria-hidden="true" class="sparkle sparkle-1" :style="{ maskImage: `url(${sparkleIcon})`, WebkitMaskImage: `url(${sparkleIcon})` }" />
+                    <span aria-hidden="true" class="sparkle sparkle-2" :style="{ maskImage: `url(${sparkleIcon})`, WebkitMaskImage: `url(${sparkleIcon})` }" />
+                    <span aria-hidden="true" class="sparkle sparkle-3" :style="{ maskImage: `url(${sparkleIcon})`, WebkitMaskImage: `url(${sparkleIcon})` }" />
+                    <span aria-hidden="true" class="sparkle sparkle-4" :style="{ maskImage: `url(${sparkleIcon})`, WebkitMaskImage: `url(${sparkleIcon})` }" />
+
+                    <div class="relative">
+                        <div class="crown-stage mx-auto flex size-24 items-center justify-center rounded-full bg-white/70 shadow-inner dark:bg-sand-900/40">
+                            <span
+                                aria-hidden="true"
+                                class="crown-icon block size-14 bg-teal dark:bg-sage-100"
+                                :style="{
+                                    maskImage: `url(${crownIcon})`,
+                                    WebkitMaskImage: `url(${crownIcon})`,
+                                    maskSize: 'contain',
+                                    WebkitMaskSize: 'contain',
+                                    maskRepeat: 'no-repeat',
+                                    WebkitMaskRepeat: 'no-repeat',
+                                    maskPosition: 'center',
+                                    WebkitMaskPosition: 'center',
+                                }"
+                            />
+                        </div>
+
+                        <h3 class="mt-5 font-display text-xl font-semibold text-teal dark:text-sand-100">
+                            {{ t('You are a premium member') }}
+                        </h3>
+                        <p class="mx-auto mt-2 max-w-xs text-sm text-sand-700 dark:text-sand-300">
+                            {{ t('Thanks for supporting Innerr. Enjoy all premium features.') }}
+                        </p>
+
+                        <div
+                            v-if="activeEntitlement?.productId || activeEntitlement?.expirationDate"
+                            class="mx-auto mt-5 inline-flex flex-col items-center gap-1 rounded-full bg-white/60 px-4 py-2 text-xs text-sand-600 backdrop-blur-sm dark:bg-sand-900/40 dark:text-sand-300"
+                        >
+                            <span v-if="activeEntitlement?.productId" class="font-medium">
+                                {{ formatSubscriptionLabel(activeEntitlement.productId) }}
+                            </span>
+                            <span v-if="activeEntitlement?.expirationDate">
+                                {{ t('Renews on :date', { date: new Date(activeEntitlement.expirationDate).toLocaleDateString() }) }}
+                            </span>
+                        </div>
+
+                        <Button
+                            variant="secondary"
+                            size="md"
+                            block
+                            class="mt-6"
+                            @click="openExternal(MANAGE_SUBSCRIPTIONS_URL)"
+                        >
+                            {{ t('Manage subscription') }}
+                        </Button>
+                    </div>
+                </section>
 
                 <template v-else>
                     <div v-if="isLoading" class="space-y-4">
@@ -325,6 +461,16 @@ onMounted(async () => {
                             <button
                                 type="button"
                                 class="flex-1 rounded-full px-3 py-2 transition"
+                                :class="selectedPeriod[tier.key] === 'monthly'
+                                    ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
+                                    : 'text-sand-500 dark:text-sand-400'"
+                                @click="selectedPeriod[tier.key] = 'monthly'"
+                            >
+                                {{ t('Monthly') }}
+                            </button>
+                            <button
+                                type="button"
+                                class="flex-1 rounded-full px-3 py-2 transition"
                                 :class="selectedPeriod[tier.key] === 'yearly'
                                     ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
                                     : 'text-sand-500 dark:text-sand-400'"
@@ -337,16 +483,6 @@ onMounted(async () => {
                                 >
                                     -{{ yearlySavings(tier) }}%
                                 </span>
-                            </button>
-                            <button
-                                type="button"
-                                class="flex-1 rounded-full px-3 py-2 transition"
-                                :class="selectedPeriod[tier.key] === 'monthly'
-                                    ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
-                                    : 'text-sand-500 dark:text-sand-400'"
-                                @click="selectedPeriod[tier.key] = 'monthly'"
-                            >
-                                {{ t('Monthly') }}
                             </button>
                         </div>
 
@@ -448,7 +584,153 @@ onMounted(async () => {
                 >
                     {{ errorMessage }}
                 </p>
+
+                <details
+                    v-if="purchaseDebug"
+                    class="rounded-lg bg-sand-100/70 p-3 text-xs text-sand-700 dark:bg-sand-800/60 dark:text-sand-200"
+                    open
+                >
+                    <summary class="flex cursor-pointer items-center gap-2 font-medium">
+                        <span
+                            class="inline-flex size-2 rounded-full"
+                            :class="{
+                                'bg-sage-500': purchaseDebug.outcome === 'success',
+                                'bg-amber-500': purchaseDebug.outcome === 'cancelled',
+                                'bg-blush-500': purchaseDebug.outcome === 'error',
+                            }"
+                        />
+                        {{ purchaseDebug.label }}
+                        <span class="ml-auto text-[10px] uppercase tracking-wide text-sand-500 dark:text-sand-400">
+                            {{ purchaseDebug.outcome }}
+                        </span>
+                    </summary>
+                    <pre class="mt-2 max-h-80 overflow-auto rounded bg-sand-200/60 p-2 text-[10px] dark:bg-sand-900/60">{{ purchaseDebug.payload }}</pre>
+                    <button
+                        type="button"
+                        class="mt-2 text-[11px] font-medium text-teal underline-offset-2 hover:underline dark:text-sand-200"
+                        @click="purchaseDebug = null"
+                    >
+                        {{ t('Clear debug') }}
+                    </button>
+                </details>
             </div>
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+.premium-hero {
+    isolation: isolate;
+}
+
+.premium-glow {
+    background:
+        radial-gradient(circle at 20% 0%, rgba(232, 199, 123, 0.35), transparent 55%),
+        radial-gradient(circle at 80% 100%, rgba(167, 197, 161, 0.35), transparent 55%);
+    animation: glow-shift 8s ease-in-out infinite;
+}
+
+.crown-stage {
+    animation: float 4s ease-in-out infinite;
+    position: relative;
+}
+
+.crown-stage::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(232, 199, 123, 0.45), transparent 65%);
+    filter: blur(8px);
+    z-index: -1;
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.crown-icon {
+    transform-origin: 50% 80%;
+    animation: crown-sway 5s ease-in-out infinite;
+}
+
+.sparkle {
+    position: absolute;
+    background-color: #e8c77b;
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-position: center;
+    opacity: 0;
+}
+
+.sparkle-1 {
+    top: 14%;
+    left: 12%;
+    width: 18px;
+    height: 18px;
+    animation: twinkle 3.4s ease-in-out infinite;
+}
+
+.sparkle-2 {
+    top: 22%;
+    right: 14%;
+    width: 14px;
+    height: 14px;
+    animation: twinkle 2.8s ease-in-out 0.6s infinite;
+}
+
+.sparkle-3 {
+    bottom: 28%;
+    left: 18%;
+    width: 12px;
+    height: 12px;
+    animation: twinkle 3.1s ease-in-out 1.1s infinite;
+}
+
+.sparkle-4 {
+    bottom: 18%;
+    right: 16%;
+    width: 16px;
+    height: 16px;
+    animation: twinkle 3.7s ease-in-out 1.6s infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes crown-sway {
+    0%, 100% { transform: rotate(-3deg) scale(1); }
+    50% { transform: rotate(3deg) scale(1.04); }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(20deg); }
+}
+
+@keyframes glow-shift {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .premium-glow,
+    .crown-stage,
+    .crown-stage::before,
+    .crown-icon,
+    .sparkle {
+        animation: none;
+    }
+
+    .sparkle {
+        opacity: 0.6;
+    }
+}
+</style>

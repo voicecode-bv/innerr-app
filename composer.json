@@ -12,7 +12,7 @@
         "php": "^8.3",
         "blade-ui-kit/blade-icons": "^1.9",
         "codingwithrk/package-info": "^1.0",
-        "developernauts/nativephp-inapp-purchases": "@dev",
+        "developernauts/nativephp-inapp-purchases": "*",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "nativephp/mobile": "^3.0",
@@ -116,11 +116,8 @@
     "minimum-stability": "stable",
     "repositories": [
         {
-            "type": "path",
-            "url": "../../nativephp-inapp-purchases",
-            "options": {
-                "symlink": true
-            }
+            "type": "vcs",
+            "url": "https://github.com/developernauts/nativephp-inapp-purchases"
         },
         {
             "name": "nativephp-plugins",
