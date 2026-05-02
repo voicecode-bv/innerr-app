@@ -60,6 +60,8 @@ const PRODUCT_IDS = [
     'plus_google_monthly',
 ];
 
+const SHOW_DEBUG = (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
+
 const MANAGE_SUBSCRIPTIONS_URL = 'https://play.google.com/store/account/subscriptions';
 
 const { t } = useTranslations();
@@ -429,7 +431,7 @@ onMounted(async () => {
                         class="space-y-3 rounded-lg bg-sand-100/70 p-4 text-sm text-sand-600 dark:bg-sand-800/60 dark:text-sand-300"
                     >
                         <p>{{ t('No products available right now.') }}</p>
-                        <details class="text-xs">
+                        <details v-if="SHOW_DEBUG" class="text-xs">
                             <summary class="cursor-pointer font-medium">{{ t('Debug info') }}</summary>
                             <p class="mt-2 font-medium">{{ t('Requested product IDs:') }}</p>
                             <ul class="ml-4 list-disc">
@@ -585,7 +587,7 @@ onMounted(async () => {
                 </p>
 
                 <details
-                    v-if="purchaseDebug"
+                    v-if="SHOW_DEBUG && purchaseDebug"
                     class="rounded-lg bg-sand-100/70 p-3 text-xs text-sand-700 dark:bg-sand-800/60 dark:text-sand-200"
                     open
                 >
