@@ -1,5 +1,9 @@
-import { createRouter, createWebHistory, createMemoryHistory  } from 'vue-router';
-import type {RouteRecordRaw} from 'vue-router';
+import {
+    createRouter,
+    createWebHistory,
+    createMemoryHistory,
+} from 'vue-router';
+import type { RouteRecordRaw } from 'vue-router';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { api } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -178,7 +182,8 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/settings/notifications',
         name: 'spa.settings.notifications',
-        component: () => import('@/spa/pages/Settings/NotificationPreferences.vue'),
+        component: () =>
+            import('@/spa/pages/Settings/NotificationPreferences.vue'),
         meta: { auth: true, onboarded: true },
     },
     {

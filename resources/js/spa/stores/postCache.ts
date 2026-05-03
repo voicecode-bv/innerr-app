@@ -25,7 +25,10 @@ export const usePostCacheStore = defineStore('spa-post-cache', {
             return (this.entries[postId]?.post as T | undefined) ?? null;
         },
         set<T>(postId: number, post: T): void {
-            this.entries[postId] = { post: post as unknown, cachedAt: Date.now() };
+            this.entries[postId] = {
+                post: post as unknown,
+                cachedAt: Date.now(),
+            };
         },
         invalidate(postId: number): void {
             delete this.entries[postId];

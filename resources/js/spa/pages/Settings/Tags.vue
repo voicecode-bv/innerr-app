@@ -67,7 +67,9 @@ async function createTag(): Promise<void> {
     createForm.reset();
 
     try {
-        const response = await externalApi.post<{ data: Tag }>('/tags', { name });
+        const response = await externalApi.post<{ data: Tag }>('/tags', {
+            name,
+        });
         tagsStore.update(optimistic.id, response.data);
     } catch {
         tagsStore.remove(optimistic.id);
@@ -109,20 +111,31 @@ let pendingDeleteTagId: number | null = null;
 async function confirmDelete(tag: Tag): Promise<void> {
     pendingDeleteTagId = tag.id;
 
-    const message = tag.usage_count > 0
-        ? t('":name" is used on :count posts. Deleting it will remove the tag from those posts.', {
-              name: tag.name,
-              count: tag.usage_count,
-          })
-        : t('Are you sure you want to delete ":name"?', { name: tag.name });
+    const message =
+        tag.usage_count > 0
+            ? t(
+                  '":name" is used on :count posts. Deleting it will remove the tag from those posts.',
+                  {
+                      name: tag.name,
+                      count: tag.usage_count,
+                  },
+              )
+            : t('Are you sure you want to delete ":name"?', { name: tag.name });
 
     await Dialog.alert()
         .confirm(t('Delete tag'), message)
         .id('delete-tag-confirm');
 }
 
-async function handleButtonPressed(payload: { index: number; id?: string | null }): Promise<void> {
-    if (payload.id !== 'delete-tag-confirm' || payload.index !== 1 || pendingDeleteTagId === null) {
+async function handleButtonPressed(payload: {
+    index: number;
+    id?: string | null;
+}): Promise<void> {
+    if (
+        payload.id !== 'delete-tag-confirm' ||
+        payload.index !== 1 ||
+        pendingDeleteTagId === null
+    ) {
         return;
     }
 
@@ -154,9 +167,23 @@ function lowercase(event: Event, target: { name: string }): void {
 <template>
     <AppLayout ref="layout" :title="t('Tags')">
         <template #header-left>
-            <button class="flex items-center text-teal dark:text-sand-300" @click="goBack">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            <button
+                class="flex items-center text-teal dark:text-sand-300"
+                @click="goBack"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
                 </svg>
             </button>
         </template>
@@ -166,15 +193,37 @@ function lowercase(event: Event, target: { name: string }): void {
                 :aria-label="t('Add tag')"
                 @click="showCreateForm = !showCreateForm"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path v-if="!showCreateForm" stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    <path v-else stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        v-if="!showCreateForm"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4.5v15m7.5-7.5h-15"
+                    />
+                    <path
+                        v-else
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                    />
                 </svg>
             </button>
         </template>
 
-        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]">
-            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+        <div
+            class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
+        >
+            <PullToRefreshIndicator
+                :pull-distance="pullDistance"
+                :is-refreshing="isRefreshing"
+            />
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <Transition
@@ -185,9 +234,11 @@ function lowercase(event: Event, target: { name: string }): void {
                     leave-from-class="translate-y-0 opacity-100"
                     leave-to-class="-translate-y-2 opacity-0"
                 >
-                    <SurfaceCard v-if="showCreateForm">
+                    <SurfaceCard v-if="showCreateForm" class="reveal-item">
                         <form class="space-y-3" @submit.prevent="createTag">
-                            <label class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
+                            <label
+                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                            >
                                 {{ t('New tag') }}
                             </label>
                             <input
@@ -199,20 +250,31 @@ function lowercase(event: Event, target: { name: string }): void {
                                 autofocus
                                 @input="lowercase($event, createForm.data)"
                             />
-                            <p v-if="createForm.errors.name" class="text-xs text-accent">{{ createForm.errors.name }}</p>
+                            <p
+                                v-if="createForm.errors.name"
+                                class="text-accent"
+                            >
+                                {{ createForm.errors.name }}
+                            </p>
                             <div class="flex justify-end gap-2">
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="md"
-                                    @click="showCreateForm = false; createForm.reset();"
+                                    @click="
+                                        showCreateForm = false;
+                                        createForm.reset();
+                                    "
                                 >
                                     {{ t('Cancel') }}
                                 </Button>
                                 <Button
                                     type="submit"
                                     size="md"
-                                    :disabled="createForm.processing || !createForm.data.name.trim()"
+                                    :disabled="
+                                        createForm.processing ||
+                                        !createForm.data.name.trim()
+                                    "
                                 >
                                     {{ t('Create') }}
                                 </Button>
@@ -221,18 +283,34 @@ function lowercase(event: Event, target: { name: string }): void {
                     </SurfaceCard>
                 </Transition>
 
-                <ul v-if="tags === null" class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60">
-                    <li v-for="n in 4" :key="n" class="flex items-center gap-4 px-4 py-4">
-                        <div class="size-9 shrink-0 animate-pulse rounded-lg bg-sand-200 dark:bg-sand-700" />
+                <ul
+                    v-if="tags === null"
+                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60"
+                >
+                    <li
+                        v-for="n in 4"
+                        :key="n"
+                        class="flex items-center gap-4 px-4 py-4"
+                    >
+                        <div
+                            class="size-9 shrink-0 animate-pulse rounded-lg bg-sand-200 dark:bg-sand-700"
+                        />
                         <div class="flex-1 space-y-2">
-                            <div class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
-                            <div class="h-3 w-16 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70" />
+                            <div
+                                class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700"
+                            />
+                            <div
+                                class="h-3 w-16 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70"
+                            />
                         </div>
                     </li>
                 </ul>
 
-                <ul v-else-if="tags.length > 0" class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60">
-                    <li v-for="tag in tags" :key="tag.id">
+                <ul
+                    v-else-if="tags.length > 0"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60"
+                >
+                    <li v-for="tag in tags" :key="tag.id" class="reveal-item">
                         <form
                             v-if="editingTagId === tag.id"
                             class="space-y-3 bg-white/70 px-4 py-4 backdrop-blur-sm dark:bg-sand-800/60"
@@ -246,37 +324,90 @@ function lowercase(event: Event, target: { name: string }): void {
                                 autofocus
                                 @input="lowercase($event, editForm.data)"
                             />
-                            <p v-if="editForm.errors.name" class="text-xs text-accent">{{ editForm.errors.name }}</p>
-                            <div class="flex items-center justify-between gap-2">
-                                <Button type="button" variant="danger" size="md" @click="confirmDelete(tag)">
+                            <p v-if="editForm.errors.name" class="text-accent">
+                                {{ editForm.errors.name }}
+                            </p>
+                            <div
+                                class="flex items-center justify-between gap-2"
+                            >
+                                <Button
+                                    type="button"
+                                    variant="danger"
+                                    size="md"
+                                    @click="confirmDelete(tag)"
+                                >
                                     {{ t('Delete') }}
                                 </Button>
                                 <div class="flex gap-2">
-                                    <Button type="button" variant="ghost" size="md" @click="cancelEdit">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="md"
+                                        @click="cancelEdit"
+                                    >
                                         {{ t('Cancel') }}
                                     </Button>
-                                    <Button type="submit" size="md" :disabled="editForm.processing || !editForm.data.name.trim()">
+                                    <Button
+                                        type="submit"
+                                        size="md"
+                                        :disabled="
+                                            editForm.processing ||
+                                            !editForm.data.name.trim()
+                                        "
+                                    >
                                         {{ t('Save') }}
                                     </Button>
                                 </div>
                             </div>
                         </form>
-                        <ListItem v-else :show-chevron="false" @click="startEdit(tag)">
-                            <template #leading><IconTile :icon="tagIcon" size="sm" tone="sage" /></template>
+                        <ListItem
+                            v-else
+                            :show-chevron="false"
+                            @click="startEdit(tag)"
+                        >
+                            <template #leading
+                                ><IconTile
+                                    :icon="tagIcon"
+                                    size="sm"
+                                    tone="sage"
+                            /></template>
                             {{ tag.name }}
                             <template #subtitle>
-                                {{ tag.usage_count === 1 ? t(':count post', { count: tag.usage_count }) : t(':count posts', { count: tag.usage_count }) }}
+                                {{
+                                    tag.usage_count === 1
+                                        ? t(':count post', {
+                                              count: tag.usage_count,
+                                          })
+                                        : t(':count posts', {
+                                              count: tag.usage_count,
+                                          })
+                                }}
                             </template>
                         </ListItem>
                     </li>
                 </ul>
 
-                <SurfaceCard v-else-if="tags.length === 0">
-                    <div class="flex flex-col items-center px-2 py-4 text-center">
-                        <IconTile :icon="tagIcon" size="lg" tone="sage" class="mb-4" />
-                        <h3 class="font-sans text-lg font-semibold text-teal dark:text-sand-100">{{ t('No tags yet') }}</h3>
-                        <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
-                            {{ t('Create tags to organize and filter your posts.') }}
+                <SurfaceCard v-else-if="tags.length === 0" class="reveal-item">
+                    <div
+                        class="flex flex-col items-center px-2 py-4 text-center"
+                    >
+                        <IconTile
+                            :icon="tagIcon"
+                            size="lg"
+                            tone="sage"
+                            class="mb-4"
+                        />
+                        <h3
+                            class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
+                        >
+                            {{ t('No tags yet') }}
+                        </h3>
+                        <p class="mt-1 text-sand-600 dark:text-sand-400">
+                            {{
+                                t(
+                                    'Create tags to organize and filter your posts.',
+                                )
+                            }}
                         </p>
                         <div class="mt-5">
                             <Button size="md" @click="showCreateForm = true">

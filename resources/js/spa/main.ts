@@ -1,12 +1,16 @@
 import { flare } from '@flareapp/js';
 import { flareVue } from '@flareapp/vue';
-import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { createApp } from 'vue';
 import App from '@/spa/App.vue';
-import { router } from '@/spa/router';
-import { ApiError, NetworkError, configureApiClient } from '@/spa/http/apiClient';
-import { configureExternalApi } from '@/spa/http/externalApi';
 import { usePlatform } from '@/spa/composables/usePlatform';
+import {
+    ApiError,
+    NetworkError,
+    configureApiClient,
+} from '@/spa/http/apiClient';
+import { configureExternalApi } from '@/spa/http/externalApi';
+import { router } from '@/spa/router';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
@@ -19,11 +23,17 @@ function inferInitialLocale(): string {
     if (typeof window === 'undefined') {
         return 'en';
     }
+
     const stored = window.localStorage?.getItem('spa.locale');
+
     if (stored === 'en' || stored === 'nl') {
         return stored;
     }
-    const browser = (window.navigator?.language ?? '').slice(0, 2).toLowerCase();
+
+    const browser = (window.navigator?.language ?? '')
+        .slice(0, 2)
+        .toLowerCase();
+
     return browser === 'nl' ? 'nl' : 'en';
 }
 
@@ -41,7 +51,9 @@ async function bootstrap(): Promise<void> {
 
     // Trigger NativePHP platform-detectie zo vroeg mogelijk zodat iOS-only
     // routes en links direct kunnen renderen zonder flicker.
-    usePlatform().ensureDetected().catch(() => null);
+    usePlatform()
+        .ensureDetected()
+        .catch(() => null);
 
     // Lees token uit Keychain (of localStorage-fallback) zodat externalApi al
     // een Bearer kan sturen vóór de BFF bootstrap-call. Voorkomt uitloggen
@@ -61,9 +73,11 @@ async function bootstrap(): Promise<void> {
 
     try {
         const data = await auth.bootstrap();
+
         if (data.locale && data.locale !== i18n.locale) {
             await i18n.load(data.locale);
         }
+
         configureExternalApi({
             baseUrl: data.api_base,
             auth: () => ({ token: auth.token, clear: () => auth.clear() }),
@@ -76,19 +90,22 @@ async function bootstrap(): Promise<void> {
         // Pre-warm service-keys (Mapbox token etc.) parallel zodat de eerste
         // Map-page bezoek niet hoeft te wachten op een netwerk-roundtrip.
         if (auth.user) {
-            useServiceKeysStore().ensureLoaded().catch(() => null);
+            useServiceKeysStore()
+                .ensureLoaded()
+                .catch(() => null);
         }
     } catch {
         // Bootstrap failed; route guards will redirect to login.
     }
 
-    // Globale error-tap: laat onverwachte network/server fouten als toast zien.
-    // Validation/auth errors worden door pages zelf afgehandeld en niet hier
-    // doorgesluisd. Onverwachte network/server fouten alleen loggen in dev.
+    // Globale error-tap: validation/auth errors worden door pages zelf
+    // afgehandeld en niet hier doorgesluisd. Onverwachte network/server
+    // fouten alleen loggen in dev.
     app.config.errorHandler = (err) => {
         if (err instanceof NetworkError || err instanceof ApiError) {
             return;
         }
+
         if (import.meta.env.DEV) {
             console.error(err);
         }
@@ -102,9 +119,13 @@ async function bootstrap(): Promise<void> {
     // wat in createMemoryHistory-mode niets doet. Door deze shim worden taps op
     // bottom-nav-tabs als vue-router pushes afgehandeld i.p.v. een full reload.
     if (typeof window !== 'undefined') {
-        (window as unknown as { router: { visit: (path: string) => void } }).router = {
+        (
+            window as unknown as { router: { visit: (path: string) => void } }
+        ).router = {
             visit(path: string) {
-                router.push(path).catch(() => { /* navigatie geguard of dubbel */ });
+                router.push(path).catch(() => {
+                    /* navigatie geguard of dubbel */
+                });
             },
         };
     }
@@ -113,9 +134,11 @@ async function bootstrap(): Promise<void> {
 
     if (typeof window !== 'undefined') {
         const url = new URL(window.location.href);
+
         if (url.searchParams.get('oauth') === 'success') {
             url.searchParams.delete('oauth');
             window.history.replaceState({}, '', url.toString());
+
             if (auth.user) {
                 router.replace({ name: 'spa.home' });
             }

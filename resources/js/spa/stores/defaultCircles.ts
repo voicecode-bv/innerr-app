@@ -10,7 +10,9 @@ export const useDefaultCirclesStore = defineStore('spa-default-circles', {
         loading: null as Promise<number[]> | null,
     }),
     actions: {
-        async ensureLoaded(maxAgeMs: number = DEFAULT_TTL_MS): Promise<number[]> {
+        async ensureLoaded(
+            maxAgeMs: number = DEFAULT_TTL_MS,
+        ): Promise<number[]> {
             if (this.ids && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.ids;
             }
@@ -20,11 +22,17 @@ export const useDefaultCirclesStore = defineStore('spa-default-circles', {
             if (this.loading) return this.loading;
             this.loading = (async () => {
                 try {
-                    const resp = await externalApi.get<{ data: Array<number | { id: number }> }>('/default-circles');
+                    const resp = await externalApi.get<{
+                        data: Array<number | { id: number }>;
+                    }>('/default-circles');
                     // Externe API kan IDs als nummers OF als objecten met `id` retourneren —
                     // normaliseer naar nummers.
                     this.ids = (resp.data ?? [])
-                        .map((entry) => (typeof entry === 'object' ? entry.id : Number(entry)))
+                        .map((entry) =>
+                            typeof entry === 'object'
+                                ? entry.id
+                                : Number(entry),
+                        )
                         .filter((id): id is number => Number.isFinite(id));
                     this.loadedAt = Date.now();
                     return this.ids;
@@ -39,7 +47,9 @@ export const useDefaultCirclesStore = defineStore('spa-default-circles', {
             this.ids = ids;
             this.loadedAt = Date.now();
             try {
-                await externalApi.put('/default-circles', { circle_ids: ids.map((id) => Number(id)) });
+                await externalApi.put('/default-circles', {
+                    circle_ids: ids.map((id) => Number(id)),
+                });
             } catch (error) {
                 this.ids = previous;
                 throw error;

@@ -1,11 +1,17 @@
 import type { Comment } from '@/types/comment';
 
 function getCookie(name: string): string | null {
-    const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+    const match = document.cookie.match(
+        new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'),
+    );
     return match ? decodeURIComponent(match[3]) : null;
 }
 
-async function request<T>(url: string, method: 'GET' | 'POST', body?: Record<string, unknown>): Promise<T> {
+async function request<T>(
+    url: string,
+    method: 'GET' | 'POST',
+    body?: Record<string, unknown>,
+): Promise<T> {
     const xsrfToken = getCookie('XSRF-TOKEN');
 
     const response = await fetch(url, {
@@ -31,7 +37,11 @@ export function fetchComments(postId: number): Promise<Comment[]> {
     return request<Comment[]>(`/posts/${postId}/comments`, 'GET');
 }
 
-export function postComment(postId: number, body: string, parentCommentId: number | null = null): Promise<Comment> {
+export function postComment(
+    postId: number,
+    body: string,
+    parentCommentId: number | null = null,
+): Promise<Comment> {
     return request<Comment>(`/posts/${postId}/comments`, 'POST', {
         body,
         parent_comment_id: parentCommentId,

@@ -75,7 +75,8 @@ async function confirm() {
     }
 
     const longest = Math.max(sourceCanvas.width, sourceCanvas.height);
-    const scale = longest > MAX_OUTPUT_DIMENSION ? MAX_OUTPUT_DIMENSION / longest : 1;
+    const scale =
+        longest > MAX_OUTPUT_DIMENSION ? MAX_OUTPUT_DIMENSION / longest : 1;
 
     let canvas: HTMLCanvasElement;
 
@@ -98,7 +99,9 @@ async function confirm() {
 
     // Read EXIF from the ORIGINAL source before encoding the cropped canvas —
     // canvas.toBlob() re-encodes JPEG and strips EXIF.
-    const exif = props.src ? await readExif(props.src) : { taken_at: null, latitude: null, longitude: null };
+    const exif = props.src
+        ? await readExif(props.src)
+        : { taken_at: null, latitude: null, longitude: null };
 
     canvas.toBlob(
         (blob) => {
@@ -126,10 +129,27 @@ const ratios: { value: Ratio; label: string }[] = [
     <BottomSheet :open="open" @update:open="onSheetUpdate">
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-sand-700 dark:text-sand-300">{{ t('Crop photo') }}</h2>
-                <button class="text-sand-500 dark:text-sand-400" :aria-label="t('Close')" @click="close">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
+                    {{ t('Crop photo') }}
+                </h2>
+                <button
+                    class="text-sand-500 dark:text-sand-400"
+                    :aria-label="t('Close')"
+                    @click="close"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18 18 6M6 6l12 12"
+                        />
                     </svg>
                 </button>
             </div>
@@ -140,10 +160,12 @@ const ratios: { value: Ratio; label: string }[] = [
                 <button
                     v-for="option in ratios"
                     :key="option.value"
-                    class="rounded-full px-4 py-2 text-sm font-medium transition-colors"
-                    :class="ratio === option.value
-                        ? 'bg-teal text-white shadow-sm'
-                        : 'bg-sand-100 text-sand-700 dark:bg-sand-800 dark:text-sand-200'"
+                    class="rounded-full px-4 py-2 transition-colors"
+                    :class="
+                        ratio === option.value
+                            ? 'bg-teal text-white shadow-sm'
+                            : 'bg-sand-100 text-sand-700 dark:bg-sand-800 dark:text-sand-200'
+                    "
                     @click="ratio = option.value"
                 >
                     {{ option.label }}
@@ -165,14 +187,14 @@ const ratios: { value: Ratio; label: string }[] = [
         <template #footer>
             <div class="flex gap-3 px-4 py-3">
                 <button
-                    class="flex-1 rounded-lg bg-sand-100 py-3 text-sm font-semibold text-sand-700 transition-colors dark:bg-sand-800 dark:text-sand-200"
+                    class="flex-1 rounded-lg bg-sand-100 py-3 font-semibold text-sand-700 transition-colors dark:bg-sand-800 dark:text-sand-200"
                     :disabled="processing"
                     @click="close"
                 >
                     {{ t('Cancel') }}
                 </button>
                 <button
-                    class="flex-1 rounded-lg bg-teal py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
+                    class="flex-1 rounded-lg bg-teal py-3 font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
                     :disabled="processing || !src"
                     @click="confirm"
                 >

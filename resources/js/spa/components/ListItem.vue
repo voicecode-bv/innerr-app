@@ -27,10 +27,15 @@ defineEmits<{
     >
         <slot name="leading" />
         <div class="min-w-0 flex-1">
-            <p class="truncate font-sans text-base font-semibold text-teal dark:text-sand-100">
+            <p
+                class="truncate font-sans text-base font-semibold text-teal dark:text-sand-100"
+            >
                 <slot />
             </p>
-            <p v-if="$slots.subtitle" class="truncate text-sm text-sand-600 dark:text-sand-400">
+            <p
+                v-if="$slots.subtitle"
+                class="truncate text-sand-600 dark:text-sand-400"
+            >
                 <slot name="subtitle" />
             </p>
         </div>
@@ -44,7 +49,11 @@ defineEmits<{
                 stroke="currentColor"
                 class="size-5 text-sand-400 dark:text-sand-500"
             >
-                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                />
             </svg>
         </slot>
     </component>

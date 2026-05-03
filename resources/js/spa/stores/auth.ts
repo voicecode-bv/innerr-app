@@ -64,11 +64,15 @@ export const useAuthStore = defineStore('spa-auth', {
             }
             return data;
         },
-        async login(email: string, password: string): Promise<{ redirect_to: string }> {
-            const data = await api.post<{ user: User; token: string; redirect_to: string }>(
-                '/api/spa/auth/login',
-                { email, password },
-            );
+        async login(
+            email: string,
+            password: string,
+        ): Promise<{ redirect_to: string }> {
+            const data = await api.post<{
+                user: User;
+                token: string;
+                redirect_to: string;
+            }>('/api/spa/auth/login', { email, password });
             this.user = data.user;
             this.token = data.token;
             await secureStorage.set(TOKEN_KEY, data.token);
@@ -81,10 +85,11 @@ export const useAuthStore = defineStore('spa-auth', {
             password: string;
             terms_accepted: boolean;
         }): Promise<{ redirect_to: string }> {
-            const data = await api.post<{ user: User; token: string; redirect_to: string }>(
-                '/api/spa/auth/register',
-                payload,
-            );
+            const data = await api.post<{
+                user: User;
+                token: string;
+                redirect_to: string;
+            }>('/api/spa/auth/register', payload);
             this.user = data.user;
             this.token = data.token;
             await secureStorage.set(TOKEN_KEY, data.token);

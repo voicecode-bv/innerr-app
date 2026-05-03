@@ -65,9 +65,23 @@ async function createCircle(): Promise<void> {
 <template>
     <AppLayout ref="layout" :title="t('Circles')">
         <template #header-left>
-            <button class="flex items-center text-teal dark:text-sand-300" @click="goBack">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            <button
+                class="flex items-center text-teal dark:text-sand-300"
+                @click="goBack"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
                 </svg>
             </button>
         </template>
@@ -77,15 +91,35 @@ async function createCircle(): Promise<void> {
                 :aria-label="t('Create circle')"
                 @click="showCreateForm = !showCreateForm"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path v-if="!showCreateForm" stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    <path v-else stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        v-if="!showCreateForm"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4.5v15m7.5-7.5h-15"
+                    />
+                    <path
+                        v-else
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                    />
                 </svg>
             </button>
         </template>
 
         <div class="relative mt-10 pb-24">
-            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+            <PullToRefreshIndicator
+                :pull-distance="pullDistance"
+                :is-refreshing="isRefreshing"
+            />
 
             <div class="relative space-y-4 px-4 pt-4">
                 <Transition
@@ -98,7 +132,9 @@ async function createCircle(): Promise<void> {
                 >
                     <SurfaceCard v-if="showCreateForm">
                         <form class="space-y-3" @submit.prevent="createCircle">
-                            <label class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
+                            <label
+                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                            >
                                 {{ t('New circle') }}
                             </label>
                             <input
@@ -108,12 +144,29 @@ async function createCircle(): Promise<void> {
                                 class="field"
                                 autofocus
                             />
-                            <p v-if="form.errors.name" class="text-xs text-accent">{{ form.errors.name }}</p>
+                            <p v-if="form.errors.name" class="text-accent">
+                                {{ form.errors.name }}
+                            </p>
                             <div class="flex justify-end gap-2">
-                                <Button type="button" variant="ghost" size="md" @click="showCreateForm = false; form.reset();">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="md"
+                                    @click="
+                                        showCreateForm = false;
+                                        form.reset();
+                                    "
+                                >
                                     {{ t('Cancel') }}
                                 </Button>
-                                <Button type="submit" size="md" :disabled="form.processing || !form.data.name.trim()">
+                                <Button
+                                    type="submit"
+                                    size="md"
+                                    :disabled="
+                                        form.processing ||
+                                        !form.data.name.trim()
+                                    "
+                                >
                                     {{ t('Create') }}
                                 </Button>
                             </div>
@@ -121,28 +174,62 @@ async function createCircle(): Promise<void> {
                     </SurfaceCard>
                 </Transition>
 
-                <ul v-if="circles === null" class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60">
-                    <li v-for="n in 3" :key="n" class="flex items-center gap-4 px-4 py-4">
-                        <div class="size-12 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
+                <ul
+                    v-if="circles === null"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60"
+                >
+                    <li
+                        v-for="n in 3"
+                        :key="n"
+                        class="flex items-center gap-4 px-4 py-4"
+                    >
+                        <div
+                            class="size-12 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
+                        />
                         <div class="flex-1 space-y-2">
-                            <div class="h-4 w-32 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
-                            <div class="h-3 w-20 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70" />
+                            <div
+                                class="h-4 w-32 animate-pulse rounded bg-sand-200 dark:bg-sand-700"
+                            />
+                            <div
+                                class="h-3 w-20 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70"
+                            />
                         </div>
                     </li>
                 </ul>
 
-                <ul v-else-if="circles.length > 0" class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60">
+                <ul
+                    v-else-if="circles.length > 0"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60"
+                >
                     <li v-for="circle in circles" :key="circle.id">
-                        <CircleListItem :circle="circle" avatar-shape="circle" />
+                        <CircleListItem
+                            :circle="circle"
+                            avatar-shape="circle"
+                        />
                     </li>
                 </ul>
 
                 <SurfaceCard v-else-if="circles.length === 0">
-                    <div class="flex flex-col items-center px-2 py-4 text-center">
-                        <IconTile :icon="usersIcon" size="lg" tone="sage" class="mb-4" />
-                        <h3 class="font-sans text-lg font-semibold text-teal dark:text-sand-100">{{ t('No circles yet') }}</h3>
-                        <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
-                            {{ t('Create a circle to share moments with specific people.') }}
+                    <div
+                        class="flex flex-col items-center px-2 py-4 text-center"
+                    >
+                        <IconTile
+                            :icon="usersIcon"
+                            size="lg"
+                            tone="sage"
+                            class="mb-4"
+                        />
+                        <h3
+                            class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
+                        >
+                            {{ t('No circles yet') }}
+                        </h3>
+                        <p class="mt-1 text-sand-600 dark:text-sand-400">
+                            {{
+                                t(
+                                    'Create a circle to share moments with specific people.',
+                                )
+                            }}
                         </p>
                         <div class="mt-5">
                             <Button size="md" @click="showCreateForm = true">

@@ -74,15 +74,69 @@
 }
 
 @utility field {
-    @apply w-full rounded-lg border-[1.5px] border-sand-200 bg-white px-5 py-4 text-sm font-light text-night placeholder-sand-400 outline-none transition-colors focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
+    @apply w-full rounded-lg border-[1.5px] border-sand-200 bg-white px-5 py-4 font-light text-night placeholder-sand-400 transition-colors outline-none focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
 }
 
 @utility field-area {
-    @apply w-full resize-none rounded-lg border-[1.5px] border-sand-200 bg-white px-5 py-4 text-sm font-light text-night placeholder-sand-400 outline-none transition-colors focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
+    @apply w-full resize-none rounded-lg border-[1.5px] border-sand-200 bg-white px-5 py-4 font-light text-night placeholder-sand-400 transition-colors outline-none focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
 }
 
 @utility no-scrollbar {
-  @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+    @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
+/* Subtle staggered reveal voor lijst-/kaart-items op pagina mount.
+   Gebruik: voeg `class="reveal-item"` toe aan opeenvolgende siblings;
+   de :nth-child-delays zorgen voor een trapje. Gebruik `--reveal-delay`
+   als inline style wanneer je een eigen volgorde wilt forceren. */
+.reveal-item {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: reveal-up 320ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    animation-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal-item:nth-child(2) {
+    animation-delay: var(--reveal-delay, 40ms);
+}
+.reveal-item:nth-child(3) {
+    animation-delay: var(--reveal-delay, 80ms);
+}
+.reveal-item:nth-child(4) {
+    animation-delay: var(--reveal-delay, 120ms);
+}
+.reveal-item:nth-child(5) {
+    animation-delay: var(--reveal-delay, 160ms);
+}
+.reveal-item:nth-child(6) {
+    animation-delay: var(--reveal-delay, 200ms);
+}
+.reveal-item:nth-child(7) {
+    animation-delay: var(--reveal-delay, 240ms);
+}
+.reveal-item:nth-child(8) {
+    animation-delay: var(--reveal-delay, 280ms);
+}
+.reveal-item:nth-child(9) {
+    animation-delay: var(--reveal-delay, 320ms);
+}
+.reveal-item:nth-child(n + 10) {
+    animation-delay: var(--reveal-delay, 360ms);
+}
+
+@keyframes reveal-up {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal-item {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
 }
 
 @utility shimmer {
@@ -121,21 +175,44 @@
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-8px) rotate(6deg); }
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(6deg);
+    }
 }
 
 @keyframes wave {
-    0%, 60%, 100% { transform: rotate(0deg); }
-    10%, 30% { transform: rotate(14deg); }
-    20% { transform: rotate(-8deg); }
-    40% { transform: rotate(-4deg); }
-    50% { transform: rotate(10deg); }
+    0%,
+    60%,
+    100% {
+        transform: rotate(0deg);
+    }
+    10%,
+    30% {
+        transform: rotate(14deg);
+    }
+    20% {
+        transform: rotate(-8deg);
+    }
+    40% {
+        transform: rotate(-4deg);
+    }
+    50% {
+        transform: rotate(10deg);
+    }
 }
 
 @keyframes sprout {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    50% { transform: scale(1.15) rotate(-6deg); }
+    0%,
+    100% {
+        transform: scale(1) rotate(0deg);
+    }
+    50% {
+        transform: scale(1.15) rotate(-6deg);
+    }
 }
 
 .empty-doodle {
@@ -143,8 +220,13 @@
 }
 
 @keyframes empty-float {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-8px) rotate(6deg); }
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(6deg);
+    }
 }
 
 .dot {
@@ -152,6 +234,14 @@
 }
 
 @keyframes bounce-dot {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-    40% { transform: translateY(-5px); opacity: 1; }
+    0%,
+    80%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: translateY(-5px);
+        opacity: 1;
+    }
 }

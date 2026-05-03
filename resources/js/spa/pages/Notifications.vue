@@ -8,7 +8,6 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useNotificationsStore } from '@/spa/stores/notifications';
-import { useToastsStore } from '@/spa/stores/toasts';
 import { externalApi } from '@/spa/http/externalApi';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
 import crownIcon from '../../../svg/doodle-icons/crown.svg';
@@ -51,15 +50,30 @@ interface CircleInvitation {
     status: string;
     created_at: string;
     circle: { id: number; name: string };
-    inviter: { id: number; name: string; username: string; avatar: string | null };
+    inviter: {
+        id: number;
+        name: string;
+        username: string;
+        avatar: string | null;
+    };
 }
 
 interface OwnershipTransfer {
     id: number;
     created_at: string;
     circle: { id: number; name: string };
-    from_user: { id: number; name: string; username: string; avatar: string | null };
-    to_user: { id: number; name: string; username: string; avatar: string | null };
+    from_user: {
+        id: number;
+        name: string;
+        username: string;
+        avatar: string | null;
+    };
+    to_user: {
+        id: number;
+        name: string;
+        username: string;
+        avatar: string | null;
+    };
 }
 
 interface Meta {
@@ -71,7 +85,6 @@ interface Meta {
 
 const { t } = useTranslations();
 const router = useRouter();
-const toasts = useToastsStore();
 const notificationsStore = useNotificationsStore();
 
 const items = ref<Notification[]>([]);
@@ -84,17 +97,23 @@ const isLoadingMore = ref(false);
 const loadMoreError = ref<string | null>(null);
 const optimisticallyRead = ref<Set<string>>(new Set());
 
-const hiddenNotificationTypes = new Set<string>(['circle-ownership-transfer-requested']);
+const hiddenNotificationTypes = new Set<string>([
+    'circle-ownership-transfer-requested',
+]);
 
 function isRead(notification: Notification): boolean {
-    return !!notification.read_at || optimisticallyRead.value.has(notification.id);
+    return (
+        !!notification.read_at || optimisticallyRead.value.has(notification.id)
+    );
 }
 
 const visibleNotifications = computed(() =>
     items.value.filter((n) => !hiddenNotificationTypes.has(n.type)),
 );
 
-const hasUnread = computed(() => visibleNotifications.value.some((n) => !isRead(n)));
+const hasUnread = computed(() =>
+    visibleNotifications.value.some((n) => !isRead(n)),
+);
 const hasMore = computed(() => currentPage.value < lastPage.value);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -104,9 +123,15 @@ async function loadInitial(): Promise<void> {
     isLoading.value = true;
     try {
         const [notifs, invitations, transfers] = await Promise.all([
-            externalApi.get<{ data: Notification[]; meta: Meta }>('/notifications'),
-            externalApi.get<{ data: CircleInvitation[] }>('/circle-invitations'),
-            externalApi.get<{ data: OwnershipTransfer[] }>('/circle-ownership-transfers'),
+            externalApi.get<{ data: Notification[]; meta: Meta }>(
+                '/notifications',
+            ),
+            externalApi.get<{ data: CircleInvitation[] }>(
+                '/circle-invitations',
+            ),
+            externalApi.get<{ data: OwnershipTransfer[] }>(
+                '/circle-ownership-transfers',
+            ),
         ]);
         items.value = notifs.data;
         currentPage.value = notifs.meta.current_page;
@@ -137,9 +162,10 @@ async function loadMore(): Promise<void> {
     loadMoreError.value = null;
 
     try {
-        const result = await externalApi.get<{ data: Notification[]; meta: Meta }>(
-            `/notifications?page=${currentPage.value + 1}`,
-        );
+        const result = await externalApi.get<{
+            data: Notification[];
+            meta: Meta;
+        }>(`/notifications?page=${currentPage.value + 1}`);
         const seen = new Set(items.value.map((n) => n.id));
         const incoming = result.data.filter((n) => !seen.has(n.id));
         items.value = [...items.value, ...incoming];
@@ -179,17 +205,25 @@ async function openNotification(notification: Notification): Promise<void> {
         optimisticallyRead.value.add(notification.id);
         notificationsStore.decrement();
 
-        externalApi.post('/notifications/read', { ids: [notification.id] }).catch(() => {
-            optimisticallyRead.value.delete(notification.id);
-            notificationsStore.invalidate();
-            void notificationsStore.refresh();
-        });
+        externalApi
+            .post('/notifications/read', { ids: [notification.id] })
+            .catch(() => {
+                optimisticallyRead.value.delete(notification.id);
+                notificationsStore.invalidate();
+                void notificationsStore.refresh();
+            });
     }
 
     if (notification.data.post_id) {
-        router.push({ name: 'spa.posts.show', params: { post: notification.data.post_id } });
+        router.push({
+            name: 'spa.posts.show',
+            params: { post: notification.data.post_id },
+        });
     } else if (notification.data.circle_id) {
-        router.push({ name: 'spa.circles.show', params: { circle: notification.data.circle_id } });
+        router.push({
+            name: 'spa.circles.show',
+            params: { circle: notification.data.circle_id },
+        });
     }
 }
 
@@ -209,10 +243,11 @@ async function acceptInvitation(invitationId: number): Promise<void> {
     processingInvitations.value.add(invitationId);
     try {
         await externalApi.post(`/circle-invitations/${invitationId}/accept`);
-        circleInvitations.value = circleInvitations.value.filter((i) => i.id !== invitationId);
-        toasts.success(t('Invitation accepted'));
+        circleInvitations.value = circleInvitations.value.filter(
+            (i) => i.id !== invitationId,
+        );
     } catch {
-        toasts.error(t('Failed to accept invitation'));
+        // ignore — gebruiker kan opnieuw proberen
     } finally {
         processingInvitations.value.delete(invitationId);
     }
@@ -223,10 +258,11 @@ async function declineInvitation(invitationId: number): Promise<void> {
     processingInvitations.value.add(invitationId);
     try {
         await externalApi.post(`/circle-invitations/${invitationId}/decline`);
-        circleInvitations.value = circleInvitations.value.filter((i) => i.id !== invitationId);
-        toasts.success(t('Invitation declined'));
+        circleInvitations.value = circleInvitations.value.filter(
+            (i) => i.id !== invitationId,
+        );
     } catch {
-        toasts.error(t('Failed to decline invitation'));
+        // ignore — gebruiker kan opnieuw proberen
     } finally {
         processingInvitations.value.delete(invitationId);
     }
@@ -236,11 +272,14 @@ async function acceptTransfer(transferId: number): Promise<void> {
     if (processingTransfers.value.has(transferId)) return;
     processingTransfers.value.add(transferId);
     try {
-        await externalApi.post(`/circle-ownership-transfers/${transferId}/accept`);
-        ownershipTransfers.value = ownershipTransfers.value.filter((tr) => tr.id !== transferId);
-        toasts.success(t('Ownership accepted'));
+        await externalApi.post(
+            `/circle-ownership-transfers/${transferId}/accept`,
+        );
+        ownershipTransfers.value = ownershipTransfers.value.filter(
+            (tr) => tr.id !== transferId,
+        );
     } catch {
-        toasts.error(t('Failed to accept transfer'));
+        // ignore — gebruiker kan opnieuw proberen
     } finally {
         processingTransfers.value.delete(transferId);
     }
@@ -250,11 +289,14 @@ async function declineTransfer(transferId: number): Promise<void> {
     if (processingTransfers.value.has(transferId)) return;
     processingTransfers.value.add(transferId);
     try {
-        await externalApi.post(`/circle-ownership-transfers/${transferId}/decline`);
-        ownershipTransfers.value = ownershipTransfers.value.filter((tr) => tr.id !== transferId);
-        toasts.success(t('Ownership declined'));
+        await externalApi.post(
+            `/circle-ownership-transfers/${transferId}/decline`,
+        );
+        ownershipTransfers.value = ownershipTransfers.value.filter(
+            (tr) => tr.id !== transferId,
+        );
     } catch {
-        toasts.error(t('Failed to decline transfer'));
+        // ignore — gebruiker kan opnieuw proberen
     } finally {
         processingTransfers.value.delete(transferId);
     }
@@ -272,21 +314,39 @@ function notificationMessage(notification: Notification): string {
         case 'post-liked':
             return t(':name liked your post', { name });
         case 'post-commented':
-            return t(':name commented: :comment', { name, comment: notification.data.comment_body ?? '' });
+            return t(':name commented: :comment', {
+                name,
+                comment: notification.data.comment_body ?? '',
+            });
         case 'comment-liked':
             return t(':name liked your comment', { name });
         case 'comment-replied':
-            return t(':name replied: :comment', { name, comment: notification.data.comment_body ?? '' });
+            return t(':name replied: :comment', {
+                name,
+                comment: notification.data.comment_body ?? '',
+            });
         case 'new-circle-post':
             return t(':name shared a new moment', { name });
         case 'circle-invitation-accepted':
-            return t(':name accepted your invitation to :circle', { name, circle: notification.data.circle_name ?? '' });
+            return t(':name accepted your invitation to :circle', {
+                name,
+                circle: notification.data.circle_name ?? '',
+            });
         case 'circle-ownership-transfer-requested':
-            return t(':name wants to transfer ownership of :circle to you', { name, circle: notification.data.circle_name ?? '' });
+            return t(':name wants to transfer ownership of :circle to you', {
+                name,
+                circle: notification.data.circle_name ?? '',
+            });
         case 'circle-ownership-transfer-accepted':
-            return t(':name accepted ownership of :circle', { name, circle: notification.data.circle_name ?? '' });
+            return t(':name accepted ownership of :circle', {
+                name,
+                circle: notification.data.circle_name ?? '',
+            });
         case 'circle-ownership-transfer-declined':
-            return t(':name declined ownership of :circle', { name, circle: notification.data.circle_name ?? '' });
+            return t(':name declined ownership of :circle', {
+                name,
+                circle: notification.data.circle_name ?? '',
+            });
         default:
             return '';
     }
@@ -406,7 +466,10 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
     let match: RegExpExecArray | null;
     while ((match = regex.exec(tpl)) !== null) {
         if (match.index > lastIndex) {
-            segments.push({ text: tpl.slice(lastIndex, match.index), type: 'plain' });
+            segments.push({
+                text: tpl.slice(lastIndex, match.index),
+                type: 'plain',
+            });
         }
         if (match[0] === INVITER_TOKEN) {
             segments.push({ text: invitation.inviter.name, type: 'inviter' });
@@ -425,53 +488,130 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
 <template>
     <AppLayout ref="layout" :title="t('Notifications')">
         <template #header-left>
-            <button class="flex items-center text-sand-700 dark:text-sand-300" @click="goBack">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            <button
+                class="flex items-center text-sand-700 dark:text-sand-300"
+                @click="goBack"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
                 </svg>
             </button>
         </template>
 
-        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.32)+env(safe-area-inset-bottom))]">
-            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+        <div
+            class="relative mt-10 min-h-full pb-[calc(theme(spacing.32)+env(safe-area-inset-bottom))]"
+        >
+            <PullToRefreshIndicator
+                :pull-distance="pullDistance"
+                :is-refreshing="isRefreshing"
+            />
 
             <div class="relative space-y-4 px-4 pt-4">
-                <div v-if="hasUnread" class="flex justify-end px-1">
+                <div v-if="hasUnread" class="reveal-item flex justify-end px-1">
                     <button
-                        class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-xs font-medium text-teal shadow-sm backdrop-blur-sm transition hover:bg-white dark:bg-sand-800/60 dark:text-sage-100 dark:hover:bg-sand-800"
+                        class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-teal shadow-sm backdrop-blur-sm transition hover:bg-white dark:bg-sand-800/60 dark:text-sage-100 dark:hover:bg-sand-800"
                         @click="markAllAsRead"
                     >
-                        <span aria-hidden="true" class="inline-block size-3.5 bg-current" :style="maskStyleFor(mailOpenIcon)"></span>
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-3.5 bg-current"
+                            :style="maskStyleFor(mailOpenIcon)"
+                        ></span>
                         {{ t('Mark all read') }}
                     </button>
                 </div>
 
-                <SurfaceCard v-if="ownershipTransfers.length > 0" :padded="false">
+                <SurfaceCard
+                    v-if="ownershipTransfers.length > 0"
+                    :padded="false"
+                    class="reveal-item"
+                >
                     <div class="flex items-center gap-3 px-5 pt-5">
                         <IconTile :icon="crownIcon" size="sm" tone="accent" />
                         <div class="min-w-0">
-                            <h3 class="text-sm font-semibold text-sand-900 dark:text-sand-100">{{ t('Ownership transfers') }}</h3>
-                            <p class="text-xs text-sand-500 dark:text-sand-400">{{ t(':count pending', { count: ownershipTransfers.length }) }}</p>
+                            <h3
+                                class="font-semibold text-sand-900 dark:text-sand-100"
+                            >
+                                {{ t('Ownership transfers') }}
+                            </h3>
+                            <p class="text-sand-500 dark:text-sand-400">
+                                {{
+                                    t(':count pending', {
+                                        count: ownershipTransfers.length,
+                                    })
+                                }}
+                            </p>
                         </div>
                     </div>
-                    <ul class="mt-4 divide-y divide-sand-100/80 dark:divide-sand-700/50">
-                        <li v-for="transfer in ownershipTransfers" :key="`transfer-${transfer.id}`" class="flex items-start gap-3 px-5 py-4">
+                    <ul
+                        class="mt-4 divide-y divide-sand-100/80 dark:divide-sand-700/50"
+                    >
+                        <li
+                            v-for="transfer in ownershipTransfers"
+                            :key="`transfer-${transfer.id}`"
+                            class="flex items-start gap-3 px-5 py-4"
+                        >
                             <div class="shrink-0">
-                                <img v-if="transfer.from_user.avatar" :src="transfer.from_user.avatar" :alt="transfer.from_user.name" class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800" loading="lazy" decoding="async" />
-                                <div v-else class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800">
-                                    <IconTile :icon="userIcon" size="sm" tone="sand" />
+                                <img
+                                    v-if="transfer.from_user.avatar"
+                                    :src="transfer.from_user.avatar"
+                                    :alt="transfer.from_user.name"
+                                    class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                                <div
+                                    v-else
+                                    class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                >
+                                    <IconTile
+                                        :icon="userIcon"
+                                        size="sm"
+                                        tone="sand"
+                                    />
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm text-sand-900 dark:text-sand-100">
-                                    {{ t(':name wants to transfer ownership of :circle to you', { name: transfer.from_user.name, circle: transfer.circle.name }) }}
+                                <p class="text-sand-900 dark:text-sand-100">
+                                    {{
+                                        t(
+                                            ':name wants to transfer ownership of :circle to you',
+                                            {
+                                                name: transfer.from_user.name,
+                                                circle: transfer.circle.name,
+                                            },
+                                        )
+                                    }}
                                 </p>
-                                <p class="mt-0.5 text-xs text-sand-500 dark:text-sand-400">{{ timeAgo(transfer.created_at) }}</p>
+                                <p
+                                    class="mt-0.5 text-sand-500 dark:text-sand-400"
+                                >
+                                    {{ timeAgo(transfer.created_at) }}
+                                </p>
                                 <div class="mt-3 flex gap-2">
-                                    <button class="rounded-full bg-teal px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-teal/90 disabled:opacity-50" :disabled="isTransferBusy(transfer.id)" @click="acceptTransfer(transfer.id)">
+                                    <button
+                                        class="rounded-full bg-teal px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-teal/90 disabled:opacity-50"
+                                        :disabled="isTransferBusy(transfer.id)"
+                                        @click="acceptTransfer(transfer.id)"
+                                    >
                                         {{ t('Accept') }}
                                     </button>
-                                    <button class="rounded-full bg-sand-100 px-4 py-1.5 text-xs font-semibold text-sand-700 transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700" :disabled="isTransferBusy(transfer.id)" @click="declineTransfer(transfer.id)">
+                                    <button
+                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-sand-700 transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        :disabled="isTransferBusy(transfer.id)"
+                                        @click="declineTransfer(transfer.id)"
+                                    >
                                         {{ t('Decline') }}
                                     </button>
                                 </div>
@@ -480,36 +620,111 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     </ul>
                 </SurfaceCard>
 
-                <SurfaceCard v-if="circleInvitations.length > 0" :padded="false">
+                <SurfaceCard
+                    v-if="circleInvitations.length > 0"
+                    :padded="false"
+                    class="reveal-item"
+                >
                     <div class="flex items-center gap-3 px-5 pt-5">
-                        <IconTile :icon="mailGiftIcon" size="sm" tone="accent" />
+                        <IconTile
+                            :icon="mailGiftIcon"
+                            size="sm"
+                            tone="accent"
+                        />
                         <div class="min-w-0">
-                            <h3 class="text-sm font-semibold text-sand-900 dark:text-sand-100">{{ t('Circle invitations') }}</h3>
-                            <p class="text-xs text-sand-500 dark:text-sand-400">{{ t(':count pending', { count: circleInvitations.length }) }}</p>
+                            <h3
+                                class="font-semibold text-sand-900 dark:text-sand-100"
+                            >
+                                {{ t('Circle invitations') }}
+                            </h3>
+                            <p class="text-sand-500 dark:text-sand-400">
+                                {{
+                                    t(':count pending', {
+                                        count: circleInvitations.length,
+                                    })
+                                }}
+                            </p>
                         </div>
                     </div>
-                    <ul class="mt-4 divide-y divide-sand-100/80 dark:divide-sand-700/50">
-                        <li v-for="invitation in circleInvitations" :key="`invitation-${invitation.id}`" class="flex items-start gap-3 px-5 py-4">
+                    <ul
+                        class="mt-4 divide-y divide-sand-100/80 dark:divide-sand-700/50"
+                    >
+                        <li
+                            v-for="invitation in circleInvitations"
+                            :key="`invitation-${invitation.id}`"
+                            class="flex items-start gap-3 px-5 py-4"
+                        >
                             <div class="shrink-0">
-                                <img v-if="invitation.inviter.avatar" :src="invitation.inviter.avatar" :alt="invitation.inviter.name" class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800" loading="lazy" decoding="async" />
-                                <div v-else class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800">
-                                    <IconTile :icon="userIcon" size="sm" tone="sand" />
+                                <img
+                                    v-if="invitation.inviter.avatar"
+                                    :src="invitation.inviter.avatar"
+                                    :alt="invitation.inviter.name"
+                                    class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                                <div
+                                    v-else
+                                    class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                >
+                                    <IconTile
+                                        :icon="userIcon"
+                                        size="sm"
+                                        tone="sand"
+                                    />
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm text-sand-900 dark:text-sand-100">
-                                    <template v-for="(segment, idx) in invitationSegments(invitation)" :key="idx">
-                                        <span v-if="segment.type === 'inviter'" class="font-semibold">{{ segment.text }}</span>
-                                        <span v-else-if="segment.type === 'circle'" class="font-semibold text-teal dark:text-sage-100">{{ segment.text }}</span>
-                                        <span v-else class="text-sand-600 dark:text-sand-400">{{ segment.text }}</span>
+                                <p class="text-sand-900 dark:text-sand-100">
+                                    <template
+                                        v-for="(
+                                            segment, idx
+                                        ) in invitationSegments(invitation)"
+                                        :key="idx"
+                                    >
+                                        <span
+                                            v-if="segment.type === 'inviter'"
+                                            class="font-semibold"
+                                            >{{ segment.text }}</span
+                                        >
+                                        <span
+                                            v-else-if="
+                                                segment.type === 'circle'
+                                            "
+                                            class="font-semibold text-teal dark:text-sage-100"
+                                            >{{ segment.text }}</span
+                                        >
+                                        <span
+                                            v-else
+                                            class="text-sand-600 dark:text-sand-400"
+                                            >{{ segment.text }}</span
+                                        >
                                     </template>
                                 </p>
-                                <p class="mt-0.5 text-xs text-sand-500 dark:text-sand-400">{{ timeAgo(invitation.created_at) }}</p>
+                                <p
+                                    class="mt-0.5 text-sand-500 dark:text-sand-400"
+                                >
+                                    {{ timeAgo(invitation.created_at) }}
+                                </p>
                                 <div class="mt-3 flex gap-2">
-                                    <button class="rounded-full bg-teal px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-teal/90 disabled:opacity-50" :disabled="isInvitationBusy(invitation.id)" @click="acceptInvitation(invitation.id)">
+                                    <button
+                                        class="rounded-full bg-teal px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-teal/90 disabled:opacity-50"
+                                        :disabled="
+                                            isInvitationBusy(invitation.id)
+                                        "
+                                        @click="acceptInvitation(invitation.id)"
+                                    >
                                         {{ t('Accept') }}
                                     </button>
-                                    <button class="rounded-full bg-sand-100 px-4 py-1.5 text-xs font-semibold text-sand-700 transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700" :disabled="isInvitationBusy(invitation.id)" @click="declineInvitation(invitation.id)">
+                                    <button
+                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-sand-700 transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        :disabled="
+                                            isInvitationBusy(invitation.id)
+                                        "
+                                        @click="
+                                            declineInvitation(invitation.id)
+                                        "
+                                    >
                                         {{ t('Decline') }}
                                     </button>
                                 </div>
@@ -518,43 +733,158 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     </ul>
                 </SurfaceCard>
 
-                <SurfaceCard v-if="isLoading" :padded="false">
-                    <div class="divide-y divide-sand-100/80 dark:divide-sand-700/50">
-                        <div v-for="n in 5" :key="n" class="flex items-start gap-3 px-5 py-4">
-                            <div class="size-11 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" />
+                <SurfaceCard
+                    v-if="isLoading"
+                    :padded="false"
+                    class="reveal-item"
+                >
+                    <div
+                        class="divide-y divide-sand-100/80 dark:divide-sand-700/50"
+                    >
+                        <div
+                            v-for="n in 5"
+                            :key="n"
+                            class="flex items-start gap-3 px-5 py-4"
+                        >
+                            <div
+                                class="size-11 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
+                            />
                             <div class="min-w-0 flex-1 space-y-2">
-                                <div class="h-3.5 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" :style="{ width: `${55 + n * 6}%` }" />
-                                <div class="h-3 w-20 animate-pulse rounded-full bg-sand-200/70 dark:bg-sand-700/70" />
+                                <div
+                                    class="h-3.5 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
+                                    :style="{ width: `${55 + n * 6}%` }"
+                                />
+                                <div
+                                    class="h-3 w-20 animate-pulse rounded-full bg-sand-200/70 dark:bg-sand-700/70"
+                                />
                             </div>
                         </div>
                     </div>
                 </SurfaceCard>
 
                 <template v-else-if="groupedNotifications.length > 0">
-                    <div v-for="group in groupedNotifications" :key="group.key" class="space-y-2">
-                        <h2 class="px-2 text-xs font-semibold uppercase tracking-[0.15em] text-sand-500 dark:text-sand-400">{{ group.label }}</h2>
+                    <div
+                        v-for="group in groupedNotifications"
+                        :key="group.key"
+                        class="reveal-item space-y-2"
+                    >
+                        <h2
+                            class="px-2 font-semibold tracking-[0.15em] text-sand-500 uppercase dark:text-sand-400"
+                        >
+                            {{ group.label }}
+                        </h2>
                         <SurfaceCard :padded="false">
-                            <ul class="divide-y divide-sand-100/80 dark:divide-sand-700/50">
-                                <li v-for="notification in group.items" :key="notification.id">
-                                    <button class="flex w-full items-start gap-3 px-5 py-4 text-left transition" :class="{ 'bg-sage-50/60 dark:bg-sage-900/20': !isRead(notification) }" @click="openNotification(notification)">
+                            <ul
+                                class="divide-y divide-sand-100/80 dark:divide-sand-700/50"
+                            >
+                                <li
+                                    v-for="notification in group.items"
+                                    :key="notification.id"
+                                >
+                                    <button
+                                        class="flex w-full items-start gap-3 px-5 py-4 text-left transition"
+                                        :class="{
+                                            'bg-sage-50/60 dark:bg-sage-900/20':
+                                                !isRead(notification),
+                                        }"
+                                        @click="openNotification(notification)"
+                                    >
                                         <div class="relative shrink-0">
-                                            <img v-if="notification.data.user_avatar" :src="notification.data.user_avatar" :alt="notification.data.user_name" class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800" loading="lazy" decoding="async" />
-                                            <div v-else class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800">
-                                                <IconTile :icon="userIcon" size="sm" tone="sand" />
+                                            <img
+                                                v-if="
+                                                    notification.data
+                                                        .user_avatar
+                                                "
+                                                :src="
+                                                    notification.data
+                                                        .user_avatar
+                                                "
+                                                :alt="
+                                                    notification.data.user_name
+                                                "
+                                                class="size-11 rounded-full bg-sand-200 object-cover shadow-sm ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                            <div
+                                                v-else
+                                                class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                            >
+                                                <IconTile
+                                                    :icon="userIcon"
+                                                    size="sm"
+                                                    tone="sand"
+                                                />
                                             </div>
-                                            <span class="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-md shadow-sm ring-2 ring-white dark:ring-sand-800" :class="filledToneClass[iconForType(notification.type).tone]">
-                                                <span aria-hidden="true" class="inline-block size-3 bg-current" :style="maskStyleFor(iconForType(notification.type).icon)"></span>
+                                            <span
+                                                class="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-md shadow-sm ring-2 ring-white dark:ring-sand-800"
+                                                :class="
+                                                    filledToneClass[
+                                                        iconForType(
+                                                            notification.type,
+                                                        ).tone
+                                                    ]
+                                                "
+                                            >
+                                                <span
+                                                    aria-hidden="true"
+                                                    class="inline-block size-3 bg-current"
+                                                    :style="
+                                                        maskStyleFor(
+                                                            iconForType(
+                                                                notification.type,
+                                                            ).icon,
+                                                        )
+                                                    "
+                                                ></span>
                                             </span>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <p class="text-sm leading-snug text-sand-800 dark:text-sand-100" :class="{ 'font-semibold': !isRead(notification) }">
-                                                {{ notificationMessage(notification) }}
+                                            <p
+                                                class="leading-snug text-sand-800 dark:text-sand-100"
+                                                :class="{
+                                                    'font-semibold':
+                                                        !isRead(notification),
+                                                }"
+                                            >
+                                                {{
+                                                    notificationMessage(
+                                                        notification,
+                                                    )
+                                                }}
                                             </p>
-                                            <p class="mt-1 text-xs text-sand-500 dark:text-sand-400">{{ timeAgo(notification.created_at) }}</p>
+                                            <p
+                                                class="mt-1 text-sand-500 dark:text-sand-400"
+                                            >
+                                                {{
+                                                    timeAgo(
+                                                        notification.created_at,
+                                                    )
+                                                }}
+                                            </p>
                                         </div>
-                                        <div class="flex shrink-0 items-start gap-2 pt-1">
-                                            <img v-if="notification.data.post_media_url" :src="notification.data.post_media_url" class="size-12 rounded-md bg-sand-200 object-cover shadow-sm dark:bg-sand-700" alt="" loading="lazy" decoding="async" />
-                                            <span v-if="!isRead(notification)" class="mt-1 inline-block size-2 rounded-full bg-teal" aria-hidden="true" />
+                                        <div
+                                            class="flex shrink-0 items-start gap-2 pt-1"
+                                        >
+                                            <img
+                                                v-if="
+                                                    notification.data
+                                                        .post_media_url
+                                                "
+                                                :src="
+                                                    notification.data
+                                                        .post_media_url
+                                                "
+                                                class="size-12 rounded-md bg-sand-200 object-cover shadow-sm dark:bg-sand-700"
+                                                alt=""
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                            <span
+                                                v-if="!isRead(notification)"
+                                                class="mt-1 inline-block size-2 rounded-full bg-teal"
+                                                aria-hidden="true"
+                                            />
                                         </div>
                                     </button>
                                 </li>
@@ -563,18 +893,53 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     </div>
                 </template>
 
-                <div v-if="!isLoading && hasMore" class="flex flex-col items-center gap-2 px-4 py-4">
-                    <button class="text-sm font-medium text-sand-500 disabled:opacity-50 dark:text-sand-400" :disabled="isLoadingMore" @click="loadMore">
-                        {{ isLoadingMore ? t('Loading more...') : t('Load more') }}
+                <div
+                    v-if="!isLoading && hasMore"
+                    class="flex flex-col items-center gap-2 px-4 py-4"
+                >
+                    <button
+                        class="text-sand-500 disabled:opacity-50 dark:text-sand-400"
+                        :disabled="isLoadingMore"
+                        @click="loadMore"
+                    >
+                        {{
+                            isLoadingMore
+                                ? t('Loading more...')
+                                : t('Load more')
+                        }}
                     </button>
-                    <p v-if="loadMoreError" class="text-xs text-blush-500">{{ loadMoreError }}</p>
+                    <p v-if="loadMoreError" class="text-blush-500">
+                        {{ loadMoreError }}
+                    </p>
                 </div>
 
-                <SurfaceCard v-if="!isLoading && groupedNotifications.length === 0 && circleInvitations.length === 0 && ownershipTransfers.length === 0" class="mt-4">
-                    <div class="flex flex-col items-center justify-center py-10 text-center">
+                <SurfaceCard
+                    v-if="
+                        !isLoading &&
+                        groupedNotifications.length === 0 &&
+                        circleInvitations.length === 0 &&
+                        ownershipTransfers.length === 0
+                    "
+                    class="reveal-item mt-4"
+                >
+                    <div
+                        class="flex flex-col items-center justify-center py-10 text-center"
+                    >
                         <IconTile :icon="bellIcon" size="lg" tone="sage" />
-                        <h3 class="mt-4 font-display text-lg font-semibold text-teal dark:text-sage-100">{{ t('No notifications yet') }}</h3>
-                        <p class="mt-1 max-w-xs text-sm text-sand-600 dark:text-sand-400">{{ t("When someone interacts with your posts, you'll see it here.") }}</p>
+                        <h3
+                            class="mt-4 font-display text-lg font-semibold text-teal dark:text-sage-100"
+                        >
+                            {{ t('No notifications yet') }}
+                        </h3>
+                        <p
+                            class="mt-1 max-w-xs text-sand-600 dark:text-sand-400"
+                        >
+                            {{
+                                t(
+                                    "When someone interacts with your posts, you'll see it here.",
+                                )
+                            }}
+                        </p>
                     </div>
                 </SurfaceCard>
             </div>

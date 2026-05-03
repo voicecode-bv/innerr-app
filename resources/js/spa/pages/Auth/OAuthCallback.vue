@@ -48,20 +48,30 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex h-dvh items-center justify-center bg-warmwhite px-6 dark:bg-sand-900">
-        <div class="flex flex-col items-center gap-3 text-sand-600 dark:text-sand-300">
+    <div
+        class="flex h-dvh items-center justify-center bg-warmwhite px-6 dark:bg-sand-900"
+    >
+        <div
+            class="flex flex-col items-center gap-3 text-sand-600 dark:text-sand-300"
+        >
             <span class="flex items-center gap-1" aria-hidden="true">
                 <span class="dot dot-1 size-2 rounded-full bg-teal"></span>
                 <span class="dot dot-2 size-2 rounded-full bg-accent"></span>
                 <span class="dot dot-3 size-2 rounded-full bg-sage-500"></span>
             </span>
-            <p class="text-sm">{{ t('Signing you in...') }}</p>
+            <p class="">{{ t('Signing you in...') }}</p>
         </div>
     </div>
 </template>
 
 <style scoped>
-.dot-1 { animation-delay: 0s; }
-.dot-2 { animation-delay: 0.15s; }
-.dot-3 { animation-delay: 0.3s; }
+.dot-1 {
+    animation-delay: 0s;
+}
+.dot-2 {
+    animation-delay: 0.15s;
+}
+.dot-3 {
+    animation-delay: 0.3s;
+}
 </style>

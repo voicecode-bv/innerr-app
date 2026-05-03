@@ -40,7 +40,9 @@ export function usePullToRefresh(options: Options) {
         // de native pull-to-refresh van iOS doet.
         if (!didArm && pullDistance.value >= threshold) {
             didArm = true;
-            void Haptics.vibrate().catch(() => { /* haptics niet beschikbaar */ });
+            void Haptics.vibrate().catch(() => {
+                /* haptics niet beschikbaar */
+            });
         }
     }
 
@@ -72,7 +74,9 @@ export function usePullToRefresh(options: Options) {
     function attach(element: HTMLElement): void {
         detach();
         attached = element;
-        attached.addEventListener('touchstart', onTouchStart, { passive: true });
+        attached.addEventListener('touchstart', onTouchStart, {
+            passive: true,
+        });
         attached.addEventListener('touchmove', onTouchMove, { passive: true });
         attached.addEventListener('touchend', onTouchEnd, { passive: true });
     }

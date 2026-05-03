@@ -44,7 +44,9 @@ export const useCirclesStore = defineStore('spa-circles', {
         loading: null as Promise<Circle[]> | null,
     }),
     actions: {
-        async ensureLoaded(maxAgeMs: number = DEFAULT_TTL_MS): Promise<Circle[]> {
+        async ensureLoaded(
+            maxAgeMs: number = DEFAULT_TTL_MS,
+        ): Promise<Circle[]> {
             if (this.items && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.items;
             }
@@ -54,7 +56,9 @@ export const useCirclesStore = defineStore('spa-circles', {
             if (this.loading) return this.loading;
             this.loading = (async () => {
                 try {
-                    const resp = await externalApi.get<{ data: Circle[] }>('/circles');
+                    const resp = await externalApi.get<{ data: Circle[] }>(
+                        '/circles',
+                    );
                     this.items = resp.data;
                     this.loadedAt = Date.now();
                     writeWarmCache(this.items);
@@ -74,7 +78,9 @@ export const useCirclesStore = defineStore('spa-circles', {
         },
         update(id: number, patch: Partial<Circle>): void {
             if (!this.items) return;
-            this.items = this.items.map((c) => (c.id === id ? { ...c, ...patch } : c));
+            this.items = this.items.map((c) =>
+                c.id === id ? { ...c, ...patch } : c,
+            );
             writeWarmCache(this.items);
         },
         remove(id: number): void {

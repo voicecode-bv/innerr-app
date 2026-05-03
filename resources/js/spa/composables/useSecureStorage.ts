@@ -9,7 +9,9 @@ const FALLBACK_PREFIX = 'spa.secure.';
 
 function isNativePhp(): boolean {
     if (typeof window === 'undefined') return false;
-    return Boolean((window as unknown as { __nativephp?: unknown }).__nativephp);
+    return Boolean(
+        (window as unknown as { __nativephp?: unknown }).__nativephp,
+    );
 }
 
 function fallbackKey(key: string): string {

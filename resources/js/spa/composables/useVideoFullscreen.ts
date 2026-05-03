@@ -5,7 +5,9 @@ type FullscreenVideoElement = HTMLVideoElement & {
     webkitExitFullscreen?: () => void;
 };
 
-export function useVideoFullscreen(videoRef: Ref<HTMLVideoElement | undefined>) {
+export function useVideoFullscreen(
+    videoRef: Ref<HTMLVideoElement | undefined>,
+) {
     const isMuted = ref(true);
     const isFullscreen = ref(false);
 
@@ -25,16 +27,22 @@ export function useVideoFullscreen(videoRef: Ref<HTMLVideoElement | undefined>) 
             if (video?.webkitEnterFullscreen) {
                 video.webkitEnterFullscreen();
             } else if (video?.requestFullscreen) {
-                video.requestFullscreen().catch(() => { /* fallback to in-DOM fullscreen */ });
+                video.requestFullscreen().catch(() => {
+                    /* fallback to in-DOM fullscreen */
+                });
             }
             if (video) {
                 video.muted = false;
                 isMuted.value = false;
-                video.play().catch(() => { /* autoplay blocked */ });
+                video.play().catch(() => {
+                    /* autoplay blocked */
+                });
             }
         } else {
             if (document.fullscreenElement && document.exitFullscreen) {
-                document.exitFullscreen().catch(() => { /* ignore */ });
+                document.exitFullscreen().catch(() => {
+                    /* ignore */
+                });
             } else if (video?.webkitExitFullscreen) {
                 video.webkitExitFullscreen();
             }
@@ -62,12 +70,18 @@ export function useVideoFullscreen(videoRef: Ref<HTMLVideoElement | undefined>) 
 
     onMounted(() => {
         document.addEventListener('keydown', handleKeydown);
-        document.addEventListener('fullscreenchange', syncFullscreenFromBrowser);
+        document.addEventListener(
+            'fullscreenchange',
+            syncFullscreenFromBrowser,
+        );
     });
 
     onUnmounted(() => {
         document.removeEventListener('keydown', handleKeydown);
-        document.removeEventListener('fullscreenchange', syncFullscreenFromBrowser);
+        document.removeEventListener(
+            'fullscreenchange',
+            syncFullscreenFromBrowser,
+        );
         if (isFullscreen.value && typeof document !== 'undefined') {
             const main = document.querySelector('main') as HTMLElement | null;
             if (main) main.style.overflow = '';

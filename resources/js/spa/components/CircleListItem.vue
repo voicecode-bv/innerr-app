@@ -26,8 +26,12 @@ const props = withDefaults(
 
 const { t } = useTranslations();
 
-const avatarRoundingClass = computed(() => (props.avatarShape === 'circle' ? 'rounded-full' : 'rounded-lg'));
-const iconTileClass = computed(() => (props.avatarShape === 'circle' ? '!rounded-full' : ''));
+const avatarRoundingClass = computed(() =>
+    props.avatarShape === 'circle' ? 'rounded-full' : 'rounded-lg',
+);
+const iconTileClass = computed(() =>
+    props.avatarShape === 'circle' ? '!rounded-full' : '',
+);
 </script>
 
 <template>
@@ -40,11 +44,21 @@ const iconTileClass = computed(() => (props.avatarShape === 'circle' ? '!rounded
                 class="size-12 shrink-0 object-cover"
                 :class="avatarRoundingClass"
             />
-            <IconTile v-else :icon="usersIcon" size="md" tone="sage" :class="iconTileClass" />
+            <IconTile
+                v-else
+                :icon="usersIcon"
+                size="md"
+                tone="sage"
+                :class="iconTileClass"
+            />
         </template>
         {{ circle.name }}
         <template v-if="typeof circle.members_count === 'number'" #subtitle>
-            {{ circle.members_count === 1 ? t(':count member', { count: circle.members_count }) : t(':count members', { count: circle.members_count }) }}
+            {{
+                circle.members_count === 1
+                    ? t(':count member', { count: circle.members_count })
+                    : t(':count members', { count: circle.members_count })
+            }}
         </template>
     </ListItem>
 </template>

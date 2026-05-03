@@ -18,7 +18,10 @@ export const useCommentsCacheStore = defineStore('spa-comments-cache', {
         entries: {} as Record<number, PageEntry<CommentLike>>,
     }),
     actions: {
-        get<T extends CommentLike>(postId: number, ttlMs: number = FRESH_TTL_MS): PageEntry<T> | null {
+        get<T extends CommentLike>(
+            postId: number,
+            ttlMs: number = FRESH_TTL_MS,
+        ): PageEntry<T> | null {
             const entry = this.entries[postId];
             if (!entry) return null;
             if (Date.now() - entry.cachedAt > ttlMs) return null;
@@ -27,7 +30,12 @@ export const useCommentsCacheStore = defineStore('spa-comments-cache', {
         getStale<T extends CommentLike>(postId: number): PageEntry<T> | null {
             return (this.entries[postId] as PageEntry<T> | undefined) ?? null;
         },
-        set<T extends CommentLike>(postId: number, comments: T[], currentPage: number, lastPage: number): void {
+        set<T extends CommentLike>(
+            postId: number,
+            comments: T[],
+            currentPage: number,
+            lastPage: number,
+        ): void {
             this.entries[postId] = {
                 comments,
                 currentPage,

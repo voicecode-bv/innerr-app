@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Dialog, Events, Off, On } from '@nativephp/mobile';
-import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import {
+    computed,
+    nextTick,
+    onMounted,
+    onUnmounted,
+    ref,
+    useTemplateRef,
+    watch,
+} from 'vue';
 import { RouterLink } from 'vue-router';
 import BottomSheet from '@/components/BottomSheet.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -101,7 +109,8 @@ async function loadPage(page: number): Promise<void> {
     }
 
     // Eerste pagina + stale cache → toon eerst, vervang daarna.
-    const seededFromStale = isFirst && !hasLoaded.value && seedCommentsFromCache();
+    const seededFromStale =
+        isFirst && !hasLoaded.value && seedCommentsFromCache();
 
     if (isFirst && !seededFromStale) {
         isLoading.value = true;
@@ -125,7 +134,12 @@ async function loadPage(page: number): Promise<void> {
                     seenIds.add(reply.id);
                 }
             }
-            commentsCache.set<Comment>(props.postId, result.data, result.meta.current_page, result.meta.last_page);
+            commentsCache.set<Comment>(
+                props.postId,
+                result.data,
+                result.meta.current_page,
+                result.meta.last_page,
+            );
         } else {
             const incoming = result.data.filter((c) => {
                 if (seenIds.has(c.id)) return false;
@@ -152,7 +166,12 @@ async function loadPage(page: number): Promise<void> {
 }
 
 function loadMore(): void {
-    if (isLoadingMore.value || isLoading.value || currentPage.value >= lastPage.value) return;
+    if (
+        isLoadingMore.value ||
+        isLoading.value ||
+        currentPage.value >= lastPage.value
+    )
+        return;
     void loadPage(currentPage.value + 1);
 }
 
@@ -245,7 +264,10 @@ const expandedRepliesIds = ref<Set<number>>(new Set());
 
 function visibleReplies(comment: Comment): Comment[] {
     const replies = comment.replies ?? [];
-    if (replies.length <= REPLIES_COLLAPSE_AFTER || expandedRepliesIds.value.has(comment.id)) {
+    if (
+        replies.length <= REPLIES_COLLAPSE_AFTER ||
+        expandedRepliesIds.value.has(comment.id)
+    ) {
         return replies;
     }
     return replies.slice(0, REPLIES_COLLAPSE_AFTER);
@@ -253,7 +275,10 @@ function visibleReplies(comment: Comment): Comment[] {
 
 function hiddenRepliesCount(comment: Comment): number {
     const replies = comment.replies ?? [];
-    if (replies.length <= REPLIES_COLLAPSE_AFTER || expandedRepliesIds.value.has(comment.id)) {
+    if (
+        replies.length <= REPLIES_COLLAPSE_AFTER ||
+        expandedRepliesIds.value.has(comment.id)
+    ) {
         return 0;
     }
     return replies.length - REPLIES_COLLAPSE_AFTER;
@@ -279,8 +304,11 @@ function getRepliesState(commentId: number): RepliesPagination {
 
     // Initial state: leid 'hasMore' af van de server-`replies_count` zodat we
     // niet hoeven te probeer-fetchen als er aantoonbaar niets meer is.
-    const comment = comments.value.find((c) => c.id === commentId)
-        ?? comments.value.flatMap((c) => c.replies ?? []).find((r) => r.id === commentId);
+    const comment =
+        comments.value.find((c) => c.id === commentId) ??
+        comments.value
+            .flatMap((c) => c.replies ?? [])
+            .find((r) => r.id === commentId);
     const total = comment?.replies_count;
     const localCount = comment?.replies?.length ?? 0;
     const hasMore = total === undefined ? true : total > localCount;
@@ -293,8 +321,14 @@ function getRepliesState(commentId: number): RepliesPagination {
     };
 }
 
-function setRepliesState(commentId: number, patch: Partial<RepliesPagination>): void {
-    repliesPagination.value[commentId] = { ...getRepliesState(commentId), ...patch };
+function setRepliesState(
+    commentId: number,
+    patch: Partial<RepliesPagination>,
+): void {
+    repliesPagination.value[commentId] = {
+        ...getRepliesState(commentId),
+        ...patch,
+    };
 }
 
 function canLoadMoreFromServer(comment: Comment): boolean {
@@ -310,7 +344,10 @@ async function expandReplies(comment: Comment): Promise<void> {
     // Stap 1: lokale set tonen (snel, geen netwerk).
     const isLocallyExpanded = expandedRepliesIds.value.has(comment.id);
     if (!isLocallyExpanded) {
-        expandedRepliesIds.value = new Set([...expandedRepliesIds.value, comment.id]);
+        expandedRepliesIds.value = new Set([
+            ...expandedRepliesIds.value,
+            comment.id,
+        ]);
     }
 
     // Stap 2: probeer aanvullende replies van de server (page 2+) te halen.
@@ -322,9 +359,10 @@ async function expandReplies(comment: Comment): Promise<void> {
 
     try {
         const nextPage = state.lastFetchedPage + 1;
-        const result = await externalApi.get<{ data: Comment[]; meta?: { current_page: number; last_page: number } }>(
-            `/comments/${comment.id}/replies?page=${nextPage}`,
-        );
+        const result = await externalApi.get<{
+            data: Comment[];
+            meta?: { current_page: number; last_page: number };
+        }>(`/comments/${comment.id}/replies?page=${nextPage}`);
 
         const incoming = result.data.filter((r) => {
             if (seenIds.has(r.id)) return false;
@@ -349,7 +387,11 @@ async function expandReplies(comment: Comment): Promise<void> {
     } catch {
         // Endpoint bestaat niet of is offline — markeer hasMore=false zodat
         // de knop verdwijnt en alleen de lokaal-geneste replies blijven.
-        setRepliesState(comment.id, { hasMore: false, loading: false, serverProbed: true });
+        setRepliesState(comment.id, {
+            hasMore: false,
+            loading: false,
+            serverProbed: true,
+        });
     }
 }
 
@@ -383,7 +425,8 @@ function onSwipeMove(event: TouchEvent): void {
 
 function onSwipeEnd(): void {
     if (touchingId.value === null) return;
-    swipedId.value = touchOffset.value <= -ACTION_WIDTH / 2 ? touchingId.value : null;
+    swipedId.value =
+        touchOffset.value <= -ACTION_WIDTH / 2 ? touchingId.value : null;
     touchingId.value = null;
     touchOffset.value = 0;
 }
@@ -399,11 +442,17 @@ async function requestDelete(comment: Comment): Promise<void> {
     pendingDeleteComment = comment;
     swipedId.value = null;
     await Dialog.alert()
-        .confirm(t('Delete comment'), t('Are you sure you want to delete this comment?'))
+        .confirm(
+            t('Delete comment'),
+            t('Are you sure you want to delete this comment?'),
+        )
         .id('delete-comment-confirm');
 }
 
-async function handleButtonPressed(payload: { index: number; id?: string | null }): Promise<void> {
+async function handleButtonPressed(payload: {
+    index: number;
+    id?: string | null;
+}): Promise<void> {
     if (payload.id !== 'delete-comment-confirm' || payload.index !== 1) return;
     const target = pendingDeleteComment;
     pendingDeleteComment = null;
@@ -432,7 +481,9 @@ async function deleteComment(comment: Comment): Promise<void> {
             if (idx !== -1) {
                 backupParent = parent;
                 backupIndex = idx;
-                parent.replies = parent.replies.filter((r) => r.id !== comment.id);
+                parent.replies = parent.replies.filter(
+                    (r) => r.id !== comment.id,
+                );
                 break;
             }
         }
@@ -476,7 +527,10 @@ async function toggleCommentLike(comment: Comment): Promise<void> {
 
 let optimisticIdCounter = -1;
 
-function makeOptimisticComment(content: string, parentId: number | null): Comment {
+function makeOptimisticComment(
+    content: string,
+    parentId: number | null,
+): Comment {
     return {
         id: optimisticIdCounter--,
         body: content,
@@ -514,7 +568,10 @@ async function submitComment(): Promise<void> {
         const parent = comments.value.find((c) => c.id === parentId);
         if (parent) {
             parent.replies = [...(parent.replies ?? []), optimistic];
-            expandedRepliesIds.value = new Set([...expandedRepliesIds.value, parent.id]);
+            expandedRepliesIds.value = new Set([
+                ...expandedRepliesIds.value,
+                parent.id,
+            ]);
         } else {
             comments.value = [optimistic, ...comments.value];
         }
@@ -531,19 +588,26 @@ async function submitComment(): Promise<void> {
 
     isSubmitting.value = true;
     try {
-        const response = await externalApi.post<{ data: Comment }>(`/posts/${props.postId}/comments`, {
-            body: value,
-            parent_comment_id: parentId,
-        });
+        const response = await externalApi.post<{ data: Comment }>(
+            `/posts/${props.postId}/comments`,
+            {
+                body: value,
+                parent_comment_id: parentId,
+            },
+        );
         const created = response.data;
 
         if (parentId) {
             const parent = comments.value.find((c) => c.id === parentId);
             if (parent && parent.replies) {
-                parent.replies = parent.replies.map((r) => (r.id === optimistic.id ? created : r));
+                parent.replies = parent.replies.map((r) =>
+                    r.id === optimistic.id ? created : r,
+                );
             }
         } else {
-            comments.value = comments.value.map((c) => (c.id === optimistic.id ? created : c));
+            comments.value = comments.value.map((c) =>
+                c.id === optimistic.id ? created : c,
+            );
         }
         seenIds.add(created.id);
 
@@ -553,10 +617,14 @@ async function submitComment(): Promise<void> {
         if (parentId) {
             const parent = comments.value.find((c) => c.id === parentId);
             if (parent && parent.replies) {
-                parent.replies = parent.replies.filter((r) => r.id !== optimistic.id);
+                parent.replies = parent.replies.filter(
+                    (r) => r.id !== optimistic.id,
+                );
             }
         } else {
-            comments.value = comments.value.filter((c) => c.id !== optimistic.id);
+            comments.value = comments.value.filter(
+                (c) => c.id !== optimistic.id,
+            );
         }
         body.value = submittedBody;
         replyingTo.value = submittedReplyingTo;
@@ -571,9 +639,12 @@ function timeAgo(dateString: string): string {
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (seconds < 60) return t('just now');
-    if (seconds < 3600) return t(':count min ago', { count: Math.floor(seconds / 60) });
-    if (seconds < 86400) return t(':count hours ago', { count: Math.floor(seconds / 3600) });
-    if (seconds < 604800) return t(':count days ago', { count: Math.floor(seconds / 86400) });
+    if (seconds < 3600)
+        return t(':count min ago', { count: Math.floor(seconds / 60) });
+    if (seconds < 86400)
+        return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    if (seconds < 604800)
+        return t(':count days ago', { count: Math.floor(seconds / 86400) });
     return t(':count weeks ago', { count: Math.floor(seconds / 604800) });
 }
 
@@ -618,44 +689,108 @@ defineExpose({
     <BottomSheet :open="open" @update:open="onSheetUpdate">
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-sand-700 dark:text-sand-300">
+                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
                     {{ t('Comments') }}
-                    <span v-if="commentsCount > 0" class="font-normal text-sand-400 dark:text-sand-500">({{ commentsCount }})</span>
+                    <span
+                        v-if="commentsCount > 0"
+                        class="font-normal text-sand-400 dark:text-sand-500"
+                        >({{ commentsCount }})</span
+                    >
                 </h2>
-                <button class="text-sand-500 dark:text-sand-400" :aria-label="t('Close')" @click="close">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                <button
+                    class="text-sand-500 dark:text-sand-400"
+                    :aria-label="t('Close')"
+                    @click="close"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18 18 6M6 6l12 12"
+                        />
                     </svg>
                 </button>
             </div>
         </template>
 
-        <div v-if="isLoading" class="flex items-center justify-center px-4 py-10">
-            <svg class="size-6 animate-spin text-sand-400 dark:text-sand-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        <div
+            v-if="isLoading"
+            class="flex items-center justify-center px-4 py-10"
+        >
+            <svg
+                class="size-6 animate-spin text-sand-400 dark:text-sand-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+            >
+                <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                />
+                <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
             </svg>
         </div>
 
-        <div v-else-if="loadError && comments.length === 0" class="px-4 py-10 text-center">
-            <p class="text-sm text-blush-500">{{ loadError }}</p>
-            <button class="mt-2 text-xs font-medium text-sand-500 dark:text-sand-400" @click="loadPage(1)">{{ t('Try again') }}</button>
+        <div
+            v-else-if="loadError && comments.length === 0"
+            class="px-4 py-10 text-center"
+        >
+            <p class="text-blush-500">{{ loadError }}</p>
+            <button
+                class="mt-2 text-sand-500 dark:text-sand-400"
+                @click="loadPage(1)"
+            >
+                {{ t('Try again') }}
+            </button>
         </div>
 
-        <div v-else-if="comments.length === 0" class="flex flex-col items-center justify-center px-8 py-2 text-center">
-            <div aria-hidden="true" class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40">
-                <span class="inline-block size-8 bg-current" :style="iconMaskStyle(messageIcon)"></span>
+        <div
+            v-else-if="comments.length === 0"
+            class="flex flex-col items-center justify-center px-8 py-2 text-center"
+        >
+            <div
+                aria-hidden="true"
+                class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40"
+            >
+                <span
+                    class="inline-block size-8 bg-current"
+                    :style="iconMaskStyle(messageIcon)"
+                ></span>
             </div>
-            <h3 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('No comments yet') }}</h3>
-            <p class="mt-2 text-sm text-sand-600 dark:text-sand-400">{{ t('Share what you think!') }}</p>
+            <h3
+                class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200"
+            >
+                {{ t('No comments yet') }}
+            </h3>
+            <p class="mt-2 text-sand-600 dark:text-sand-400">
+                {{ t('Share what you think!') }}
+            </p>
         </div>
 
         <div v-else>
             <div v-for="comment in comments" :key="comment.id">
-                <div :data-comment-id="comment.id" class="relative overflow-hidden border-b border-sand-50 bg-white dark:border-sand-800 dark:bg-sand-900">
+                <div
+                    :data-comment-id="comment.id"
+                    class="relative overflow-hidden border-b border-sand-50 bg-white dark:border-sand-800 dark:bg-sand-900"
+                >
                     <button
                         v-if="comment.user.id === authUserId"
-                        class="absolute inset-y-0 right-0 flex w-22 items-center justify-center bg-blush-500 text-xs font-semibold text-white"
+                        class="absolute inset-y-0 right-0 flex w-22 items-center justify-center bg-blush-500 font-semibold text-white"
                         :style="{ width: `${ACTION_WIDTH}px` }"
                         :aria-label="t('Delete comment')"
                         @click="requestDelete(comment)"
@@ -664,7 +799,11 @@ defineExpose({
                     </button>
                     <div
                         class="relative flex gap-3 bg-white px-4 py-3 dark:bg-sand-900"
-                        :class="touchingId === comment.id ? '' : 'transition-transform duration-200 ease-out'"
+                        :class="
+                            touchingId === comment.id
+                                ? ''
+                                : 'transition-transform duration-200 ease-out'
+                        "
                         :style="{ transform: rowTransform(comment.id) }"
                         @touchstart.passive="onSwipeStart($event, comment)"
                         @touchmove.passive="onSwipeMove"
@@ -672,9 +811,19 @@ defineExpose({
                         @touchcancel="onSwipeEnd"
                         @click="closeSwipe"
                     >
-                        <RouterLink :to="{ name: 'spa.profiles.show', params: { username: comment.user.username } }" class="mt-0.5 flex-shrink-0" @click="close">
+                        <RouterLink
+                            :to="{
+                                name: 'spa.profiles.show',
+                                params: { username: comment.user.username },
+                            }"
+                            class="mt-0.5 flex-shrink-0"
+                            @click="close"
+                        >
                             <img
-                                :src="comment.user.avatar ?? `https://ui-avatars.com/api/?name=${comment.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                                :src="
+                                    comment.user.avatar ??
+                                    `https://ui-avatars.com/api/?name=${comment.user.name}&background=f0dcc6&color=5c3f24&size=64`
+                                "
                                 :alt="comment.user.name"
                                 class="size-8 rounded-full bg-sand-200 object-cover dark:bg-sand-700"
                                 loading="lazy"
@@ -682,35 +831,76 @@ defineExpose({
                             />
                         </RouterLink>
                         <div class="flex-1">
-                            <p class="text-sm text-sand-800 dark:text-sand-200">
-                                <RouterLink :to="{ name: 'spa.profiles.show', params: { username: comment.user.username } }" class="font-semibold" @click="close">
+                            <p class="text-sand-800 dark:text-sand-200">
+                                <RouterLink
+                                    :to="{
+                                        name: 'spa.profiles.show',
+                                        params: {
+                                            username: comment.user.username,
+                                        },
+                                    }"
+                                    class="font-semibold"
+                                    @click="close"
+                                >
                                     {{ comment.user.name }}
                                 </RouterLink>
                                 {{ ' ' + comment.body }}
                             </p>
                             <div class="mt-1 flex items-center gap-3">
-                                <span class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(comment.created_at) }}</span>
-                                <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click.stop="startReply(comment)">{{ t('Reply') }}</button>
+                                <span
+                                    class="text-sand-400 dark:text-sand-500"
+                                    >{{ timeAgo(comment.created_at) }}</span
+                                >
+                                <button
+                                    class="text-sand-500 dark:text-sand-400"
+                                    @click.stop="startReply(comment)"
+                                >
+                                    {{ t('Reply') }}
+                                </button>
                             </div>
                         </div>
-                        <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                            <button :disabled="comment.user.id === authUserId" @click.stop="toggleCommentLike(comment)">
+                        <div
+                            class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5"
+                        >
+                            <button
+                                :disabled="comment.user.id === authUserId"
+                                @click.stop="toggleCommentLike(comment)"
+                            >
                                 <span
                                     aria-hidden="true"
                                     class="inline-block size-4"
-                                    :class="comment.is_liked ? 'bg-blush-400' : 'bg-sand-400 dark:bg-sand-500'"
-                                    :style="iconMaskStyle(comment.is_liked ? heartFilledIcon : heartIcon)"
+                                    :class="
+                                        comment.is_liked
+                                            ? 'bg-blush-400'
+                                            : 'bg-sand-400 dark:bg-sand-500'
+                                    "
+                                    :style="
+                                        iconMaskStyle(
+                                            comment.is_liked
+                                                ? heartFilledIcon
+                                                : heartIcon,
+                                        )
+                                    "
                                 ></span>
                             </button>
-                            <span v-if="comment.likes_count > 0" class="text-[10px] text-sand-400 dark:text-sand-500">{{ comment.likes_count }}</span>
+                            <span
+                                v-if="comment.likes_count > 0"
+                                class="text-sand-400 dark:text-sand-500"
+                                >{{ comment.likes_count }}</span
+                            >
                         </div>
                     </div>
                 </div>
 
-                <div v-for="reply in visibleReplies(comment)" :key="reply.id" :data-comment-id="reply.id" class="relative overflow-hidden border-b border-sand-50 bg-white dark:border-sand-800 dark:bg-sand-900">
+                <div
+                    v-for="reply in visibleReplies(comment)"
+                    :key="reply.id"
+                    :data-comment-id="reply.id"
+                    class="relative overflow-hidden border-b border-sand-50 bg-white dark:border-sand-800 dark:bg-sand-900"
+                >
                     <button
                         v-if="reply.user.id === authUserId"
-                        class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 text-xs font-semibold text-white"
+                        class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 font-semibold text-white"
                         :style="{ width: `${ACTION_WIDTH}px` }"
                         :aria-label="t('Delete comment')"
                         @click="requestDelete(reply)"
@@ -718,8 +908,12 @@ defineExpose({
                         {{ t('Delete') }}
                     </button>
                     <div
-                        class="relative flex gap-3 bg-white py-3 pl-14 pr-4 dark:bg-sand-900"
-                        :class="touchingId === reply.id ? '' : 'transition-transform duration-200 ease-out'"
+                        class="relative flex gap-3 bg-white py-3 pr-4 pl-14 dark:bg-sand-900"
+                        :class="
+                            touchingId === reply.id
+                                ? ''
+                                : 'transition-transform duration-200 ease-out'
+                        "
                         :style="{ transform: rowTransform(reply.id) }"
                         @touchstart.passive="onSwipeStart($event, reply)"
                         @touchmove.passive="onSwipeMove"
@@ -727,9 +921,19 @@ defineExpose({
                         @touchcancel="onSwipeEnd"
                         @click="closeSwipe"
                     >
-                        <RouterLink :to="{ name: 'spa.profiles.show', params: { username: reply.user.username } }" class="mt-0.5 flex-shrink-0" @click="close">
+                        <RouterLink
+                            :to="{
+                                name: 'spa.profiles.show',
+                                params: { username: reply.user.username },
+                            }"
+                            class="mt-0.5 flex-shrink-0"
+                            @click="close"
+                        >
                             <img
-                                :src="reply.user.avatar ?? `https://ui-avatars.com/api/?name=${reply.user.name}&background=f0dcc6&color=5c3f24&size=64`"
+                                :src="
+                                    reply.user.avatar ??
+                                    `https://ui-avatars.com/api/?name=${reply.user.name}&background=f0dcc6&color=5c3f24&size=64`
+                                "
                                 :alt="reply.user.name"
                                 class="size-6 rounded-full bg-sand-200 object-cover dark:bg-sand-700"
                                 loading="lazy"
@@ -737,81 +941,174 @@ defineExpose({
                             />
                         </RouterLink>
                         <div class="flex-1">
-                            <p class="text-sm text-sand-800 dark:text-sand-200">
-                                <RouterLink :to="{ name: 'spa.profiles.show', params: { username: reply.user.username } }" class="font-semibold" @click="close">
+                            <p class="text-sand-800 dark:text-sand-200">
+                                <RouterLink
+                                    :to="{
+                                        name: 'spa.profiles.show',
+                                        params: {
+                                            username: reply.user.username,
+                                        },
+                                    }"
+                                    class="font-semibold"
+                                    @click="close"
+                                >
                                     {{ reply.user.name }}
                                 </RouterLink>
                                 {{ ' ' + reply.body }}
                             </p>
                             <div class="mt-1 flex items-center gap-3">
-                                <span class="text-xs text-sand-400 dark:text-sand-500">{{ timeAgo(reply.created_at) }}</span>
-                                <button class="text-xs font-medium text-sand-500 dark:text-sand-400" @click.stop="startReply(comment)">{{ t('Reply') }}</button>
+                                <span
+                                    class="text-sand-400 dark:text-sand-500"
+                                    >{{ timeAgo(reply.created_at) }}</span
+                                >
+                                <button
+                                    class="text-sand-500 dark:text-sand-400"
+                                    @click.stop="startReply(comment)"
+                                >
+                                    {{ t('Reply') }}
+                                </button>
                             </div>
                         </div>
-                        <div class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5">
-                            <button :disabled="reply.user.id === authUserId" @click.stop="toggleCommentLike(reply)">
+                        <div
+                            class="mt-1 flex flex-shrink-0 flex-col items-center gap-0.5"
+                        >
+                            <button
+                                :disabled="reply.user.id === authUserId"
+                                @click.stop="toggleCommentLike(reply)"
+                            >
                                 <span
                                     aria-hidden="true"
                                     class="inline-block size-4"
-                                    :class="reply.is_liked ? 'bg-blush-400' : 'bg-sand-400 dark:bg-sand-500'"
-                                    :style="iconMaskStyle(reply.is_liked ? heartFilledIcon : heartIcon)"
+                                    :class="
+                                        reply.is_liked
+                                            ? 'bg-blush-400'
+                                            : 'bg-sand-400 dark:bg-sand-500'
+                                    "
+                                    :style="
+                                        iconMaskStyle(
+                                            reply.is_liked
+                                                ? heartFilledIcon
+                                                : heartIcon,
+                                        )
+                                    "
                                 ></span>
                             </button>
-                            <span v-if="reply.likes_count > 0" class="text-[10px] text-sand-400 dark:text-sand-500">{{ reply.likes_count }}</span>
+                            <span
+                                v-if="reply.likes_count > 0"
+                                class="text-sand-400 dark:text-sand-500"
+                                >{{ reply.likes_count }}</span
+                            >
                         </div>
                     </div>
                 </div>
 
                 <button
-                    v-if="hiddenRepliesCount(comment) > 0 || remoteRepliesCount(comment) > 0 || (expandedRepliesIds.has(comment.id) && canLoadMoreFromServer(comment))"
-                    class="block w-full border-b border-sand-50 bg-white py-2 pl-14 pr-4 text-left text-xs font-medium text-sand-500 hover:text-teal disabled:opacity-50 dark:border-sand-800 dark:bg-sand-900 dark:text-sand-400"
+                    v-if="
+                        hiddenRepliesCount(comment) > 0 ||
+                        remoteRepliesCount(comment) > 0 ||
+                        (expandedRepliesIds.has(comment.id) &&
+                            canLoadMoreFromServer(comment))
+                    "
+                    class="block w-full border-b border-sand-50 bg-white py-2 pr-4 pl-14 text-left text-sand-500 hover:text-teal disabled:opacity-50 dark:border-sand-800 dark:bg-sand-900 dark:text-sand-400"
                     :disabled="isLoadingMoreReplies(comment)"
                     @click="expandReplies(comment)"
                 >
-                    <template v-if="isLoadingMoreReplies(comment)">{{ t('Loading more...') }}</template>
+                    <template v-if="isLoadingMoreReplies(comment)">{{
+                        t('Loading more...')
+                    }}</template>
                     <template v-else-if="hiddenRepliesCount(comment) > 0">
-                        {{ (hiddenRepliesCount(comment) + remoteRepliesCount(comment)) === 1
-                            ? t('Show :count more reply', { count: hiddenRepliesCount(comment) + remoteRepliesCount(comment) })
-                            : t('Show :count more replies', { count: hiddenRepliesCount(comment) + remoteRepliesCount(comment) }) }}
+                        {{
+                            hiddenRepliesCount(comment) +
+                                remoteRepliesCount(comment) ===
+                            1
+                                ? t('Show :count more reply', {
+                                      count:
+                                          hiddenRepliesCount(comment) +
+                                          remoteRepliesCount(comment),
+                                  })
+                                : t('Show :count more replies', {
+                                      count:
+                                          hiddenRepliesCount(comment) +
+                                          remoteRepliesCount(comment),
+                                  })
+                        }}
                     </template>
                     <template v-else-if="remoteRepliesCount(comment) > 0">
-                        {{ remoteRepliesCount(comment) === 1
-                            ? t('Show :count more reply', { count: remoteRepliesCount(comment) })
-                            : t('Show :count more replies', { count: remoteRepliesCount(comment) }) }}
+                        {{
+                            remoteRepliesCount(comment) === 1
+                                ? t('Show :count more reply', {
+                                      count: remoteRepliesCount(comment),
+                                  })
+                                : t('Show :count more replies', {
+                                      count: remoteRepliesCount(comment),
+                                  })
+                        }}
                     </template>
                     <template v-else>{{ t('Load more replies') }}</template>
                 </button>
             </div>
 
-            <div v-if="isLoadingMore" class="flex items-center justify-center gap-2 px-4 py-4 text-xs text-sand-500 dark:text-sand-400">
+            <div
+                v-if="isLoadingMore"
+                class="flex items-center justify-center gap-2 px-4 py-4 text-sand-500 dark:text-sand-400"
+            >
                 {{ t('Loading more...') }}
             </div>
 
-            <p v-if="loadError" class="px-4 py-2 text-center text-xs text-blush-500">{{ loadError }}</p>
+            <p v-if="loadError" class="px-4 py-2 text-center text-blush-500">
+                {{ loadError }}
+            </p>
 
             <div ref="sentinel" class="h-1" />
         </div>
 
         <template #footer>
-            <div v-if="replyingTo" class="flex items-center justify-between border-b border-sand-100 px-4 py-2 dark:border-sand-800">
-                <span class="text-xs text-sand-500 dark:text-sand-400">
-                    {{ t('Replying to') }} <span class="font-semibold">{{ replyingTo.user.name }}</span>
+            <div
+                v-if="replyingTo"
+                class="flex items-center justify-between border-b border-sand-100 px-4 py-2 dark:border-sand-800"
+            >
+                <span class="text-sand-500 dark:text-sand-400">
+                    {{ t('Replying to') }}
+                    <span class="font-semibold">{{
+                        replyingTo.user.name
+                    }}</span>
                 </span>
-                <button class="text-sand-500 dark:text-sand-400" :aria-label="t('Cancel reply')" @click="cancelReply">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                <button
+                    class="text-sand-500 dark:text-sand-400"
+                    :aria-label="t('Cancel reply')"
+                    @click="cancelReply"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-4"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18 18 6M6 6l12 12"
+                        />
                     </svg>
                 </button>
             </div>
             <div class="flex items-center gap-3 px-4 py-3">
                 <img
-                    :src="auth.user?.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.user?.name ?? '')}&background=f0dcc6&color=5c3f24&size=64`"
+                    :src="
+                        auth.user?.avatar ??
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.user?.name ?? '')}&background=f0dcc6&color=5c3f24&size=64`
+                    "
                     :alt="auth.user?.name ?? ''"
                     class="size-8 flex-shrink-0 rounded-full bg-sand-200 object-cover dark:bg-sand-800"
                     loading="lazy"
                     decoding="async"
                 />
-                <form class="flex flex-1 items-center gap-2" @submit.prevent="submitComment">
+                <form
+                    class="flex flex-1 items-center gap-2"
+                    @submit.prevent="submitComment"
+                >
                     <input
                         ref="commentInput"
                         v-model="body"
@@ -819,13 +1116,17 @@ defineExpose({
                         inputmode="text"
                         autocapitalize="sentences"
                         enterkeyhint="send"
-                        :placeholder="replyingTo ? t('Write a reply...') : t('Write a comment...')"
-                        class="flex-1 bg-transparent text-sm text-sand-800 placeholder-sand-400 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
+                        :placeholder="
+                            replyingTo
+                                ? t('Write a reply...')
+                                : t('Write a comment...')
+                        "
+                        class="flex-1 bg-transparent text-sand-800 placeholder-sand-400 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
                         @click.stop
                     />
                     <button
                         type="submit"
-                        class="text-sm font-semibold text-sand-600 disabled:opacity-30 dark:text-sand-400"
+                        class="font-semibold text-sand-600 disabled:opacity-30 dark:text-sand-400"
                         :disabled="!body.trim() || isSubmitting"
                     >
                         {{ t('Post') }}

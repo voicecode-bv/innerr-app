@@ -53,7 +53,15 @@ const maskStyle = computed(() => ({
 </script>
 
 <template>
-    <span class="flex shrink-0 items-center justify-center rounded-lg" :class="wrapperClasses">
-        <span aria-hidden="true" class="inline-block bg-current" :class="iconSizeClass" :style="maskStyle"></span>
+    <span
+        class="flex shrink-0 items-center justify-center rounded-lg"
+        :class="wrapperClasses"
+    >
+        <span
+            aria-hidden="true"
+            class="inline-block bg-current"
+            :class="iconSizeClass"
+            :style="maskStyle"
+        ></span>
     </span>
 </template>

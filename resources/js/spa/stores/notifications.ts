@@ -20,7 +20,9 @@ export const useNotificationsStore = defineStore('spa-notifications', {
             if (this.loading) return this.loading;
             this.loading = (async () => {
                 try {
-                    const resp = await externalApi.get<{ count: number }>('/notifications/unread-count');
+                    const resp = await externalApi.get<{ count: number }>(
+                        '/notifications/unread-count',
+                    );
                     this.unreadCount = resp.count;
                     this.loadedAt = Date.now();
                     return this.unreadCount;

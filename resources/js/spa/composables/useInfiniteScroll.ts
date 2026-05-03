@@ -32,10 +32,13 @@ export function useInfiniteScroll<T>(
     // Bij `immediate=true` zonder seed-data: markeer direct loading=true zodat
     // het allereerste render-frame al de skeleton toont in plaats van de
     // "geen-posts" empty state te flashen.
-    const willAutoLoad = options.immediate !== false && initialItems.length === 0;
+    const willAutoLoad =
+        options.immediate !== false && initialItems.length === 0;
     const loading = ref(willAutoLoad);
     const error = ref<Error | null>(null);
-    const finished = ref(initialItems.length > 0 && page.value > (options.initialLastPage ?? 1));
+    const finished = ref(
+        initialItems.length > 0 && page.value > (options.initialLastPage ?? 1),
+    );
 
     let observer: IntersectionObserver | null = null;
     const seenIds = new Set<string | number>();

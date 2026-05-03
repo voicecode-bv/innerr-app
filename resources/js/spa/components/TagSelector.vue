@@ -46,7 +46,11 @@ const tags = computed<Tag[]>(() => {
         merged.push(tag);
     }
 
-    return merged.sort((a, b) => (b.usage_count ?? 0) - (a.usage_count ?? 0) || a.name.localeCompare(b.name));
+    return merged.sort(
+        (a, b) =>
+            (b.usage_count ?? 0) - (a.usage_count ?? 0) ||
+            a.name.localeCompare(b.name),
+    );
 });
 
 const tagsById = computed(() => {
@@ -79,9 +83,13 @@ const exactMatch = computed(() =>
     tags.value.some((tag) => tag.name.toLowerCase() === trimmedQuery.value),
 );
 
-const canCreate = computed(() => trimmedQuery.value !== '' && !exactMatch.value && !isCreating.value);
+const canCreate = computed(
+    () => trimmedQuery.value !== '' && !exactMatch.value && !isCreating.value,
+);
 
-const optionsCount = computed(() => filteredTags.value.length + (canCreate.value ? 1 : 0));
+const optionsCount = computed(
+    () => filteredTags.value.length + (canCreate.value ? 1 : 0),
+);
 
 function openDropdown(): void {
     isOpen.value = true;
@@ -101,7 +109,10 @@ function selectTag(tagId: number): void {
 }
 
 function removeTag(tagId: number): void {
-    emit('update:selectedIds', props.selectedIds.filter((id) => id !== tagId));
+    emit(
+        'update:selectedIds',
+        props.selectedIds.filter((id) => id !== tagId),
+    );
 }
 
 function onInput(event: Event): void {
@@ -119,7 +130,8 @@ function onBackspace(): void {
 function moveActive(delta: number): void {
     if (optionsCount.value === 0) return;
     isOpen.value = true;
-    activeIndex.value = (activeIndex.value + delta + optionsCount.value) % optionsCount.value;
+    activeIndex.value =
+        (activeIndex.value + delta + optionsCount.value) % optionsCount.value;
 }
 
 function commitActive(): void {
@@ -146,7 +158,9 @@ async function createTag(): Promise<void> {
     const name = trimmedQuery.value;
 
     try {
-        const response = await externalApi.post<{ data: Tag }>('/tags', { name });
+        const response = await externalApi.post<{ data: Tag }>('/tags', {
+            name,
+        });
         const tag = response.data;
         localTags.value.push(tag);
         emit('tag-created', tag);
@@ -167,16 +181,21 @@ async function createTag(): Promise<void> {
 
 <template>
     <div>
-        <p class="mb-3 text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
+        <p
+            class="mb-3 tracking-wider text-sand-500 uppercase dark:text-sand-400"
+        >
             {{ t('Tags') }}
         </p>
 
-        <div class="relative rounded-2xl bg-sand-100 px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-teal dark:bg-sand-800" @click="inputRef?.focus()">
+        <div
+            class="relative rounded-2xl bg-sand-100 px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-teal dark:bg-sand-800"
+            @click="inputRef?.focus()"
+        >
             <div class="flex flex-wrap items-center gap-2">
                 <span
                     v-for="tag in selectedTags"
                     :key="tag.id"
-                    class="inline-flex items-center gap-1 rounded-full bg-teal px-3 py-1 text-sm font-medium text-white shadow-sm"
+                    class="inline-flex items-center gap-1 rounded-full bg-teal px-3 py-1 text-white shadow-sm"
                 >
                     {{ tag.name }}
                     <button
@@ -185,8 +204,14 @@ async function createTag(): Promise<void> {
                         :aria-label="t('Remove tag')"
                         @click.stop="removeTag(tag.id)"
                     >
-                        <svg viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3">
-                            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                        <svg
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            class="h-3 w-3"
+                        >
+                            <path
+                                d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+                            />
                         </svg>
                     </button>
                 </span>
@@ -196,8 +221,12 @@ async function createTag(): Promise<void> {
                     :value="query"
                     type="text"
                     maxlength="50"
-                    :placeholder="selectedTags.length === 0 ? t('Search or add tags...') : ''"
-                    class="min-w-[8rem] flex-1 border-0 bg-transparent px-2 py-1 text-sm text-sand-800 placeholder-sand-400 focus:outline-none focus:ring-0 dark:text-sand-100 dark:placeholder-sand-500"
+                    :placeholder="
+                        selectedTags.length === 0
+                            ? t('Search or add tags...')
+                            : ''
+                    "
+                    class="min-w-[8rem] flex-1 border-0 bg-transparent px-2 py-1 text-sand-800 placeholder-sand-400 focus:ring-0 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
                     @input="onInput"
                     @focus="openDropdown"
                     @blur="closeDropdown"
@@ -211,14 +240,18 @@ async function createTag(): Promise<void> {
 
             <ul
                 v-if="isOpen && optionsCount > 0"
-                class="absolute left-0 right-0 top-full z-20 mt-2 max-h-64 overflow-y-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-sand-200 dark:bg-sand-900 dark:ring-sand-700"
+                class="absolute top-full right-0 left-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-sand-200 dark:bg-sand-900 dark:ring-sand-700"
                 @mousedown.prevent
             >
                 <li
                     v-for="(tag, index) in filteredTags"
                     :key="tag.id"
-                    class="cursor-pointer px-4 py-2 text-sm text-sand-800 dark:text-sand-100"
-                    :class="index === activeIndex ? 'bg-sand-100 dark:bg-sand-800' : ''"
+                    class="cursor-pointer px-4 py-2 text-sand-800 dark:text-sand-100"
+                    :class="
+                        index === activeIndex
+                            ? 'bg-sand-100 dark:bg-sand-800'
+                            : ''
+                    "
                     @mouseenter="activeIndex = index"
                     @click="selectTag(tag.id)"
                 >
@@ -227,20 +260,34 @@ async function createTag(): Promise<void> {
 
                 <li
                     v-if="canCreate"
-                    class="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-teal"
-                    :class="filteredTags.length === activeIndex ? 'bg-sand-100 dark:bg-sand-800' : ''"
+                    class="flex cursor-pointer items-center gap-2 px-4 py-2 text-teal"
+                    :class="
+                        filteredTags.length === activeIndex
+                            ? 'bg-sand-100 dark:bg-sand-800'
+                            : ''
+                    "
                     @mouseenter="activeIndex = filteredTags.length"
                     @click="createTag"
                 >
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-                        <path d="M10 3.75a.75.75 0 0 1 .75.75v4.75h4.75a.75.75 0 0 1 0 1.5h-4.75v4.75a.75.75 0 0 1-1.5 0V10.75H4.5a.75.75 0 0 1 0-1.5h4.75V4.5a.75.75 0 0 1 .75-.75Z" />
+                    <svg
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        class="h-4 w-4"
+                    >
+                        <path
+                            d="M10 3.75a.75.75 0 0 1 .75.75v4.75h4.75a.75.75 0 0 1 0 1.5h-4.75v4.75a.75.75 0 0 1-1.5 0V10.75H4.5a.75.75 0 0 1 0-1.5h4.75V4.5a.75.75 0 0 1 .75-.75Z"
+                        />
                     </svg>
-                    {{ isCreating ? t('Adding...') : t('Create ":name"', { name: trimmedQuery }) }}
+                    {{
+                        isCreating
+                            ? t('Adding...')
+                            : t('Create ":name"', { name: trimmedQuery })
+                    }}
                 </li>
             </ul>
         </div>
 
-        <p v-if="createError" class="mt-2 text-xs text-blush-500">{{ createError }}</p>
-        <p v-if="error" class="mt-2 text-xs text-blush-500">{{ error }}</p>
+        <p v-if="createError" class="mt-2 text-blush-500">{{ createError }}</p>
+        <p v-if="error" class="mt-2 text-blush-500">{{ error }}</p>
     </div>
 </template>

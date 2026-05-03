@@ -21,7 +21,9 @@ export const usePersonsStore = defineStore('spa-persons', {
         loading: null as Promise<Person[]> | null,
     }),
     actions: {
-        async ensureLoaded(maxAgeMs: number = DEFAULT_TTL_MS): Promise<Person[]> {
+        async ensureLoaded(
+            maxAgeMs: number = DEFAULT_TTL_MS,
+        ): Promise<Person[]> {
             if (this.items && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.items;
             }
@@ -31,7 +33,9 @@ export const usePersonsStore = defineStore('spa-persons', {
             if (this.loading) return this.loading;
             this.loading = (async () => {
                 try {
-                    const resp = await externalApi.get<{ data: Person[] }>('/persons');
+                    const resp = await externalApi.get<{ data: Person[] }>(
+                        '/persons',
+                    );
                     this.items = resp.data;
                     this.loadedAt = Date.now();
                     return this.items;
@@ -49,7 +53,9 @@ export const usePersonsStore = defineStore('spa-persons', {
         },
         update(id: number, patch: Partial<Person>): void {
             if (!this.items) return;
-            this.items = this.items.map((p) => (p.id === id ? { ...p, ...patch } : p));
+            this.items = this.items.map((p) =>
+                p.id === id ? { ...p, ...patch } : p,
+            );
         },
         remove(id: number): void {
             if (!this.items) return;

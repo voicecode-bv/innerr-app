@@ -12,7 +12,10 @@ const variantClasses: Record<string, string> = {
 
 <template>
     <Teleport to="body">
-        <div class="pointer-events-none fixed inset-x-0 z-[10000] flex flex-col items-center gap-2 px-4" style="top: calc(env(safe-area-inset-top) + 1rem)">
+        <div
+            class="pointer-events-none fixed inset-x-0 z-[10000] flex flex-col items-center gap-2 px-4"
+            style="top: calc(env(safe-area-inset-top) + 1rem)"
+        >
             <TransitionGroup
                 enter-active-class="transition duration-200 ease-out"
                 enter-from-class="-translate-y-2 opacity-0"
@@ -27,7 +30,7 @@ const variantClasses: Record<string, string> = {
                     v-for="toast in toasts.toasts"
                     :key="toast.id"
                     role="status"
-                    class="pointer-events-auto flex items-start gap-3 rounded-lg px-4 py-3 text-sm shadow-md"
+                    class="pointer-events-auto flex items-start gap-3 rounded-lg px-4 py-3 shadow-md"
                     :class="variantClasses[toast.variant]"
                 >
                     <span class="flex-1">{{ toast.message }}</span>
@@ -37,8 +40,19 @@ const variantClasses: Record<string, string> = {
                         :aria-label="'Dismiss'"
                         @click="toasts.dismiss(toast.id)"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="size-4"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6 18 18 6M6 6l12 12"
+                            />
                         </svg>
                     </button>
                 </div>

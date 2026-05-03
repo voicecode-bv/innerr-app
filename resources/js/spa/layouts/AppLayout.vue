@@ -2,12 +2,15 @@
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { computed, nextTick, onMounted, ref, useSlots } from 'vue';
 
-const props = withDefaults(defineProps<{
-    showHeader?: boolean;
-    title?: string;
-}>(), {
-    showHeader: true,
-});
+const props = withDefaults(
+    defineProps<{
+        showHeader?: boolean;
+        title?: string;
+    }>(),
+    {
+        showHeader: true,
+    },
+);
 
 const { t } = useTranslations();
 const slots = useSlots();
@@ -53,14 +56,18 @@ defineExpose({ mainRef });
     <div class="flex h-dvh flex-col">
         <header
             v-if="props.showHeader"
-            class="pt-[var(--inset-top,0)] left-[var(--inset-left,0)] right-[var(--inset-right,0)] fixed z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 dark:border-sand-800 dark:bg-sand-900"
+            class="fixed right-[var(--inset-right,0)] left-[var(--inset-left,0)] z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 pt-[var(--inset-top,0)] dark:border-sand-800 dark:bg-sand-900"
         >
             <div class="flex w-16 items-center">
                 <slot name="header-left">
                     <span v-if="!hasHeaderLeft" />
                 </slot>
             </div>
-            <h1 class="font-display text-lg font-semibold tracking-tight text-sand-800 dark:text-sand-100">{{ title ?? t('Innerr') }}</h1>
+            <h1
+                class="font-display text-lg font-semibold tracking-tight text-sand-800 dark:text-sand-100"
+            >
+                {{ title ?? t('Innerr') }}
+            </h1>
             <div class="flex w-16 items-center justify-end">
                 <slot name="header-right" />
             </div>
@@ -70,8 +77,8 @@ defineExpose({ mainRef });
 
         <main
             ref="mainRef"
-            class="pt-[var(--inset-top)] flex h-dvh flex-col flex-1 overflow-y-auto"
-            style="transform: translate3d(0, 0, 0); will-change: transform;"
+            class="flex h-dvh flex-1 flex-col overflow-y-auto pt-[var(--inset-top)]"
+            style="transform: translate3d(0, 0, 0); will-change: transform"
         >
             <slot />
         </main>

@@ -16,7 +16,9 @@ export interface LikesPage {
 }
 
 function getCookie(name: string): string | null {
-    const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+    const match = document.cookie.match(
+        new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'),
+    );
     return match ? decodeURIComponent(match[3]) : null;
 }
 
@@ -37,12 +39,19 @@ async function sendLike(url: string, method: 'POST' | 'DELETE'): Promise<void> {
     }
 }
 
-export const likePost = (postId: number) => sendLike(`/posts/${postId}/like`, 'POST');
-export const unlikePost = (postId: number) => sendLike(`/posts/${postId}/like`, 'DELETE');
-export const likeComment = (commentId: number) => sendLike(`/comments/${commentId}/like`, 'POST');
-export const unlikeComment = (commentId: number) => sendLike(`/comments/${commentId}/like`, 'DELETE');
+export const likePost = (postId: number) =>
+    sendLike(`/posts/${postId}/like`, 'POST');
+export const unlikePost = (postId: number) =>
+    sendLike(`/posts/${postId}/like`, 'DELETE');
+export const likeComment = (commentId: number) =>
+    sendLike(`/comments/${commentId}/like`, 'POST');
+export const unlikeComment = (commentId: number) =>
+    sendLike(`/comments/${commentId}/like`, 'DELETE');
 
-export async function fetchPostLikes(postId: number, page = 1): Promise<LikesPage> {
+export async function fetchPostLikes(
+    postId: number,
+    page = 1,
+): Promise<LikesPage> {
     const response = await fetch(`/posts/${postId}/likes?page=${page}`, {
         credentials: 'same-origin',
         headers: {

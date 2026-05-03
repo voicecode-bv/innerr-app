@@ -7,7 +7,11 @@ const isMobile = ref(false);
 const isReady = ref(false);
 let detectionPromise: Promise<void> | null = null;
 
-function detectFromUserAgent(): { ios: boolean; android: boolean; mobile: boolean } {
+function detectFromUserAgent(): {
+    ios: boolean;
+    android: boolean;
+    mobile: boolean;
+} {
     if (typeof navigator === 'undefined') {
         return { ios: false, android: false, mobile: false };
     }
@@ -45,5 +49,11 @@ export function usePlatform() {
     if (!detectionPromise) {
         detectionPromise = detect();
     }
-    return { isIos, isAndroid, isMobile, isReady, ensureDetected: () => detectionPromise! };
+    return {
+        isIos,
+        isAndroid,
+        isMobile,
+        isReady,
+        ensureDetected: () => detectionPromise!,
+    };
 }

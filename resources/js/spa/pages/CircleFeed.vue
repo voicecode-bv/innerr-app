@@ -7,7 +7,10 @@ import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { useInfiniteScroll, type PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
+import {
+    useInfiniteScroll,
+    type PaginatedResponse,
+} from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { externalApi } from '@/spa/http/externalApi';
@@ -34,7 +37,9 @@ const circle = ref<Circle | null>(null);
 
 async function loadCircle(): Promise<void> {
     try {
-        const data = await externalApi.get<{ data: Circle }>(`/circles/${circleId.value}`);
+        const data = await externalApi.get<{ data: Circle }>(
+            `/circles/${circleId.value}`,
+        );
         circle.value = data.data;
     } catch {
         router.push({ name: 'spa.home' });
@@ -43,8 +48,12 @@ async function loadCircle(): Promise<void> {
 
 const cached = feedCache.get<PostData>(feedKey.value);
 
-async function fetchCircleFeed(page: number): Promise<PaginatedResponse<PostData>> {
-    const response = await externalApi.get<PaginatedResponse<PostData>>(`/circles/${circleId.value}/feed?page=${page}`);
+async function fetchCircleFeed(
+    page: number,
+): Promise<PaginatedResponse<PostData>> {
+    const response = await externalApi.get<PaginatedResponse<PostData>>(
+        `/circles/${circleId.value}/feed?page=${page}`,
+    );
     if (page === 1) {
         feedCache.set(feedKey.value, response.data, response.meta.last_page);
     }
@@ -120,9 +129,23 @@ function goBack(): void {
 <template>
     <AppLayout ref="layout" :title="circle?.name ?? t('Circle')">
         <template #header-left>
-            <button class="flex items-center text-teal dark:text-sand-300" @click="goBack">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            <button
+                class="flex items-center text-teal dark:text-sand-300"
+                @click="goBack"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
                 </svg>
             </button>
         </template>
@@ -134,22 +157,42 @@ function goBack(): void {
                 class="flex items-center text-sand-700 dark:text-sand-300"
                 :aria-label="t('Open map')"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m0-8.25L3.32 4.507a.75.75 0 0 0-1.07.68v11.124c0 .285.165.544.421.666L9 19.5m0-12.75 6 3m-6 9 6-3m0 0V15m0-8.25 5.68-2.243a.75.75 0 0 1 1.07.68v11.124a.75.75 0 0 1-.421.666L15 19.5M15 6.75V15" />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 6.75V15m0-8.25L3.32 4.507a.75.75 0 0 0-1.07.68v11.124c0 .285.165.544.421.666L9 19.5m0-12.75 6 3m-6 9 6-3m0 0V15m0-8.25 5.68-2.243a.75.75 0 0 1 1.07.68v11.124a.75.75 0 0 1-.421.666L15 19.5M15 6.75V15"
+                    />
                 </svg>
             </RouterLink>
         </template>
 
         <div class="mt-10 pb-24">
-            <PullToRefreshIndicator :pull-distance="pullDistance" :is-refreshing="isRefreshing" />
+            <PullToRefreshIndicator
+                :pull-distance="pullDistance"
+                :is-refreshing="isRefreshing"
+            />
 
             <template v-if="feed.items.length === 0 && feed.loading">
                 <div v-for="n in 3" :key="n" class="animate-pulse">
                     <div class="flex items-center gap-3 px-4 py-3">
-                        <div class="size-10 rounded-full bg-sand-200 dark:bg-sand-700" />
-                        <div class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700" />
+                        <div
+                            class="size-10 rounded-full bg-sand-200 dark:bg-sand-700"
+                        />
+                        <div
+                            class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700"
+                        />
                     </div>
-                    <div class="aspect-square w-full bg-sand-200 dark:bg-sand-700" />
+                    <div
+                        class="aspect-square w-full bg-sand-200 dark:bg-sand-700"
+                    />
                 </div>
             </template>
 
@@ -161,21 +204,51 @@ function goBack(): void {
                 @open-likes="openLikesForPost"
             />
 
-            <div v-if="feed.loading && feed.items.length > 0" class="flex items-center justify-center gap-2 py-6 text-sm text-sand-500 dark:text-sand-400">
+            <div
+                v-if="feed.loading && feed.items.length > 0"
+                class="flex items-center justify-center gap-2 py-6 text-sand-500 dark:text-sand-400"
+            >
                 {{ t('Loading more...') }}
             </div>
 
             <div ref="sentinelRef" class="h-1" />
 
-            <div v-if="!feed.loading && feed.items.length === 0" class="flex flex-col items-center justify-center px-8 py-20 text-center">
-                <div aria-hidden="true" class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+            <div
+                v-if="!feed.loading && feed.items.length === 0"
+                class="flex flex-col items-center justify-center px-8 py-20 text-center"
+            >
+                <div
+                    aria-hidden="true"
+                    class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="size-8"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"
+                        />
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"
+                        />
                     </svg>
                 </div>
-                <h3 class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200">{{ t('No moments yet') }}</h3>
-                <p class="mt-2 text-sm text-sand-600 dark:text-sand-400">{{ t('Be the first to share something in this circle.') }}</p>
+                <h3
+                    class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200"
+                >
+                    {{ t('No moments yet') }}
+                </h3>
+                <p class="mt-2 text-sand-600 dark:text-sand-400">
+                    {{ t('Be the first to share something in this circle.') }}
+                </p>
             </div>
         </div>
 

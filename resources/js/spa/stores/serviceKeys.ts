@@ -67,7 +67,8 @@ export const useServiceKeysStore = defineStore('spa-service-keys', {
             }
             this.loading = true;
             try {
-                const data = await externalApi.get<ServiceKeys>('/service-keys');
+                const data =
+                    await externalApi.get<ServiceKeys>('/service-keys');
                 this.keys = data;
                 writeCache({ keys: data, fetched_at: Date.now() });
                 return data;

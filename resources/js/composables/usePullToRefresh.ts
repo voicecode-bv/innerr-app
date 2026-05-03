@@ -53,7 +53,10 @@ export function usePullToRefresh({
 
             // Require a clear vertical-down gesture before activating, so
             // ordinary scroll / horizontal swipes are not hijacked.
-            if (diffY <= ACTIVATION_THRESHOLD || Math.abs(diffY) <= Math.abs(diffX)) {
+            if (
+                diffY <= ACTIVATION_THRESHOLD ||
+                Math.abs(diffY) <= Math.abs(diffX)
+            ) {
                 return;
             }
 
@@ -125,10 +128,14 @@ export function usePullToRefresh({
         boundTarget = null;
     }
 
-    watch(containerRef, (el, oldEl) => {
-        if (oldEl) unbind();
-        if (el) bind(el);
-    }, { immediate: true });
+    watch(
+        containerRef,
+        (el, oldEl) => {
+            if (oldEl) unbind();
+            if (el) bind(el);
+        },
+        { immediate: true },
+    );
 
     onUnmounted(unbind);
 

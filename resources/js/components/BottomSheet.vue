@@ -11,7 +11,9 @@ const emit = defineEmits<{
 
 const sheetRef = useTemplateRef<HTMLDivElement>('sheetRef');
 
-const isIos = typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent);
+const isIos =
+    typeof navigator !== 'undefined' &&
+    /iP(hone|ad|od)/.test(navigator.userAgent);
 
 let focusOutTimer: number | null = null;
 let savedBodyOverflow = '';
@@ -49,10 +51,10 @@ function unlockBodyScroll() {
 // iOS WKWebView blijft scroll-gestures door-routeren naar de achterliggende
 // pagina ondanks `overflow:hidden` en `overscroll-behavior:contain`. We
 // onderscheppen daarom alle touchmoves in capture-phase:
-//  - Buiten de sheet → altijd blokkeren.
-//  - Binnen de sheet → alleen blokkeren wanneer de gebruiker probeert verder
-//    te scrollen dan de inhoud toelaat (iNoBounce-patroon), zodat de bounce
-//    niet doorlekt naar de feed.
+// - Buiten de sheet → altijd blokkeren.
+// - Binnen de sheet → alleen blokkeren wanneer de gebruiker probeert verder
+// te scrollen dan de inhoud toelaat (iNoBounce-patroon), zodat de bounce
+// niet doorlekt naar de feed.
 let touchStartY = 0;
 
 function onCaptureTouchStart(event: TouchEvent): void {
@@ -65,8 +67,9 @@ function findScrollableAncestor(start: HTMLElement | null): HTMLElement | null {
     let node: HTMLElement | null = start;
     while (node && sheetRef.value && sheetRef.value.contains(node)) {
         const style = window.getComputedStyle(node);
-        const canScrollY = (style.overflowY === 'auto' || style.overflowY === 'scroll')
-            && node.scrollHeight > node.clientHeight;
+        const canScrollY =
+            (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+            node.scrollHeight > node.clientHeight;
         if (canScrollY) {
             return node;
         }
@@ -95,7 +98,8 @@ function blockBackgroundTouchMove(event: TouchEvent): void {
 
     const deltaY = event.touches[0].clientY - touchStartY;
     const atTop = scrollEl.scrollTop <= 0;
-    const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
+    const atBottom =
+        scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
 
     if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
         event.preventDefault();
@@ -210,7 +214,9 @@ let savedMainTouchAction = '';
 watch(
     () => props.open,
     (isOpen) => {
-        const scrollContainer = document.querySelector('main') as HTMLElement | null;
+        const scrollContainer = document.querySelector(
+            'main',
+        ) as HTMLElement | null;
 
         if (scrollContainer) {
             if (isOpen) {
@@ -231,14 +237,26 @@ watch(
         if (isOpen) {
             lockBodyScroll();
             document.addEventListener('keydown', handleKeydown);
-            document.addEventListener('touchstart', onCaptureTouchStart, { passive: true, capture: true });
-            document.addEventListener('touchmove', blockBackgroundTouchMove, { passive: false, capture: true });
+            document.addEventListener('touchstart', onCaptureTouchStart, {
+                passive: true,
+                capture: true,
+            });
+            document.addEventListener('touchmove', blockBackgroundTouchMove, {
+                passive: false,
+                capture: true,
+            });
             updateKeyboardOffset();
         } else {
             unlockBodyScroll();
             document.removeEventListener('keydown', handleKeydown);
-            document.removeEventListener('touchstart', onCaptureTouchStart, { capture: true });
-            document.removeEventListener('touchmove', blockBackgroundTouchMove, { capture: true });
+            document.removeEventListener('touchstart', onCaptureTouchStart, {
+                capture: true,
+            });
+            document.removeEventListener(
+                'touchmove',
+                blockBackgroundTouchMove,
+                { capture: true },
+            );
             setKeyboardInset(0);
         }
     },
@@ -253,8 +271,12 @@ onMounted(() => {
 
 onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
-    document.removeEventListener('touchstart', onCaptureTouchStart, { capture: true });
-    document.removeEventListener('touchmove', blockBackgroundTouchMove, { capture: true });
+    document.removeEventListener('touchstart', onCaptureTouchStart, {
+        capture: true,
+    });
+    document.removeEventListener('touchmove', blockBackgroundTouchMove, {
+        capture: true,
+    });
     window.visualViewport?.removeEventListener('resize', updateKeyboardOffset);
     window.visualViewport?.removeEventListener('scroll', updateKeyboardOffset);
 
@@ -264,7 +286,9 @@ onUnmounted(() => {
     }
 
     setKeyboardInset(0);
-    const scrollContainer = document.querySelector('main') as HTMLElement | null;
+    const scrollContainer = document.querySelector(
+        'main',
+    ) as HTMLElement | null;
 
     if (scrollContainer) {
         scrollContainer.style.overflow = savedMainOverflow;
@@ -282,7 +306,9 @@ onUnmounted(() => {
         <div
             :class="[
                 'fixed inset-0 z-9999 touch-none bg-black/50 transition-opacity duration-300',
-                open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
+                open
+                    ? 'pointer-events-auto opacity-100'
+                    : 'pointer-events-none opacity-0',
             ]"
             @click="close"
             @touchmove.prevent
@@ -306,15 +332,20 @@ onUnmounted(() => {
             @focusout="onFocusOut"
         >
             <div
-                class="flex cursor-grab touch-none justify-center pb-1 pt-3 active:cursor-grabbing"
+                class="flex cursor-grab touch-none justify-center pt-3 pb-1 active:cursor-grabbing"
                 @pointerdown="onHandlePointerDown"
                 @pointermove="onHandlePointerMove"
                 @pointerup="endDrag"
                 @pointercancel="endDrag"
             >
-                <div class="h-1 w-10 rounded-full bg-sand-200 dark:bg-sand-700" />
+                <div
+                    class="h-1 w-10 rounded-full bg-sand-200 dark:bg-sand-700"
+                />
             </div>
-            <div v-if="$slots.header" class="flex-shrink-0 border-b border-sand-100 px-4 py-3 dark:border-sand-800">
+            <div
+                v-if="$slots.header"
+                class="flex-shrink-0 border-b border-sand-100 px-4 py-3 dark:border-sand-800"
+            >
                 <slot name="header" />
             </div>
             <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -324,7 +355,9 @@ onUnmounted(() => {
                 v-if="$slots.footer"
                 :class="[
                     'flex-shrink-0 border-t border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900',
-                    open && !keyboardOpen ? 'pb-24' : 'pb-[env(safe-area-inset-bottom)]',
+                    open && !keyboardOpen
+                        ? 'pb-24'
+                        : 'pb-[env(safe-area-inset-bottom)]',
                 ]"
             >
                 <slot name="footer" />

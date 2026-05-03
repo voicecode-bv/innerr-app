@@ -17,7 +17,9 @@ function readStorage(): Record<string, FeedCacheEntry<FeedItem>> {
     if (typeof window === 'undefined') return {};
     try {
         const raw = window.localStorage?.getItem(STORAGE_KEY);
-        return raw ? (JSON.parse(raw) as Record<string, FeedCacheEntry<FeedItem>>) : {};
+        return raw
+            ? (JSON.parse(raw) as Record<string, FeedCacheEntry<FeedItem>>)
+            : {};
     } catch {
         return {};
     }
@@ -47,7 +49,11 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
             const entry = this.entries[key];
             return !!entry && Date.now() - entry.cachedAt < ttlMs;
         },
-        set<T extends FeedItem>(key: string, items: T[], lastPage: number): void {
+        set<T extends FeedItem>(
+            key: string,
+            items: T[],
+            lastPage: number,
+        ): void {
             this.entries[key] = {
                 items: items as FeedItem[],
                 lastPage,
@@ -57,7 +63,9 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
         },
         prepend<T extends FeedItem>(key: string, item: T): void {
             const existing = this.entries[key];
-            const items = existing ? [item as FeedItem, ...existing.items] : [item as FeedItem];
+            const items = existing
+                ? [item as FeedItem, ...existing.items]
+                : [item as FeedItem];
             this.entries[key] = {
                 items,
                 lastPage: existing?.lastPage ?? 1,

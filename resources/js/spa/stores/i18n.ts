@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 
-const loaders: Record<string, () => Promise<{ default: Record<string, string> }>> = {
+const loaders: Record<
+    string,
+    () => Promise<{ default: Record<string, string> }>
+> = {
     nl: () => import('../../../../lang/nl.json'),
     en: () => import('../../../../lang/en.json'),
 };
@@ -43,9 +46,14 @@ export const useI18nStore = defineStore('spa-i18n', {
                 void this.load(key);
             }
         },
-        t(key: string, replacements: Record<string, string | number> = {}): string {
+        t(
+            key: string,
+            replacements: Record<string, string | number> = {},
+        ): string {
             let value = this.translations[key] ?? key;
-            for (const [placeholder, replacement] of Object.entries(replacements)) {
+            for (const [placeholder, replacement] of Object.entries(
+                replacements,
+            )) {
                 value = value.replace(`:${placeholder}`, String(replacement));
             }
             return value;

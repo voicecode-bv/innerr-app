@@ -26,7 +26,9 @@ export const useTagsStore = defineStore('spa-tags', {
             if (this.loading) return this.loading;
             this.loading = (async () => {
                 try {
-                    const resp = await externalApi.get<{ data: Tag[] }>('/tags');
+                    const resp = await externalApi.get<{ data: Tag[] }>(
+                        '/tags',
+                    );
                     this.items = resp.data;
                     this.loadedAt = Date.now();
                     return this.items;
@@ -44,7 +46,9 @@ export const useTagsStore = defineStore('spa-tags', {
         },
         update(id: number, patch: Partial<Tag>): void {
             if (!this.items) return;
-            this.items = this.items.map((t) => (t.id === id ? { ...t, ...patch } : t));
+            this.items = this.items.map((t) =>
+                t.id === id ? { ...t, ...patch } : t,
+            );
         },
         remove(id: number): void {
             if (!this.items) return;

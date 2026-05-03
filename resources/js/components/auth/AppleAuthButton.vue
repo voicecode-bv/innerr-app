@@ -12,7 +12,9 @@ const props = defineProps<{
 
 const page = usePage();
 const locale = computed(() => page.props.locale as string);
-const src = computed(() => (locale.value === 'nl' ? appleButtonNl : appleButtonEn));
+const src = computed(() =>
+    locale.value === 'nl' ? appleButtonNl : appleButtonEn,
+);
 
 async function go() {
     await Browser.auth(props.url);
@@ -20,5 +22,10 @@ async function go() {
 </script>
 
 <template>
-    <img :src="src" :alt="label" class="block h-auto w-full cursor-pointer" @click="go" />
+    <img
+        :src="src"
+        :alt="label"
+        class="block h-auto w-full cursor-pointer"
+        @click="go"
+    />
 </template>

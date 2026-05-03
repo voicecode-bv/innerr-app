@@ -39,7 +39,9 @@ function goBack(): void {
 
 async function loadProfile(): Promise<void> {
     try {
-        const response = await externalApi.get<{ data: EditableProfile }>('/profile');
+        const response = await externalApi.get<{ data: EditableProfile }>(
+            '/profile',
+        );
         avatar.value = response.data.avatar;
         bio.value = response.data.bio ?? '';
         birthdate.value = response.data.birthdate ?? '';
@@ -57,16 +59,23 @@ async function pickAvatar(): Promise<void> {
     await Camera.pickImages().all();
 }
 
-async function handleMediaSelected(payload: { success: boolean; files: { path: string; mimeType: string }[]; cancelled: boolean }): Promise<void> {
+async function handleMediaSelected(payload: {
+    success: boolean;
+    files: { path: string; mimeType: string }[];
+    cancelled: boolean;
+}): Promise<void> {
     if (!payload.success || payload.cancelled || !payload.files.length) {
         return;
     }
 
     avatarUploading.value = true;
     try {
-        const response = await api.post<{ avatar: string | null }>('/api/spa/settings/profile/avatar', {
-            avatar_path: payload.files[0].path,
-        });
+        const response = await api.post<{ avatar: string | null }>(
+            '/api/spa/settings/profile/avatar',
+            {
+                avatar_path: payload.files[0].path,
+            },
+        );
         avatar.value = response.avatar;
         if (auth.user) {
             auth.user.avatar = response.avatar;
@@ -107,7 +116,10 @@ async function save(): Promise<void> {
     } catch (error) {
         if (error instanceof ApiError && error.status === 422) {
             errors.value = Object.fromEntries(
-                Object.entries(error.errors).map(([key, value]) => [key, value[0] ?? '']),
+                Object.entries(error.errors).map(([key, value]) => [
+                    key,
+                    value[0] ?? '',
+                ]),
             );
         }
     } finally {
@@ -119,16 +131,32 @@ async function save(): Promise<void> {
 <template>
     <AppLayout :title="t('Edit profile')">
         <template #header-left>
-            <button class="flex items-center text-teal dark:text-sand-300" @click="goBack">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            <button
+                class="flex items-center text-teal dark:text-sand-300"
+                @click="goBack"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
                 </svg>
             </button>
         </template>
 
-        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]">
+        <div
+            class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
+        >
             <div class="relative space-y-4 px-4 pt-4 pb-24">
-                <SurfaceCard>
+                <SurfaceCard class="reveal-item">
                     <div class="flex flex-col items-center gap-3">
                         <button
                             type="button"
@@ -149,46 +177,92 @@ async function save(): Promise<void> {
                                 class="flex size-24 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
                                 :class="{ 'opacity-60': avatarUploading }"
                             >
-                                <span aria-hidden="true" class="inline-block size-12 bg-current" :style="{ maskImage: `url(${userIcon})`, WebkitMaskImage: `url(${userIcon})`, maskSize: 'contain', WebkitMaskSize: 'contain', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat', maskPosition: 'center', WebkitMaskPosition: 'center' }"></span>
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-12 bg-current"
+                                    :style="{
+                                        maskImage: `url(${userIcon})`,
+                                        WebkitMaskImage: `url(${userIcon})`,
+                                        maskSize: 'contain',
+                                        WebkitMaskSize: 'contain',
+                                        maskRepeat: 'no-repeat',
+                                        WebkitMaskRepeat: 'no-repeat',
+                                        maskPosition: 'center',
+                                        WebkitMaskPosition: 'center',
+                                    }"
+                                ></span>
                             </span>
-                            <span class="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white dark:ring-sand-900">
-                                <span aria-hidden="true" class="inline-block size-4 bg-white" :style="{ maskImage: `url(${pencilIcon})`, WebkitMaskImage: `url(${pencilIcon})`, maskSize: 'contain', WebkitMaskSize: 'contain', maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat', maskPosition: 'center', WebkitMaskPosition: 'center' }"></span>
+                            <span
+                                class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white dark:ring-sand-900"
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-4 bg-white"
+                                    :style="{
+                                        maskImage: `url(${pencilIcon})`,
+                                        WebkitMaskImage: `url(${pencilIcon})`,
+                                        maskSize: 'contain',
+                                        WebkitMaskSize: 'contain',
+                                        maskRepeat: 'no-repeat',
+                                        WebkitMaskRepeat: 'no-repeat',
+                                        maskPosition: 'center',
+                                        WebkitMaskPosition: 'center',
+                                    }"
+                                ></span>
                             </span>
                         </button>
-                        <p class="text-xs text-sand-500 dark:text-sand-400">{{ t('Tap to change your photo') }}</p>
+                        <p class="text-sand-500 dark:text-sand-400">
+                            {{ t('Tap to change your photo') }}
+                        </p>
                     </div>
                 </SurfaceCard>
 
-                <SurfaceCard>
+                <SurfaceCard class="reveal-item">
                     <form class="space-y-5" @submit.prevent="save">
                         <div>
-                            <label for="bio" class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
+                            <label
+                                for="bio"
+                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                            >
                                 {{ t('Bio') }}
                             </label>
                             <textarea
                                 id="bio"
                                 v-model="bio"
-                                class="field-area mt-2"
+                                class="mt-2 field-area"
                                 rows="4"
                                 maxlength="1000"
-                                :placeholder="t('Write something about yourself...')"
+                                :placeholder="
+                                    t('Write something about yourself...')
+                                "
                             />
-                            <p v-if="errors.bio" class="mt-1 text-xs text-accent">{{ errors.bio }}</p>
+                            <p v-if="errors.bio" class="mt-1 text-accent">
+                                {{ errors.bio }}
+                            </p>
                         </div>
 
                         <div>
-                            <label for="birthdate" class="text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
+                            <label
+                                for="birthdate"
+                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                            >
                                 {{ t('Birthdate') }}
                             </label>
                             <input
                                 id="birthdate"
                                 v-model="birthdate"
                                 type="date"
-                                class="field mt-2 block w-full min-w-0 max-w-full appearance-none box-border"
+                                class="mt-2 box-border block field w-full max-w-full min-w-0 appearance-none"
                             />
-                            <p v-if="errors.birthdate" class="mt-1 text-xs text-accent">{{ errors.birthdate }}</p>
-                            <p class="mt-2 text-xs text-sand-500 dark:text-sand-400">
-                                {{ t('Your birthdate is used to show your age on tagged photos.') }}
+                            <p v-if="errors.birthdate" class="mt-1 text-accent">
+                                {{ errors.birthdate }}
+                            </p>
+                            <p class="mt-2 text-sand-500 dark:text-sand-400">
+                                {{
+                                    t(
+                                        'Your birthdate is used to show your age on tagged photos.',
+                                    )
+                                }}
                             </p>
                         </div>
 
@@ -200,13 +274,20 @@ async function save(): Promise<void> {
                             leave-from-class="opacity-100"
                             leave-to-class="opacity-0"
                         >
-                            <p v-if="saved" class="rounded-lg bg-sage-100/70 px-4 py-2 text-sm font-medium text-sage-700 dark:bg-sage-800/40 dark:text-sage-200">
+                            <p
+                                v-if="saved"
+                                class="rounded-lg bg-sage-100/70 px-4 py-2 text-sage-700 dark:bg-sage-800/40 dark:text-sage-200"
+                            >
                                 {{ t('Profile saved.') }}
                             </p>
                         </Transition>
 
                         <div class="flex justify-end">
-                            <Button type="submit" size="md" :disabled="processing || isLoading">
+                            <Button
+                                type="submit"
+                                size="md"
+                                :disabled="processing || isLoading"
+                            >
                                 {{ processing ? t('Saving...') : t('Save') }}
                             </Button>
                         </div>

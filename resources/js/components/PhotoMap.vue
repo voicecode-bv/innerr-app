@@ -156,7 +156,11 @@ function fitToFeatures(features: Feature<Point, PhotoProperties>[]): void {
         bounds.extend([lng, lat]);
     });
 
-    map.fitBounds(bounds as LngLatBoundsLike, { padding: 64, maxZoom: 12, duration: 0 });
+    map.fitBounds(bounds as LngLatBoundsLike, {
+        padding: 64,
+        maxZoom: 12,
+        duration: 0,
+    });
 }
 
 async function performInitialLoad(): Promise<void> {
@@ -181,7 +185,9 @@ function handleClusterClick(event: MapMouseEvent): void {
         return;
     }
 
-    const features = map.queryRenderedFeatures(event.point, { layers: [CLUSTER_LAYER] });
+    const features = map.queryRenderedFeatures(event.point, {
+        layers: [CLUSTER_LAYER],
+    });
     const feature = features[0];
 
     if (!feature) {
@@ -191,7 +197,11 @@ function handleClusterClick(event: MapMouseEvent): void {
     const clusterId = feature.properties?.cluster_id as number | undefined;
     const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
 
-    if (clusterId === undefined || !source || feature.geometry.type !== 'Point') {
+    if (
+        clusterId === undefined ||
+        !source ||
+        feature.geometry.type !== 'Point'
+    ) {
         return;
     }
 
@@ -206,7 +216,8 @@ function handleClusterClick(event: MapMouseEvent): void {
     });
 }
 
-const VIDEO_BADGE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653Z" /></svg>';
+const VIDEO_BADGE_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653Z" /></svg>';
 
 function createPhotoMarkerElement(properties: PhotoProperties): HTMLElement {
     const button = document.createElement('button');
@@ -257,13 +268,22 @@ function syncPhotoMarkers(): void {
     const seen = new Set<string>();
 
     for (const feature of features) {
-        const properties = feature.properties as (PhotoProperties & { cluster?: boolean; cluster_id?: number; point_count?: number }) | null;
+        const properties = feature.properties as
+            | (PhotoProperties & {
+                  cluster?: boolean;
+                  cluster_id?: number;
+                  point_count?: number;
+              })
+            | null;
 
         if (!properties || feature.geometry.type !== 'Point') {
             continue;
         }
 
-        const coords = (feature.geometry as Point).coordinates as [number, number];
+        const coords = (feature.geometry as Point).coordinates as [
+            number,
+            number,
+        ];
 
         if (properties.cluster && properties.cluster_id != null && source) {
             const id = `cluster-${properties.cluster_id}`;
@@ -274,7 +294,9 @@ function syncPhotoMarkers(): void {
             }
 
             const clusterId = properties.cluster_id;
-            const element = createClusterMarkerElement(properties.point_count ?? 0);
+            const element = createClusterMarkerElement(
+                properties.point_count ?? 0,
+            );
 
             element.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -288,7 +310,9 @@ function syncPhotoMarkers(): void {
             });
 
             if (mapboxgl) {
-                photoMarkers[id] = new mapboxgl.Marker({ element }).setLngLat(coords).addTo(map);
+                photoMarkers[id] = new mapboxgl.Marker({ element })
+                    .setLngLat(coords)
+                    .addTo(map);
             }
 
             source.getClusterLeaves(clusterId, 1, 0, (error, leaves) => {
@@ -296,7 +320,8 @@ function syncPhotoMarkers(): void {
                     return;
                 }
 
-                const thumb = (leaves[0].properties as PhotoProperties | null)?.thumbnail_url;
+                const thumb = (leaves[0].properties as PhotoProperties | null)
+                    ?.thumbnail_url;
 
                 if (thumb) {
                     element.style.backgroundImage = `url("${thumb}")`;
@@ -318,7 +343,9 @@ function syncPhotoMarkers(): void {
         }
 
         const element = createPhotoMarkerElement(properties);
-        photoMarkers[id] = new mapboxgl.Marker({ element }).setLngLat(coords).addTo(map);
+        photoMarkers[id] = new mapboxgl.Marker({ element })
+            .setLngLat(coords)
+            .addTo(map);
     }
 
     for (const id of Object.keys(photoMarkers)) {
@@ -371,15 +398,19 @@ function initLayers(): void {
                 'step',
                 ['get', 'point_count'],
                 '#14b8a6',
-                25, '#0f766e',
-                100, '#115e59',
+                25,
+                '#0f766e',
+                100,
+                '#115e59',
             ],
             'circle-radius': [
                 'step',
                 ['get', 'point_count'],
                 18,
-                25, 24,
-                100, 32,
+                25,
+                24,
+                100,
+                32,
             ],
             'circle-stroke-width': 3,
             'circle-stroke-color': '#ffffff',
@@ -466,15 +497,22 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="relative size-full">
-        <div v-if="!mapboxToken" class="flex h-full items-center justify-center p-8 text-center text-sm text-sand-600 dark:text-sand-300">
-            {{ t('Mapbox token is not configured. Set MAPBOX_TOKEN in your environment.') }}
+        <div
+            v-if="!mapboxToken"
+            class="flex h-full items-center justify-center p-8 text-center text-sand-600 dark:text-sand-300"
+        >
+            {{
+                t(
+                    'Mapbox token is not configured. Set MAPBOX_TOKEN in your environment.',
+                )
+            }}
         </div>
         <template v-else>
             <div ref="mapContainer" class="absolute! inset-0" />
 
             <div
                 v-if="isLoading"
-                class="pointer-events-none absolute left-1/2 top-4 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-sand-700 shadow-sm dark:bg-sand-900/90 dark:text-sand-200"
+                class="pointer-events-none absolute top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-sand-700 shadow-sm dark:bg-sand-900/90 dark:text-sand-200"
             >
                 <span class="size-2 animate-pulse rounded-full bg-teal" />
                 {{ t('Loading photos...') }}
@@ -482,14 +520,14 @@ onBeforeUnmount(() => {
 
             <div
                 v-if="isTruncated && !isLoading"
-                class="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-sand-700 shadow-sm dark:bg-sand-900/90 dark:text-sand-200"
+                class="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1.5 text-sand-700 shadow-sm dark:bg-sand-900/90 dark:text-sand-200"
             >
                 {{ t('Zoom in for more photos') }}
             </div>
 
             <div
                 v-if="hasError && !isLoading"
-                class="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-red-500/90 px-3 py-1.5 text-xs font-medium text-white shadow-sm"
+                class="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-red-500/90 px-3 py-1.5 text-white shadow-sm"
             >
                 {{ t('Could not load photos') }}
             </div>

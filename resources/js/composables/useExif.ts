@@ -35,7 +35,9 @@ function clampCoordinate(value: unknown, max: number): number | null {
     return value;
 }
 
-export async function readExif(source: string | Blob | File | ArrayBuffer): Promise<ExifData> {
+export async function readExif(
+    source: string | Blob | File | ArrayBuffer,
+): Promise<ExifData> {
     const empty: ExifData = { taken_at: null, latitude: null, longitude: null };
 
     try {
@@ -51,7 +53,8 @@ export async function readExif(source: string | Blob | File | ArrayBuffer): Prom
             return empty;
         }
 
-        const taken: Date | undefined = result.DateTimeOriginal ?? result.DateTime;
+        const taken: Date | undefined =
+            result.DateTimeOriginal ?? result.DateTime;
 
         return {
             taken_at: clampDate(taken),

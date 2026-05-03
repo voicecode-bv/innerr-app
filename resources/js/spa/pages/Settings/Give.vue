@@ -1,36 +1,79 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { Browser } from '@nativephp/mobile';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
-import Confetti from '@/components/Confetti.vue';
 import IconTile from '@/components/IconTile.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi, ApiError } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useToastsStore } from '@/spa/stores/toasts';
+import balloonIcon from '../../../../svg/doodle-icons/balloon-2.svg';
 import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
+import heartFilledIcon from '../../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
+
+interface DonationOption {
+    value: number;
+    icon: string;
+    labelKey: string;
+    descriptionKey: string;
+}
 
 interface EditableProfile {
     id: number;
     donation_percentage: number;
 }
 
-const OPTIONS: number[] = [0, 1, 2, 5, 10];
+const OPTIONS: DonationOption[] = [
+    {
+        value: 0,
+        icon: foldedHandsIcon,
+        labelKey: 'Not right now',
+        descriptionKey:
+            'It does not cost you anything extra, are you sure this is the option you want?',
+    },
+    {
+        value: 5,
+        icon: heartIcon,
+        labelKey: 'A warm heart',
+        descriptionKey:
+            '5% of my subscription goes to children in care every month.',
+    },
+    {
+        value: 10,
+        icon: balloonIcon,
+        labelKey: 'A bright smile',
+        descriptionKey:
+            '10% of my subscription brings extra joy to recovering kids.',
+    },
+];
 
-const { t } = useTranslations();
+const { t, locale } = useTranslations();
 const router = useRouter();
-const toasts = useToastsStore();
+
+const learnMoreUrl = computed(() =>
+    locale.value === 'nl'
+        ? 'https://innerr.app/nl/doneren/'
+        : 'https://innerr.app/en/donate/',
+);
+
+async function openLearnMore(): Promise<void> {
+    try {
+        await Browser.open(learnMoreUrl.value);
+    } catch {
+        if (typeof window !== 'undefined') {
+            window.open(learnMoreUrl.value, '_blank');
+        }
+    }
+}
 
 const isLoading = ref(true);
-const processing = ref(false);
-const savedPercentage = ref<number | null>(null);
+const savingValue = ref<number | null>(null);
 const selected = ref<number>(0);
-const showConfetti = ref(false);
+const errorMessage = ref<string | null>(null);
 
-const hasChanged = computed(() => savedPercentage.value !== null && selected.value !== savedPercentage.value);
-const isContributing = computed(() => savedPercentage.value !== null && savedPercentage.value > 0);
+const isContributing = computed(() => selected.value > 0);
 
 function goBack(): void {
     router.push({ name: 'spa.settings' });
@@ -38,12 +81,11 @@ function goBack(): void {
 
 async function loadProfile(): Promise<void> {
     try {
-        const response = await externalApi.get<{ data: EditableProfile }>('/profile');
-        const value = response.data.donation_percentage ?? 0;
-        savedPercentage.value = value;
-        selected.value = value;
+        const response = await externalApi.get<{ data: EditableProfile }>(
+            '/profile',
+        );
+        selected.value = response.data.donation_percentage ?? 0;
     } catch {
-        savedPercentage.value = 0;
         selected.value = 0;
     } finally {
         isLoading.value = false;
@@ -52,141 +94,259 @@ async function loadProfile(): Promise<void> {
 
 onMounted(loadProfile);
 
-function selectOption(value: number): void {
-    if (processing.value) {
-return;
-}
+async function selectOption(value: number): Promise<void> {
+    if (savingValue.value !== null || value === selected.value) {
+        return;
+    }
 
+    const previous = selected.value;
     selected.value = value;
-}
-
-async function save(): Promise<void> {
-    if (processing.value || !hasChanged.value) {
-return;
-}
-
-    processing.value = true;
-
-    const next = selected.value;
-    const previous = savedPercentage.value ?? 0;
+    savingValue.value = value;
+    errorMessage.value = null;
 
     try {
-        await externalApi.patch('/profile', { donation_percentage: next });
-        savedPercentage.value = next;
-
-        if (next > 0) {
-            toasts.success(t('Thank you! We will donate :percentage% on your behalf.', { percentage: next }));
-
-            if (previous === 0) {
-                triggerConfetti();
-            }
-        } else {
-            toasts.success(t('Your preference has been saved.'));
-        }
+        await externalApi.patch('/profile', { donation_percentage: value });
     } catch (error) {
-        const message = error instanceof ApiError && error.message
-            ? error.message
-            : t('Could not save your preference. Please try again.');
-        toasts.error(message);
+        selected.value = previous;
+        errorMessage.value =
+            error instanceof ApiError && error.message
+                ? error.message
+                : t('Could not save your preference. Please try again.');
     } finally {
-        processing.value = false;
+        savingValue.value = null;
     }
-}
-
-function triggerConfetti(): void {
-    showConfetti.value = false;
-    nextTick(() => {
-        showConfetti.value = true;
-    });
 }
 </script>
 
 <template>
     <AppLayout :title="t('Inner Gives')">
-        <Confetti :active="showConfetti" />
-
         <template #header-left>
-            <button class="flex items-center text-teal dark:text-sand-300" @click="goBack">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            <button
+                class="flex items-center text-teal dark:text-sand-300"
+                @click="goBack"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
                 </svg>
             </button>
         </template>
 
-        <div class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]">
-            <div class="relative space-y-4 px-4 pt-4 pb-24">
-                <SurfaceCard>
-                    <div class="flex flex-col items-center gap-3 text-center">
-                        <IconTile :icon="foldedHandsIcon" size="lg" tone="sage" />
-                        <h2 class="font-display text-xl font-semibold text-teal dark:text-sand-100">
+        <div
+            class="relative mt-10 min-h-full pb-[calc(theme(spacing.48)+env(safe-area-inset-bottom))]"
+        >
+            <div
+                class="relative space-y-4 px-4 pt-4 pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
+            >
+                <SurfaceCard class="reveal-item">
+                    <div class="flex flex-col items-center gap-4 text-center">
+                        <IconTile
+                            :icon="foldedHandsIcon"
+                            size="lg"
+                            tone="sage"
+                        />
+                        <h2
+                            class="font-display text-2xl font-semibold text-teal dark:text-sand-100"
+                        >
                             {{ t('Inner Gives') }}
                         </h2>
-                        <p class="text-sm text-sand-600 dark:text-sand-400">
-                            {{ t('Choose a percentage of your subscription that Innerr will donate to charity each month. You can change or pause this any time.') }}
+                        <p
+                            class="leading-relaxed text-sand-600 dark:text-sand-300"
+                        >
+                            {{
+                                t(
+                                    "Children who are sick, going through surgery, recovering. Innerr gives part of every paid subscription back to a Dutch foundation for children's care. You choose how much.",
+                                )
+                            }}
                         </p>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="md"
+                            @click="openLearnMore"
+                        >
+                            {{ t('Read more on innerr.app') }}
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="2"
+                                stroke="currentColor"
+                                class="size-4"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                />
+                            </svg>
+                        </Button>
                     </div>
                 </SurfaceCard>
 
-                <SurfaceCard v-if="isLoading">
-                    <div class="space-y-3 animate-pulse">
-                        <div v-for="n in OPTIONS.length" :key="n" class="h-14 rounded-lg bg-sand-200 dark:bg-sand-700/60" />
-                    </div>
-                </SurfaceCard>
+                <div
+                    v-if="isLoading"
+                    class="reveal-item grid gap-3 sm:grid-cols-3"
+                >
+                    <div
+                        v-for="n in OPTIONS.length"
+                        :key="n"
+                        class="h-44 animate-pulse rounded-2xl bg-sand-200 dark:bg-sand-700/60"
+                    />
+                </div>
 
-                <SurfaceCard v-else>
-                    <fieldset class="space-y-3">
-                        <legend class="mb-3 text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400">
-                            {{ t('Donation percentage') }}
-                        </legend>
+                <fieldset v-else class="reveal-item">
+                    <legend class="sr-only">
+                        {{ t('Donation percentage') }}
+                    </legend>
+                    <div class="grid gap-3 sm:grid-cols-3">
                         <button
                             v-for="option in OPTIONS"
-                            :key="option"
+                            :key="option.value"
                             type="button"
                             role="radio"
-                            :aria-checked="selected === option"
-                            class="flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-4 text-left transition active:scale-[0.99]"
-                            :class="selected === option
-                                ? 'border-teal bg-sage-100/70 text-teal dark:border-sage-300 dark:bg-sage-900/40 dark:text-sand-100'
-                                : 'border-sand-200 bg-white/60 text-sand-700 hover:border-sand-300 dark:border-sand-700/60 dark:bg-sand-800/60 dark:text-sand-200'"
-                            @click="selectOption(option)"
+                            :aria-checked="selected === option.value"
+                            class="group relative flex flex-col items-center gap-4 overflow-hidden rounded-2xl border-2 px-5 py-7 text-center transition-all duration-200 active:scale-[0.98] disabled:cursor-progress"
+                            :class="
+                                selected === option.value
+                                    ? 'border-teal bg-gradient-to-br from-sage-100 via-cream to-sand-50 shadow-md shadow-teal/10 dark:border-sage-300 dark:from-sage-900/50 dark:via-sand-800/60 dark:to-sand-900'
+                                    : 'border-sand-200/70 bg-white/60 hover:-translate-y-0.5 hover:border-sand-300 hover:shadow-sm dark:border-sand-700/50 dark:bg-sand-800/40'
+                            "
+                            :disabled="savingValue !== null"
+                            @click="selectOption(option.value)"
                         >
-                            <span class="flex items-center gap-3">
-                                <span
-                                    class="flex size-5 items-center justify-center rounded-full border-2 transition"
-                                    :class="selected === option ? 'border-teal bg-teal dark:border-sand-100 dark:bg-sand-100' : 'border-sand-300 dark:border-sand-600'"
+                            <span
+                                v-if="savingValue === option.value"
+                                class="absolute top-3 right-3 flex size-6 items-center justify-center rounded-full bg-teal text-white shadow-sm"
+                                aria-hidden="true"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    class="size-3.5 animate-spin"
                                 >
-                                    <span
-                                        v-if="selected === option"
-                                        class="size-2 rounded-full bg-white dark:bg-teal"
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="3"
+                                        stroke-linecap="round"
+                                        stroke-dasharray="40 60"
                                     />
-                                </span>
-                                <span class="font-sans text-base font-semibold">
-                                    {{ option === 0 ? t('No donation for now') : t(':percentage% of my subscription', { percentage: option }) }}
-                                </span>
+                                </svg>
                             </span>
-                        </button>
-                    </fieldset>
-                </SurfaceCard>
+                            <span
+                                v-else-if="selected === option.value"
+                                class="absolute top-3 right-3 flex size-6 items-center justify-center rounded-full bg-teal text-white shadow-sm"
+                                aria-hidden="true"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    class="size-3.5"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="m5 13 4 4L19 7"
+                                    />
+                                </svg>
+                            </span>
 
-                <SurfaceCard v-if="isContributing" tone="muted">
-                    <div class="flex items-start gap-3">
-                        <IconTile :icon="heartIcon" size="sm" tone="accent" />
+                            <IconTile
+                                :icon="option.icon"
+                                size="lg"
+                                :tone="
+                                    selected === option.value ? 'teal' : 'sage'
+                                "
+                                class="transition-transform group-hover:-rotate-3"
+                            />
+
+                            <div class="space-y-3">
+                                <p
+                                    class="font-display text-6xl leading-none font-semibold"
+                                    :class="
+                                        selected === option.value
+                                            ? 'text-teal dark:text-sand-50'
+                                            : 'text-sand-700 dark:text-sand-200'
+                                    "
+                                >
+                                    {{ option.value
+                                    }}<span class="text-4xl">%</span>
+                                </p>
+                                <p
+                                    class="font-sans text-xl font-semibold"
+                                    :class="
+                                        selected === option.value
+                                            ? 'text-teal dark:text-sand-100'
+                                            : 'text-sand-800 dark:text-sand-100'
+                                    "
+                                >
+                                    {{ t(option.labelKey) }}
+                                </p>
+                            </div>
+
+                            <p
+                                class="leading-relaxed text-sand-600 dark:text-sand-300"
+                            >
+                                {{ t(option.descriptionKey) }}
+                            </p>
+                        </button>
+                    </div>
+                </fieldset>
+
+                <SurfaceCard
+                    v-if="isContributing"
+                    tone="muted"
+                    class="reveal-item"
+                >
+                    <div class="flex items-start gap-4">
+                        <IconTile
+                            :icon="heartFilledIcon"
+                            size="md"
+                            tone="accent"
+                        />
                         <div class="min-w-0 flex-1">
-                            <p class="font-sans text-sm font-semibold text-teal dark:text-sand-100">
+                            <p
+                                class="font-sans font-semibold text-teal dark:text-sand-100"
+                            >
                                 {{ t('Thank you for giving back') }}
                             </p>
-                            <p class="mt-1 text-sm text-sand-600 dark:text-sand-400">
-                                {{ t('Each month we donate :percentage% of your subscription on your behalf.', { percentage: savedPercentage ?? 0 }) }}
+                            <p
+                                class="mt-1 leading-relaxed text-sand-600 dark:text-sand-300"
+                            >
+                                {{
+                                    t(
+                                        "Each month we donate :percentage% of your subscription to children's care on your behalf.",
+                                        { percentage: selected },
+                                    )
+                                }}
                             </p>
                         </div>
                     </div>
                 </SurfaceCard>
 
-                <div class="flex justify-end">
-                    <Button type="button" size="md" :disabled="processing || isLoading || !hasChanged" @click="save">
-                        {{ processing ? t('Saving...') : t('Save') }}
-                    </Button>
-                </div>
+                <p
+                    v-if="errorMessage"
+                    class="rounded-lg bg-blush-50 p-3 text-blush-700 dark:bg-blush-900/30 dark:text-blush-200"
+                >
+                    {{ errorMessage }}
+                </p>
             </div>
         </div>
     </AppLayout>

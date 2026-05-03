@@ -9,7 +9,9 @@ function isTransient(error: unknown): boolean {
     }
 
     if (error instanceof ApiError) {
-        return error.status === 503 || error.status === 504 || error.status === 0;
+        return (
+            error.status === 503 || error.status === 504 || error.status === 0
+        );
     }
 
     return false;
@@ -37,9 +39,15 @@ export function configureExternalApi(opts: {
     unauthorizedHandler = opts.onUnauthorized;
 }
 
-async function performCall<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function performCall<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+): Promise<T> {
     if (!baseUrl) {
-        throw new Error('externalApi not configured. Call configureExternalApi first.');
+        throw new Error(
+            'externalApi not configured. Call configureExternalApi first.',
+        );
     }
 
     const auth = authResolver?.();
@@ -83,13 +91,21 @@ async function performCall<T>(method: string, path: string, body?: unknown): Pro
     if (response.status === 422) {
         const data = await response.json().catch(() => ({}));
 
-        throw new ApiError(422, data.errors ?? {}, data.message ?? 'Validation failed');
+        throw new ApiError(
+            422,
+            data.errors ?? {},
+            data.message ?? 'Validation failed',
+        );
     }
 
     if (!response.ok) {
         const data = await response.json().catch(() => ({}));
 
-        throw new ApiError(response.status, {}, data.message ?? `HTTP ${response.status}`);
+        throw new ApiError(
+            response.status,
+            {},
+            data.message ?? `HTTP ${response.status}`,
+        );
     }
 
     if (response.status === 204) {
@@ -110,8 +126,10 @@ function call<T>(method: string, path: string, body?: unknown): Promise<T> {
 
 export const externalApi = {
     get: <T>(path: string) => call<T>('GET', path),
-    post: <T>(path: string, body?: unknown) => call<T>('POST', path, body ?? {}),
+    post: <T>(path: string, body?: unknown) =>
+        call<T>('POST', path, body ?? {}),
     put: <T>(path: string, body?: unknown) => call<T>('PUT', path, body ?? {}),
-    patch: <T>(path: string, body?: unknown) => call<T>('PATCH', path, body ?? {}),
+    patch: <T>(path: string, body?: unknown) =>
+        call<T>('PATCH', path, body ?? {}),
     delete: <T>(path: string) => call<T>('DELETE', path),
 };

@@ -56,7 +56,9 @@ const summaryText = computed(() => {
 });
 
 const sortedPersons = computed(() =>
-    [...props.persons].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+    [...props.persons].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+    ),
 );
 
 function toggle(personId: number) {
@@ -76,7 +78,7 @@ function toggle(personId: number) {
         <div class="mb-3 flex items-center justify-between gap-2">
             <button
                 type="button"
-                class="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-sand-500 dark:text-sand-400"
+                class="flex items-center gap-1.5 tracking-wider text-sand-500 uppercase dark:text-sand-400"
                 @click="isCollapsed = !isCollapsed"
             >
                 {{ t('Tag persons') }}
@@ -89,22 +91,35 @@ function toggle(personId: number) {
                     class="size-3.5 transition-transform"
                     :class="isCollapsed ? '' : 'rotate-180'"
                 >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                    />
                 </svg>
             </button>
 
-            <span v-if="isCollapsed" class="truncate text-xs text-sand-500 dark:text-sand-400">{{ summaryText }}</span>
+            <span
+                v-if="isCollapsed"
+                class="truncate text-sand-500 dark:text-sand-400"
+                >{{ summaryText }}</span
+            >
         </div>
 
-        <div v-if="!isCollapsed && persons.length === 0" class="text-xs text-sand-500 dark:text-sand-400">
+        <div
+            v-if="!isCollapsed && persons.length === 0"
+            class="text-sand-500 dark:text-sand-400"
+        >
             {{ t('No persons yet. Add them in Settings → Persons.') }}
         </div>
 
         <div
             v-else-if="!isCollapsed"
-            :class="layout === 'grid'
-                ? 'grid grid-cols-4 gap-x-3 gap-y-4'
-                : '-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 no-scrollbar'"
+            :class="
+                layout === 'grid'
+                    ? 'grid grid-cols-4 gap-x-3 gap-y-4'
+                    : '-mx-1 no-scrollbar flex gap-3 overflow-x-auto px-1 pb-1'
+            "
         >
             <button
                 v-for="person in sortedPersons"
@@ -116,31 +131,60 @@ function toggle(personId: number) {
             >
                 <div
                     class="relative rounded-full p-[2px] transition-colors"
-                    :class="selectedIds.includes(person.id) ? 'person-ring' : 'bg-sand-200 dark:bg-sand-700'"
+                    :class="
+                        selectedIds.includes(person.id)
+                            ? 'person-ring'
+                            : 'bg-sand-200 dark:bg-sand-700'
+                    "
                 >
                     <div class="rounded-full bg-white p-0.5 dark:bg-sand-900">
                         <img
                             v-if="person.avatar_thumbnail || person.avatar"
-                            :src="person.avatar_thumbnail ?? person.avatar ?? ''"
+                            :src="
+                                person.avatar_thumbnail ?? person.avatar ?? ''
+                            "
                             :alt="person.name"
                             class="size-14 rounded-full object-cover transition-opacity"
-                            :class="selectedIds.includes(person.id) ? '' : 'opacity-60'"
+                            :class="
+                                selectedIds.includes(person.id)
+                                    ? ''
+                                    : 'opacity-60'
+                            "
                         />
                         <div
                             v-else
                             class="flex size-14 items-center justify-center rounded-full bg-sand-100 transition-opacity dark:bg-sand-900"
-                            :class="selectedIds.includes(person.id) ? '' : 'opacity-60'"
+                            :class="
+                                selectedIds.includes(person.id)
+                                    ? ''
+                                    : 'opacity-60'
+                            "
                         >
-                            <span aria-hidden="true" class="inline-block size-7 bg-sand-600 dark:bg-sand-300" :style="iconMaskStyle(userIcon)"></span>
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-7 bg-sand-600 dark:bg-sand-300"
+                                :style="iconMaskStyle(userIcon)"
+                            ></span>
                         </div>
                     </div>
 
                     <div
                         v-if="selectedIds.includes(person.id)"
-                        class="absolute bottom-0 right-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white dark:ring-sand-900"
+                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white dark:ring-sand-900"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="size-3 text-white">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="3"
+                            stroke="currentColor"
+                            class="size-3 text-white"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m4.5 12.75 6 6 9-13.5"
+                            />
                         </svg>
                     </div>
 
@@ -149,19 +193,27 @@ function toggle(personId: number) {
                         class="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-800 dark:ring-sand-900"
                         :title="t('Member of this circle')"
                     >
-                        <span aria-hidden="true" class="inline-block size-3 bg-teal" :style="iconMaskStyle(userIcon)"></span>
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-3 bg-teal"
+                            :style="iconMaskStyle(userIcon)"
+                        ></span>
                     </div>
                 </div>
                 <span
-                    class="max-w-16 truncate text-[10px] font-medium"
-                    :class="selectedIds.includes(person.id) ? 'text-sand-900 dark:text-sand-100' : 'text-sand-500 dark:text-sand-400'"
+                    class="max-w-16 truncate"
+                    :class="
+                        selectedIds.includes(person.id)
+                            ? 'text-sand-900 dark:text-sand-100'
+                            : 'text-sand-500 dark:text-sand-400'
+                    "
                 >
                     {{ person.name }}
                 </span>
             </button>
         </div>
 
-        <p v-if="error" class="mt-2 text-xs text-blush-500">{{ error }}</p>
+        <p v-if="error" class="mt-2 text-blush-500">{{ error }}</p>
     </div>
 </template>
 

@@ -27,7 +27,14 @@ type Particle = {
     opacity: number;
 };
 
-const COLORS = ['#0F766E', '#5A8A6E', '#E8C77B', '#E8A0A0', '#F2E2C4', '#A7C5A1'];
+const COLORS = [
+    '#0F766E',
+    '#5A8A6E',
+    '#E8C77B',
+    '#E8A0A0',
+    '#F2E2C4',
+    '#A7C5A1',
+];
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const isRunning = ref(false);

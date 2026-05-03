@@ -66,13 +66,16 @@ const showEmailForm = ref(false);
 async function submit(): Promise<void> {
     flashError.value = null;
     try {
-        await form.post<{ user: unknown; token: string; redirect_to: string }>('/api/spa/auth/login', {
-            onSuccess: async (data) => {
-                await auth.bootstrap();
-                router.push(data.redirect_to ?? '/');
+        await form.post<{ user: unknown; token: string; redirect_to: string }>(
+            '/api/spa/auth/login',
+            {
+                onSuccess: async (data) => {
+                    await auth.bootstrap();
+                    router.push(data.redirect_to ?? '/');
+                },
+                onFinish: () => form.reset('password'),
             },
-            onFinish: () => form.reset('password'),
-        });
+        );
     } catch (error) {
         if (error instanceof ApiError) {
             flashError.value = error.message || t('Invalid credentials');
@@ -84,31 +87,65 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-    <div class="nativephp-safe-area relative flex h-dvh flex-col overflow-hidden bg-warmwhite px-6 dark:bg-sand-900">
-        <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
-            <div class="absolute -left-24 -top-24 size-72 rounded-full bg-sage-200/60 blur-3xl dark:bg-sage-700/20"></div>
-            <div class="absolute -right-28 top-1/4 size-80 rounded-full bg-accent-soft/40 blur-3xl dark:bg-accent/10"></div>
-            <div class="absolute -bottom-32 left-1/4 size-96 rounded-full bg-sand-200/50 blur-3xl dark:bg-sand-700/30"></div>
+    <div
+        class="nativephp-safe-area relative flex h-dvh flex-col overflow-hidden bg-warmwhite px-6 dark:bg-sand-900"
+    >
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 overflow-hidden"
+        >
+            <div
+                class="absolute -top-24 -left-24 size-72 rounded-full bg-sage-200/60 blur-3xl dark:bg-sage-700/20"
+            ></div>
+            <div
+                class="absolute top-1/4 -right-28 size-80 rounded-full bg-accent-soft/40 blur-3xl dark:bg-accent/10"
+            ></div>
+            <div
+                class="absolute -bottom-32 left-1/4 size-96 rounded-full bg-sand-200/50 blur-3xl dark:bg-sand-700/30"
+            ></div>
         </div>
 
         <div aria-hidden="true" class="pointer-events-none absolute inset-0">
-            <svg class="doodle doodle-1 absolute left-8 top-28 size-5 text-accent/70" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l2.1 6.9L21 11l-6.9 2.1L12 20l-2.1-6.9L3 11l6.9-2.1z" />
+            <svg
+                class="doodle doodle-1 absolute top-28 left-8 size-5 text-accent/70"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+            >
+                <path
+                    d="M12 2l2.1 6.9L21 11l-6.9 2.1L12 20l-2.1-6.9L3 11l6.9-2.1z"
+                />
             </svg>
-            <svg class="doodle doodle-2 absolute right-10 top-20 size-4 text-teal/60" viewBox="0 0 24 24" fill="currentColor">
+            <svg
+                class="doodle doodle-2 absolute top-20 right-10 size-4 text-teal/60"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+            >
                 <circle cx="12" cy="12" r="6" />
             </svg>
-            <svg class="doodle doodle-3 absolute right-6 top-1/2 size-6 text-accent/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <svg
+                class="doodle doodle-3 absolute top-1/2 right-6 size-6 text-accent/50"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+            >
                 <path d="M3 12 Q 7 6, 11 12 T 19 12" />
             </svg>
-            <svg class="doodle doodle-4 absolute bottom-32 left-6 size-5 text-sage-500/70" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" />
+            <svg
+                class="doodle doodle-4 absolute bottom-32 left-6 size-5 text-sage-500/70"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+            >
+                <path
+                    d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"
+                />
             </svg>
         </div>
 
         <div class="relative flex justify-end pt-4">
             <button
-                class="rounded-full bg-white/70 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-teal shadow-sm backdrop-blur-sm transition hover:scale-105 dark:bg-sand-800/60 dark:text-sand-200"
+                class="rounded-full bg-white/70 px-3 py-2 font-semibold tracking-wider text-teal uppercase shadow-sm backdrop-blur-sm transition hover:scale-105 dark:bg-sand-800/60 dark:text-sand-200"
                 @click="setLocale(currentLocale === 'nl' ? 'en' : 'nl')"
             >
                 {{ currentLocale === 'nl' ? 'NL' : 'EN' }}
@@ -117,21 +154,34 @@ async function submit(): Promise<void> {
 
         <div class="relative flex flex-1 flex-col items-center justify-center">
             <div class="mb-8 text-center">
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm dark:bg-sage-900/50 dark:text-sage-300">
+                <span
+                    class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-sage-700 shadow-sm dark:bg-sage-900/50 dark:text-sage-300"
+                >
                     {{ t('welcome back') }}
-                    <span aria-hidden="true" class="inline-block size-4 bg-current animate-[wave_2s_ease-in-out_infinite] origin-[70%_70%]" :style="iconMaskStyle(handIcon)"></span>
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-4 origin-[70%_70%] animate-[wave_2s_ease-in-out_infinite] bg-current"
+                        :style="iconMaskStyle(handIcon)"
+                    ></span>
                 </span>
                 <h1 class="mt-4">
-                    <img :src="innerrLogo" alt="innerr" class="mx-auto h-16 w-auto" />
+                    <img
+                        :src="innerrLogo"
+                        alt="innerr"
+                        class="mx-auto h-16 w-auto"
+                    />
                 </h1>
-                <p class="mt-3 text-sm text-sand-600 dark:text-sand-400">
+                <p class="mt-3 text-sand-600 dark:text-sand-400">
                     {{ t('Safely share with those who matter') }}
                 </p>
             </div>
 
-            <div class="w-full max-w-xs relative">
+            <div class="relative w-full max-w-xs">
                 <div class="space-y-3">
-                    <p v-if="flashError" class="rounded-xl bg-blush-50 px-3 py-2 text-center text-xs text-blush-600 dark:bg-blush-900/20">
+                    <p
+                        v-if="flashError"
+                        class="rounded-xl bg-blush-50 px-3 py-2 text-center text-blush-600 dark:bg-blush-900/20"
+                    >
                         {{ flashError }}
                     </p>
 
@@ -146,23 +196,37 @@ async function submit(): Promise<void> {
                         />
 
                         <div class="flex items-center gap-3 pt-1">
-                            <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
-                            <span class="text-[11px] uppercase tracking-widest text-sand-400 dark:text-sand-500">{{ t('or') }}</span>
-                            <span class="h-px flex-1 bg-sand-200 dark:bg-sand-700"></span>
+                            <span
+                                class="h-px flex-1 bg-sand-200 dark:bg-sand-700"
+                            ></span>
+                            <span
+                                class="tracking-widest text-sand-400 uppercase dark:text-sand-500"
+                                >{{ t('or') }}</span
+                            >
+                            <span
+                                class="h-px flex-1 bg-sand-200 dark:bg-sand-700"
+                            ></span>
                         </div>
                     </template>
 
                     <button
                         v-if="showEmailForm"
                         type="button"
-                        class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-sm font-medium text-teal transition hover:text-teal-light"
+                        class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-teal transition hover:text-teal-light"
                         @click="showEmailForm = false"
                     >
-                        <span class="transition-transform group-hover:-translate-x-0.5">←</span>
+                        <span
+                            class="transition-transform group-hover:-translate-x-0.5"
+                            >←</span
+                        >
                         <span>{{ t('Back') }}</span>
                     </button>
 
-                    <form v-if="showEmailForm" class="space-y-3 pt-1" @submit.prevent="submit">
+                    <form
+                        v-if="showEmailForm"
+                        class="space-y-3 pt-1"
+                        @submit.prevent="submit"
+                    >
                         <div>
                             <input
                                 v-model="form.data.email"
@@ -171,7 +235,11 @@ async function submit(): Promise<void> {
                                 :placeholder="t('Email address')"
                                 autocomplete="email"
                                 class="field"
-                                :class="form.errors.email ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
+                                :class="
+                                    form.errors.email
+                                        ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400'
+                                        : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'
+                                "
                             />
                         </div>
 
@@ -183,11 +251,15 @@ async function submit(): Promise<void> {
                                 :placeholder="t('Password')"
                                 autocomplete="current-password"
                                 class="field pr-16"
-                                :class="form.errors.password ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400' : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'"
+                                :class="
+                                    form.errors.password
+                                        ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400'
+                                        : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'
+                                "
                             />
                             <button
                                 type="button"
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-sand-400 dark:text-sand-500"
+                                class="absolute top-1/2 right-3 -translate-y-1/2 text-sand-400 dark:text-sand-500"
                                 @click="showPassword = !showPassword"
                             >
                                 {{ showPassword ? t('Hide') : t('Show') }}
@@ -198,7 +270,11 @@ async function submit(): Promise<void> {
                             type="submit"
                             size="lg"
                             block
-                            :disabled="form.processing || !form.data.email || !form.data.password"
+                            :disabled="
+                                form.processing ||
+                                !form.data.email ||
+                                !form.data.password
+                            "
                         >
                             {{ form.processing ? '...' : t('Log in') }}
                         </Button>
@@ -207,18 +283,21 @@ async function submit(): Promise<void> {
                     <button
                         v-else
                         type="button"
-                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-sm font-medium text-teal transition hover:text-teal-light"
+                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-teal transition hover:text-teal-light"
                         @click="showEmailForm = true"
                     >
                         <span>{{ t('Log in with email') }}</span>
-                        <span class="transition-transform group-hover:translate-x-0.5">→</span>
+                        <span
+                            class="transition-transform group-hover:translate-x-0.5"
+                            >→</span
+                        >
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="relative pb-8 pt-4">
-            <p class="text-center text-sm text-sand-500 dark:text-sand-400">
+        <div class="relative pt-4 pb-8">
+            <p class="text-center text-sand-500 dark:text-sand-400">
                 {{ t('New to innerr?') }}
                 <a
                     href="/register"
@@ -232,8 +311,19 @@ async function submit(): Promise<void> {
 </template>
 
 <style scoped>
-.doodle-1 { animation-delay: 0s; }
-.doodle-2 { animation-delay: 1.2s; animation-duration: 5s; }
-.doodle-3 { animation-delay: 2.4s; animation-duration: 7s; }
-.doodle-4 { animation-delay: 0.6s; animation-duration: 6.5s; }
+.doodle-1 {
+    animation-delay: 0s;
+}
+.doodle-2 {
+    animation-delay: 1.2s;
+    animation-duration: 5s;
+}
+.doodle-3 {
+    animation-delay: 2.4s;
+    animation-duration: 7s;
+}
+.doodle-4 {
+    animation-delay: 0.6s;
+    animation-duration: 6.5s;
+}
 </style>

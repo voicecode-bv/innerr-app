@@ -10,7 +10,9 @@ export interface NotificationsPage<T> {
     meta: PaginationMeta;
 }
 
-export async function fetchNotificationsPage<T>(page: number): Promise<NotificationsPage<T>> {
+export async function fetchNotificationsPage<T>(
+    page: number,
+): Promise<NotificationsPage<T>> {
     const response = await fetch(`/notifications/load?page=${page}`, {
         credentials: 'same-origin',
         headers: {

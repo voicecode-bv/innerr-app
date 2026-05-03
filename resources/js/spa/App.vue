@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
-import ToastContainer from '@/spa/components/ToastContainer.vue';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 
 useNetworkStatus();
@@ -8,8 +7,11 @@ useNetworkStatus();
 
 <template>
     <!-- Persistente achtergrond zodat er nooit een wit/leeg-frame zichtbaar is
-         tijdens route-transities of het laden van een lazy chunk. -->
-    <div aria-hidden="true" class="pointer-events-none fixed inset-0 -z-20 bg-warmwhite dark:bg-sand-900" />
+ tijdens route-transities of het laden van een lazy chunk. -->
+    <div
+        aria-hidden="true"
+        class="pointer-events-none fixed inset-0 -z-20 bg-warmwhite dark:bg-sand-900"
+    />
 
     <RouterView v-slot="{ Component }">
         <Transition
@@ -24,5 +26,4 @@ useNetworkStatus();
             <component :is="Component" />
         </Transition>
     </RouterView>
-    <ToastContainer />
 </template>

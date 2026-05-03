@@ -24,7 +24,9 @@ export async function withRetry<T>(
             if (attempt === retries || !isTransient(error)) {
                 throw error;
             }
-            await new Promise((resolve) => setTimeout(resolve, backoff * 2 ** attempt));
+            await new Promise((resolve) =>
+                setTimeout(resolve, backoff * 2 ** attempt),
+            );
         }
     }
     throw lastError;

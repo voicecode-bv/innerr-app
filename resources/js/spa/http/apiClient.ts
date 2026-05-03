@@ -19,7 +19,9 @@ export class NetworkError extends Error {
 function isTransient(error: unknown): boolean {
     if (error instanceof NetworkError) return true;
     if (error instanceof ApiError) {
-        return error.status === 503 || error.status === 504 || error.status === 0;
+        return (
+            error.status === 503 || error.status === 504 || error.status === 0
+        );
     }
     return false;
 }
@@ -43,7 +45,11 @@ export function configureApiClient(opts: {
     unauthorizedHandler = opts.onUnauthorized;
 }
 
-async function performCall<T>(method: string, url: string, body?: unknown): Promise<T> {
+async function performCall<T>(
+    method: string,
+    url: string,
+    body?: unknown,
+): Promise<T> {
     const auth = authResolver?.();
     const locale = localeResolver?.();
     const headers: Record<string, string> = { Accept: 'application/json' };
@@ -85,12 +91,20 @@ async function performCall<T>(method: string, url: string, body?: unknown): Prom
 
     if (response.status === 422) {
         const data = await response.json().catch(() => ({}));
-        throw new ApiError(422, data.errors ?? {}, data.message ?? 'Validation failed');
+        throw new ApiError(
+            422,
+            data.errors ?? {},
+            data.message ?? 'Validation failed',
+        );
     }
 
     if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new ApiError(response.status, {}, data.message ?? `HTTP ${response.status}`);
+        throw new ApiError(
+            response.status,
+            {},
+            data.message ?? `HTTP ${response.status}`,
+        );
     }
 
     if (response.status === 204) {
@@ -109,7 +123,9 @@ function call<T>(method: string, url: string, body?: unknown): Promise<T> {
 }
 
 function readCookie(name: string): string | null {
-    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+    const match = document.cookie.match(
+        new RegExp('(^|;\\s*)' + name + '=([^;]*)'),
+    );
     return match ? match[2] : null;
 }
 
