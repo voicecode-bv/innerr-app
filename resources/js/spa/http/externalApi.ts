@@ -106,6 +106,7 @@ async function performCall<T>(
             {},
             data.message ?? `HTTP 429`,
             parseRetryAfter(response.headers.get('Retry-After')),
+            url,
         );
     }
 

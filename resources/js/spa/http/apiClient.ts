@@ -6,6 +6,7 @@ export class ApiError extends Error {
         public errors: Record<string, string[]> = {},
         message: string,
         public retryAfterSeconds: number | null = null,
+        public url: string | null = null,
     ) {
         super(message);
     }
@@ -124,6 +125,7 @@ async function performCall<T>(
             {},
             data.message ?? `HTTP 429`,
             parseRetryAfter(response.headers.get('Retry-After')),
+            url,
         );
     }
 

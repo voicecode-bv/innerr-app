@@ -207,6 +207,7 @@
     "Slow down a moment": "Slow down a moment",
     "Please try again in :count second.": "Please try again in :count second.",
     "Please try again in :count seconds.": "Please try again in :count seconds.",
+    "Endpoint: :endpoint": "Endpoint: :endpoint",
     "Loading taggable people...": "Loading taggable people...",
     "Could not load taggable people. Please try again.": "Could not load taggable people. Please try again.",
     "You are no longer a member of one of the selected circles. Please update your circle selection.": "You are no longer a member of one of the selected circles. Please update your circle selection.",

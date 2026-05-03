@@ -450,16 +450,27 @@ async function submit(): Promise<void> {
 
         if (error instanceof ApiError && error.status === 429) {
             const seconds = error.retryAfterSeconds ?? 60;
-            const message =
+            const wait =
                 seconds === 1
                     ? t('Please try again in :count second.', { count: 1 })
                     : t('Please try again in :count seconds.', {
                           count: seconds,
                       });
+            // Endpoint pad zonder query/host zodat de dialog leesbaar blijft.
+            const endpoint = error.url
+                ? (() => {
+                      try {
+                          return new URL(error.url, window.location.origin)
+                              .pathname;
+                      } catch {
+                          return error.url;
+                      }
+                  })()
+                : '/api/spa/posts';
 
-            void Dialog.alert()
-                .alert(t('Slow down a moment'), message)
-                .id('post-rate-limit');
+            const message = `${wait}\n\n${t('Endpoint: :endpoint', { endpoint })}`;
+
+            void Dialog.alert(t('Slow down a moment'), message);
         }
     }
 }
