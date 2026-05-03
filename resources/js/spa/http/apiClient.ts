@@ -5,9 +5,28 @@ export class ApiError extends Error {
         public status: number,
         public errors: Record<string, string[]> = {},
         message: string,
+        public retryAfterSeconds: number | null = null,
     ) {
         super(message);
     }
+}
+
+// Parse Retry-After header. Spec: ofwel een aantal seconden, ofwel een
+// HTTP-date. Geeft null bij ontbrekende of niet-parseerbare waarde.
+export function parseRetryAfter(header: string | null): number | null {
+    if (!header) return null;
+
+    const seconds = Number(header);
+    if (Number.isFinite(seconds) && seconds >= 0) {
+        return Math.ceil(seconds);
+    }
+
+    const dateMs = Date.parse(header);
+    if (Number.isFinite(dateMs)) {
+        return Math.max(0, Math.ceil((dateMs - Date.now()) / 1000));
+    }
+
+    return null;
 }
 
 export class NetworkError extends Error {
@@ -95,6 +114,16 @@ async function performCall<T>(
             422,
             data.errors ?? {},
             data.message ?? 'Validation failed',
+        );
+    }
+
+    if (response.status === 429) {
+        const data = await response.json().catch(() => ({}));
+        throw new ApiError(
+            429,
+            {},
+            data.message ?? `HTTP 429`,
+            parseRetryAfter(response.headers.get('Retry-After')),
         );
     }
 

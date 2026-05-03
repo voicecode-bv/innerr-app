@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Camera, Edge, Events, Off, On } from '@nativephp/mobile';
+import { Camera, Dialog, Edge, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     defineAsyncComponent,
@@ -440,12 +440,26 @@ async function submit(): Promise<void> {
         for (const circleId of targetCircleIds) {
             feedCache.invalidate(`circle:${circleId}`);
         }
-    } catch {
+    } catch (error) {
         if (optimistic) {
             feedCache.removeItem('home', optimistic.id);
             for (const circleId of targetCircleIds) {
                 feedCache.removeItem(`circle:${circleId}`, optimistic.id);
             }
+        }
+
+        if (error instanceof ApiError && error.status === 429) {
+            const seconds = error.retryAfterSeconds ?? 60;
+            const message =
+                seconds === 1
+                    ? t('Please try again in :count second.', { count: 1 })
+                    : t('Please try again in :count seconds.', {
+                          count: seconds,
+                      });
+
+            void Dialog.alert()
+                .alert(t('Slow down a moment'), message)
+                .id('post-rate-limit');
         }
     }
 }

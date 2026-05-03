@@ -84,6 +84,18 @@ class PostsController extends Controller
         }
 
         if (! $response->successful()) {
+            // 429 doorrijzen mét Retry-After zodat de client een nette
+            // "probeer over X seconden opnieuw" melding kan tonen. Verstoppen
+            // achter een 422 zou betekenen dat de spam-throttle voor de
+            // gebruiker onzichtbaar blijft en de upload "niet werkt".
+            if ($response->status() === 429) {
+                return response()->json([
+                    'message' => $response->json('message', __('Too many requests. Please try again shortly.')),
+                ], 429, array_filter([
+                    'Retry-After' => $response->header('Retry-After'),
+                ]));
+            }
+
             $apiErrors = $response->json('errors');
 
             if (is_array($apiErrors) && $apiErrors !== []) {

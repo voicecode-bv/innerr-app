@@ -1,4 +1,4 @@
-import { ApiError, NetworkError } from '@/spa/http/apiClient';
+import { ApiError, NetworkError, parseRetryAfter } from '@/spa/http/apiClient';
 import { withRetry } from '@/spa/http/retry';
 
 export { ApiError };
@@ -95,6 +95,17 @@ async function performCall<T>(
             422,
             data.errors ?? {},
             data.message ?? 'Validation failed',
+        );
+    }
+
+    if (response.status === 429) {
+        const data = await response.json().catch(() => ({}));
+
+        throw new ApiError(
+            429,
+            {},
+            data.message ?? `HTTP 429`,
+            parseRetryAfter(response.headers.get('Retry-After')),
         );
     }
 
