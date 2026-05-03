@@ -259,7 +259,7 @@ function iconMaskStyle(url: string) {
             </div>
         </template>
 
-        <div class="mt-36 pb-24">
+        <div class="mt-39 pb-24">
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"

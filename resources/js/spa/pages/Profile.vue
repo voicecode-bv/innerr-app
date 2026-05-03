@@ -255,21 +255,32 @@ function iconMaskStyle(url: string) {
                             </span>
                         </button>
                         <div class="min-w-0 flex-1">
-                            <h2 class="truncate font-sans text-xl font-bold text-teal">
+                            <h2
+                                class="truncate font-sans text-xl font-bold text-teal"
+                            >
                                 {{ profile.name }}
                             </h2>
                             <p class="text-sand-500 dark:text-sand-400">
                                 @{{ profile.username }}
                             </p>
                             <div>
-                                <span class="text-sand-700 dark:text-sand-200">{{ profile.posts_count }}</span>
-                                <span class="ml-1 text-sand-500 dark:text-sand-400">{{
-                                    profile.posts_count === 1
-                                        ? t('moment')
-                                        : t('moments')
-                                }}</span>
+                                <span
+                                    class="text-sand-700 dark:text-sand-200"
+                                    >{{ profile.posts_count }}</span
+                                >
+                                <span
+                                    class="ml-1 text-sand-500 dark:text-sand-400"
+                                    >{{
+                                        profile.posts_count === 1
+                                            ? t('moment')
+                                            : t('moments')
+                                    }}</span
+                                >
                             </div>
-                            <p v-if="profile.bio" class="text-sand-700 dark:text-sand-300">
+                            <p
+                                v-if="profile.bio"
+                                class="text-sand-700 dark:text-sand-300"
+                            >
                                 {{ profile.bio }}
                             </p>
                         </div>

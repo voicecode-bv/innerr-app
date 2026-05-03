@@ -22,6 +22,7 @@ import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { usePersonsStore } from '@/spa/stores/persons';
+import { useTaggablePersonsStore } from '@/spa/stores/taggablePersons';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
@@ -51,6 +52,7 @@ const { t } = useTranslations();
 const router = useRouter();
 const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
+const taggablePersonsStore = useTaggablePersonsStore();
 
 const persons = computed<Person[]>(() =>
     (personsStore.items ?? []).filter((p) => !p.user_id),
@@ -75,6 +77,10 @@ async function loadData(force = false): Promise<void> {
         if (force) {
             personsStore.invalidate();
             circlesStore.invalidate();
+            // Persons of hun circle-link kunnen zijn gewijzigd: leeg de
+            // taggable-cache zodat de post-compose picker volgende keer een
+            // verse lijst ophaalt.
+            taggablePersonsStore.invalidate();
         }
         await Promise.all([
             personsStore.ensureLoaded(),
