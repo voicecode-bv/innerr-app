@@ -64,7 +64,7 @@ const router = useRouter();
 const auth = useAuthStore();
 const feedCache = useFeedCacheStore();
 const circlesStore = useCirclesStore();
-const taggablePersonsStore = useTaggablePersonsStore();
+const personsStore = usePersonsStore();
 const tagsStore = useTagsStore();
 const defaultCirclesStore = useDefaultCirclesStore();
 
@@ -73,45 +73,14 @@ const defaultCircleIds = computed<number[]>(
     () => defaultCirclesStore.ids ?? [],
 );
 const availableTags = computed<Tag[]>(() => tagsStore.items ?? []);
-
-const taggableLoading = ref(false);
-const taggableError = ref<string | null>(null);
+const allPersons = computed<Person[]>(() => personsStore.items ?? []);
 const availablePersons = computed<Person[]>(() => {
     const selected = form.data.circle_ids;
     if (selected.length === 0) return [];
-    return taggablePersonsStore.get(selected) ?? [];
+    return allPersons.value.filter((person) =>
+        (person.circle_ids ?? []).some((id) => selected.includes(id)),
+    );
 });
-
-async function refreshTaggablePersons(): Promise<void> {
-    const selected = [...form.data.circle_ids];
-
-    if (selected.length === 0) {
-        taggableError.value = null;
-        taggableLoading.value = false;
-        return;
-    }
-
-    taggableLoading.value = true;
-    taggableError.value = null;
-
-    try {
-        await taggablePersonsStore.load(selected);
-    } catch (error) {
-        if (error instanceof ApiError) {
-            if (error.status === 403) {
-                taggableError.value = t(
-                    'You are no longer a member of one of the selected circles. Please update your circle selection.',
-                );
-            } else if (error.status !== 422) {
-                taggableError.value = t(
-                    'Could not load taggable people. Please try again.',
-                );
-            }
-        }
-    } finally {
-        taggableLoading.value = false;
-    }
-}
 
 async function loadFormData(): Promise<void> {
     try {
@@ -119,18 +88,13 @@ async function loadFormData(): Promise<void> {
             circlesStore.ensureLoaded(),
             defaultCirclesStore.ensureLoaded().catch(() => null),
             tagsStore.ensureLoaded().catch(() => null),
+            personsStore.ensureLoaded().catch(() => null),
         ]);
 
         const availableIds = circles.value.map((c) => c.id);
         form.data.circle_ids = defaultCircleIds.value.filter((id) =>
             availableIds.includes(id),
         );
-
-        // Pre-warm taggable persons voor de pre-selectie zodat de picker
-        // direct gevuld is wanneer de gebruiker bij stap 3 aankomt.
-        if (form.data.circle_ids.length > 0) {
-            void refreshTaggablePersons();
-        }
     } catch {
         // ignore
     }
@@ -216,13 +180,10 @@ const primaryLabel = computed(() => {
     return t('Next');
 });
 
-// Refetch taggable persons whenever the circle-selectie wijzigt; daarna
-// taggings die niet meer mogelijk zijn opruimen.
+// Drop tagged persons that are no longer in any of the selected circles.
 watch(
-    () => [...form.data.circle_ids].sort((a, b) => a - b).join(','),
-    async () => {
-        await refreshTaggablePersons();
-
+    () => form.data.circle_ids,
+    () => {
         if (form.data.person_ids.length === 0) return;
         const stillVisible = new Set(availablePersons.value.map((p) => p.id));
         form.data.person_ids = form.data.person_ids.filter((id) =>
@@ -683,32 +644,7 @@ function iconMaskStyle(url: string) {
                     <section
                         class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60"
                     >
-                        <p
-                            v-if="form.data.circle_ids.length === 0"
-                            class="text-sand-600 dark:text-sand-400"
-                        >
-                            {{
-                                t(
-                                    'Pick at least one circle in the previous step to tag people.',
-                                )
-                            }}
-                        </p>
-                        <p
-                            v-else-if="taggableError"
-                            class="rounded-lg bg-blush-50 p-3 text-blush-700 dark:bg-blush-900/30 dark:text-blush-200"
-                        >
-                            {{ taggableError }}
-                        </p>
-                        <p
-                            v-else-if="
-                                taggableLoading && availablePersons.length === 0
-                            "
-                            class="text-sand-600 dark:text-sand-400"
-                        >
-                            {{ t('Loading taggable people...') }}
-                        </p>
                         <PersonPicker
-                            v-else
                             :persons="availablePersons"
                             :selected-ids="form.data.person_ids"
                             layout="grid"
