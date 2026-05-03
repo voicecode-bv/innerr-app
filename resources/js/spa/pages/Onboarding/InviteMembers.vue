@@ -132,7 +132,7 @@ function continueOnboarding(): void {
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
             <div class="mb-10 text-center">
-                <p class="tracking-widest text-accent uppercase">
+                <p class="truncate tracking-widest text-accent uppercase">
                     {{ circle?.name ?? ' ' }}
                 </p>
                 <h1

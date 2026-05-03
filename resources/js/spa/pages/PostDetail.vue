@@ -770,7 +770,9 @@ watch(
                                     :style="iconMaskStyle(userIcon)"
                                 ></span>
                             </div>
-                            <span class="text-white">{{ circle.name }}</span>
+                            <span class="max-w-32 truncate text-white">{{
+                                circle.name
+                            }}</span>
                         </RouterLink>
                     </div>
 

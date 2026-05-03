@@ -165,7 +165,7 @@ async function toggleCircle(circleId: number): Promise<void> {
                             class="flex items-center justify-between gap-3 py-3"
                         >
                             <span
-                                class="text-base text-sand-800 dark:text-sand-100"
+                                class="min-w-0 flex-1 truncate text-base text-sand-800 dark:text-sand-100"
                                 >{{ circle.name }}</span
                             >
                             <span

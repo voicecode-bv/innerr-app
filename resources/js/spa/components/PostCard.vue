@@ -315,7 +315,9 @@ function timeAgo(dateString: string): string {
                             />
                         </svg>
                     </div>
-                    <span class="text-white">{{ circle.name }}</span>
+                    <span class="max-w-32 truncate text-white">{{
+                        circle.name
+                    }}</span>
                 </RouterLink>
             </div>
             <div

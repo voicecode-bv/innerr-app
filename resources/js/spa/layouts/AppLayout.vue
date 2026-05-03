@@ -64,7 +64,7 @@ defineExpose({ mainRef });
                 </slot>
             </div>
             <h1
-                class="font-display text-lg font-semibold tracking-tight text-sand-800 dark:text-sand-100"
+                class="min-w-0 flex-1 truncate text-center font-display text-lg font-semibold tracking-tight text-sand-800 dark:text-sand-100"
             >
                 {{ title ?? t('Innerr') }}
             </h1>
