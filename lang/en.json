@@ -421,6 +421,17 @@
     "Default circles": "Default circles",
     "Create a circle to set it as a default for new posts.": "Create a circle to set it as a default for new posts.",
 
+    "Inner Gives": "Inner Gives",
+    "Choose a percentage of your subscription that Innerr will donate to charity each month. You can change or pause this any time.": "Choose a percentage of your subscription that Innerr will donate to charity each month. You can change or pause this any time.",
+    "Donation percentage": "Donation percentage",
+    "No donation for now": "No donation for now",
+    ":percentage% of my subscription": ":percentage% of my subscription",
+    "Thank you for giving back": "Thank you for giving back",
+    "Each month we donate :percentage% of your subscription on your behalf.": "Each month we donate :percentage% of your subscription on your behalf.",
+    "Thank you! We will donate :percentage% on your behalf.": "Thank you! We will donate :percentage% on your behalf.",
+    "Your preference has been saved.": "Your preference has been saved.",
+    "Could not save your preference. Please try again.": "Could not save your preference. Please try again.",
+
     "Persons": "Persons",
     "Add person": "Add person",
     "Edit person": "Edit person",

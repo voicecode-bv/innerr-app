@@ -4,16 +4,17 @@ import { computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import ListItem from '@/spa/components/ListItem.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePlatform } from '@/spa/composables/usePlatform';
+import { useTranslations } from '@/spa/composables/useTranslations';
+import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
-import { externalApi } from '@/spa/http/externalApi';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 import circleIcon from '../../../../svg/doodle-icons/circle.svg';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
+import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
 import globeIcon from '../../../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
@@ -41,9 +42,11 @@ const languageIconStyle = computed(() => ({
 
 async function setLocale(locale: string): Promise<void> {
     i18n.set(locale);
+
     if (auth.user) {
         auth.user.locale = locale;
     }
+
     try {
         await externalApi.put('/profile', { locale });
     } catch {
@@ -124,6 +127,12 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         <ListItem :to="{ name: 'spa.settings.notifications' }">
                             <template #leading><IconTile :icon="bellIcon" size="sm" tone="sage" /></template>
                             {{ t('Push notifications') }}
+                        </ListItem>
+                    </li>
+                    <li>
+                        <ListItem :to="{ name: 'spa.settings.give' }">
+                            <template #leading><IconTile :icon="foldedHandsIcon" size="sm" tone="sage" /></template>
+                            {{ t('Inner Gives') }}
                         </ListItem>
                     </li>
                     <li v-if="isIos">

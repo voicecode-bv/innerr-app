@@ -1,7 +1,8 @@
-import { createRouter, createWebHistory, createMemoryHistory, type RouteRecordRaw } from 'vue-router';
-import { useAuthStore } from '@/spa/stores/auth';
+import { createRouter, createWebHistory, createMemoryHistory  } from 'vue-router';
+import type {RouteRecordRaw} from 'vue-router';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { api } from '@/spa/http/apiClient';
+import { useAuthStore } from '@/spa/stores/auth';
 
 declare module 'vue-router' {
     interface RouteMeta {
@@ -187,6 +188,12 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true },
     },
     {
+        path: '/settings/give',
+        name: 'spa.settings.give',
+        component: () => import('@/spa/pages/Settings/Give.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
         path: '/settings/apple-subscriptions',
         name: 'spa.settings.apple-subscriptions',
         component: () => import('@/spa/pages/Settings/AppleSubscriptions.vue'),
@@ -229,6 +236,7 @@ router.beforeEach(async (to) => {
     if (to.meta.iosOnly) {
         const { isIos, ensureDetected } = usePlatform();
         await ensureDetected();
+
         if (!isIos.value) {
             return { name: 'spa.settings' };
         }
@@ -237,6 +245,7 @@ router.beforeEach(async (to) => {
 
 router.afterEach((to) => {
     const auth = useAuthStore();
+
     if (!auth.user) {
         return;
     }

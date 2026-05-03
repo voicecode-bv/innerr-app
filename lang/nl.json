@@ -359,6 +359,17 @@
     "We could not request your data export. Please try again later.": "We konden je gegevensexport niet aanvragen. Probeer het later opnieuw.",
     "Default circles": "Standaard kringen",
 
+    "Inner Gives": "Inner Geeft",
+    "Choose a percentage of your subscription that Innerr will donate to charity each month. You can change or pause this any time.": "Kies een percentage van je abonnement dat Innerr elke maand voor jou aan een goed doel doneert. Je kunt dit altijd wijzigen of pauzeren.",
+    "Donation percentage": "Donatiepercentage",
+    "No donation for now": "Voor nu geen donatie",
+    ":percentage% of my subscription": ":percentage% van mijn abonnement",
+    "Thank you for giving back": "Bedankt dat je iets teruggeeft",
+    "Each month we donate :percentage% of your subscription on your behalf.": "Elke maand doneren wij namens jou :percentage% van je abonnement.",
+    "Thank you! We will donate :percentage% on your behalf.": "Bedankt! We gaan namens jou :percentage% doneren.",
+    "Your preference has been saved.": "Je voorkeur is opgeslagen.",
+    "Could not save your preference. Please try again.": "We konden je voorkeur niet opslaan. Probeer het opnieuw.",
+
     "Transfer ownership": "Eigendom overdragen",
     "Choose a member to transfer ownership of this circle to. They must accept before the transfer is complete.": "Kies een lid om het eigendom van deze kring aan over te dragen. Zij moeten de overdracht eerst accepteren.",
     "Select a new owner": "Kies een nieuwe eigenaar",
