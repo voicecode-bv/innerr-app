@@ -26,9 +26,8 @@ import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
-import { useTaggablePersonsStore } from '@/spa/stores/taggablePersons';
+import { usePersonsStore } from '@/spa/stores/persons';
 import { useTagsStore } from '@/spa/stores/tags';
-import { ApiError } from '@/spa/http/externalApi';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import { api } from '@/spa/http/apiClient';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
@@ -57,7 +56,6 @@ interface Person {
     avatar?: string | null;
     avatar_thumbnail?: string | null;
     user_id?: number | null;
-    created_by_user_id?: number | null;
     circle_ids?: number[];
 }
 

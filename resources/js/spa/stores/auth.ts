@@ -8,7 +8,6 @@ import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationPreferencesStore } from '@/spa/stores/notificationPreferences';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import { usePersonsStore } from '@/spa/stores/persons';
-import { useTaggablePersonsStore } from '@/spa/stores/taggablePersons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
 
@@ -113,7 +112,6 @@ export const useAuthStore = defineStore('spa-auth', {
             // niet stale data ziet.
             useCirclesStore().clear();
             usePersonsStore().clear();
-            useTaggablePersonsStore().clear();
             useTagsStore().clear();
             useDefaultCirclesStore().clear();
             useNotificationPreferencesStore().clear();
