@@ -59,6 +59,46 @@ export function useVideoFullscreen(
         isFullscreen.value = !!document.fullscreenElement;
     }
 
+    // iOS' webkitEnterFullscreen() vuurt geen `fullscreenchange` op document,
+    // alleen `webkitbeginfullscreen` / `webkitendfullscreen` op het video-
+    // element zelf. Zonder deze sync blijft isFullscreen=true hangen wanneer
+    // iOS' eigen "Done"-knop fullscreen sluit, waardoor main.style.overflow
+    // op 'hidden' blijft staan en de feed niet meer scrollbaar is.
+    function onWebkitBeginFullscreen(): void {
+        isFullscreen.value = true;
+    }
+
+    function onWebkitEndFullscreen(): void {
+        isFullscreen.value = false;
+    }
+
+    watch(
+        () => videoRef.value,
+        (video, prevVideo) => {
+            if (prevVideo) {
+                prevVideo.removeEventListener(
+                    'webkitbeginfullscreen',
+                    onWebkitBeginFullscreen,
+                );
+                prevVideo.removeEventListener(
+                    'webkitendfullscreen',
+                    onWebkitEndFullscreen,
+                );
+            }
+            if (video) {
+                video.addEventListener(
+                    'webkitbeginfullscreen',
+                    onWebkitBeginFullscreen,
+                );
+                video.addEventListener(
+                    'webkitendfullscreen',
+                    onWebkitEndFullscreen,
+                );
+            }
+        },
+        { immediate: true },
+    );
+
     watch(isFullscreen, (val) => {
         if (typeof document === 'undefined') return;
         const main = document.querySelector('main') as HTMLElement | null;
@@ -82,7 +122,17 @@ export function useVideoFullscreen(
             'fullscreenchange',
             syncFullscreenFromBrowser,
         );
-        if (isFullscreen.value && typeof document !== 'undefined') {
+        if (videoRef.value) {
+            videoRef.value.removeEventListener(
+                'webkitbeginfullscreen',
+                onWebkitBeginFullscreen,
+            );
+            videoRef.value.removeEventListener(
+                'webkitendfullscreen',
+                onWebkitEndFullscreen,
+            );
+        }
+        if (typeof document !== 'undefined') {
             const main = document.querySelector('main') as HTMLElement | null;
             if (main) main.style.overflow = '';
             document.body.style.overflow = '';
