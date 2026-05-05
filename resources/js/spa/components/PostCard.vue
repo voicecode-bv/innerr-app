@@ -279,21 +279,19 @@ function timeAgo(dateString: string): string {
             </button>
             <div
                 v-if="post.circles && post.circles.length > 0"
-                class="absolute top-3 right-3 z-10 flex max-w-[70%] flex-wrap justify-end gap-1.5"
+                class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
             >
                 <RouterLink
-                    v-for="circle in post.circles"
-                    :key="circle.id"
                     :to="{
                         name: 'spa.circles.show',
-                        params: { circle: circle.id },
+                        params: { circle: post.circles[0].id },
                     }"
                     class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
                 >
                     <img
-                        v-if="circle.photo"
-                        :src="circle.photo"
-                        :alt="circle.name"
+                        v-if="post.circles[0].photo"
+                        :src="post.circles[0].photo"
+                        :alt="post.circles[0].name"
                         class="size-5 rounded-full object-cover"
                     />
                     <div
@@ -316,9 +314,14 @@ function timeAgo(dateString: string): string {
                         </svg>
                     </div>
                     <span class="max-w-32 truncate text-white">{{
-                        circle.name
+                        post.circles[0].name
                     }}</span>
                 </RouterLink>
+                <span
+                    v-if="post.circles.length > 1"
+                    class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
+                    >+{{ post.circles.length - 1 }}</span
+                >
             </div>
             <div
                 class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
@@ -537,22 +540,20 @@ function timeAgo(dateString: string): string {
                     v-if="
                         !isFullscreen && post.circles && post.circles.length > 0
                     "
-                    class="absolute top-3 right-3 z-10 flex max-w-[70%] flex-wrap justify-end gap-1.5"
+                    class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
                     @click.stop
                 >
                     <RouterLink
-                        v-for="circle in post.circles"
-                        :key="circle.id"
                         :to="{
                             name: 'spa.circles.show',
-                            params: { circle: circle.id },
+                            params: { circle: post.circles[0].id },
                         }"
                         class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
                     >
                         <img
-                            v-if="circle.photo"
-                            :src="circle.photo"
-                            :alt="circle.name"
+                            v-if="post.circles[0].photo"
+                            :src="post.circles[0].photo"
+                            :alt="post.circles[0].name"
                             class="size-5 rounded-full object-cover"
                         />
                         <div
@@ -574,8 +575,13 @@ function timeAgo(dateString: string): string {
                                 />
                             </svg>
                         </div>
-                        <span class="text-white">{{ circle.name }}</span>
+                        <span class="text-white">{{ post.circles[0].name }}</span>
                     </RouterLink>
+                    <span
+                        v-if="post.circles.length > 1"
+                        class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
+                        >+{{ post.circles.length - 1 }}</span
+                    >
                 </div>
 
                 <div

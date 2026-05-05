@@ -738,45 +738,6 @@ watch(
                     </div>
 
                     <div
-                        v-if="
-                            !isFullscreen &&
-                            post.circles &&
-                            post.circles.length > 0
-                        "
-                        class="absolute top-3 right-3 z-10 flex max-w-[70%] flex-wrap justify-end gap-1.5"
-                    >
-                        <RouterLink
-                            v-for="circle in post.circles"
-                            :key="circle.id"
-                            :to="{
-                                name: 'spa.circles.show',
-                                params: { circle: circle.id },
-                            }"
-                            class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
-                        >
-                            <img
-                                v-if="circle.photo"
-                                :src="circle.photo"
-                                :alt="circle.name"
-                                class="size-5 rounded-full object-cover"
-                            />
-                            <div
-                                v-else
-                                class="flex size-5 items-center justify-center rounded-full bg-white/20"
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    class="inline-block size-3 bg-white"
-                                    :style="iconMaskStyle(userIcon)"
-                                ></span>
-                            </div>
-                            <span class="max-w-32 truncate text-white">{{
-                                circle.name
-                            }}</span>
-                        </RouterLink>
-                    </div>
-
-                    <div
                         v-if="!isFullscreen"
                         class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
                     >
@@ -839,12 +800,53 @@ watch(
 
                 <div
                     v-if="
+                        (post.circles ?? []).length > 0 ||
                         (post.persons ?? []).length > 0 ||
                         (post.tags ?? []).length > 0 ||
                         staticMapUrl
                     "
                     class="space-y-5 bg-warmwhite px-4 pt-5 pb-2 dark:bg-sand-900"
                 >
+                    <section
+                        v-if="(post.circles ?? []).length > 0"
+                        class="space-y-3"
+                    >
+                        <h3
+                            class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
+                        >
+                            {{ t('Circles') }}
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <RouterLink
+                                v-for="circle in post.circles"
+                                :key="circle.id"
+                                :to="{
+                                    name: 'spa.circles.show',
+                                    params: { circle: circle.id },
+                                }"
+                                class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-3.5 pl-1 font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 transition-colors hover:bg-sand-50 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60 dark:hover:bg-sand-700"
+                            >
+                                <img
+                                    v-if="circle.photo"
+                                    :src="circle.photo"
+                                    :alt="circle.name"
+                                    class="size-7 rounded-full object-cover"
+                                />
+                                <span
+                                    v-else
+                                    class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        class="inline-block size-3.5 bg-current"
+                                        :style="iconMaskStyle(userIcon)"
+                                    ></span>
+                                </span>
+                                {{ circle.name }}
+                            </RouterLink>
+                        </div>
+                    </section>
+
                     <section
                         v-if="(post.persons ?? []).length > 0"
                         class="space-y-3"
