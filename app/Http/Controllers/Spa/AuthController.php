@@ -119,7 +119,7 @@ class AuthController extends Controller
         }
 
         return [
-            'id' => (int) $user->api_user_id,
+            'id' => $user->api_user_id,
             'name' => $user->name,
             'username' => $user->username,
             'email' => $user->email,

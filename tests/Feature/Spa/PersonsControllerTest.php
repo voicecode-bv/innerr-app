@@ -26,7 +26,7 @@ afterEach(function () {
 });
 
 it('rejects person photo upload without auth', function () {
-    $this->postJson('/api/spa/settings/persons/1/photo', [
+    $this->postJson('/api/spa/settings/persons/550e8400-e29b-41d4-a716-446655440001/photo', [
         'photo_path' => '/tmp/x.jpg',
     ])->assertStatus(401);
 });
@@ -35,7 +35,7 @@ it('returns 422 when photo_path does not exist on disk', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->postJson('/api/spa/settings/persons/1/photo', [
+        ->postJson('/api/spa/settings/persons/550e8400-e29b-41d4-a716-446655440001/photo', [
             'photo_path' => '/non/existent/photo.jpg',
         ])
         ->assertStatus(422)
@@ -49,14 +49,14 @@ it('forwards multipart upload to external API for person avatar', function () {
 
     $pending = Mockery::mock(PendingRequest::class);
     $pending->shouldReceive('attach')->once()->andReturnSelf();
-    $pending->shouldReceive('post')->once()->with('/persons/7/avatar')->andReturn($apiResponse);
+    $pending->shouldReceive('post')->once()->with('/persons/550e8400-e29b-41d4-a716-446655440007/avatar')->andReturn($apiResponse);
 
     $client = Mockery::mock(ApiClient::class);
     $client->shouldReceive('authenticated')->andReturn($pending);
     $this->app->instance(ApiClient::class, $client);
 
     $this->actingAs($user)
-        ->postJson('/api/spa/settings/persons/7/photo', [
+        ->postJson('/api/spa/settings/persons/550e8400-e29b-41d4-a716-446655440007/photo', [
             'photo_path' => $this->tempPath,
         ])
         ->assertOk()
@@ -79,7 +79,7 @@ it('returns 422 when external API responds with errors on person photo upload', 
     $this->app->instance(ApiClient::class, $client);
 
     $this->actingAs($user)
-        ->postJson('/api/spa/settings/persons/7/photo', [
+        ->postJson('/api/spa/settings/persons/550e8400-e29b-41d4-a716-446655440007/photo', [
             'photo_path' => $this->tempPath,
         ])
         ->assertStatus(422)

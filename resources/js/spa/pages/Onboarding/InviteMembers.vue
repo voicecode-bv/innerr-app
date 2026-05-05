@@ -9,7 +9,7 @@ import userAddIcon from '../../../../svg/doodle-icons/user-add.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
 }
 
@@ -34,7 +34,7 @@ const circle = ref<Circle | null>(null);
 const invited = ref<string[]>([]);
 const form = useApiForm({ identifier: '' });
 
-const circleId = Number(route.params.circle);
+const circleId = String(route.params.circle);
 
 onMounted(async () => {
     try {

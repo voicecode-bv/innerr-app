@@ -20,12 +20,12 @@ import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
 
 interface Comment {
-    id: number;
+    id: string;
     body: string;
     created_at: string;
-    parent_id: number | null;
+    parent_id: string | null;
     user: {
-        id: number;
+        id: string;
         name: string;
         username: string;
         avatar: string | null;
@@ -46,7 +46,7 @@ interface Meta {
 const props = withDefaults(
     defineProps<{
         open: boolean;
-        postId: number;
+        postId: string;
         commentsCount?: number;
         initialReplyTo?: Comment | null;
     }>(),
@@ -81,7 +81,7 @@ const lastPage = ref(1);
 const commentInput = useTemplateRef<HTMLInputElement>('commentInput');
 const sentinelRef = useTemplateRef<HTMLDivElement>('sentinel');
 let observer: IntersectionObserver | null = null;
-const seenIds = new Set<number>();
+const seenIds = new Set<string>();
 
 function seedCommentsFromCache(): boolean {
     const cached = commentsCache.getStale<Comment>(props.postId);
@@ -254,13 +254,13 @@ function cancelReply(): void {
 }
 
 const ACTION_WIDTH = 88;
-const swipedId = ref<number | null>(null);
-const touchingId = ref<number | null>(null);
+const swipedId = ref<string | null>(null);
+const touchingId = ref<string | null>(null);
 const touchStartX = ref(0);
 const touchOffset = ref(0);
 
 const REPLIES_COLLAPSE_AFTER = 3;
-const expandedRepliesIds = ref<Set<number>>(new Set());
+const expandedRepliesIds = ref<Set<string>>(new Set());
 
 function visibleReplies(comment: Comment): Comment[] {
     const replies = comment.replies ?? [];
@@ -296,9 +296,9 @@ interface RepliesPagination {
     serverProbed: boolean;
 }
 
-const repliesPagination = ref<Record<number, RepliesPagination>>({});
+const repliesPagination = ref<Record<string, RepliesPagination>>({});
 
-function getRepliesState(commentId: number): RepliesPagination {
+function getRepliesState(commentId: string): RepliesPagination {
     const stored = repliesPagination.value[commentId];
     if (stored) return stored;
 
@@ -322,7 +322,7 @@ function getRepliesState(commentId: number): RepliesPagination {
 }
 
 function setRepliesState(
-    commentId: number,
+    commentId: string,
     patch: Partial<RepliesPagination>,
 ): void {
     repliesPagination.value[commentId] = {
@@ -395,7 +395,7 @@ async function expandReplies(comment: Comment): Promise<void> {
     }
 }
 
-function rowTransform(commentId: number): string {
+function rowTransform(commentId: string): string {
     if (touchingId.value === commentId) {
         return `translate3d(${touchOffset.value}px, 0, 0)`;
     }
@@ -525,19 +525,17 @@ async function toggleCommentLike(comment: Comment): Promise<void> {
     }
 }
 
-let optimisticIdCounter = -1;
-
 function makeOptimisticComment(
     content: string,
-    parentId: number | null,
+    parentId: string | null,
 ): Comment {
     return {
-        id: optimisticIdCounter--,
+        id: `optimistic-${crypto.randomUUID()}`,
         body: content,
         created_at: new Date().toISOString(),
         parent_id: parentId,
         user: {
-            id: authUserId.value ?? 0,
+            id: authUserId.value ?? '',
             name: auth.user?.name ?? '',
             username: auth.user?.username ?? '',
             avatar: auth.user?.avatar ?? null,
@@ -548,7 +546,7 @@ function makeOptimisticComment(
     };
 }
 
-function scrollToComment(commentId: number): void {
+function scrollToComment(commentId: string): void {
     nextTick(() => {
         const el = document.querySelector(`[data-comment-id="${commentId}"]`);
         if (el instanceof HTMLElement) {

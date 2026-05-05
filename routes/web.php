@@ -26,8 +26,8 @@ Route::prefix('api/spa')->group(function () {
         Route::post('/edge/active-tab', [SpaEdgeController::class, 'setActiveTab']);
 
         Route::post('/settings/profile/avatar', [SpaSettingsController::class, 'updateAvatar']);
-        Route::post('/settings/persons/{person}/photo', [SpaPersonsController::class, 'updatePhoto'])->whereNumber('person');
-        Route::post('/circles/{circle}/photo', [SpaCircleMediaController::class, 'updatePhoto'])->whereNumber('circle');
+        Route::post('/settings/persons/{person}/photo', [SpaPersonsController::class, 'updatePhoto'])->whereUuid('person');
+        Route::post('/circles/{circle}/photo', [SpaCircleMediaController::class, 'updatePhoto'])->whereUuid('circle');
         Route::post('/posts', [SpaPostsController::class, 'store']);
     });
 });
@@ -47,7 +47,7 @@ Route::middleware('auth.api')->group(function () {
 
     Route::get('/photos/map', [MapController::class, 'photos'])->name('photos.map');
     Route::get('/profiles/{username}/photos/map', [MapController::class, 'profilePhotos'])->name('profiles.photos.map');
-    Route::get('/circles/{circle}/photos/map', [MapController::class, 'circlePhotos'])->name('circles.photos.map')->whereNumber('circle');
+    Route::get('/circles/{circle}/photos/map', [MapController::class, 'circlePhotos'])->name('circles.photos.map')->whereUuid('circle');
 });
 
 // SPA shell — vangt alle overige routes (incl. /, /login, /spa-test/*, etc.).

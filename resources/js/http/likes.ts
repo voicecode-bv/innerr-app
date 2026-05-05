@@ -1,5 +1,5 @@
 export interface LikeUser {
-    id: number;
+    id: string;
     name: string;
     username: string;
     avatar: string | null;
@@ -39,17 +39,17 @@ async function sendLike(url: string, method: 'POST' | 'DELETE'): Promise<void> {
     }
 }
 
-export const likePost = (postId: number) =>
+export const likePost = (postId: string) =>
     sendLike(`/posts/${postId}/like`, 'POST');
-export const unlikePost = (postId: number) =>
+export const unlikePost = (postId: string) =>
     sendLike(`/posts/${postId}/like`, 'DELETE');
-export const likeComment = (commentId: number) =>
+export const likeComment = (commentId: string) =>
     sendLike(`/comments/${commentId}/like`, 'POST');
-export const unlikeComment = (commentId: number) =>
+export const unlikeComment = (commentId: string) =>
     sendLike(`/comments/${commentId}/like`, 'DELETE');
 
 export async function fetchPostLikes(
-    postId: number,
+    postId: string,
     page = 1,
 ): Promise<LikesPage> {
     const response = await fetch(`/posts/${postId}/likes?page=${page}`, {

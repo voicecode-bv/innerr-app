@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 
 interface CommentLike {
-    id: number;
+    id: string;
 }
 
 interface PageEntry<T extends CommentLike> {
@@ -15,11 +15,11 @@ const FRESH_TTL_MS = 60 * 1000;
 
 export const useCommentsCacheStore = defineStore('spa-comments-cache', {
     state: () => ({
-        entries: {} as Record<number, PageEntry<CommentLike>>,
+        entries: {} as Record<string, PageEntry<CommentLike>>,
     }),
     actions: {
         get<T extends CommentLike>(
-            postId: number,
+            postId: string,
             ttlMs: number = FRESH_TTL_MS,
         ): PageEntry<T> | null {
             const entry = this.entries[postId];
@@ -27,11 +27,11 @@ export const useCommentsCacheStore = defineStore('spa-comments-cache', {
             if (Date.now() - entry.cachedAt > ttlMs) return null;
             return entry as PageEntry<T>;
         },
-        getStale<T extends CommentLike>(postId: number): PageEntry<T> | null {
+        getStale<T extends CommentLike>(postId: string): PageEntry<T> | null {
             return (this.entries[postId] as PageEntry<T> | undefined) ?? null;
         },
         set<T extends CommentLike>(
-            postId: number,
+            postId: string,
             comments: T[],
             currentPage: number,
             lastPage: number,
@@ -43,7 +43,7 @@ export const useCommentsCacheStore = defineStore('spa-comments-cache', {
                 cachedAt: Date.now(),
             };
         },
-        invalidate(postId: number): void {
+        invalidate(postId: string): void {
             delete this.entries[postId];
         },
         clear(): void {

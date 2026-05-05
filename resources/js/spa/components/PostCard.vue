@@ -10,7 +10,7 @@ import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
 
 export interface PostData {
-    id: number;
+    id: string;
     media_url: string;
     media_type: string;
     thumbnail_url: string | null;
@@ -20,13 +20,13 @@ export interface PostData {
     location: string | null;
     created_at: string;
     user: {
-        id: number;
+        id: string;
         name: string;
         username: string;
         avatar: string | null;
     };
     circles?: {
-        id: number;
+        id: string;
         name: string;
         photo: string | null;
     }[];
@@ -40,8 +40,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    (e: 'openComments', postId: number): void;
-    (e: 'openLikes', postId: number): void;
+    (e: 'openComments', postId: string): void;
+    (e: 'openLikes', postId: string): void;
 }>();
 
 function openLikes(): void {

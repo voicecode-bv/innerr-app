@@ -4,11 +4,11 @@ import { useRoute, useRouter } from 'vue-router';
 import AppleAuthButton from '@/spa/components/auth/AppleAuthButton.vue';
 import GoogleAuthButton from '@/spa/components/auth/GoogleAuthButton.vue';
 import Button from '@/components/Button.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
+import { useTranslations } from '@/spa/composables/useTranslations';
+import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
-import { ApiError } from '@/spa/http/apiClient';
 import handIcon from '../../../../svg/doodle-icons/hand.svg';
 import innerrLogo from '../../../../svg/innerr-logo.svg';
 
@@ -44,6 +44,7 @@ const oauthErrorMessages: Record<string, string> = {
 
 onMounted(() => {
     const code = route.query.oauth_error;
+
     if (typeof code === 'string' && code !== '') {
         const messageKey = oauthErrorMessages[code] ?? 'Social sign-in failed';
         flashError.value = t(messageKey);
@@ -65,6 +66,7 @@ const showEmailForm = ref(false);
 
 async function submit(): Promise<void> {
     flashError.value = null;
+    
     try {
         await form.post<{ user: unknown; token: string; redirect_to: string }>(
             '/api/spa/auth/login',

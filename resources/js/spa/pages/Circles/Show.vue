@@ -21,7 +21,7 @@ import userAddIcon from '../../../../svg/doodle-icons/user-add.svg';
 import userRemoveIcon from '../../../../svg/doodle-icons/user-remove.svg';
 
 interface Member {
-    id: number;
+    id: string;
     name: string;
     username: string;
     avatar: string | null;
@@ -29,14 +29,14 @@ interface Member {
 }
 
 interface Invitation {
-    id: number;
+    id: string;
     email: string | null;
     username: string | null;
     created_at: string;
 }
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo: string | null;
     members_count: number;
@@ -52,7 +52,7 @@ const route = useRoute();
 const router = useRouter();
 const circlesStore = useCirclesStore();
 
-const circleId = computed(() => Number(route.params.circle));
+const circleId = computed(() => String(route.params.circle));
 
 const circle = ref<Circle | null>(null);
 const invitations = ref<Invitation[]>([]);
@@ -232,9 +232,9 @@ async function handleMediaSelected(payload: {
     }
 }
 
-let pendingInvitationId: number | null = null;
+let pendingInvitationId: string | null = null;
 
-async function cancelInvitation(invitationId: number): Promise<void> {
+async function cancelInvitation(invitationId: string): Promise<void> {
     pendingInvitationId = invitationId;
     await Dialog.alert()
         .confirm(
@@ -244,9 +244,9 @@ async function cancelInvitation(invitationId: number): Promise<void> {
         .id('cancel-invitation-confirm');
 }
 
-let pendingMemberId: number | null = null;
+let pendingMemberId: string | null = null;
 
-async function removeMember(userId: number): Promise<void> {
+async function removeMember(userId: string): Promise<void> {
     pendingMemberId = userId;
     await Dialog.alert()
         .confirm(

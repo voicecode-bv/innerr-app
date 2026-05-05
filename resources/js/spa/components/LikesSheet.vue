@@ -6,7 +6,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 
 interface LikeUser {
-    id: number;
+    id: string;
     name: string;
     username: string;
     avatar: string | null;
@@ -21,7 +21,7 @@ interface Meta {
 
 const props = defineProps<{
     open: boolean;
-    postId: number;
+    postId: string;
     initialCount?: number;
 }>();
 
@@ -42,7 +42,7 @@ const lastPage = ref(1);
 
 const sentinelRef = useTemplateRef<HTMLDivElement>('sentinel');
 let observer: IntersectionObserver | null = null;
-const seenIds = new Set<number>();
+const seenIds = new Set<string>();
 
 async function loadPage(page: number): Promise<void> {
     const isFirst = page === 1;

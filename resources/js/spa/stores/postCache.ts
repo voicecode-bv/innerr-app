@@ -12,25 +12,25 @@ export const usePostCacheStore = defineStore('spa-post-cache', {
         // shape: Record<postId, CacheEntry<unknown>>
         // Using `unknown` zodat de page zelf het type van Post bezit zonder
         // hier te hoeven importeren — voorkomt circular deps.
-        entries: {} as Record<number, CacheEntry<unknown>>,
+        entries: {} as Record<string, CacheEntry<unknown>>,
     }),
     actions: {
-        get<T>(postId: number, ttlMs: number = FRESH_TTL_MS): T | null {
+        get<T>(postId: string, ttlMs: number = FRESH_TTL_MS): T | null {
             const entry = this.entries[postId];
             if (!entry) return null;
             if (Date.now() - entry.cachedAt > ttlMs) return null;
             return entry.post as T;
         },
-        getStale<T>(postId: number): T | null {
+        getStale<T>(postId: string): T | null {
             return (this.entries[postId]?.post as T | undefined) ?? null;
         },
-        set<T>(postId: number, post: T): void {
+        set<T>(postId: string, post: T): void {
             this.entries[postId] = {
                 post: post as unknown,
                 cachedAt: Date.now(),
             };
         },
-        invalidate(postId: number): void {
+        invalidate(postId: string): void {
             delete this.entries[postId];
         },
         clear(): void {

@@ -50,7 +50,7 @@ function goBack(): void {
     }
 }
 
-function handlePostClick(postId: number): void {
+function handlePostClick(postId: string): void {
     router.push({ name: 'spa.posts.show', params: { post: postId } });
 }
 </script>

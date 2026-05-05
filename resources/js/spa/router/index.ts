@@ -14,6 +14,7 @@ declare module 'vue-router' {
         guest?: boolean;
         onboarded?: boolean;
         iosOnly?: boolean;
+        mobileOnly?: boolean;
     }
 }
 
@@ -199,16 +200,16 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true },
     },
     {
-        path: '/settings/apple-subscriptions',
-        name: 'spa.settings.apple-subscriptions',
-        component: () => import('@/spa/pages/Settings/AppleSubscriptions.vue'),
-        meta: { auth: true, onboarded: true, iosOnly: true },
+        path: '/settings/storage',
+        name: 'spa.settings.storage',
+        component: () => import('@/spa/pages/Settings/Storage.vue'),
+        meta: { auth: true, onboarded: true },
     },
     {
-        path: '/settings/google-subscriptions',
-        name: 'spa.settings.google-subscriptions',
-        component: () => import('@/spa/pages/Settings/GoogleSubscriptions.vue'),
-        meta: { auth: true, onboarded: true, androidOnly: true },
+        path: '/settings/subscriptions',
+        name: 'spa.settings.subscriptions',
+        component: () => import('@/spa/pages/Settings/Subscriptions.vue'),
+        meta: { auth: true, onboarded: true, mobileOnly: true },
     },
 
     // Catch-all → login
@@ -243,6 +244,15 @@ router.beforeEach(async (to) => {
         await ensureDetected();
 
         if (!isIos.value) {
+            return { name: 'spa.settings' };
+        }
+    }
+
+    if (to.meta.mobileOnly) {
+        const { isIos, isAndroid, ensureDetected } = usePlatform();
+        await ensureDetected();
+
+        if (!isIos.value && !isAndroid.value) {
             return { name: 'spa.settings' };
         }
     }

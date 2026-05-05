@@ -6,7 +6,7 @@ import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 
 interface PhotoProperties {
-    post_id: number;
+    post_id: string;
     media_type: 'image' | 'video';
     thumbnail_url: string | null;
     taken_at: string | null;
@@ -21,7 +21,7 @@ const props = withDefaults(
         mapboxToken: string | null;
         fetchUrl: string;
         mediaType?: 'image' | 'video' | 'all';
-        onPostClick?: (postId: number) => void;
+        onPostClick?: (postId: string) => void;
     }>(),
     {
         mediaType: 'all',

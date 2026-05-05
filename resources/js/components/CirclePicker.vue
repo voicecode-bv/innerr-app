@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 import userIcon from '../../svg/doodle-icons/user.svg';
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo?: string | null;
     members_count?: number;
@@ -15,7 +15,7 @@ interface Circle {
 const props = withDefaults(
     defineProps<{
         circles: Circle[];
-        selectedIds: number[];
+        selectedIds: string[];
         error?: string | null;
         defaultCollapsed?: boolean;
         layout?: 'scroll' | 'grid';
@@ -28,7 +28,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    (e: 'update:selectedIds', value: number[]): void;
+    (e: 'update:selectedIds', value: string[]): void;
 }>();
 
 const { t } = useTranslations();
@@ -67,7 +67,7 @@ const summaryText = computed(() => {
     return t(':count selected', { count: String(props.selectedIds.length) });
 });
 
-function toggle(circleId: number) {
+function toggle(circleId: string) {
     if (props.selectedIds.includes(circleId)) {
         emit(
             'update:selectedIds',

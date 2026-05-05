@@ -19,7 +19,7 @@ class CircleMediaController extends Controller
 {
     public function __construct(protected ApiClient $apiClient) {}
 
-    public function updatePhoto(Request $request, int $circle): JsonResponse
+    public function updatePhoto(Request $request, string $circle): JsonResponse
     {
         $validated = $request->validate([
             'photo_path' => ['required', 'string'],

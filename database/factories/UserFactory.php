@@ -18,7 +18,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'api_user_id' => $this->faker->unique()->numberBetween(1, 1_000_000),
+            'api_user_id' => $this->faker->unique()->uuid(),
             'name' => $this->faker->name(),
             'username' => $this->faker->unique()->userName(),
             'email' => $this->faker->unique()->safeEmail(),

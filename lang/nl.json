@@ -513,5 +513,16 @@
     "Comment posted": "Reactie geplaatst",
     "Language updated": "Taal bijgewerkt",
     "Failed to update preferences": "Voorkeuren bijwerken mislukt",
+    "Storage": "Opslag",
+    "Storage usage": "Opslaggebruik",
+    "This is the total space used by the photos and videos you have uploaded to your circles. Items shared with you by others do not count towards your limit.": "Dit is de totale ruimte die wordt gebruikt door de foto's en video's die jij naar je kringen hebt geüpload. Items die anderen met jou delen tellen niet mee voor je limiet.",
+    "Plan: :plan": "Abonnement: :plan",
+    "of :total used": "van :total gebruikt",
+    ":percent% used": ":percent% gebruikt",
+    "Need more space?": "Meer ruimte nodig?",
+    "Upgrade to Familie+ for 1 TB of storage for your photos and videos.": "Upgrade naar Familie+ voor 1 TB opslag voor je foto's en video's.",
+    "View subscriptions": "Bekijk abonnementen",
+    "Could not load storage usage.": "Kon het opslaggebruik niet laden.",
+    "Unlimited": "Onbeperkt",
     "Something went wrong. Please try again.": "Er is iets misgegaan. Probeer het opnieuw."
 }

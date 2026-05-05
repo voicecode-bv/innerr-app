@@ -24,7 +24,7 @@ import { useAuthStore } from '@/spa/stores/auth';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
 
 interface Profile {
-    id: number;
+    id: string;
     name: string;
     username: string;
     avatar: string | null;

@@ -29,14 +29,14 @@ import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { useTagsStore } from '@/spa/stores/tags';
 import type { PostData } from '@/spa/components/PostCard.vue';
-import { api } from '@/spa/http/apiClient';
+import { api, ApiError } from '@/spa/http/apiClient';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import cropIcon from '../../../svg/doodle-icons/crop.svg';
 import photoIcon from '../../../svg/doodle-icons/photo.svg';
 import videoCameraIcon from '../../../svg/doodle-icons/video-camera.svg';
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo?: string | null;
     members_count?: number;
@@ -45,18 +45,18 @@ interface Circle {
 }
 
 interface Tag {
-    id: number;
+    id: string;
     name: string;
     usage_count?: number;
 }
 
 interface Person {
-    id: number;
+    id: string;
     name: string;
     avatar?: string | null;
     avatar_thumbnail?: string | null;
-    user_id?: number | null;
-    circle_ids?: number[];
+    user_id?: string | null;
+    circle_ids?: string[];
 }
 
 const { t } = useTranslations();
@@ -69,7 +69,7 @@ const tagsStore = useTagsStore();
 const defaultCirclesStore = useDefaultCirclesStore();
 
 const circles = computed<Circle[]>(() => circlesStore.items ?? []);
-const defaultCircleIds = computed<number[]>(
+const defaultCircleIds = computed<string[]>(
     () => defaultCirclesStore.ids ?? [],
 );
 const availableTags = computed<Tag[]>(() => tagsStore.items ?? []);
@@ -103,9 +103,9 @@ async function loadFormData(): Promise<void> {
 const form = useApiForm({
     media_path: null as string | null,
     caption: '',
-    circle_ids: [] as number[],
-    tag_ids: [] as number[],
-    person_ids: [] as number[],
+    circle_ids: [] as string[],
+    tag_ids: [] as string[],
+    person_ids: [] as string[],
 });
 
 const mediaPreview = ref<string | null>(null);
@@ -347,7 +347,7 @@ onUnmounted(() => {
 });
 
 function buildOptimisticPost(): PostData {
-    const tempId = -Date.now();
+    const tempId = `optimistic-${crypto.randomUUID()}`;
     const isVideo = mediaIsVideo.value;
     const previewUrl = mediaPreview.value ?? '';
     const selectedCircles = circles.value
@@ -365,7 +365,7 @@ function buildOptimisticPost(): PostData {
         location: null,
         created_at: new Date().toISOString(),
         user: {
-            id: auth.user?.id ?? 0,
+            id: auth.user?.id ?? '',
             name: auth.user?.name ?? '',
             username: auth.user?.username ?? '',
             avatar: auth.user?.avatar ?? null,

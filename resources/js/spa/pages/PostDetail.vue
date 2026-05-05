@@ -32,28 +32,28 @@ import pencilIcon from '../../../svg/doodle-icons/pencil-3.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
 interface User {
-    id: number;
+    id: string;
     name: string;
     username: string;
     avatar: string | null;
 }
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo: string | null;
 }
 
 interface Tag {
-    id: number;
+    id: string;
     name: string;
 }
 
 interface Person {
-    id: number;
+    id: string;
     name: string;
     avatar_thumbnail?: string | null;
-    user_id?: number | null;
+    user_id?: string | null;
     user_username?: string | null;
     birthdate?: string | null;
 }
@@ -65,21 +65,21 @@ interface AvailableCircle extends Circle {
 }
 
 interface AvailableTag {
-    id: number;
+    id: string;
     name: string;
     usage_count?: number;
 }
 
 interface AvailablePerson {
-    id: number;
+    id: string;
     name: string;
     avatar_thumbnail?: string | null;
     avatar?: string | null;
-    user_id?: number | null;
+    user_id?: string | null;
 }
 
 interface Post {
-    id: number;
+    id: string;
     media_url: string;
     media_type: string;
     thumbnail_url: string | null;
@@ -104,7 +104,7 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
-const postId = computed(() => Number(route.params.post));
+const postId = computed(() => String(route.params.post));
 const post = ref<Post | null>(null);
 const isLoading = ref(true);
 const isDeleting = ref(false);

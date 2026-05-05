@@ -27,11 +27,11 @@ class PostsController extends Controller
             'caption' => ['nullable', 'string', 'max:2200'],
             'location' => ['nullable', 'string', 'max:255'],
             'circle_ids' => ['required', 'array'],
-            'circle_ids.*' => ['integer'],
+            'circle_ids.*' => ['uuid'],
             'tag_ids' => ['nullable', 'array'],
-            'tag_ids.*' => ['integer'],
+            'tag_ids.*' => ['uuid'],
             'person_ids' => ['nullable', 'array'],
-            'person_ids.*' => ['integer'],
+            'person_ids.*' => ['uuid'],
         ]);
 
         $path = $validated['media_path'];

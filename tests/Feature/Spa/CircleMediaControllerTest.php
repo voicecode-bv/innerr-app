@@ -27,7 +27,7 @@ afterEach(function () {
 });
 
 it('rejects circle photo upload without auth', function () {
-    $this->postJson('/api/spa/circles/1/photo', [
+    $this->postJson('/api/spa/circles/550e8400-e29b-41d4-a716-446655440001/photo', [
         'photo_path' => '/tmp/x.jpg',
     ])->assertStatus(401);
 });
@@ -36,7 +36,7 @@ it('returns 422 when circle photo_path does not exist', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->postJson('/api/spa/circles/1/photo', [
+        ->postJson('/api/spa/circles/550e8400-e29b-41d4-a716-446655440001/photo', [
             'photo_path' => '/non/existent/photo.jpg',
         ])
         ->assertStatus(422)
@@ -45,20 +45,20 @@ it('returns 422 when circle photo_path does not exist', function () {
 
 it('forwards multipart upload and invalidates circles cache', function () {
     $user = User::factory()->create();
-    Cache::put(ApiClient::circlesCacheKey(), [['id' => 1]], 300);
+    Cache::put(ApiClient::circlesCacheKey(), [['id' => '550e8400-e29b-41d4-a716-446655440001']], 300);
 
     $apiResponse = new Response(Http::response(['ok' => true], 200)->wait());
 
     $pending = Mockery::mock(PendingRequest::class);
     $pending->shouldReceive('attach')->once()->andReturnSelf();
-    $pending->shouldReceive('post')->once()->with('/circles/9/photo')->andReturn($apiResponse);
+    $pending->shouldReceive('post')->once()->with('/circles/550e8400-e29b-41d4-a716-446655440009/photo')->andReturn($apiResponse);
 
     $client = Mockery::mock(ApiClient::class);
     $client->shouldReceive('authenticated')->andReturn($pending);
     $this->app->instance(ApiClient::class, $client);
 
     $this->actingAs($user)
-        ->postJson('/api/spa/circles/9/photo', [
+        ->postJson('/api/spa/circles/550e8400-e29b-41d4-a716-446655440009/photo', [
             'photo_path' => $this->tempPath,
         ])
         ->assertOk()
@@ -83,7 +83,7 @@ it('returns 422 when external API rejects circle photo', function () {
     $this->app->instance(ApiClient::class, $client);
 
     $this->actingAs($user)
-        ->postJson('/api/spa/circles/9/photo', [
+        ->postJson('/api/spa/circles/550e8400-e29b-41d4-a716-446655440009/photo', [
             'photo_path' => $this->tempPath,
         ])
         ->assertStatus(422)

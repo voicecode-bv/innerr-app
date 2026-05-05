@@ -52,7 +52,7 @@ it('keeps existing local user fields when validateToken fails', function () {
 
 it('returns authenticated user payload with token mirror', function () {
     $user = User::factory()->create([
-        'api_user_id' => 42,
+        'api_user_id' => '550e8400-e29b-41d4-a716-446655440042',
         'name' => 'Jane Doe',
         'username' => 'jane',
         'email' => 'jane@example.com',
@@ -77,6 +77,6 @@ it('returns authenticated user payload with token mirror', function () {
 
     $response->assertOk()
         ->assertJsonPath('user.username', 'jane')
-        ->assertJsonPath('user.id', 42)
+        ->assertJsonPath('user.id', '550e8400-e29b-41d4-a716-446655440042')
         ->assertJsonPath('token', 'jwt-token');
 });

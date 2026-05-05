@@ -12,7 +12,7 @@ import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
 
 export interface User {
-    id: number;
+    id: string;
     name: string;
     username: string;
     email: string;

@@ -504,5 +504,16 @@
     "Comment posted": "Comment posted",
     "Language updated": "Language updated",
     "Failed to update preferences": "Failed to update preferences",
+    "Storage": "Storage",
+    "Storage usage": "Storage usage",
+    "This is the total space used by the photos and videos you have uploaded to your circles. Items shared with you by others do not count towards your limit.": "This is the total space used by the photos and videos you have uploaded to your circles. Items shared with you by others do not count towards your limit.",
+    "Plan: :plan": "Plan: :plan",
+    "of :total used": "of :total used",
+    ":percent% used": ":percent% used",
+    "Need more space?": "Need more space?",
+    "Upgrade to Familie+ for 1 TB of storage for your photos and videos.": "Upgrade to Familie+ for 1 TB of storage for your photos and videos.",
+    "View subscriptions": "View subscriptions",
+    "Could not load storage usage.": "Could not load storage usage.",
+    "Unlimited": "Unlimited",
     "Something went wrong. Please try again.": "Something went wrong. Please try again."
 }

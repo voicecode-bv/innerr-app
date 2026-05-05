@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 
 interface FeedItem {
-    id: number;
+    id: string;
 }
 
 interface FeedCacheEntry<T extends FeedItem> {
@@ -10,7 +10,7 @@ interface FeedCacheEntry<T extends FeedItem> {
     cachedAt: number;
 }
 
-const STORAGE_KEY = 'spa.feed.cache';
+const STORAGE_KEY = 'spa.feed.cache.v2';
 const FRESH_TTL_MS = 30 * 1000;
 
 function readStorage(): Record<string, FeedCacheEntry<FeedItem>> {
@@ -73,7 +73,7 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
             };
             writeStorage(this.entries);
         },
-        removeItem(key: string, id: number): void {
+        removeItem(key: string, id: string): void {
             const existing = this.entries[key];
             if (!existing) return;
             this.entries[key] = {

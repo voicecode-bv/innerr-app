@@ -14,6 +14,7 @@ import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 import circleIcon from '../../../../svg/doodle-icons/circle.svg';
+import cloudIcon from '../../../../svg/doodle-icons/cloud.svg';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
 import globeIcon from '../../../../svg/doodle-icons/globe.svg';
@@ -53,19 +54,15 @@ const menuItems = computed(() => [
         icon: foldedHandsIcon,
         label: 'Inner Gives',
     },
-    ...(isIos.value
+    {
+        routeName: 'spa.settings.storage',
+        icon: cloudIcon,
+        label: 'Storage',
+    },
+    ...(isIos.value || isAndroid.value
         ? [
               {
-                  routeName: 'spa.settings.apple-subscriptions',
-                  icon: crownIcon,
-                  label: 'Subscription',
-              },
-          ]
-        : []),
-    ...(isAndroid.value
-        ? [
-              {
-                  routeName: 'spa.settings.google-subscriptions',
+                  routeName: 'spa.settings.subscriptions',
                   icon: crownIcon,
                   label: 'Subscription',
               },

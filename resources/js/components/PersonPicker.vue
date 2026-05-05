@@ -4,17 +4,17 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import userIcon from '../../svg/doodle-icons/user.svg';
 
 interface Person {
-    id: number;
+    id: string;
     name: string;
     avatar_thumbnail?: string | null;
     avatar?: string | null;
-    user_id?: number | null;
+    user_id?: string | null;
 }
 
 const props = withDefaults(
     defineProps<{
         persons: Person[];
-        selectedIds: number[];
+        selectedIds: string[];
         error?: string | null;
         defaultCollapsed?: boolean;
         layout?: 'scroll' | 'grid';
@@ -27,7 +27,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    (e: 'update:selectedIds', value: number[]): void;
+    (e: 'update:selectedIds', value: string[]): void;
 }>();
 
 const { t } = useTranslations();
@@ -61,7 +61,7 @@ const sortedPersons = computed(() =>
     ),
 );
 
-function toggle(personId: number) {
+function toggle(personId: string) {
     if (props.selectedIds.includes(personId)) {
         emit(
             'update:selectedIds',

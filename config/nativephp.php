@@ -111,6 +111,8 @@ return [
         '*_SECRET',
         'DB_PASSWORD',
         'DB_USERNAME',
+        'ANDROID_*',
+        'IOS_*',
     ],
 
     /*
@@ -128,7 +130,7 @@ return [
         'storage/framework/sessions',
         'storage/framework/cache',
         'storage/framework/testing',
-        'storage/logs/laravel.log'
+        'storage/logs/laravel.log',
     ],
 
     /*

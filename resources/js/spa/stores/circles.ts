@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { externalApi } from '@/spa/http/externalApi';
 
 export interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo: string | null;
     members_count?: number;
@@ -11,7 +11,7 @@ export interface Circle {
     created_at?: string;
 }
 
-const STORAGE_KEY = 'spa.circles.cache';
+const STORAGE_KEY = 'spa.circles.cache.v2';
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 
 function readWarmCache(): Circle[] | null {
@@ -76,14 +76,14 @@ export const useCirclesStore = defineStore('spa-circles', {
             this.items = [circle, ...(this.items ?? [])];
             writeWarmCache(this.items);
         },
-        update(id: number, patch: Partial<Circle>): void {
+        update(id: string, patch: Partial<Circle>): void {
             if (!this.items) return;
             this.items = this.items.map((c) =>
                 c.id === id ? { ...c, ...patch } : c,
             );
             writeWarmCache(this.items);
         },
-        remove(id: number): void {
+        remove(id: string): void {
             if (!this.items) return;
             this.items = this.items.filter((c) => c.id !== id);
             writeWarmCache(this.items);

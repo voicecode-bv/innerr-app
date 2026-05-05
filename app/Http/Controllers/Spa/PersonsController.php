@@ -19,7 +19,7 @@ class PersonsController extends Controller
 {
     public function __construct(protected ApiClient $apiClient) {}
 
-    public function updatePhoto(Request $request, int $person): JsonResponse
+    public function updatePhoto(Request $request, string $person): JsonResponse
     {
         $validated = $request->validate([
             'photo_path' => ['required', 'string'],

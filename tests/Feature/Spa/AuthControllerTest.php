@@ -14,7 +14,7 @@ it('returns user + token + redirect on successful login', function () {
     $client->shouldReceive('login')->once()->with('jane@example.com', 'secret123')->andReturn([
         'success' => true,
         'user' => [
-            'id' => 42,
+            'id' => '550e8400-e29b-41d4-a716-446655440042',
             'name' => 'Jane',
             'username' => 'jane',
             'email' => 'jane@example.com',
@@ -25,7 +25,7 @@ it('returns user + token + redirect on successful login', function () {
         ],
     ]);
     $client->shouldReceive('getToken')->andReturn('jwt-token');
-    $client->shouldReceive('cachedCircles')->andReturn([['id' => 1, 'name' => 'Family']]);
+    $client->shouldReceive('cachedCircles')->andReturn([['id' => '550e8400-e29b-41d4-a716-446655441001', 'name' => 'Family']]);
     $this->app->instance(ApiClient::class, $client);
 
     $response = $this->postJson('/api/spa/auth/login', [
@@ -38,7 +38,7 @@ it('returns user + token + redirect on successful login', function () {
         ->assertJsonPath('token', 'jwt-token')
         ->assertJsonPath('redirect_to', '/');
 
-    $this->assertDatabaseHas('users', ['username' => 'jane', 'api_user_id' => 42]);
+    $this->assertDatabaseHas('users', ['username' => 'jane', 'api_user_id' => '550e8400-e29b-41d4-a716-446655440042']);
     $this->assertAuthenticated();
 });
 
@@ -49,7 +49,7 @@ it('redirects new users to onboarding when no circles exist', function () {
     $client->shouldReceive('login')->andReturn([
         'success' => true,
         'user' => [
-            'id' => 42, 'name' => 'Jane', 'username' => 'jane',
+            'id' => '550e8400-e29b-41d4-a716-446655440042', 'name' => 'Jane', 'username' => 'jane',
             'email' => 'jane@example.com', 'avatar' => null, 'bio' => null,
             'locale' => 'en', 'onboarded_at' => null,
         ],

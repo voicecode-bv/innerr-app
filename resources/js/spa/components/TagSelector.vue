@@ -4,7 +4,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi, ApiError } from '@/spa/http/externalApi';
 
 interface Tag {
-    id: number;
+    id: string;
     name: string;
     usage_count?: number;
 }
@@ -12,7 +12,7 @@ interface Tag {
 const props = withDefaults(
     defineProps<{
         availableTags?: Tag[] | null;
-        selectedIds: number[];
+        selectedIds: string[];
         error?: string | null;
     }>(),
     {
@@ -22,7 +22,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-    (e: 'update:selectedIds', value: number[]): void;
+    (e: 'update:selectedIds', value: string[]): void;
     (e: 'tag-created', value: Tag): void;
 }>();
 
@@ -37,7 +37,7 @@ const inputRef = ref<HTMLInputElement | null>(null);
 const activeIndex = ref(0);
 
 const tags = computed<Tag[]>(() => {
-    const seen = new Set<number>();
+    const seen = new Set<string>();
     const merged: Tag[] = [];
 
     for (const tag of [...(props.availableTags ?? []), ...localTags.value]) {
@@ -54,7 +54,7 @@ const tags = computed<Tag[]>(() => {
 });
 
 const tagsById = computed(() => {
-    const map = new Map<number, Tag>();
+    const map = new Map<string, Tag>();
     for (const tag of tags.value) {
         map.set(tag.id, tag);
     }
@@ -100,7 +100,7 @@ function closeDropdown(): void {
     isOpen.value = false;
 }
 
-function selectTag(tagId: number): void {
+function selectTag(tagId: string): void {
     if (props.selectedIds.includes(tagId)) return;
     emit('update:selectedIds', [...props.selectedIds, tagId]);
     query.value = '';
@@ -108,7 +108,7 @@ function selectTag(tagId: number): void {
     nextTick(() => inputRef.value?.focus());
 }
 
-function removeTag(tagId: number): void {
+function removeTag(tagId: string): void {
     emit(
         'update:selectedIds',
         props.selectedIds.filter((id) => id !== tagId),

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { externalApi } from '@/spa/http/externalApi';
 
 export interface Tag {
-    id: number;
+    id: string;
     name: string;
     usage_count: number;
 }
@@ -44,13 +44,13 @@ export const useTagsStore = defineStore('spa-tags', {
         prepend(tag: Tag): void {
             this.items = [tag, ...(this.items ?? [])];
         },
-        update(id: number, patch: Partial<Tag>): void {
+        update(id: string, patch: Partial<Tag>): void {
             if (!this.items) return;
             this.items = this.items.map((t) =>
                 t.id === id ? { ...t, ...patch } : t,
             );
         },
-        remove(id: number): void {
+        remove(id: string): void {
             if (!this.items) return;
             this.items = this.items.filter((t) => t.id !== id);
         },

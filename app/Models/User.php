@@ -47,7 +47,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'api_user_id' => 'integer',
+            'api_user_id' => 'string',
             'email_verified_at' => 'datetime',
             'notifications_prompted_at' => 'datetime',
             'onboarded_at' => 'datetime',

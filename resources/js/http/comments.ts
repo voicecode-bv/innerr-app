@@ -33,14 +33,14 @@ async function request<T>(
     return response.json() as Promise<T>;
 }
 
-export function fetchComments(postId: number): Promise<Comment[]> {
+export function fetchComments(postId: string): Promise<Comment[]> {
     return request<Comment[]>(`/posts/${postId}/comments`, 'GET');
 }
 
 export function postComment(
-    postId: number,
+    postId: string,
     body: string,
-    parentCommentId: number | null = null,
+    parentCommentId: string | null = null,
 ): Promise<Comment> {
     return request<Comment>(`/posts/${postId}/comments`, 'POST', {
         body,

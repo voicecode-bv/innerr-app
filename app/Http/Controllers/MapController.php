@@ -23,7 +23,7 @@ class MapController extends Controller
         return $this->proxyPhotoMap($request, $apiClient, "/profiles/{$username}/photos/map");
     }
 
-    public function circlePhotos(int $circle, Request $request, ApiClient $apiClient): JsonResponse
+    public function circlePhotos(string $circle, Request $request, ApiClient $apiClient): JsonResponse
     {
         return $this->proxyPhotoMap($request, $apiClient, "/circles/{$circle}/photos/map");
     }

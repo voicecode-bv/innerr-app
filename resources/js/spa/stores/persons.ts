@@ -2,14 +2,14 @@ import { defineStore } from 'pinia';
 import { externalApi } from '@/spa/http/externalApi';
 
 export interface Person {
-    id: number;
+    id: string;
     name: string;
     birthdate: string | null;
     avatar: string | null;
     avatar_thumbnail: string | null;
     usage_count: number;
-    user_id?: number | null;
-    circle_ids?: number[];
+    user_id?: string | null;
+    circle_ids?: string[];
 }
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
@@ -51,13 +51,13 @@ export const usePersonsStore = defineStore('spa-persons', {
         prepend(person: Person): void {
             this.items = [person, ...(this.items ?? [])];
         },
-        update(id: number, patch: Partial<Person>): void {
+        update(id: string, patch: Partial<Person>): void {
             if (!this.items) return;
             this.items = this.items.map((p) =>
                 p.id === id ? { ...p, ...patch } : p,
             );
         },
-        remove(id: number): void {
+        remove(id: string): void {
             if (!this.items) return;
             this.items = this.items.filter((p) => p.id !== id);
         },

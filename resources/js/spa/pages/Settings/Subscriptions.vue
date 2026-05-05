@@ -7,9 +7,11 @@ import Confetti from '@/components/Confetti.vue';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
+import { usePlatform } from '@/spa/composables/usePlatform';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import {
     products as fetchProducts,
@@ -54,21 +56,58 @@ type Tier = {
     yearly?: Product;
 };
 
-const PRODUCT_IDS = [
+const APPLE_PRODUCT_IDS = [
     'pro_apple_yearly',
     'pro_apple_monthly',
     'plus_apple_yearly',
     'plus_apple_monthly',
 ];
 
+const GOOGLE_PRODUCT_IDS = [
+    'pro_google_yearly',
+    'pro_google_monthly',
+    'plus_google_yearly',
+    'plus_google_monthly',
+];
+
+const APPLE_MANAGE_URL = 'https://apps.apple.com/account/subscriptions';
+const GOOGLE_MANAGE_URL =
+    'https://play.google.com/store/account/subscriptions';
+
 const SHOW_DEBUG =
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
-const MANAGE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
-
 const { t } = useTranslations();
 const i18n = useI18nStore();
+const auth = useAuthStore();
 const router = useRouter();
+const { isIos, isAndroid } = usePlatform();
+
+const platform = computed<'apple' | 'google'>(() =>
+    isAndroid.value && !isIos.value ? 'google' : 'apple',
+);
+
+const PRODUCT_IDS = computed(() =>
+    platform.value === 'google' ? GOOGLE_PRODUCT_IDS : APPLE_PRODUCT_IDS,
+);
+
+const MANAGE_SUBSCRIPTIONS_URL = computed(() =>
+    platform.value === 'google' ? GOOGLE_MANAGE_URL : APPLE_MANAGE_URL,
+);
+
+const renewalDisclaimer = computed(() =>
+    platform.value === 'google'
+        ? t(
+              'Subscriptions automatically renew at the end of each billing period unless cancelled at least 24 hours before. Your Google account will be charged for renewal at the same price. You can manage and cancel your subscription in the Google Play account settings.',
+          )
+        : t(
+              'Subscriptions automatically renew at the end of each billing period unless cancelled at least 24 hours before. Your Apple ID will be charged for renewal at the same price. You can manage and cancel your subscription in the App Store account settings.',
+          ),
+);
+
+const logPrefix = computed(() =>
+    platform.value === 'google' ? '[GoogleSubscriptions]' : '[AppleSubscriptions]',
+);
 
 const productList = ref<Product[]>([]);
 const entitlements = ref<Entitlement[]>([]);
@@ -105,24 +144,28 @@ function findProduct(id: string): Product | undefined {
     return productList.value.find((product) => product.id === id);
 }
 
-const tiers = computed<Tier[]>(() => [
-    {
-        key: 'plus',
-        title: t('Gezin'),
-        description: t('100 GB storage for your photos and videos.'),
-        icon: diamondIcon,
-        monthly: findProduct('plus_apple_monthly'),
-        yearly: findProduct('plus_apple_yearly'),
-    },
-    {
-        key: 'pro',
-        title: t('Familie+'),
-        description: t('1 TB storage for your photos and videos.'),
-        icon: crownIcon,
-        monthly: findProduct('pro_apple_monthly'),
-        yearly: findProduct('pro_apple_yearly'),
-    },
-]);
+const tiers = computed<Tier[]>(() => {
+    const suffix = platform.value === 'google' ? 'google' : 'apple';
+
+    return [
+        {
+            key: 'plus',
+            title: t('Gezin'),
+            description: t('100 GB storage for your photos and videos.'),
+            icon: diamondIcon,
+            monthly: findProduct(`plus_${suffix}_monthly`),
+            yearly: findProduct(`plus_${suffix}_yearly`),
+        },
+        {
+            key: 'pro',
+            title: t('Familie+'),
+            description: t('1 TB storage for your photos and videos.'),
+            icon: crownIcon,
+            monthly: findProduct(`pro_${suffix}_monthly`),
+            yearly: findProduct(`pro_${suffix}_yearly`),
+        },
+    ];
+});
 
 const activeEntitlement = computed(() => entitlements.value[0] ?? null);
 
@@ -144,25 +187,30 @@ type EntitlementResponse = {
     is_premium?: boolean;
     entitlements?: Entitlement[];
 };
-type MessageResponse = { message?: string };
 
 async function loadProducts(): Promise<void> {
     try {
-        const result = (await fetchProducts(PRODUCT_IDS)) as ProductsResponse;
+        const result = (await fetchProducts(
+            PRODUCT_IDS.value,
+        )) as ProductsResponse;
 
-        console.log('[AppleSubscriptions] products result', result);
-        debugRaw.value = JSON.stringify(result, null, 2);
+        if (SHOW_DEBUG) {
+            console.log(`${logPrefix.value} products result`, result);
+            debugRaw.value = JSON.stringify(result, null, 2);
+        }
         productList.value = result.products ?? [];
     } catch (err) {
         const e = err as { code?: string; message?: string; data?: unknown };
 
-        console.error('[AppleSubscriptions] products error', e);
-        debugRaw.value = JSON.stringify(
-            { code: e.code, message: e.message, data: e.data },
-            null,
-            2,
-        );
-        const code = e.code ? ` (${e.code})` : '';
+        if (SHOW_DEBUG) {
+            console.error(`${logPrefix.value} products error`, e);
+            debugRaw.value = JSON.stringify(
+                { code: e.code, message: e.message, data: e.data },
+                null,
+                2,
+            );
+        }
+        const code = SHOW_DEBUG && e.code ? ` (${e.code})` : '';
         errorMessage.value =
             (e.message ?? t('Could not load purchases.')) + code;
     }
@@ -189,16 +237,24 @@ async function purchase(productId: string): Promise<void> {
     const startedAt = new Date().toISOString();
 
     try {
-        const result = (await buyProduct(productId)) as Record<string, unknown>;
+        const appAccountToken = auth.user?.id;
+        const result = (await buyProduct(
+            productId,
+            appAccountToken ? { appAccountToken } : {},
+        )) as Record<string, unknown>;
 
-        console.log('[AppleSubscriptions] purchase result', result);
-        message.value =
-            (result.message as string | undefined) ?? t('Purchase successful.');
-        purchaseDebug.value = {
-            label: t('Purchase debug: :id', { id: productId }),
-            outcome: 'success',
-            payload: JSON.stringify({ startedAt, productId, result }, null, 2),
-        };
+        if (SHOW_DEBUG) {
+            console.log(`${logPrefix.value} purchase result`, result);
+            purchaseDebug.value = {
+                label: t('Purchase debug: :id', { id: productId }),
+                outcome: 'success',
+                payload: JSON.stringify(
+                    { startedAt, productId, appAccountToken, result },
+                    null,
+                    2,
+                ),
+            };
+        }
         await refreshEntitlement();
     } catch (err) {
         const e = err as {
@@ -208,23 +264,25 @@ async function purchase(productId: string): Promise<void> {
             data?: unknown;
         };
 
-        console.error('[AppleSubscriptions] purchase error', e);
-        purchaseDebug.value = {
-            label: t('Purchase debug: :id', { id: productId }),
-            outcome: e.code === 'user_cancelled' ? 'cancelled' : 'error',
-            payload: JSON.stringify(
-                {
-                    startedAt,
-                    productId,
-                    code: e.code,
-                    message: e.message,
-                    status: e.status,
-                    data: e.data,
-                },
-                null,
-                2,
-            ),
-        };
+        if (SHOW_DEBUG) {
+            console.error(`${logPrefix.value} purchase error`, e);
+            purchaseDebug.value = {
+                label: t('Purchase debug: :id', { id: productId }),
+                outcome: e.code === 'user_cancelled' ? 'cancelled' : 'error',
+                payload: JSON.stringify(
+                    {
+                        startedAt,
+                        productId,
+                        code: e.code,
+                        message: e.message,
+                        status: e.status,
+                        data: e.data,
+                    },
+                    null,
+                    2,
+                ),
+            };
+        }
 
         if (e.code === 'user_cancelled') {
             return;
@@ -249,14 +307,16 @@ async function restore(): Promise<void> {
     try {
         const result = (await restorePurchases()) as Record<string, unknown>;
 
-        console.log('[AppleSubscriptions] restore result', result);
+        if (SHOW_DEBUG) {
+            console.log(`${logPrefix.value} restore result`, result);
+            purchaseDebug.value = {
+                label: t('Restore debug'),
+                outcome: 'success',
+                payload: JSON.stringify({ startedAt, result }, null, 2),
+            };
+        }
         message.value =
             (result.message as string | undefined) ?? t('Purchases restored.');
-        purchaseDebug.value = {
-            label: t('Restore debug'),
-            outcome: 'success',
-            payload: JSON.stringify({ startedAt, result }, null, 2),
-        };
         await refreshEntitlement();
     } catch (err) {
         const e = err as {
@@ -266,22 +326,24 @@ async function restore(): Promise<void> {
             data?: unknown;
         };
 
-        console.error('[AppleSubscriptions] restore error', e);
-        purchaseDebug.value = {
-            label: t('Restore debug'),
-            outcome: e.code === 'user_cancelled' ? 'cancelled' : 'error',
-            payload: JSON.stringify(
-                {
-                    startedAt,
-                    code: e.code,
-                    message: e.message,
-                    status: e.status,
-                    data: e.data,
-                },
-                null,
-                2,
-            ),
-        };
+        if (SHOW_DEBUG) {
+            console.error(`${logPrefix.value} restore error`, e);
+            purchaseDebug.value = {
+                label: t('Restore debug'),
+                outcome: e.code === 'user_cancelled' ? 'cancelled' : 'error',
+                payload: JSON.stringify(
+                    {
+                        startedAt,
+                        code: e.code,
+                        message: e.message,
+                        status: e.status,
+                        data: e.data,
+                    },
+                    null,
+                    2,
+                ),
+            };
+        }
 
         if (e.code === 'user_cancelled') {
             return;
@@ -770,11 +832,7 @@ onMounted(async () => {
                     <p
                         class="mt-2 leading-relaxed text-sand-500 dark:text-sand-400"
                     >
-                        {{
-                            t(
-                                'Subscriptions automatically renew at the end of each billing period unless cancelled at least 24 hours before. Your Apple ID will be charged for renewal at the same price. You can manage and cancel your subscription in the App Store account settings.',
-                            )
-                        }}
+                        {{ renewalDisclaimer }}
                     </p>
 
                     <div class="flex flex-col items-center gap-2 text-center">

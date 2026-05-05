@@ -13,7 +13,7 @@ import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 
 interface Member {
-    id: number;
+    id: string;
     name: string;
     username: string;
     avatar: string | null;
@@ -21,7 +21,7 @@ interface Member {
 }
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo: string | null;
     members: Member[] | null;
@@ -29,14 +29,14 @@ interface Circle {
 }
 
 interface TransferUser {
-    id: number;
+    id: string;
     name: string;
     username: string;
     avatar: string | null;
 }
 
 interface PendingTransfer {
-    id: number;
+    id: string;
     created_at: string;
     from_user: TransferUser;
     to_user: TransferUser;
@@ -46,7 +46,7 @@ const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 
-const circleId = computed(() => Number(route.params.circle));
+const circleId = computed(() => String(route.params.circle));
 
 const circle = ref<Circle | null>(null);
 const pendingTransfer = ref<PendingTransfer | null>(null);
@@ -70,7 +70,7 @@ async function loadData(): Promise<void> {
 
 onMounted(loadData);
 
-const selectedMemberId = ref<number | null>(null);
+const selectedMemberId = ref<string | null>(null);
 
 const eligibleMembers = computed(() =>
     (circle.value?.members ?? []).filter((m) => !m.is_owner),

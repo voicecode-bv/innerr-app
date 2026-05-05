@@ -51,7 +51,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
 onMounted(() => loadDefaults());
 
-async function toggleCircle(circleId: number): Promise<void> {
+async function toggleCircle(circleId: string): Promise<void> {
     // Intersect met de zichtbare kringen zodat eventuele stale IDs (kring
     // verwijderd of lidmaatschap opgezegd) niet meer in de payload komen —
     // de externe API valideert dat ieder ID nog geldig is.

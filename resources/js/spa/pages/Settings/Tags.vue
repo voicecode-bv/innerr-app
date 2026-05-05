@@ -61,7 +61,11 @@ async function createTag(): Promise<void> {
     const name = createForm.data.name.trim();
     if (!name || createForm.processing) return;
 
-    const optimistic: Tag = { id: -Date.now(), name, usage_count: 0 };
+    const optimistic: Tag = {
+        id: `optimistic-${crypto.randomUUID()}`,
+        name,
+        usage_count: 0,
+    };
     tagsStore.prepend(optimistic);
     showCreateForm.value = false;
     createForm.reset();
@@ -76,7 +80,7 @@ async function createTag(): Promise<void> {
     }
 }
 
-const editingTagId = ref<number | null>(null);
+const editingTagId = ref<string | null>(null);
 const editForm = useApiForm({ name: '' }, externalApi);
 
 function startEdit(tag: Tag): void {
@@ -106,7 +110,7 @@ async function saveEdit(tag: Tag): Promise<void> {
     }
 }
 
-let pendingDeleteTagId: number | null = null;
+let pendingDeleteTagId: string | null = null;
 
 async function confirmDelete(tag: Tag): Promise<void> {
     pendingDeleteTagId = tag.id;

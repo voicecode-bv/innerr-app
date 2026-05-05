@@ -29,18 +29,18 @@ import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 
 interface Person {
-    id: number;
+    id: string;
     name: string;
     birthdate: string | null;
     avatar: string | null;
     avatar_thumbnail: string | null;
     usage_count: number;
-    user_id?: number | null;
-    circle_ids?: number[];
+    user_id?: string | null;
+    circle_ids?: string[];
 }
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo?: string | null;
     is_owner?: boolean;
@@ -100,15 +100,15 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
 onMounted(loadData);
 
-const selectedCircleIds = ref<number[]>([]);
+const selectedCircleIds = ref<string[]>([]);
 
-function defaultCreateCircleIds(): number[] {
+function defaultCreateCircleIds(): string[] {
     return circles.value
         .filter((circle) => circle.is_owner === true)
         .map((circle) => circle.id);
 }
 
-const editingPersonId = ref<number | null>(null);
+const editingPersonId = ref<string | null>(null);
 const editingPerson = computed<Person | null>(() => {
     if (editingPersonId.value === null) {
         return null;
@@ -125,7 +125,7 @@ const editForm = useApiForm(
     {
         name: '',
         birthdate: '' as string | null,
-        circle_ids: [] as number[],
+        circle_ids: [] as string[],
     },
     externalApi,
 );
@@ -162,12 +162,12 @@ function closeSheet(): void {
 }
 
 async function syncCircleIds(
-    personId: number,
-    current: number[],
-    desired: number[],
+    personId: string,
+    current: string[],
+    desired: string[],
 ): Promise<void> {
-    const desiredUnique = Array.from(new Set(desired.map((id) => Number(id))));
-    const currentUnique = Array.from(new Set(current.map((id) => Number(id))));
+    const desiredUnique = Array.from(new Set(desired));
+    const currentUnique = Array.from(new Set(current));
 
     const toAttach = desiredUnique.filter((id) => !currentUnique.includes(id));
     const toDetach = currentUnique.filter((id) => !desiredUnique.includes(id));
@@ -289,7 +289,7 @@ async function createPerson(): Promise<void> {
     }
 }
 
-let pendingDeletePersonId: number | null = null;
+let pendingDeletePersonId: string | null = null;
 
 async function confirmDelete(person: Person): Promise<void> {
     if (person.user_id) {

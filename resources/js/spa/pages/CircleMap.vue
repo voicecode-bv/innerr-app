@@ -8,7 +8,7 @@ import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { externalApi } from '@/spa/http/externalApi';
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo: string | null;
 }
@@ -17,7 +17,7 @@ const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 
-const circleId = computed(() => Number(route.params.circle));
+const circleId = computed(() => String(route.params.circle));
 
 const serviceKeys = useServiceKeysStore();
 const mapboxToken = computed(() => serviceKeys.mapboxToken);
@@ -49,7 +49,7 @@ function goBack(): void {
     }
 }
 
-function handlePostClick(postId: number): void {
+function handlePostClick(postId: string): void {
     router.push({ name: 'spa.posts.show', params: { post: postId } });
 }
 </script>

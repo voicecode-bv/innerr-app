@@ -16,7 +16,7 @@ import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { externalApi } from '@/spa/http/externalApi';
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo: string | null;
 }
@@ -26,7 +26,7 @@ const route = useRoute();
 const router = useRouter();
 const feedCache = useFeedCacheStore();
 
-const circleId = computed(() => Number(route.params.circle));
+const circleId = computed(() => String(route.params.circle));
 const feedKey = computed(() => `circle:${circleId.value}`);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -81,18 +81,18 @@ onMounted(() => {
     }
 });
 
-const commentsPostId = ref<number | null>(null);
+const commentsPostId = ref<string | null>(null);
 const isCommentsOpen = ref(false);
 
-const likesPostId = ref<number | null>(null);
+const likesPostId = ref<string | null>(null);
 const isLikesOpen = ref(false);
 
-function openCommentsForPost(postId: number): void {
+function openCommentsForPost(postId: string): void {
     commentsPostId.value = postId;
     isCommentsOpen.value = true;
 }
 
-function openLikesForPost(postId: number): void {
+function openLikesForPost(postId: string): void {
     likesPostId.value = postId;
     isLikesOpen.value = true;
 }

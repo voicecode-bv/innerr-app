@@ -12,7 +12,7 @@ import { useApiForm } from '@/spa/composables/useApiForm';
 import { externalApi } from '@/spa/http/externalApi';
 
 interface Circle {
-    id: number;
+    id: string;
     name: string;
     photo?: string | null;
     members_count?: number;
@@ -21,24 +21,24 @@ interface Circle {
 }
 
 interface Tag {
-    id: number;
+    id: string;
     name: string;
     usage_count?: number;
 }
 
 interface Person {
-    id: number;
+    id: string;
     name: string;
     avatar?: string | null;
     avatar_thumbnail?: string | null;
-    user_id?: number | null;
-    circle_ids?: number[];
+    user_id?: string | null;
+    circle_ids?: string[];
 }
 
 const props = withDefaults(
     defineProps<{
         open: boolean;
-        postId: number;
+        postId: string;
         caption: string | null;
         circles: Circle[];
         availableCircles?: Circle[] | null;
@@ -118,7 +118,7 @@ watch(
     },
 );
 
-function sameIds(a: number[], b: number[]): boolean {
+function sameIds(a: string[], b: string[]): boolean {
     if (a.length !== b.length) return false;
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();

@@ -92,18 +92,18 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 onMounted(loadCircles);
 onMounted(loadUnreadCount);
 
-const commentsPostId = ref<number | null>(null);
+const commentsPostId = ref<string | null>(null);
 const isCommentsOpen = ref(false);
 
-const likesPostId = ref<number | null>(null);
+const likesPostId = ref<string | null>(null);
 const isLikesOpen = ref(false);
 
-function openCommentsForPost(postId: number): void {
+function openCommentsForPost(postId: string): void {
     commentsPostId.value = postId;
     isCommentsOpen.value = true;
 }
 
-function openLikesForPost(postId: number): void {
+function openLikesForPost(postId: string): void {
     likesPostId.value = postId;
     isLikesOpen.value = true;
 }
@@ -198,7 +198,7 @@ function iconMaskStyle(url: string) {
                                 />
                             </svg>
                         </div>
-                        <span class="text-sand-500 dark:text-sand-400">{{
+                        <span class="text-sm text-sand-500 dark:text-sand-400">{{
                             t('Circles')
                         }}</span>
                     </RouterLink>
@@ -209,12 +209,8 @@ function iconMaskStyle(url: string) {
                             :key="n"
                             class="flex shrink-0 flex-col items-center gap-1.5"
                         >
-                            <div
-                                class="size-15 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
-                            />
-                            <div
-                                class="h-3 w-12 animate-pulse rounded bg-sand-200 dark:bg-sand-700"
-                            />
+                            <div class="size-15 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" /> 
+                            <div class="h-3 w-12 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
                         </div>
                     </template>
 
@@ -228,7 +224,7 @@ function iconMaskStyle(url: string) {
                         }"
                         class="flex shrink-0 flex-col items-center gap-1.5"
                     >
-                        <div class="circle-ring relative rounded-full p-[2px]">
+                        <div class="circle-ring relative rounded-full p-0.5">
                             <div
                                 class="rounded-full bg-white p-0.5 dark:bg-sand-900"
                             >
@@ -250,16 +246,13 @@ function iconMaskStyle(url: string) {
                                 </div>
                             </div>
                         </div>
-                        <span
-                            class="max-w-16 truncate text-sand-700 dark:text-sand-300"
-                            >{{ circle.name }}</span
-                        >
+                        <span class="text-sm max-w-16 truncate text-sand-700 dark:text-sand-300">{{ circle.name }}</span>
                     </RouterLink>
                 </div>
             </div>
         </template>
 
-        <div class="mt-39 pb-24">
+        <div class="mt-38 pb-24">
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"

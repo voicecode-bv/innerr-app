@@ -8,7 +8,7 @@ import usersIcon from '../../../svg/doodle-icons/user.svg';
 type AvatarShape = 'circle' | 'square';
 
 interface CircleSummary {
-    id: number;
+    id: string;
     name: string;
     photo: string | null;
     members_count?: number;
