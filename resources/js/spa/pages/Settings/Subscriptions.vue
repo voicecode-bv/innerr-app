@@ -623,7 +623,7 @@ onMounted(async () => {
                             >
                                 {{
                                     t(
-                                        "Innerr donates part of every paid subscription to a Dutch foundation for children's care. You choose how much.",
+                                        "Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.",
                                     )
                                 }}
                             </p>

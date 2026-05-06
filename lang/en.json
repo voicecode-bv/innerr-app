@@ -426,23 +426,14 @@
     "Create a circle to set it as a default for new posts.": "Create a circle to set it as a default for new posts.",
 
     "Inner Gives": "Inner Gives",
-    "Children who are sick, going through surgery, recovering. Innerr gives part of every paid subscription back to a Dutch foundation for children's care. You choose how much.": "Not every child has it easy. Illness, surgery or recovery can leave any child in need of an extra smile. That is why Innerr gives part of every paid subscription back to a Dutch foundation for children's care. You choose how much.",
+    "Children who are sick, going through surgery, recovering. Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.": "Not every child has it easy. Illness, surgery or recovery can leave any child in need of an extra smile. That is why Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.",
     "Read more on innerr.app": "Read more on innerr.app",
-    "Innerr donates part of every paid subscription to a Dutch foundation for children's care. You choose how much.": "Innerr donates part of every paid subscription to a Dutch foundation for children's care. You choose how much.",
+    "Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.": "Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.",
     "Open Inner Gives": "Open Inner Gives",
-    "Donation percentage": "Donation percentage",
-    "Not right now": "Not right now",
-    "You can switch this on whenever you feel ready.": "You can switch this on whenever you feel ready.",
-    "It does not cost you anything extra, are you sure this is the option you want?": "It does not cost you anything extra, are you sure this is the option you want?",
-    "A warm heart": "A warm heart",
-    "5% of my subscription goes to children in care every month.": "5% of my subscription goes to children in care every month.",
     "A bright smile": "A bright smile",
     "10% of my subscription brings extra joy to recovering kids.": "10% of my subscription brings extra joy to recovering kids.",
     "Thank you for giving back": "Thank you for giving back",
     "Each month we donate :percentage% of your subscription to children's care on your behalf.": "Each month we donate :percentage% of your subscription to children's care on your behalf.",
-    "Thank you! We will donate :percentage% to children's care on your behalf.": "Thank you! We will donate :percentage% to children's care on your behalf.",
-    "Your preference has been saved.": "Your preference has been saved.",
-    "Could not save your preference. Please try again.": "Could not save your preference. Please try again.",
 
     "Persons": "Persons",
     "Add person": "Add person",
@@ -515,5 +506,7 @@
     "View subscriptions": "View subscriptions",
     "Could not load storage usage.": "Could not load storage usage.",
     "Unlimited": "Unlimited",
-    "Something went wrong. Please try again.": "Something went wrong. Please try again."
+    "Something went wrong. Please try again.": "Something went wrong. Please try again.",
+    "Details": "Details",
+    "No details for this moment.": "No details for this moment."
 }

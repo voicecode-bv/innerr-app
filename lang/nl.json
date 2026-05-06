@@ -364,23 +364,14 @@
     "Default circles": "Standaard kringen",
 
     "Inner Gives": "Inner Geeft",
-    "Children who are sick, going through surgery, recovering. Innerr gives part of every paid subscription back to a Dutch foundation for children's care. You choose how much.": "Niet ieder kind heeft het makkelijk. Door ziekte, operaties of herstel daarvan kan een kind wel een extra lach gebruiken. Daarom geeft Innerr een deel van elk betaald abonnement terug aan een Nederlandse stichting voor kinderzorg. Jij kiest hoeveel.",
+    "Children who are sick, going through surgery, recovering. Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.": "Niet ieder kind heeft het makkelijk. Door ziekte, operaties of herstel daarvan kan een kind wel een extra lach gebruiken. Daarom doneert Innerr 10% van elk betaald abonnement aan een Nederlandse stichting voor kinderzorg.",
     "Read more on innerr.app": "Lees meer op innerr.app",
-    "Innerr donates part of every paid subscription to a Dutch foundation for children's care. You choose how much.": "Innerr doneert een deel van elk betaald abonnement aan een Nederlandse stichting voor kinderzorg. Jij kiest hoeveel.",
+    "Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.": "Innerr doneert 10% van elk betaald abonnement aan een Nederlandse stichting voor kinderzorg.",
     "Open Inner Gives": "Open Inner Geeft",
-    "Donation percentage": "Donatiepercentage",
-    "Not right now": "Nu nog niet",
-    "You can switch this on whenever you feel ready.": "Je kunt dit aanzetten wanneer jij er klaar voor bent.",
-    "It does not cost you anything extra, are you sure this is the option you want?": "Het kost jou niets extra's, weet je zeker dat je deze optie wilt?",
-    "A warm heart": "Een warm hart",
-    "5% of my subscription goes to children in care every month.": "5% van mijn abonnement gaat elke maand naar kinderen in de zorg.",
     "A bright smile": "Een grote glimlach",
     "10% of my subscription brings extra joy to recovering kids.": "10% van mijn abonnement zorgt voor extra vreugde bij herstellende kinderen.",
     "Thank you for giving back": "Bedankt dat je iets teruggeeft",
     "Each month we donate :percentage% of your subscription to children's care on your behalf.": "Elke maand doneren wij namens jou :percentage% van je abonnement aan de kinderzorg.",
-    "Thank you! We will donate :percentage% to children's care on your behalf.": "Bedankt! We gaan namens jou :percentage% doneren aan de kinderzorg.",
-    "Your preference has been saved.": "Je voorkeur is opgeslagen.",
-    "Could not save your preference. Please try again.": "We konden je voorkeur niet opslaan. Probeer het opnieuw.",
 
     "Transfer ownership": "Eigendom overdragen",
     "Choose a member to transfer ownership of this circle to. They must accept before the transfer is complete.": "Kies een lid om het eigendom van deze kring aan over te dragen. Zij moeten de overdracht eerst accepteren.",
@@ -524,5 +515,7 @@
     "View subscriptions": "Bekijk abonnementen",
     "Could not load storage usage.": "Kon het opslaggebruik niet laden.",
     "Unlimited": "Onbeperkt",
-    "Something went wrong. Please try again.": "Er is iets misgegaan. Probeer het opnieuw."
+    "Something went wrong. Please try again.": "Er is iets misgegaan. Probeer het opnieuw.",
+    "Details": "Details",
+    "No details for this moment.": "Geen details voor dit moment."
 }
