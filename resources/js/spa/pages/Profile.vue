@@ -154,7 +154,7 @@ function mediaKey(post: PostData): string {
 async function shareProfile(): Promise<void> {
     if (!profile.value) return;
     const url = `https://innerr.app/profiles/${profile.value.username}`;
-    await Share.url(profile.value.name, '', url);
+    await Share.url('', '', url);
 }
 
 function iconMaskStyle(url: string) {
