@@ -247,7 +247,7 @@ function timeAgo(dateString: string): string {
 
         <div
             v-if="post.media_type === 'image'"
-            class="relative aspect-square w-full overflow-hidden bg-sand-100 dark:bg-sand-800"
+            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800"
         >
             <button
                 class="block size-full"
@@ -382,7 +382,7 @@ function timeAgo(dateString: string): string {
                 :class="[
                     isFullscreen
                         ? 'fixed inset-0 z-9999 flex items-center justify-center bg-black'
-                        : 'relative aspect-square w-full overflow-hidden bg-sand-100 dark:bg-sand-800',
+                        : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800',
                 ]"
                 @click="openDetails"
             >
@@ -643,7 +643,7 @@ function timeAgo(dateString: string): string {
 
         <div
             v-else
-            class="relative aspect-square w-full bg-sand-100 dark:bg-sand-800"
+            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800"
         >
             <button
                 class="block size-full"

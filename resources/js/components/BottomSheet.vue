@@ -364,7 +364,11 @@ onUnmounted(() => {
             </div>
             <div
                 v-if="$slots.header"
-                class="flex-shrink-0 border-b border-sand-100 px-4 py-3 dark:border-sand-800"
+                class="flex-shrink-0 cursor-grab touch-none border-b border-sand-100 px-4 py-3 active:cursor-grabbing dark:border-sand-800"
+                @pointerdown="onHandlePointerDown"
+                @pointermove="onHandlePointerMove"
+                @pointerup="endDrag"
+                @pointercancel="endDrag"
             >
                 <slot name="header" />
             </div>
