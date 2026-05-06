@@ -52,6 +52,8 @@ class NativeServiceProvider extends ServiceProvider
             \Developernauts\NativephpInappPurchases\NativephpInappPurchasesServiceProvider::class,
             \Native\Mobile\Providers\SystemServiceProvider::class,
             \Native\Mobile\Providers\DeviceServiceProvider::class,
+            \Native\Mobile\Providers\ShareServiceProvider::class,
+        
         
         
         

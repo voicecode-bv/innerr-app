@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Camera, Events, Off, On } from '@nativephp/mobile';
+import { Camera, Events, Off, On, Share } from '@nativephp/mobile';
 import {
     computed,
     onMounted,
@@ -22,6 +22,7 @@ import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
+import shareIcon from '../../../svg/doodle-icons/send-2.svg';
 
 interface Profile {
     id: string;
@@ -148,6 +149,12 @@ function mediaKey(post: PostData): string {
     return post.media_type === 'video'
         ? (post.thumbnail_url ?? '')
         : post.media_url;
+}
+
+async function shareProfile(): Promise<void> {
+    if (!profile.value) return;
+    const url = `https://innerr.app/profiles/${profile.value.username}`;
+    await Share.url(profile.value.name, '', url);
 }
 
 function iconMaskStyle(url: string) {
@@ -286,13 +293,26 @@ function iconMaskStyle(url: string) {
                         </div>
                     </div>
 
-                    <RouterLink
-                        v-if="isOwnProfile"
-                        :to="{ name: 'spa.settings.edit-profile' }"
-                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
-                    >
-                        {{ t('Edit profile') }}
-                    </RouterLink>
+                    <div v-if="isOwnProfile" class="mt-4 flex gap-2">
+                        <RouterLink
+                            :to="{ name: 'spa.settings.edit-profile' }"
+                            class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                        >
+                            {{ t('Edit') }}
+                        </RouterLink>
+                        <button
+                            type="button"
+                            class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                            @click="shareProfile"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-4 bg-current"
+                                :style="iconMaskStyle(shareIcon)"
+                            ></span>
+                            {{ t('Share') }}
+                        </button>
+                    </div>
                 </div>
 
                 <div class="h-2 bg-warmwhite dark:bg-sand-900" />
