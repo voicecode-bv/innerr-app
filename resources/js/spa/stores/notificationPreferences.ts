@@ -8,6 +8,7 @@ export interface NotificationPreferences {
     comment_replied: boolean;
     new_circle_post: boolean;
     post_tagged: boolean;
+    circle_invitation_received: boolean;
     circle_invitation_accepted: boolean;
     circle_ownership_transfer_requested: boolean;
     circle_ownership_transfer_accepted: boolean;

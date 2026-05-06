@@ -9,6 +9,7 @@ import {
     useTemplateRef,
 } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
 import { type PostData } from '@/spa/components/PostCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -22,7 +23,6 @@ import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
-import shareIcon from '../../../svg/doodle-icons/send-2.svg';
 
 interface Profile {
     id: string;
@@ -155,6 +155,12 @@ async function shareProfile(): Promise<void> {
     if (!profile.value) return;
     const url = `https://innerr.app/profiles/${profile.value.username}`;
     await Share.url('', '', url);
+}
+
+const inviteSheetOpen = ref(false);
+
+function openInviteSheet(): void {
+    inviteSheetOpen.value = true;
 }
 
 function iconMaskStyle(url: string) {
@@ -305,14 +311,17 @@ function iconMaskStyle(url: string) {
                             class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
                             @click="shareProfile"
                         >
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-4 bg-current"
-                                :style="iconMaskStyle(shareIcon)"
-                            ></span>
                             {{ t('Share') }}
                         </button>
                     </div>
+                    <button
+                        v-else
+                        type="button"
+                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                        @click="openInviteSheet"
+                    >
+                        {{ t('Invite') }}
+                    </button>
                 </div>
 
                 <div class="h-2 bg-warmwhite dark:bg-sand-900" />
@@ -442,5 +451,12 @@ function iconMaskStyle(url: string) {
                 </div>
             </div>
         </div>
+
+        <InviteToCircleSheet
+            v-if="profile && !isOwnProfile"
+            v-model:open="inviteSheetOpen"
+            :username="profile.username"
+            :person-name="profile.name"
+        />
     </AppLayout>
 </template>

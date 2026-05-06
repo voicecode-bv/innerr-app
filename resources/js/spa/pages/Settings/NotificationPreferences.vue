@@ -49,6 +49,7 @@ const labels = computed<Record<keyof Preferences, string>>(() => ({
     comment_replied: t('Comment replied'),
     new_circle_post: t('New circle post'),
     post_tagged: t('Tagged in a post'),
+    circle_invitation_received: t('Circle invitation received'),
     circle_invitation_accepted: t('Circle invitation accepted'),
     circle_ownership_transfer_requested: t(
         'Circle ownership transfer requested',
