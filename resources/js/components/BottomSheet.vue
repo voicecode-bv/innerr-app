@@ -24,6 +24,10 @@ const keyboardOpen = ref(false);
 const dragOffset = ref(0);
 const isDragging = ref(false);
 const mounted = ref(false);
+// Aparte visuele open-state. We willen dat het sheet-element eerst een
+// frame in `translate-y-full` rendert voordat we naar 0 transitionen,
+// anders verschijnt de sheet op de allereerste open zonder animatie.
+const displayOpen = ref(false);
 
 let dragStartY = 0;
 let dragPointerId: number | null = null;
@@ -213,6 +217,22 @@ let savedMainTouchAction = '';
 
 watch(
     () => props.open,
+    (val) => {
+        if (val) {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    displayOpen.value = true;
+                });
+            });
+        } else {
+            displayOpen.value = false;
+        }
+    },
+    { immediate: true },
+);
+
+watch(
+    () => props.open,
     (isOpen) => {
         const scrollContainer = document.querySelector(
             'main',
@@ -306,7 +326,7 @@ onUnmounted(() => {
         <div
             :class="[
                 'fixed inset-0 z-9999 touch-none bg-black/50 transition-opacity duration-300',
-                open
+                displayOpen
                     ? 'pointer-events-auto opacity-100'
                     : 'pointer-events-none opacity-0',
             ]"
@@ -318,7 +338,7 @@ onUnmounted(() => {
             :class="[
                 'fixed inset-x-0 bottom-0 z-9999 flex flex-col rounded-2xl bg-white shadow-2xl dark:bg-sand-900',
                 isDragging ? '' : 'transition-transform duration-300 ease-out',
-                open
+                displayOpen
                     ? 'translate-y-[calc(var(--drag-offset,0px)+var(--kb-inset,0px)*-1)]'
                     : 'translate-y-full',
             ]"

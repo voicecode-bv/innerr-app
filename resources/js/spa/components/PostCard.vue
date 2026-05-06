@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -42,6 +42,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'openComments', postId: string): void;
     (e: 'openLikes', postId: string): void;
+    (e: 'openDetails', postId: string): void;
 }>();
 
 function openLikes(): void {
@@ -49,7 +50,6 @@ function openLikes(): void {
 }
 
 const { t } = useTranslations();
-const router = useRouter();
 const auth = useAuthStore();
 
 const authUserId = computed(() => auth.user?.id ?? null);
@@ -120,12 +120,9 @@ function iconMaskStyle(url: string) {
     };
 }
 
-function navigateToPost(): void {
+function openDetails(): void {
     if (!isFullscreen.value) {
-        router.push({
-            name: 'spa.posts.show',
-            params: { post: props.post.id },
-        });
+        emit('openDetails', props.post.id);
     }
 }
 
@@ -255,7 +252,7 @@ function timeAgo(dateString: string): string {
             <button
                 class="block size-full"
                 type="button"
-                @click="navigateToPost"
+                @click="openDetails"
             >
                 <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
                 <img
@@ -387,7 +384,7 @@ function timeAgo(dateString: string): string {
                         ? 'fixed inset-0 z-9999 flex items-center justify-center bg-black'
                         : 'relative aspect-square w-full overflow-hidden bg-sand-100 dark:bg-sand-800',
                 ]"
-                @click="navigateToPost"
+                @click="openDetails"
             >
                 <div
                     v-if="
@@ -651,7 +648,7 @@ function timeAgo(dateString: string): string {
             <button
                 class="block size-full"
                 type="button"
-                @click="navigateToPost"
+                @click="openDetails"
             >
                 <div class="flex size-full items-center justify-center">
                     <svg
