@@ -600,7 +600,7 @@ watch(
                     :class="[
                         isFullscreen
                             ? 'fixed inset-0 z-50 flex items-center justify-center bg-black'
-                            : 'relative aspect-square w-full overflow-hidden bg-sand-100 dark:bg-sand-800',
+                            : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800',
                     ]"
                 >
                     <div

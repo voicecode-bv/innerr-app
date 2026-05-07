@@ -117,21 +117,32 @@ function openDetailsForPost(postId: string): void {
     isDetailsOpen.value = true;
 }
 
+async function onPostUpdated(): Promise<void> {
+    feedCache.invalidate(FEED_KEY);
+    await feed.softRefresh();
+}
+
 function activeLikesCount(): number {
     if (likesPostId.value === null) return 0;
+
     const target = feed.items.find((p) => p.id === likesPostId.value);
+
     return target?.likes_count ?? 0;
 }
 
 function activeCommentsCount(): number {
     if (commentsPostId.value === null) return 0;
+
     const target = feed.items.find((p) => p.id === commentsPostId.value);
+
     return target?.comments_count ?? 0;
 }
 
 function bumpActivePostCommentsCount(delta: number): void {
     if (commentsPostId.value === null) return;
+
     const target = feed.items.find((p) => p.id === commentsPostId.value);
+    
     if (target) {
         target.comments_count = Math.max(0, target.comments_count + delta);
     }
@@ -298,6 +309,7 @@ function iconMaskStyle(url: string) {
                 @open-comments="openCommentsForPost"
                 @open-likes="openLikesForPost"
                 @open-details="openDetailsForPost"
+                @post-updated="onPostUpdated"
             />
 
             <div

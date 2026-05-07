@@ -193,13 +193,6 @@ function ageAt(
 
 <template>
     <BottomSheet :open="open" @update:open="$emit('update:open', $event)">
-        <template #header>
-            <h2
-                class="text-center font-display font-semibold text-sand-800 dark:text-sand-100"
-            >
-                {{ t('Details') }}
-            </h2>
-        </template>
 
         <div v-if="isLoading && !post" class="space-y-4 px-4 py-6">
             <div class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />

@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
+import EditPostModal from '@/spa/components/EditPostModal.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
-import { useAuthStore } from '@/spa/stores/auth';
 import { externalApi } from '@/spa/http/externalApi';
-import heartIcon from '../../../svg/doodle-icons/heart.svg';
+import { useAuthStore } from '@/spa/stores/auth';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { usePersonsStore } from '@/spa/stores/persons';
+import { usePostCacheStore } from '@/spa/stores/postCache';
+import { useTagsStore } from '@/spa/stores/tags';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
+import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
+import pencilIcon from '../../../svg/doodle-icons/pencil-3.svg';
 
 export interface PostData {
     id: string;
@@ -39,10 +45,51 @@ const props = defineProps<{
     post: PostData;
 }>();
 
+interface FullPostCircle {
+    id: string;
+    name: string;
+    photo: string | null;
+}
+
+interface FullPostTag {
+    id: string;
+    name: string;
+}
+
+interface FullPostPerson {
+    id: string;
+    name: string;
+    avatar_thumbnail?: string | null;
+    user_id?: string | null;
+}
+
+interface FullPost {
+    id: string;
+    caption: string | null;
+    circles?: FullPostCircle[];
+    tags?: FullPostTag[];
+    persons?: FullPostPerson[];
+}
+
+interface AvailableCircle extends FullPostCircle {
+    members_count?: number;
+    members_can_invite?: boolean;
+    is_owner?: boolean;
+}
+
+interface AvailableTag extends FullPostTag {
+    usage_count?: number;
+}
+
+interface AvailablePerson extends FullPostPerson {
+    avatar?: string | null;
+}
+
 const emit = defineEmits<{
     (e: 'openComments', postId: string): void;
     (e: 'openLikes', postId: string): void;
     (e: 'openDetails', postId: string): void;
+    (e: 'postUpdated', postId: string): void;
 }>();
 
 function openLikes(): void {
@@ -53,9 +100,52 @@ const { t } = useTranslations();
 const auth = useAuthStore();
 
 const authUserId = computed(() => auth.user?.id ?? null);
+const isOwner = computed(() => props.post.user.id === authUserId.value);
 const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
 const commentsCount = ref(props.post.comments_count);
+
+const circlesStore = useCirclesStore();
+const personsStore = usePersonsStore();
+const tagsStore = useTagsStore();
+const postCache = usePostCacheStore();
+
+const isEditModalOpen = ref(false);
+const isLoadingEdit = ref(false);
+const editPost = ref<FullPost | null>(null);
+const editAvailableCircles = ref<AvailableCircle[]>([]);
+const editAvailableTags = ref<AvailableTag[]>([]);
+const editAvailablePersons = ref<AvailablePerson[]>([]);
+
+async function openEditModal(event: Event): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isLoadingEdit.value) return;
+    isLoadingEdit.value = true;
+    try {
+        const [postResponse, circles, tags, persons] = await Promise.all([
+            externalApi.get<{ data: FullPost }>(`/posts/${props.post.id}`),
+            circlesStore.ensureLoaded().catch(() => [] as AvailableCircle[]),
+            tagsStore.ensureLoaded().catch(() => [] as AvailableTag[]),
+            personsStore.ensureLoaded().catch(() => [] as AvailablePerson[]),
+        ]);
+        editPost.value = postResponse.data;
+        postCache.set(props.post.id, postResponse.data);
+        editAvailableCircles.value = circles as AvailableCircle[];
+        editAvailableTags.value = tags as AvailableTag[];
+        editAvailablePersons.value = persons as AvailablePerson[];
+        isEditModalOpen.value = true;
+    } catch {
+        // ignore — gebruiker blijft op de feed staan
+    } finally {
+        isLoadingEdit.value = false;
+    }
+}
+
+function onPostUpdated(): void {
+    postCache.invalidate(props.post.id);
+    emit('postUpdated', props.post.id);
+}
 const showFullCaption = ref(false);
 const captionRef = ref<HTMLParagraphElement>();
 const isCaptionOverflowing = ref(false);
@@ -192,7 +282,7 @@ function timeAgo(dateString: string): string {
 </script>
 
 <template>
-    <article class="bg-white dark:bg-sand-900">
+    <article class="pt-6 bg-white dark:bg-sand-900">
         <div class="flex items-center gap-3 px-4 py-3">
             <RouterLink
                 :to="{
@@ -370,6 +460,19 @@ function timeAgo(dateString: string): string {
                     <span v-if="commentsCount > 0" class=" ">{{
                         commentsCount
                     }}</span>
+                </button>
+                <button
+                    v-if="isOwner"
+                    class="flex items-center text-white drop-shadow disabled:opacity-50"
+                    :aria-label="t('Edit post')"
+                    :disabled="isLoadingEdit"
+                    @click.stop="openEditModal"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-6 bg-current"
+                        :style="iconMaskStyle(pencilIcon)"
+                    ></span>
                 </button>
                 <span class="ml-auto text-white/80 drop-shadow">{{
                     timeAgo(post.created_at)
@@ -634,6 +737,19 @@ function timeAgo(dateString: string): string {
                             commentsCount
                         }}</span>
                     </button>
+                    <button
+                        v-if="isOwner"
+                        class="flex items-center text-white drop-shadow disabled:opacity-50"
+                        :aria-label="t('Edit post')"
+                        :disabled="isLoadingEdit"
+                        @click.stop="openEditModal"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-6 bg-current"
+                            :style="iconMaskStyle(pencilIcon)"
+                        ></span>
+                    </button>
                     <span class="ml-auto text-white/80 drop-shadow">{{
                         timeAgo(post.created_at)
                     }}</span>
@@ -673,5 +789,20 @@ function timeAgo(dateString: string): string {
                 </div>
             </button>
         </div>
+
+        <EditPostModal
+            v-if="editPost && isOwner"
+            :open="isEditModalOpen"
+            :post-id="editPost.id"
+            :caption="editPost.caption"
+            :circles="editPost.circles ?? []"
+            :available-circles="editAvailableCircles"
+            :tags="editPost.tags ?? []"
+            :persons="editPost.persons ?? []"
+            :available-tags="editAvailableTags"
+            :available-persons="editAvailablePersons"
+            @update:open="isEditModalOpen = $event"
+            @updated="onPostUpdated"
+        />
     </article>
 </template>
