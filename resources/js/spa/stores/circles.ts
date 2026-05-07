@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia';
 import { externalApi } from '@/spa/http/externalApi';
 
+export interface CirclePendingInvitation {
+    id: string;
+    email: string | null;
+    username: string | null;
+    inviter_id: string;
+    can_cancel: boolean;
+    created_at: string;
+}
+
 export interface Circle {
     id: string;
     name: string;
@@ -9,15 +18,20 @@ export interface Circle {
     members_can_invite?: boolean;
     is_owner?: boolean;
     created_at?: string;
+    pending_invitations?: CirclePendingInvitation[];
 }
 
 const STORAGE_KEY = 'spa.circles.cache.v2';
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 
 function readWarmCache(): Circle[] | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
     try {
         const raw = window.localStorage?.getItem(STORAGE_KEY);
+
         return raw ? (JSON.parse(raw) as Circle[]) : null;
     } catch {
         return null;
@@ -25,7 +39,10 @@ function readWarmCache(): Circle[] | null {
 }
 
 function writeWarmCache(items: Circle[] | null): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+        return;
+    }
+
     try {
         if (items === null) {
             window.localStorage?.removeItem(STORAGE_KEY);
@@ -50,10 +67,14 @@ export const useCirclesStore = defineStore('spa-circles', {
             if (this.items && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.items;
             }
+
             return this.refresh();
         },
         async refresh(): Promise<Circle[]> {
-            if (this.loading) return this.loading;
+            if (this.loading) {
+                return this.loading;
+            }
+
             this.loading = (async () => {
                 try {
                     const resp = await externalApi.get<{ data: Circle[] }>(
@@ -62,11 +83,13 @@ export const useCirclesStore = defineStore('spa-circles', {
                     this.items = resp.data;
                     this.loadedAt = Date.now();
                     writeWarmCache(this.items);
+
                     return this.items;
                 } finally {
                     this.loading = null;
                 }
             })();
+
             return this.loading;
         },
         invalidate(): void {
@@ -77,14 +100,20 @@ export const useCirclesStore = defineStore('spa-circles', {
             writeWarmCache(this.items);
         },
         update(id: string, patch: Partial<Circle>): void {
-            if (!this.items) return;
+            if (!this.items) {
+                return;
+            }
+
             this.items = this.items.map((c) =>
                 c.id === id ? { ...c, ...patch } : c,
             );
             writeWarmCache(this.items);
         },
         remove(id: string): void {
-            if (!this.items) return;
+            if (!this.items) {
+                return;
+            }
+
             this.items = this.items.filter((c) => c.id !== id);
             writeWarmCache(this.items);
         },

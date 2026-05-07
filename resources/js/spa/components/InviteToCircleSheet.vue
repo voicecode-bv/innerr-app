@@ -6,10 +6,15 @@ import IconTile from '@/components/IconTile.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
-import { type Circle } from '@/spa/stores/circles';
+import type { Circle, CirclePendingInvitation } from '@/spa/stores/circles';
 import usersIcon from '../../../svg/doodle-icons/user.svg';
 
-type RowStatus = 'idle' | 'pending' | 'invited' | 'already';
+type RowState =
+    | { status: 'idle' }
+    | { status: 'pending' }
+    | { status: 'invited'; invitationId: string; canCancel: boolean }
+    | { status: 'withdrawing'; invitationId: string }
+    | { status: 'already' };
 
 const props = defineProps<{
     open: boolean;
@@ -26,7 +31,7 @@ const { t } = useTranslations();
 const circles = ref<Circle[]>([]);
 const isLoading = ref(false);
 const loadError = ref<string | null>(null);
-const rowStatus = ref<Record<string, RowStatus>>({});
+const rowState = ref<Record<string, RowState>>({});
 
 const invitableCircles = computed<Circle[]>(() =>
     circles.value.filter(
@@ -34,14 +39,49 @@ const invitableCircles = computed<Circle[]>(() =>
     ),
 );
 
+function rowFor(circleId: string): RowState {
+    return rowState.value[circleId] ?? { status: 'idle' };
+}
+
+function setRowState(circleId: string, next: RowState): void {
+    rowState.value = { ...rowState.value, [circleId]: next };
+}
+
+function initialRowStateFor(circle: Circle): RowState {
+    const invitation: CirclePendingInvitation | undefined =
+        circle.pending_invitations?.[0];
+
+    if (!invitation) {
+        return { status: 'idle' };
+    }
+
+    return {
+        status: 'invited',
+        invitationId: invitation.id,
+        canCancel: invitation.can_cancel,
+    };
+}
+
+function rebuildRowStates(): void {
+    const next: Record<string, RowState> = {};
+
+    for (const circle of circles.value) {
+        next[circle.id] = initialRowStateFor(circle);
+    }
+
+    rowState.value = next;
+}
+
 async function loadCircles(): Promise<void> {
     isLoading.value = true;
     loadError.value = null;
+
     try {
         const resp = await externalApi.get<{ data: Circle[] }>(
             `/circles?not_member_username=${encodeURIComponent(props.username)}`,
         );
         circles.value = resp.data;
+        rebuildRowStates();
     } catch {
         loadError.value = t('Could not load circles');
     } finally {
@@ -52,8 +92,11 @@ async function loadCircles(): Promise<void> {
 watch(
     () => props.open,
     (isOpen) => {
-        if (!isOpen) return;
-        rowStatus.value = {};
+        if (!isOpen) {
+            return;
+        }
+
+        rowState.value = {};
         void loadCircles();
     },
     { immediate: true },
@@ -72,16 +115,28 @@ function onSheetUpdate(value: boolean): void {
 }
 
 async function inviteTo(circle: Circle): Promise<void> {
-    if (rowStatus.value[circle.id] === 'pending') return;
-    if (rowStatus.value[circle.id] === 'invited') return;
-
-    rowStatus.value = { ...rowStatus.value, [circle.id]: 'pending' };
+    setRowState(circle.id, { status: 'pending' });
 
     try {
-        await externalApi.post(`/circles/${circle.id}/members`, {
+        const resp = await externalApi.post<{
+            invitation?: {
+                id: string;
+                inviter_id: string;
+                can_cancel: boolean;
+            };
+        }>(`/circles/${circle.id}/members`, {
             username: props.username,
         });
-        rowStatus.value = { ...rowStatus.value, [circle.id]: 'invited' };
+
+        if (resp.invitation) {
+            setRowState(circle.id, {
+                status: 'invited',
+                invitationId: resp.invitation.id,
+                canCancel: resp.invitation.can_cancel,
+            });
+        } else {
+            setRowState(circle.id, { status: 'idle' });
+        }
     } catch (error) {
         if (error instanceof ApiError) {
             const apiMessage =
@@ -89,10 +144,8 @@ async function inviteTo(circle: Circle): Promise<void> {
             const normalized = apiMessage.toLowerCase();
 
             if (normalized.includes('already')) {
-                rowStatus.value = {
-                    ...rowStatus.value,
-                    [circle.id]: 'already',
-                };
+                setRowState(circle.id, { status: 'already' });
+
                 return;
             }
 
@@ -114,8 +167,86 @@ async function inviteTo(circle: Circle): Promise<void> {
             );
         }
 
-        rowStatus.value = { ...rowStatus.value, [circle.id]: 'idle' };
+        setRowState(circle.id, { status: 'idle' });
     }
+}
+
+async function withdrawFrom(circle: Circle): Promise<void> {
+    const current = rowFor(circle.id);
+
+    if (current.status !== 'invited' || !current.canCancel) {
+        return;
+    }
+
+    const invitationId = current.invitationId;
+    setRowState(circle.id, { status: 'withdrawing', invitationId });
+
+    try {
+        await externalApi.delete(
+            `/circles/${circle.id}/invitations/${invitationId}`,
+        );
+        setRowState(circle.id, { status: 'idle' });
+    } catch (error) {
+        const apiMessage =
+            error instanceof ApiError ? (error.message ?? '') : '';
+
+        void Dialog.alert(
+            t('Could not cancel invitation'),
+            apiMessage || t('Failed to cancel invitation'),
+        );
+
+        setRowState(circle.id, {
+            status: 'invited',
+            invitationId,
+            canCancel: current.canCancel,
+        });
+    }
+}
+
+function onRowClick(circle: Circle): void {
+    const state = rowFor(circle.id);
+
+    if (state.status === 'pending' || state.status === 'withdrawing') {
+        return;
+    }
+
+    if (state.status === 'already') {
+        return;
+    }
+
+    if (state.status === 'invited') {
+        if (state.canCancel) {
+            void withdrawFrom(circle);
+        }
+
+        return;
+    }
+
+    void inviteTo(circle);
+}
+
+function isRowDisabled(circle: Circle): boolean {
+    const state = rowFor(circle.id);
+
+    if (state.status === 'pending' || state.status === 'withdrawing') {
+        return true;
+    }
+
+    if (state.status === 'already') {
+        return true;
+    }
+
+    if (state.status === 'invited' && !state.canCancel) {
+        return true;
+    }
+
+    return false;
+}
+
+function canCancelInvitation(circleId: string): boolean {
+    const state = rowFor(circleId);
+
+    return state.status === 'invited' && state.canCancel;
 }
 </script>
 
@@ -175,10 +306,7 @@ async function inviteTo(circle: Circle): Promise<void> {
             </svg>
         </div>
 
-        <div
-            v-else-if="loadError"
-            class="px-4 py-10 pb-24 text-center"
-        >
+        <div v-else-if="loadError" class="px-4 py-10 pb-24 text-center">
             <p class="text-blush-500">{{ loadError }}</p>
             <button
                 class="mt-2 text-sand-500 dark:text-sand-400"
@@ -206,12 +334,8 @@ async function inviteTo(circle: Circle): Promise<void> {
                 <button
                     type="button"
                     class="flex w-full items-center gap-3 px-4 py-3 text-left disabled:opacity-60"
-                    :disabled="
-                        rowStatus[circle.id] === 'pending' ||
-                        rowStatus[circle.id] === 'invited' ||
-                        rowStatus[circle.id] === 'already'
-                    "
-                    @click="inviteTo(circle)"
+                    :disabled="isRowDisabled(circle)"
+                    @click="onRowClick(circle)"
                 >
                     <img
                         v-if="circle.photo"
@@ -248,7 +372,10 @@ async function inviteTo(circle: Circle): Promise<void> {
                         </p>
                     </div>
                     <span
-                        v-if="rowStatus[circle.id] === 'pending'"
+                        v-if="
+                            rowFor(circle.id).status === 'pending' ||
+                            rowFor(circle.id).status === 'withdrawing'
+                        "
                         class="text-sand-500 dark:text-sand-400"
                     >
                         <svg
@@ -272,14 +399,21 @@ async function inviteTo(circle: Circle): Promise<void> {
                             />
                         </svg>
                     </span>
-                    <span
-                        v-else-if="rowStatus[circle.id] === 'invited'"
-                        class="text-sage-700 dark:text-sage-300"
+                    <template
+                        v-else-if="rowFor(circle.id).status === 'invited'"
                     >
-                        {{ t('Invited') }}
-                    </span>
+                        <span
+                            v-if="canCancelInvitation(circle.id)"
+                            class="text-blush-500"
+                        >
+                            {{ t('Cancel invitation') }}
+                        </span>
+                        <span v-else class="text-sand-500 dark:text-sand-400">
+                            {{ t('Invited') }}
+                        </span>
+                    </template>
                     <span
-                        v-else-if="rowStatus[circle.id] === 'already'"
+                        v-else-if="rowFor(circle.id).status === 'already'"
                         class="text-sand-500 dark:text-sand-400"
                     >
                         {{ t('Already in circle') }}

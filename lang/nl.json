@@ -465,6 +465,8 @@
     "No circles available to invite to": "Geen kringen beschikbaar om voor uit te nodigen",
     "Already in circle": "Al in kring",
     "Could not invite": "Uitnodigen mislukt",
+    "Could not cancel invitation": "Uitnodiging intrekken mislukt",
+    "Failed to cancel invitation": "Uitnodiging kon niet worden ingetrokken",
     "Profile photo": "Profielfoto",
     "Profile saved.": "Profiel opgeslagen.",
     "Tap to change your photo": "Tik om je foto te wijzigen",
