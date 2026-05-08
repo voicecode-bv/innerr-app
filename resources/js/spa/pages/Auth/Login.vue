@@ -4,11 +4,11 @@ import { useRoute, useRouter } from 'vue-router';
 import AppleAuthButton from '@/spa/components/auth/AppleAuthButton.vue';
 import GoogleAuthButton from '@/spa/components/auth/GoogleAuthButton.vue';
 import Button from '@/components/Button.vue';
+import LanguageSelector from '@/spa/components/LanguageSelector.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
-import { useI18nStore } from '@/spa/stores/i18n';
 import handIcon from '../../../../svg/doodle-icons/hand.svg';
 import innerrLogo from '../../../../svg/innerr-logo.svg';
 
@@ -26,12 +26,10 @@ function iconMaskStyle(url: string) {
 }
 
 const { t } = useTranslations();
-const i18n = useI18nStore();
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-const currentLocale = computed(() => i18n.locale);
 const socialAuthUrls = computed(() => auth.socialAuthUrls);
 
 const flashError = ref<string | null>(null);
@@ -56,10 +54,6 @@ const form = useApiForm({
     email: '',
     password: '',
 });
-
-function setLocale(locale: string): void {
-    i18n.set(locale);
-}
 
 const showPassword = ref(false);
 const showEmailForm = ref(false);
@@ -146,12 +140,7 @@ async function submit(): Promise<void> {
         </div>
 
         <div class="relative flex justify-end pt-4">
-            <button
-                class="rounded-full bg-white/70 px-3 py-2 font-semibold tracking-wider text-teal uppercase shadow-sm backdrop-blur-sm transition hover:scale-105 dark:bg-sand-800/60 dark:text-sand-200"
-                @click="setLocale(currentLocale === 'nl' ? 'en' : 'nl')"
-            >
-                {{ currentLocale === 'nl' ? 'NL' : 'EN' }}
-            </button>
+            <LanguageSelector />
         </div>
 
         <div class="relative flex flex-1 flex-col items-center justify-center">

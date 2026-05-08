@@ -193,6 +193,33 @@ function ageAt(
 
 <template>
     <BottomSheet :open="open" @update:open="$emit('update:open', $event)">
+        <template #header>
+            <div class="flex items-center justify-between">
+                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
+                    {{ t('Details') }}
+                </h2>
+                <button
+                    class="text-sand-500 dark:text-sand-400"
+                    :aria-label="t('Close')"
+                    @click="$emit('update:open', false)"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18 18 6M6 6l12 12"
+                        />
+                    </svg>
+                </button>
+            </div>
+        </template>
 
         <div v-if="isLoading && !post" class="space-y-4 px-4 py-6">
             <div class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />

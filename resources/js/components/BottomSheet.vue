@@ -175,6 +175,11 @@ function onHandlePointerDown(event: PointerEvent) {
         return;
     }
 
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, a, input, textarea, select, [role="button"]')) {
+        return;
+    }
+
     dragPointerId = event.pointerId;
     dragStartY = event.clientY;
     isDragging.value = true;

@@ -6,6 +6,7 @@ const loaders: Record<
 > = {
     nl: () => import('../../../../lang/nl.json'),
     en: () => import('../../../../lang/en.json'),
+    fr: () => import('../../../../lang/fr.json'),
 };
 
 const cache: Record<string, Record<string, string>> = {};

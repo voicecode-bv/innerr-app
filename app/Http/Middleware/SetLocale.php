@@ -13,7 +13,7 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $supported = ['en', 'nl'];
+        $supported = ['en', 'nl', 'fr'];
 
         // Accept-Language wint van user.locale: de SPA stuurt deze header op
         // élke call met de actueel-gekozen taal. user.locale wordt alleen op

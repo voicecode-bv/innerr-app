@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { externalApi } from '@/spa/http/externalApi';
+import { trackOnboardingStep } from '@/spa/http/onboarding';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
@@ -38,6 +39,7 @@ function pickSuggestion(name: string): void {
 async function submit(): Promise<void> {
     await form.post<{ data: { id: number; name: string } }>('/circles', {
         onSuccess: (response) => {
+            trackOnboardingStep('first_circle');
             router.push({
                 name: 'spa.onboarding.invite-members',
                 params: { circle: response.data.id },
@@ -47,6 +49,7 @@ async function submit(): Promise<void> {
 }
 
 function skip(): void {
+    trackOnboardingStep('first_circle');
     router.push({ name: 'spa.onboarding.notifications' });
 }
 </script>

@@ -4,6 +4,7 @@ import { RouterLink, useRouter } from 'vue-router';
 import AppleAuthButton from '@/spa/components/auth/AppleAuthButton.vue';
 import GoogleAuthButton from '@/spa/components/auth/GoogleAuthButton.vue';
 import Button from '@/components/Button.vue';
+import LanguageSelector from '@/spa/components/LanguageSelector.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -135,7 +136,7 @@ function lowercaseUsername(event: Event): void {
             </svg>
         </div>
 
-        <div class="relative flex justify-start pt-4">
+        <div class="relative flex items-center justify-between pt-4">
             <RouterLink
                 :to="{ name: 'spa.login' }"
                 class="inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-2 text-teal shadow-sm backdrop-blur-sm transition hover:-translate-x-0.5 dark:bg-sand-800/60 dark:text-sand-300"
@@ -156,6 +157,7 @@ function lowercaseUsername(event: Event): void {
                 </svg>
                 {{ t('Back') }}
             </RouterLink>
+            <LanguageSelector />
         </div>
 
         <div

@@ -19,6 +19,7 @@ import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
+import searchIcon from '../../../svg/doodle-icons/search.svg';
 import starIcon from '../../../svg/doodle-icons/star.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
@@ -168,7 +169,18 @@ function iconMaskStyle(url: string) {
             <div
                 class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-sand-200 bg-white pt-[var(--inset-top)] dark:border-sand-800 dark:bg-sand-900"
             >
-                <div class="flex items-center justify-end px-4 pt-2">
+                <div class="flex items-center justify-between px-4 pt-2">
+                    <RouterLink
+                        :to="{ name: 'spa.search' }"
+                        :aria-label="t('Search people')"
+                        class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100 dark:hover:bg-sand-800"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-6 bg-accent"
+                            :style="iconMaskStyle(searchIcon)"
+                        ></span>
+                    </RouterLink>
                     <RouterLink
                         :to="{ name: 'spa.notifications' }"
                         :aria-label="

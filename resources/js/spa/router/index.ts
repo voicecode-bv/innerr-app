@@ -101,6 +101,14 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true },
     },
 
+    // Search
+    {
+        path: '/search',
+        name: 'spa.search',
+        component: () => import('@/spa/pages/Search.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
     // Map
     {
         path: '/map',

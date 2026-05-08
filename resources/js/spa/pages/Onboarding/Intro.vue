@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { trackOnboardingStep } from '@/spa/http/onboarding';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
@@ -46,6 +47,7 @@ const steps = [
 ];
 
 function continueOnboarding(): void {
+    trackOnboardingStep('intro');
     router.push({ name: 'spa.onboarding.first-circle' });
 }
 </script>

@@ -5,6 +5,7 @@ import { Events, On, PushNotifications } from '@nativephp/mobile';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
 import { externalApi } from '@/spa/http/externalApi';
+import { trackOnboardingStep } from '@/spa/http/onboarding';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../../svg/doodle-icons/message.svg';
@@ -74,6 +75,7 @@ onUnmounted(() => {
 });
 
 async function completeOnboarding(): Promise<void> {
+    trackOnboardingStep('notifications');
     try {
         await externalApi.post('/onboarding/complete');
     } catch {

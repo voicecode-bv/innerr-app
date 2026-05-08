@@ -167,6 +167,17 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         >
                             EN
                         </button>
+                        <button
+                            class="rounded-full px-3 py-1 transition"
+                            :class="
+                                currentLocale === 'fr'
+                                    ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
+                                    : 'text-sand-500 dark:text-sand-400'
+                            "
+                            @click="setLocale('fr')"
+                        >
+                            FR
+                        </button>
                     </div>
                 </div>
 

@@ -5,6 +5,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { externalApi } from '@/spa/http/externalApi';
 import { ApiError } from '@/spa/http/apiClient';
+import { trackOnboardingStep } from '@/spa/http/onboarding';
 import userAddIcon from '../../../../svg/doodle-icons/user-add.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 
@@ -105,6 +106,7 @@ async function submit(): Promise<void> {
 }
 
 function continueOnboarding(): void {
+    trackOnboardingStep('invite_members');
     router.push({ name: 'spa.onboarding.notifications' });
 }
 </script>
