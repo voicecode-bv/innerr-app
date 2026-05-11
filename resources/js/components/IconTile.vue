@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 
 type Size = 'sm' | 'md' | 'lg';
-type Tone = 'sage' | 'sand' | 'accent' | 'teal';
+type Tone = 'sage' | 'sand' | 'accent' | 'teal' | 'orange' | 'green' | 'yellow';
 
 const props = withDefaults(
     defineProps<{
@@ -23,10 +23,13 @@ const wrapperClasses = computed(() => {
         lg: 'size-14',
     };
     const toneMap: Record<Tone, string> = {
-        sage: 'bg-sage-100 text-teal dark:bg-sage-900/40 dark:text-sage-100',
-        sand: 'bg-sand-100 text-sand-600 dark:bg-sand-700/60 dark:text-sand-300',
-        accent: 'bg-accent-soft/30 text-accent dark:bg-accent/20 dark:text-accent-soft',
-        teal: 'bg-teal text-white',
+        sage: 'bg-sage-100 text-teal',
+        sand: 'bg-sand-100 text-teal',
+        accent: 'bg-accent-soft/30 text-accent',
+        teal: 'bg-teal text-brand-sand',
+        orange: 'bg-brand-orange text-brand-sand',
+        green: 'bg-brand-green text-brand-sand',
+        yellow: 'bg-brand-yellow text-brand-green',
     };
     return [sizeMap[props.size], toneMap[props.tone]];
 });

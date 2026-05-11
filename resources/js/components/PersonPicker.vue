@@ -78,7 +78,7 @@ function toggle(personId: string) {
         <div class="mb-3 flex items-center justify-between gap-2">
             <button
                 type="button"
-                class="flex items-center gap-1.5 tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                class="flex items-center gap-1.5 font-semibold text-teal"
                 @click="isCollapsed = !isCollapsed"
             >
                 {{ t('Tag persons') }}
@@ -99,17 +99,12 @@ function toggle(personId: string) {
                 </svg>
             </button>
 
-            <span
-                v-if="isCollapsed"
-                class="truncate text-sand-500 dark:text-sand-400"
-                >{{ summaryText }}</span
-            >
+            <span v-if="isCollapsed" class="truncate text-teal-muted">{{
+                summaryText
+            }}</span>
         </div>
 
-        <div
-            v-if="!isCollapsed && persons.length === 0"
-            class="text-sand-500 dark:text-sand-400"
-        >
+        <div v-if="!isCollapsed && persons.length === 0" class="text-teal-muted">
             {{ t('No persons yet. Add them in Settings → Persons.') }}
         </div>
 
@@ -134,10 +129,10 @@ function toggle(personId: string) {
                     :class="
                         selectedIds.includes(person.id)
                             ? 'person-ring'
-                            : 'bg-sand-200 dark:bg-sand-700'
+                            : 'bg-sand-200'
                     "
                 >
-                    <div class="rounded-full bg-white p-0.5 dark:bg-sand-900">
+                    <div class="rounded-full bg-white p-0.5">
                         <img
                             v-if="person.avatar_thumbnail || person.avatar"
                             :src="
@@ -153,7 +148,7 @@ function toggle(personId: string) {
                         />
                         <div
                             v-else
-                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 transition-opacity dark:bg-sand-900"
+                            class="flex size-14 items-center justify-center rounded-full bg-sage-100 transition-opacity"
                             :class="
                                 selectedIds.includes(person.id)
                                     ? ''
@@ -162,7 +157,7 @@ function toggle(personId: string) {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-7 bg-sand-600 dark:bg-sand-300"
+                                class="inline-block size-7 bg-teal"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </div>
@@ -170,7 +165,7 @@ function toggle(personId: string) {
 
                     <div
                         v-if="selectedIds.includes(person.id)"
-                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white dark:ring-sand-900"
+                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -190,7 +185,7 @@ function toggle(personId: string) {
 
                     <div
                         v-else-if="person.user_id"
-                        class="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-800 dark:ring-sand-900"
+                        class="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white"
                         :title="t('Member of this circle')"
                     >
                         <span
@@ -204,8 +199,8 @@ function toggle(personId: string) {
                     class="max-w-16 truncate"
                     :class="
                         selectedIds.includes(person.id)
-                            ? 'text-sand-900 dark:text-sand-100'
-                            : 'text-sand-500 dark:text-sand-400'
+                            ? 'font-medium text-teal'
+                            : 'text-teal-muted'
                     "
                 >
                     {{ person.name }}

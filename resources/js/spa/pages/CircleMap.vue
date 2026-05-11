@@ -57,10 +57,7 @@ function handlePostClick(postId: string): void {
 <template>
     <AppLayout :title="circle?.name ?? t('Map')">
         <template #header-left>
-            <button
-                class="flex items-center text-sand-700 dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-sand-700" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -87,7 +84,7 @@ function handlePostClick(postId: string): void {
             />
             <div v-else class="flex h-full items-center justify-center">
                 <svg
-                    class="size-6 animate-spin text-sand-400 dark:text-sand-500"
+                    class="size-6 animate-spin text-sand-400"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"

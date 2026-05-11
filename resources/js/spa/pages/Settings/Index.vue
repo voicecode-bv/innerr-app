@@ -2,9 +2,9 @@
 import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
-import ListItem from '@/spa/components/ListItem.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api } from '@/spa/http/apiClient';
@@ -36,28 +36,43 @@ const menuItems = computed(() => [
         routeName: 'spa.settings.edit-profile',
         icon: pencilIcon,
         label: 'Edit profile',
+        tone: 'teal' as const,
     },
     {
         routeName: 'spa.settings.default-circles',
         icon: circleIcon,
         label: 'Default circles',
+        tone: 'green' as const,
     },
-    { routeName: 'spa.settings.persons', icon: usersIcon, label: 'Persons' },
-    { routeName: 'spa.settings.tags', icon: tagIcon, label: 'Tags' },
+    {
+        routeName: 'spa.settings.persons',
+        icon: usersIcon,
+        label: 'Persons',
+        tone: 'yellow' as const,
+    },
+    {
+        routeName: 'spa.settings.tags',
+        icon: tagIcon,
+        label: 'Tags',
+        tone: 'teal' as const,
+    },
     {
         routeName: 'spa.settings.notifications',
         icon: bellIcon,
         label: 'Push notifications',
+        tone: 'teal' as const,
     },
     {
         routeName: 'spa.settings.give',
         icon: foldedHandsIcon,
         label: 'Inner Gives',
+        tone: 'orange' as const,
     },
     {
         routeName: 'spa.settings.storage',
         icon: cloudIcon,
         label: 'Storage',
+        tone: 'green' as const,
     },
     ...(isIos.value || isAndroid.value
         ? [
@@ -65,10 +80,16 @@ const menuItems = computed(() => [
                   routeName: 'spa.settings.subscriptions',
                   icon: crownIcon,
                   label: 'Subscription',
+                  tone: 'yellow' as const,
               },
           ]
         : []),
-    { routeName: 'spa.settings.account', icon: lockIcon, label: 'Account' },
+    {
+        routeName: 'spa.settings.account',
+        icon: lockIcon,
+        label: 'Account',
+        tone: 'green' as const,
+    },
 ]);
 
 const languageIconStyle = computed(() => ({
@@ -132,9 +153,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
         >
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <div class="flex items-center justify-between gap-3 px-2">
-                    <span
-                        class="flex items-center gap-2 text-sand-500 dark:text-sand-400"
-                    >
+                    <span class="flex items-center gap-2 text-teal-muted">
                         <span
                             aria-hidden="true"
                             class="inline-block size-3.5 bg-current"
@@ -143,14 +162,14 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         {{ t('Language') }}
                     </span>
                     <div
-                        class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5 dark:bg-sand-800/60"
+                        class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5"
                     >
                         <button
                             class="rounded-full px-3 py-1 transition"
                             :class="
                                 currentLocale === 'nl'
-                                    ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
-                                    : 'text-sand-500 dark:text-sand-400'
+                                    ? 'bg-white text-teal shadow-sm'
+                                    : 'text-teal-muted'
                             "
                             @click="setLocale('nl')"
                         >
@@ -160,8 +179,8 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                             class="rounded-full px-3 py-1 transition"
                             :class="
                                 currentLocale === 'en'
-                                    ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
-                                    : 'text-sand-500 dark:text-sand-400'
+                                    ? 'bg-white text-teal shadow-sm'
+                                    : 'text-teal-muted'
                             "
                             @click="setLocale('en')"
                         >
@@ -171,8 +190,8 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                             class="rounded-full px-3 py-1 transition"
                             :class="
                                 currentLocale === 'fr'
-                                    ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
-                                    : 'text-sand-500 dark:text-sand-400'
+                                    ? 'bg-white text-teal shadow-sm'
+                                    : 'text-teal-muted'
                             "
                             @click="setLocale('fr')"
                         >
@@ -181,24 +200,28 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                     </div>
                 </div>
 
-                <ul
-                    class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60"
-                >
+                <ul class="divide-y divide-sand-100 bg-white">
                     <li
                         v-for="item in menuItems"
                         :key="item.routeName"
                         class="reveal-item"
                     >
-                        <ListItem :to="{ name: item.routeName }">
-                            <template #leading>
-                                <IconTile
-                                    :icon="item.icon"
-                                    size="sm"
-                                    tone="sage"
-                                />
-                            </template>
-                            {{ t(item.label) }}
-                        </ListItem>
+                        <RouterLink
+                            :to="{ name: item.routeName }"
+                            class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-sand-50"
+                        >
+                            <IconTile
+                                :icon="item.icon"
+                                size="md"
+                                :tone="item.tone"
+                                class="shrink-0"
+                            />
+                            <span
+                                class="flex-1 text-base leading-snug font-semibold text-teal"
+                            >
+                                {{ t(item.label) }}
+                            </span>
+                        </RouterLink>
                     </li>
                 </ul>
 

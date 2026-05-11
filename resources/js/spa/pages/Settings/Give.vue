@@ -4,10 +4,8 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
-import SurfaceCard from '@/components/SurfaceCard.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
-import balloonIcon from '../../../../svg/doodle-icons/balloon-2.svg';
 import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
 import heartFilledIcon from '../../../../svg/doodle-icons/heart-filled.svg';
 
@@ -40,10 +38,7 @@ function goBack(): void {
 <template>
     <AppLayout :title="t('Inner Gives')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -67,21 +62,21 @@ function goBack(): void {
             <div
                 class="relative space-y-4 px-4 pt-4 pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
             >
-                <SurfaceCard class="reveal-item">
+                <div
+                    class="reveal-item rounded-lg bg-teal p-6 shadow-sm shadow-teal/20"
+                >
                     <div class="flex flex-col items-center gap-4 text-center">
                         <IconTile
                             :icon="foldedHandsIcon"
                             size="lg"
-                            tone="sage"
+                            tone="yellow"
                         />
                         <h2
-                            class="font-display text-2xl font-semibold text-teal dark:text-sand-100"
+                            class="font-display text-2xl font-semibold text-brand-sand"
                         >
                             {{ t('Inner Gives') }}
                         </h2>
-                        <p
-                            class="leading-relaxed text-sand-600 dark:text-sand-300"
-                        >
+                        <p class="leading-relaxed text-brand-sand/80">
                             {{
                                 t(
                                     "Children who are sick, going through surgery, recovering. Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.",
@@ -90,7 +85,7 @@ function goBack(): void {
                         </p>
                         <Button
                             type="button"
-                            variant="secondary"
+                            variant="inverse"
                             size="md"
                             @click="openLearnMore"
                         >
@@ -111,64 +106,32 @@ function goBack(): void {
                             </svg>
                         </Button>
                     </div>
-                </SurfaceCard>
+                </div>
 
-                <SurfaceCard class="reveal-item">
-                    <div
-                        class="flex flex-col items-center gap-4 rounded-2xl bg-gradient-to-br from-sage-100 via-cream to-sand-50 p-6 text-center dark:from-sage-900/50 dark:via-sand-800/60 dark:to-sand-900"
+                <div
+                    class="reveal-item flex flex-col items-center gap-4 rounded-lg bg-brand-green p-6 text-center shadow-sm shadow-sage-900/20"
+                >
+                    <IconTile
+                        :icon="heartFilledIcon"
+                        size="lg"
+                        tone="yellow"
+                    />
+                    <p
+                        class="font-display text-6xl leading-none font-semibold text-brand-yellow"
                     >
-                        <IconTile :icon="balloonIcon" size="lg" tone="teal" />
-                        <p
-                            class="font-display text-6xl leading-none font-semibold text-teal dark:text-sand-50"
-                        >
-                            {{ DONATION_PERCENTAGE
-                            }}<span class="text-4xl">%</span>
-                        </p>
-                        <p
-                            class="font-sans text-xl font-semibold text-teal dark:text-sand-100"
-                        >
-                            {{ t('A bright smile') }}
-                        </p>
-                        <p
-                            class="leading-relaxed text-sand-600 dark:text-sand-300"
-                        >
-                            {{
-                                t(
-                                    '10% of my subscription brings extra joy to recovering kids.',
-                                )
-                            }}
-                        </p>
-                    </div>
-                </SurfaceCard>
-
-                <SurfaceCard tone="muted" class="reveal-item">
-                    <div class="flex items-start gap-4">
-                        <IconTile
-                            :icon="heartFilledIcon"
-                            size="md"
-                            tone="accent"
-                        />
-                        <div class="min-w-0 flex-1">
-                            <p
-                                class="font-sans font-semibold text-teal dark:text-sand-100"
-                            >
-                                {{ t('Thank you for giving back') }}
-                            </p>
-                            <p
-                                class="mt-1 leading-relaxed text-sand-600 dark:text-sand-300"
-                            >
-                                {{
-                                    t(
-                                        "Each month we donate :percentage% of your subscription to children's care on your behalf.",
-                                        {
-                                            percentage: DONATION_PERCENTAGE,
-                                        },
-                                    )
-                                }}
-                            </p>
-                        </div>
-                    </div>
-                </SurfaceCard>
+                        {{ DONATION_PERCENTAGE }}<span class="text-4xl">%</span>
+                    </p>
+                    <p class="font-sans text-xl font-semibold text-brand-sand">
+                        {{ t('A bright smile') }}
+                    </p>
+                    <p class="leading-relaxed text-brand-sand/90">
+                        {{
+                            t(
+                                '10% of your subscription brings extra joy to recovering kids.',
+                            )
+                        }}
+                    </p>
+                </div>
             </div>
         </div>
     </AppLayout>

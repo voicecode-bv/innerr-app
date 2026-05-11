@@ -181,14 +181,12 @@ async function createTag(): Promise<void> {
 
 <template>
     <div>
-        <p
-            class="mb-3 tracking-wider text-sand-500 uppercase dark:text-sand-400"
-        >
+        <p class="mb-3 font-semibold text-teal">
             {{ t('Tags') }}
         </p>
 
         <div
-            class="relative rounded-2xl bg-sand-100 px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-teal dark:bg-sand-800"
+            class="relative rounded-2xl bg-sand-100 px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-teal"
             @click="inputRef?.focus()"
         >
             <div class="flex flex-wrap items-center gap-2">
@@ -226,7 +224,7 @@ async function createTag(): Promise<void> {
                             ? t('Search or add tags...')
                             : ''
                     "
-                    class="min-w-[8rem] flex-1 border-0 bg-transparent px-2 py-1 text-sand-800 placeholder-sand-400 focus:ring-0 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
+                    class="min-w-[8rem] flex-1 border-0 bg-transparent px-2 py-1 text-night placeholder-teal-muted/50 focus:ring-0 focus:outline-none"
                     @input="onInput"
                     @focus="openDropdown"
                     @blur="closeDropdown"
@@ -240,18 +238,14 @@ async function createTag(): Promise<void> {
 
             <ul
                 v-if="isOpen && optionsCount > 0"
-                class="absolute top-full right-0 left-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-sand-200 dark:bg-sand-900 dark:ring-sand-700"
+                class="absolute top-full right-0 left-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-sand-200"
                 @mousedown.prevent
             >
                 <li
                     v-for="(tag, index) in filteredTags"
                     :key="tag.id"
-                    class="cursor-pointer px-4 py-2 text-sand-800 dark:text-sand-100"
-                    :class="
-                        index === activeIndex
-                            ? 'bg-sand-100 dark:bg-sand-800'
-                            : ''
-                    "
+                    class="cursor-pointer px-4 py-2 text-night"
+                    :class="index === activeIndex ? 'bg-sand-100' : ''"
                     @mouseenter="activeIndex = index"
                     @click="selectTag(tag.id)"
                 >
@@ -262,9 +256,7 @@ async function createTag(): Promise<void> {
                     v-if="canCreate"
                     class="flex cursor-pointer items-center gap-2 px-4 py-2 text-teal"
                     :class="
-                        filteredTags.length === activeIndex
-                            ? 'bg-sand-100 dark:bg-sand-800'
-                            : ''
+                        filteredTags.length === activeIndex ? 'bg-sand-100' : ''
                     "
                     @mouseenter="activeIndex = filteredTags.length"
                     @click="createTag"

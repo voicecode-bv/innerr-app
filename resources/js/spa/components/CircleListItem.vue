@@ -12,7 +12,15 @@ interface CircleSummary {
     name: string;
     photo: string | null;
     members_count?: number;
+    members_can_view_members?: boolean;
+    is_owner?: boolean;
 }
+
+const canSeeMemberCount = computed(
+    () =>
+        props.circle.is_owner === true ||
+        props.circle.members_can_view_members !== false,
+);
 
 const props = withDefaults(
     defineProps<{
@@ -27,7 +35,7 @@ const props = withDefaults(
 const { t } = useTranslations();
 
 const avatarRoundingClass = computed(() =>
-    props.avatarShape === 'circle' ? 'rounded-full' : 'rounded-lg',
+    props.avatarShape === 'circle' ? 'avatar-ring rounded-full' : 'rounded-lg',
 );
 const iconTileClass = computed(() =>
     props.avatarShape === 'circle' ? '!rounded-full' : '',
@@ -53,7 +61,12 @@ const iconTileClass = computed(() =>
             />
         </template>
         {{ circle.name }}
-        <template v-if="typeof circle.members_count === 'number'" #subtitle>
+        <template
+            v-if="
+                canSeeMemberCount && typeof circle.members_count === 'number'
+            "
+            #subtitle
+        >
             {{
                 circle.members_count === 1
                     ? t(':count member', { count: circle.members_count })

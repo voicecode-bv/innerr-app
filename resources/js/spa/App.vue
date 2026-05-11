@@ -10,7 +10,7 @@ useNetworkStatus();
  tijdens route-transities of het laden van een lazy chunk. -->
     <div
         aria-hidden="true"
-        class="pointer-events-none fixed inset-0 -z-20 bg-warmwhite dark:bg-sand-900"
+        class="pointer-events-none fixed inset-0 -z-20 bg-sand"
     />
 
     <RouterView v-slot="{ Component }">

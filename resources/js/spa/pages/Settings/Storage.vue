@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
-import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
@@ -11,8 +10,6 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useI18nStore } from '@/spa/stores/i18n';
-import cloudIcon from '../../../../svg/doodle-icons/cloud.svg';
-import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 
 interface StorageUsage {
     used_bytes: number;
@@ -63,10 +60,10 @@ const barToneClass = computed(() => {
     }
 
     if (usagePercent.value >= 75) {
-        return 'bg-amber-500';
+        return 'bg-brand-orange';
     }
 
-    return 'bg-teal';
+    return 'bg-brand-yellow';
 });
 
 function formatBytes(bytes: number | null | undefined): string {
@@ -123,10 +120,7 @@ onMounted(load);
 <template>
     <AppLayout ref="layout" :title="t('Storage')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -156,31 +150,25 @@ onMounted(load);
                 <SurfaceCard v-if="!loaded" class="reveal-item">
                     <div class="animate-pulse">
                         <div class="flex items-center gap-3">
-                            <div
-                                class="size-9 rounded-lg bg-sand-200 dark:bg-sand-700"
-                            />
-                            <div
-                                class="h-3 w-40 rounded bg-sand-200 dark:bg-sand-700"
-                            />
+                            <div class="size-9 rounded-lg bg-sand-200" />
+                            <div class="h-3 w-40 rounded bg-sand-200" />
                         </div>
-                        <div
-                            class="mt-4 h-3 w-full rounded-full bg-sand-200 dark:bg-sand-700"
-                        />
-                        <div
-                            class="mt-3 h-3 w-1/3 rounded bg-sand-200 dark:bg-sand-700"
-                        />
+                        <div class="mt-4 h-3 w-full rounded-full bg-sand-200" />
+                        <div class="mt-3 h-3 w-1/3 rounded bg-sand-200" />
                     </div>
                 </SurfaceCard>
 
-                <SurfaceCard v-else-if="usage" class="reveal-item">
+                <div
+                    v-else-if="usage"
+                    class="reveal-item rounded-lg bg-teal p-5 shadow-sm shadow-teal/20"
+                >
                     <h3
-                        class="flex items-center gap-3 font-semibold text-sand-900 dark:text-sand-100"
+                        class="font-display text-lg font-semibold text-brand-sand"
                     >
-                        <IconTile :icon="cloudIcon" size="sm" tone="sage" />
                         {{ t('Storage usage') }}
                     </h3>
 
-                    <p class="mt-2 text-sand-600 dark:text-sand-400">
+                    <p class="mt-2 text-brand-sand/80">
                         {{
                             t(
                                 'This is the total space used by the photos and videos you have uploaded to your circles. Items shared with you by others do not count towards your limit.',
@@ -189,15 +177,13 @@ onMounted(load);
                     </p>
 
                     <div class="mt-4">
-                        <div
-                            class="flex items-baseline justify-between gap-2"
-                        >
+                        <div class="flex items-baseline justify-between gap-2">
                             <span
-                                class="font-display text-xl font-semibold text-teal dark:text-sand-100"
+                                class="font-display text-xl font-semibold text-brand-yellow"
                             >
                                 {{ formatBytes(usage.used_bytes) }}
                             </span>
-                            <span class="text-sand-500 dark:text-sand-400">
+                            <span class="text-brand-sand/80">
                                 {{
                                     t('of :total used', {
                                         total: formatBytes(usage.limit_bytes),
@@ -207,7 +193,7 @@ onMounted(load);
                         </div>
 
                         <div
-                            class="mt-3 h-3 overflow-hidden rounded-full bg-sand-100 dark:bg-sand-700/60"
+                            class="mt-3 h-3 overflow-hidden rounded-full bg-brand-sand/20"
                             role="progressbar"
                             :aria-valuenow="usagePercent"
                             aria-valuemin="0"
@@ -222,36 +208,31 @@ onMounted(load);
 
                         <p
                             v-if="usage.limit_bytes"
-                            class="mt-2 text-sand-500 dark:text-sand-400"
+                            class="mt-2 text-brand-sand/80"
                         >
-                            {{
-                                t(':percent% used', { percent: usagePercent })
-                            }}
+                            {{ t(':percent% used', { percent: usagePercent }) }}
                         </p>
                     </div>
-                </SurfaceCard>
+                </div>
 
-                <SurfaceCard v-if="showUpgradeCta" class="reveal-item">
-                    <div class="flex items-start gap-3">
-                        <IconTile :icon="crownIcon" size="md" tone="sage" />
-                        <div class="min-w-0 flex-1">
-                            <h3
-                                class="font-display text-lg font-semibold text-teal dark:text-sand-100"
-                            >
-                                {{ t('Need more space?') }}
-                            </h3>
-                            <p
-                                class="mt-1 text-sand-700 dark:text-sand-300"
-                            >
-                                {{
-                                    t(
-                                        'Upgrade to Familie+ for 1 TB of storage for your photos and videos.',
-                                    )
-                                }}
-                            </p>
-                        </div>
-                    </div>
+                <div
+                    v-if="showUpgradeCta"
+                    class="reveal-item rounded-lg bg-brand-green p-5 shadow-sm shadow-sage-900/20"
+                >
+                    <h3
+                        class="font-display text-lg font-semibold text-brand-sand"
+                    >
+                        {{ t('Need more space?') }}
+                    </h3>
+                    <p class="mt-1 text-brand-sand/90">
+                        {{
+                            t(
+                                'Upgrade to Familie+ for 1 TB of storage for your photos and videos.',
+                            )
+                        }}
+                    </p>
                     <Button
+                        variant="inverse"
                         size="lg"
                         block
                         class="mt-4"
@@ -259,11 +240,11 @@ onMounted(load);
                     >
                         {{ t('View subscriptions') }}
                     </Button>
-                </SurfaceCard>
+                </div>
 
                 <p
                     v-if="errorMessage"
-                    class="rounded-lg bg-blush-50 p-3 text-blush-700 dark:bg-blush-900/30 dark:text-blush-200"
+                    class="rounded-lg bg-blush-50 p-3 text-blush-700"
                 >
                     {{ errorMessage }}
                 </p>

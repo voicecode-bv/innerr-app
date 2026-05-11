@@ -56,7 +56,7 @@ defineExpose({ mainRef });
     <div class="flex h-dvh flex-col">
         <header
             v-if="props.showHeader"
-            class="fixed right-[var(--inset-right,0)] left-[var(--inset-left,0)] z-100 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 pt-[var(--inset-top,0)] dark:border-sand-800 dark:bg-sand-900"
+            class="fixed right-[var(--inset-right,0)] left-[var(--inset-left,0)] z-100 flex items-center justify-between border-b border-sand-200 bg-sand px-4 py-3 pt-[var(--inset-top,0)]"
         >
             <div class="flex w-16 items-center">
                 <slot name="header-left">
@@ -64,7 +64,7 @@ defineExpose({ mainRef });
                 </slot>
             </div>
             <h1
-                class="min-w-0 flex-1 truncate text-center font-display text-lg font-semibold tracking-tight text-sand-800 dark:text-sand-100"
+                class="min-w-0 flex-1 truncate text-center font-sans text-lg font-semibold tracking-tight text-teal"
             >
                 {{ title ?? t('Innerr') }}
             </h1>

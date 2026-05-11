@@ -138,10 +138,7 @@ function goBack(): void {
 <template>
     <AppLayout ref="layout" :title="circle?.name ?? t('Circle')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -163,7 +160,7 @@ function goBack(): void {
             <RouterLink
                 v-if="circle"
                 :to="{ name: 'spa.circles.map', params: { circle: circle.id } }"
-                class="flex items-center text-sand-700 dark:text-sand-300"
+                class="flex items-center text-sand-700"
                 :aria-label="t('Open map')"
             >
                 <svg
@@ -192,16 +189,10 @@ function goBack(): void {
             <template v-if="feed.items.length === 0 && feed.loading">
                 <div v-for="n in 3" :key="n" class="animate-pulse">
                     <div class="flex items-center gap-3 px-4 py-3">
-                        <div
-                            class="size-10 rounded-full bg-sand-200 dark:bg-sand-700"
-                        />
-                        <div
-                            class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700"
-                        />
+                        <div class="size-10 rounded-full bg-sand" />
+                        <div class="h-3 w-32 rounded bg-sand" />
                     </div>
-                    <div
-                        class="aspect-square w-full bg-sand-200 dark:bg-sand-700"
-                    />
+                    <div class="aspect-square w-full bg-sand" />
                 </div>
             </template>
 
@@ -216,7 +207,7 @@ function goBack(): void {
 
             <div
                 v-if="feed.loading && feed.items.length > 0"
-                class="flex items-center justify-center gap-2 py-6 text-sand-500 dark:text-sand-400"
+                class="flex items-center justify-center gap-2 py-6 text-sand-500"
             >
                 {{ t('Loading more...') }}
             </div>
@@ -229,7 +220,7 @@ function goBack(): void {
             >
                 <div
                     aria-hidden="true"
-                    class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40"
+                    class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -251,12 +242,10 @@ function goBack(): void {
                         />
                     </svg>
                 </div>
-                <h3
-                    class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200"
-                >
+                <h3 class="font-display text-lg font-semibold text-teal">
                     {{ t('No moments yet') }}
                 </h3>
-                <p class="mt-2 text-sand-600 dark:text-sand-400">
+                <p class="mt-2 text-sand-600">
                     {{ t('Be the first to share something in this circle.') }}
                 </p>
             </div>

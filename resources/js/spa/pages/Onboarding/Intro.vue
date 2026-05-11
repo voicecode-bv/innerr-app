@@ -48,42 +48,29 @@ const steps = [
 
 function continueOnboarding(): void {
     trackOnboardingStep('intro');
-    router.push({ name: 'spa.onboarding.first-circle' });
+    router.push({ name: 'spa.onboarding.birthdate' });
 }
 </script>
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-warmwhite px-6 text-sand-900 dark:bg-sand-900 dark:text-sand-100"
+        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-teal"
     >
-        <div
-            aria-hidden="true"
-            class="pointer-events-none absolute inset-0 overflow-hidden"
-        >
-            <div
-                class="absolute -top-24 -left-24 size-72 rounded-full bg-sage-200/60 blur-3xl dark:bg-sage-700/20"
-            ></div>
-            <div
-                class="absolute top-1/3 -right-28 size-80 rounded-full bg-accent-soft/40 blur-3xl dark:bg-accent/10"
-            ></div>
-            <div
-                class="absolute -bottom-32 left-1/4 size-96 rounded-full bg-sand-200/50 blur-3xl dark:bg-sand-700/30"
-            ></div>
-        </div>
-
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
             <div class="mb-10 text-center">
-                <p class="tracking-widest text-accent uppercase">
+                <span
+                    class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm"
+                >
                     {{ t('How it works') }}
-                </p>
+                </span>
                 <h1
                     class="mt-3 font-display text-4xl font-semibold tracking-tight text-teal"
                 >
                     {{ t('Welcome to innerr') }}
                 </h1>
-                <p class="mt-3 text-sand-600 dark:text-sand-400">
+                <p class="mt-3 text-teal-muted">
                     {{ t('Three simple steps and you are ready to share.') }}
                 </p>
             </div>
@@ -92,11 +79,11 @@ function continueOnboarding(): void {
                 <li
                     v-for="(step, index) in steps"
                     :key="index"
-                    class="relative flex items-start gap-4 rounded-lg bg-white/50 p-4 shadow-sm backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/60"
+                    class="relative flex items-start gap-4 rounded-lg bg-white/50 p-4 shadow-sm backdrop-blur-sm"
                 >
                     <div class="relative shrink-0">
                         <div
-                            class="flex size-14 items-center justify-center rounded-lg bg-sage-100 text-teal dark:bg-sage-900/40"
+                            class="flex size-14 items-center justify-center rounded-lg bg-sage-100 text-teal"
                         >
                             <span
                                 aria-hidden="true"
@@ -111,14 +98,10 @@ function continueOnboarding(): void {
                         </span>
                     </div>
                     <div class="flex-1 pt-1">
-                        <h2
-                            class="font-sans text-base font-semibold text-sand-800 dark:text-sand-100"
-                        >
+                        <h2 class="font-sans text-base font-semibold text-teal">
                             {{ step.title }}
                         </h2>
-                        <p
-                            class="mt-1 leading-relaxed text-sand-600 dark:text-sand-400"
-                        >
+                        <p class="mt-1 leading-relaxed text-teal-muted">
                             {{ step.description }}
                         </p>
                     </div>

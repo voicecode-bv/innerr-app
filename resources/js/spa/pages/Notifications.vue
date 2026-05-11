@@ -16,6 +16,7 @@ import mailGiftIcon from '../../../svg/doodle-icons/mail-gift.svg';
 import mailOpenIcon from '../../../svg/doodle-icons/mail-open.svg';
 import message2Icon from '../../../svg/doodle-icons/message-2.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
+import tagIcon from '../../../svg/doodle-icons/tag.svg';
 import userAddIcon from '../../../svg/doodle-icons/user-add.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
@@ -327,11 +328,25 @@ function notificationMessage(notification: Notification): string {
             });
         case 'new-circle-post':
             return t(':name shared a new moment', { name });
-        case 'circle-invitation-accepted':
-            return t(':name accepted your invitation to :circle', {
-                name,
-                circle: notification.data.circle_name ?? '',
-            });
+        case 'post-tagged':
+            return t(':name tagged you in a post', { name });
+        case 'circle-invitation-accepted': {
+            const circle =
+                (notification.data.circle_name as string | undefined) ?? '';
+            if (name && circle) {
+                return t(':name accepted your invitation to :circle', {
+                    name,
+                    circle,
+                });
+            }
+            if (name) {
+                return t(':name accepted your invitation', { name });
+            }
+            if (circle) {
+                return t('Your invitation to :circle was accepted', { circle });
+            }
+            return t('Your invitation was accepted');
+        }
         case 'circle-ownership-transfer-requested':
             return t(':name wants to transfer ownership of :circle to you', {
                 name,
@@ -364,6 +379,7 @@ const typeIconMap: Record<string, BadgeConfig> = {
     'post-commented': { icon: messageIcon, tone: 'sage' },
     'comment-replied': { icon: message2Icon, tone: 'sage' },
     'new-circle-post': { icon: bellIcon, tone: 'teal' },
+    'post-tagged': { icon: tagIcon, tone: 'accent' },
     'circle-invitation-accepted': { icon: userAddIcon, tone: 'sage' },
     'circle-ownership-transfer-requested': { icon: crownIcon, tone: 'accent' },
     'circle-ownership-transfer-accepted': { icon: crownIcon, tone: 'sage' },
@@ -372,7 +388,7 @@ const typeIconMap: Record<string, BadgeConfig> = {
 
 const filledToneClass: Record<IconToneName, string> = {
     sage: 'bg-sage-200 text-teal dark:bg-sage-800 dark:text-sage-100',
-    sand: 'bg-sand-200 text-sand-700 dark:bg-sand-700 dark:text-sand-200',
+    sand: 'bg-sand-200 text-teal dark:bg-sand-700 dark:text-sand-200',
     accent: 'bg-accent text-white dark:bg-accent dark:text-white',
     teal: 'bg-teal text-white',
 };
@@ -489,7 +505,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
     <AppLayout ref="layout" :title="t('Notifications')">
         <template #header-left>
             <button
-                class="flex items-center text-sand-700 dark:text-sand-300"
+                class="flex items-center text-teal dark:text-sand-300"
                 @click="goBack"
             >
                 <svg
@@ -541,11 +557,11 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         <IconTile :icon="crownIcon" size="sm" tone="accent" />
                         <div class="min-w-0">
                             <h3
-                                class="font-semibold text-sand-900 dark:text-sand-100"
+                                class="font-semibold text-teal dark:text-sand-100"
                             >
                                 {{ t('Ownership transfers') }}
                             </h3>
-                            <p class="text-sand-500 dark:text-sand-400">
+                            <p class="text-teal-muted dark:text-sand-400">
                                 {{
                                     t(':count pending', {
                                         count: ownershipTransfers.length,
@@ -583,7 +599,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sand-900 dark:text-sand-100">
+                                <p class="text-teal dark:text-sand-100">
                                     {{
                                         t(
                                             ':name wants to transfer ownership of :circle to you',
@@ -595,7 +611,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                     }}
                                 </p>
                                 <p
-                                    class="mt-0.5 text-sand-500 dark:text-sand-400"
+                                    class="mt-0.5 text-teal-muted dark:text-sand-400"
                                 >
                                     {{ timeAgo(transfer.created_at) }}
                                 </p>
@@ -608,7 +624,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         {{ t('Accept') }}
                                     </button>
                                     <button
-                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-sand-700 transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-teal transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
                                         :disabled="isTransferBusy(transfer.id)"
                                         @click="declineTransfer(transfer.id)"
                                     >
@@ -633,11 +649,11 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         />
                         <div class="min-w-0">
                             <h3
-                                class="font-semibold text-sand-900 dark:text-sand-100"
+                                class="font-semibold text-teal dark:text-sand-100"
                             >
                                 {{ t('Circle invitations') }}
                             </h3>
-                            <p class="text-sand-500 dark:text-sand-400">
+                            <p class="text-teal-muted dark:text-sand-400">
                                 {{
                                     t(':count pending', {
                                         count: circleInvitations.length,
@@ -675,7 +691,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sand-900 dark:text-sand-100">
+                                <p class="text-teal dark:text-sand-100">
                                     <template
                                         v-for="(
                                             segment, idx
@@ -696,13 +712,13 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         >
                                         <span
                                             v-else
-                                            class="text-sand-600 dark:text-sand-400"
+                                            class="text-teal-muted dark:text-sand-400"
                                             >{{ segment.text }}</span
                                         >
                                     </template>
                                 </p>
                                 <p
-                                    class="mt-0.5 text-sand-500 dark:text-sand-400"
+                                    class="mt-0.5 text-teal-muted dark:text-sand-400"
                                 >
                                     {{ timeAgo(invitation.created_at) }}
                                 </p>
@@ -717,7 +733,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         {{ t('Accept') }}
                                     </button>
                                     <button
-                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-sand-700 transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-teal transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
                                         :disabled="
                                             isInvitationBusy(invitation.id)
                                         "
@@ -768,9 +784,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         :key="group.key"
                         class="reveal-item space-y-2"
                     >
-                        <h2
-                            class="px-2 font-semibold tracking-[0.15em] text-sand-500 uppercase dark:text-sand-400"
-                        >
+                        <h2 class="px-2 font-semibold text-teal">
                             {{ group.label }}
                         </h2>
                         <SurfaceCard :padded="false">
@@ -841,7 +855,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p
-                                                class="leading-snug text-sand-800 dark:text-sand-100"
+                                                class="leading-snug text-night dark:text-sand-100"
                                                 :class="{
                                                     'font-semibold':
                                                         !isRead(notification),
@@ -854,7 +868,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                                 }}
                                             </p>
                                             <p
-                                                class="mt-1 text-sand-500 dark:text-sand-400"
+                                                class="mt-1 text-teal-muted dark:text-sand-400"
                                             >
                                                 {{
                                                     timeAgo(
@@ -898,7 +912,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     class="flex flex-col items-center gap-2 px-4 py-4"
                 >
                     <button
-                        class="text-sand-500 disabled:opacity-50 dark:text-sand-400"
+                        class="text-teal-muted disabled:opacity-50 dark:text-sand-400"
                         :disabled="isLoadingMore"
                         @click="loadMore"
                     >
@@ -932,7 +946,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                             {{ t('No notifications yet') }}
                         </h3>
                         <p
-                            class="mt-1 max-w-xs text-sand-600 dark:text-sand-400"
+                            class="mt-1 max-w-xs text-teal-muted dark:text-sand-400"
                         >
                             {{
                                 t(

@@ -174,7 +174,7 @@ onUnmounted(() => {
 <template>
     <AppLayout :title="t('Transfer ownership')">
         <template #header-left>
-            <button class="text-teal dark:text-sand-300" @click="goBack">
+            <button class="text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -203,11 +203,11 @@ onUnmounted(() => {
                         />
                         <div class="min-w-0">
                             <h2
-                                class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
+                                class="font-sans text-lg font-semibold text-teal"
                             >
                                 {{ t('Transfer ownership') }}
                             </h2>
-                            <p class="mt-1 text-sand-600 dark:text-sand-400">
+                            <p class="mt-1 text-sand-600">
                                 {{
                                     t(
                                         'Choose a member to transfer ownership of this circle to. They must accept before the transfer is complete.',
@@ -219,9 +219,7 @@ onUnmounted(() => {
                 </SurfaceCard>
 
                 <SurfaceCard v-if="pendingTransfer">
-                    <h3
-                        class="flex items-center gap-3 font-semibold text-sand-900 dark:text-sand-100"
-                    >
+                    <h3 class="flex items-center gap-3 font-semibold text-teal">
                         <IconTile
                             :icon="arrowCircleRightIcon"
                             size="sm"
@@ -230,7 +228,7 @@ onUnmounted(() => {
                         {{ t('Pending transfer') }}
                     </h3>
                     <div
-                        class="my-4 flex items-center gap-3 rounded-xl bg-sand-50/80 p-3 dark:bg-sand-800/40"
+                        class="my-4 flex items-center gap-3 rounded-xl bg-sand-50/80 p-3"
                     >
                         <img
                             :src="
@@ -241,14 +239,10 @@ onUnmounted(() => {
                             class="size-11 shrink-0 rounded-full object-cover"
                         />
                         <div class="min-w-0 flex-1">
-                            <p
-                                class="truncate font-semibold text-sand-900 dark:text-sand-100"
-                            >
+                            <p class="truncate font-semibold text-teal">
                                 {{ pendingTransfer.to_user.name }}
                             </p>
-                            <p
-                                class="truncate text-sand-500 dark:text-sand-400"
-                            >
+                            <p class="truncate text-sand-500">
                                 @{{ pendingTransfer.to_user.username }}
                             </p>
                         </div>
@@ -259,9 +253,7 @@ onUnmounted(() => {
                 </SurfaceCard>
 
                 <SurfaceCard v-else-if="eligibleMembers.length > 0">
-                    <h3
-                        class="flex items-center gap-3 font-semibold text-sand-900 dark:text-sand-100"
-                    >
+                    <h3 class="flex items-center gap-3 font-semibold text-teal">
                         <IconTile :icon="crownIcon" size="sm" tone="sage" />
                         {{ t('Select a new owner') }}
                     </h3>
@@ -272,8 +264,8 @@ onUnmounted(() => {
                                 class="flex w-full items-center gap-3 rounded-xl p-3 text-left transition"
                                 :class="
                                     selectedMemberId === member.id
-                                        ? 'bg-sage-100/60 dark:bg-sage-800/30'
-                                        : 'hover:bg-sand-50 dark:hover:bg-sand-800/40'
+                                        ? 'bg-sage-100/60'
+                                        : 'hover:bg-sand-50'
                                 "
                                 @click="selectedMemberId = member.id"
                             >
@@ -286,14 +278,10 @@ onUnmounted(() => {
                                     class="size-11 shrink-0 rounded-full object-cover"
                                 />
                                 <div class="min-w-0 flex-1">
-                                    <p
-                                        class="truncate font-semibold text-sand-900 dark:text-sand-100"
-                                    >
+                                    <p class="truncate font-semibold text-teal">
                                         {{ member.name }}
                                     </p>
-                                    <p
-                                        class="truncate text-sand-500 dark:text-sand-400"
-                                    >
+                                    <p class="truncate text-sand-500">
                                         @{{ member.username }}
                                     </p>
                                 </div>
@@ -302,7 +290,7 @@ onUnmounted(() => {
                                     :class="
                                         selectedMemberId === member.id
                                             ? 'border-teal bg-teal'
-                                            : 'border-sand-300 dark:border-sand-600'
+                                            : 'border-sand-300'
                                     "
                                 >
                                     <svg
@@ -348,12 +336,10 @@ onUnmounted(() => {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3
-                            class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
-                        >
+                        <h3 class="font-sans text-lg font-semibold text-teal">
                             {{ t('No members to transfer to') }}
                         </h3>
-                        <p class="mt-1 text-sand-600 dark:text-sand-400">
+                        <p class="mt-1 text-sand-600">
                             {{
                                 t(
                                     'Invite someone to this circle first, then you can transfer ownership.',

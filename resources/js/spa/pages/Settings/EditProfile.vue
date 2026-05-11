@@ -131,10 +131,7 @@ async function save(): Promise<void> {
 <template>
     <AppLayout :title="t('Edit profile')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -169,12 +166,12 @@ async function save(): Promise<void> {
                                 v-if="avatar"
                                 :src="avatar"
                                 :alt="t('Profile photo')"
-                                class="size-24 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                                class="avatar-ring size-24 rounded-full object-cover"
                                 :class="{ 'opacity-60': avatarUploading }"
                             />
                             <span
                                 v-else
-                                class="flex size-24 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
+                                class="flex size-24 items-center justify-center rounded-full bg-sage-100 text-teal"
                                 :class="{ 'opacity-60': avatarUploading }"
                             >
                                 <span
@@ -193,7 +190,7 @@ async function save(): Promise<void> {
                                 ></span>
                             </span>
                             <span
-                                class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white dark:ring-sand-900"
+                                class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white"
                             >
                                 <span
                                     aria-hidden="true"
@@ -211,7 +208,7 @@ async function save(): Promise<void> {
                                 ></span>
                             </span>
                         </button>
-                        <p class="text-sand-500 dark:text-sand-400">
+                        <p class="text-teal-muted">
                             {{ t('Tap to change your photo') }}
                         </p>
                     </div>
@@ -222,7 +219,7 @@ async function save(): Promise<void> {
                         <div>
                             <label
                                 for="bio"
-                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                                class="font-semibold text-teal"
                             >
                                 {{ t('Bio') }}
                             </label>
@@ -236,7 +233,7 @@ async function save(): Promise<void> {
                                     t('Write something about yourself...')
                                 "
                             />
-                            <p v-if="errors.bio" class="mt-1 text-accent">
+                            <p v-if="errors.bio" class="mt-1 text-blush-500">
                                 {{ errors.bio }}
                             </p>
                         </div>
@@ -244,25 +241,28 @@ async function save(): Promise<void> {
                         <div>
                             <label
                                 for="birthdate"
-                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                                class="font-semibold text-teal"
                             >
                                 {{ t('Birthdate') }}
                             </label>
+                            <p class="mt-1 text-teal-muted">
+                                {{
+                                    t(
+                                        'Your birthdate is used to show your age on tagged photos.',
+                                    )
+                                }}
+                            </p>
                             <input
                                 id="birthdate"
                                 v-model="birthdate"
                                 type="date"
                                 class="mt-2 box-border block field w-full max-w-full min-w-0 appearance-none"
                             />
-                            <p v-if="errors.birthdate" class="mt-1 text-accent">
+                            <p
+                                v-if="errors.birthdate"
+                                class="mt-1 text-blush-500"
+                            >
                                 {{ errors.birthdate }}
-                            </p>
-                            <p class="mt-2 text-sand-500 dark:text-sand-400">
-                                {{
-                                    t(
-                                        'Your birthdate is used to show your age on tagged photos.',
-                                    )
-                                }}
                             </p>
                         </div>
 
@@ -276,7 +276,7 @@ async function save(): Promise<void> {
                         >
                             <p
                                 v-if="saved"
-                                class="rounded-lg bg-sage-100/70 px-4 py-2 text-sage-700 dark:bg-sage-800/40 dark:text-sage-200"
+                                class="rounded-lg bg-sage-100/70 px-4 py-2 text-sage-700"
                             >
                                 {{ t('Profile saved.') }}
                             </p>

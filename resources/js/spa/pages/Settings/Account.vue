@@ -3,15 +3,12 @@ import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
-import IconTile from '@/components/IconTile.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { useAuthStore } from '@/spa/stores/auth';
 import { externalApi } from '@/spa/http/externalApi';
-import downloadIcon from '../../../../svg/doodle-icons/arrow-circle-down.svg';
-import userDeleteIcon from '../../../../svg/doodle-icons/user-delete.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -99,10 +96,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 <template>
     <AppLayout :title="t('Account')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -125,14 +119,11 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
         >
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <SurfaceCard class="reveal-item">
-                    <h3
-                        class="flex items-center gap-3 font-semibold text-sand-900 dark:text-sand-100"
-                    >
-                        <IconTile :icon="downloadIcon" size="sm" tone="sage" />
+                    <h3 class="font-semibold text-teal">
                         {{ t('Download your data') }}
                     </h3>
 
-                    <p class="mt-3 text-sand-700 dark:text-sand-300">
+                    <p class="mt-3 text-night">
                         {{
                             t(
                                 'Request an email with a download link to all your data. The link is valid for 24 hours.',
@@ -151,7 +142,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                     >
                         <div
                             v-if="exportSuccess"
-                            class="mt-4 rounded-lg bg-sage-100/70 px-4 py-3 text-sage-700 dark:bg-sage-800/40 dark:text-sage-200"
+                            class="mt-4 rounded-lg bg-sage-100/70 px-4 py-3 text-sage-700"
                         >
                             {{
                                 t(
@@ -177,25 +168,18 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 
                     <p
                         v-if="exportError"
-                        class="mt-4 rounded-lg bg-blush-50 p-3 text-blush-700 dark:bg-blush-900/30 dark:text-blush-200"
+                        class="mt-4 rounded-lg bg-blush-50 p-3 text-blush-700"
                     >
                         {{ exportError }}
                     </p>
                 </SurfaceCard>
 
                 <SurfaceCard class="reveal-item">
-                    <h3
-                        class="flex items-center gap-3 font-semibold text-sand-900 dark:text-sand-100"
-                    >
-                        <IconTile
-                            :icon="userDeleteIcon"
-                            size="sm"
-                            tone="sage"
-                        />
+                    <h3 class="font-semibold text-teal">
                         {{ t('Delete account') }}
                     </h3>
 
-                    <p class="mt-3 text-sand-700 dark:text-sand-300">
+                    <p class="mt-3 text-night">
                         {{
                             t(
                                 'Deleting your account removes your personal data in line with GDPR. The following happens:',
@@ -203,9 +187,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         }}
                     </p>
 
-                    <ul
-                        class="mt-3 list-disc space-y-1 pl-5 text-sand-700 dark:text-sand-300"
-                    >
+                    <ul class="mt-3 list-disc space-y-1 pl-5 text-night">
                         <li>
                             {{
                                 t(
@@ -250,7 +232,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 
                     <p
                         v-if="accountError"
-                        class="mt-4 rounded-lg bg-blush-50 p-3 text-blush-700 dark:bg-blush-900/30 dark:text-blush-200"
+                        class="mt-4 rounded-lg bg-blush-50 p-3 text-blush-700"
                     >
                         {{ accountError }}
                     </p>

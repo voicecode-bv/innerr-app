@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import BottomSheet from '@/components/BottomSheet.vue';
+import Chip from '@/components/Chip.vue';
+import SheetHeader from '@/components/SheetHeader.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
@@ -102,7 +104,7 @@ const staticMapUrl = computed<string | null>(() => {
     if (!token || !hasLocation.value || !post.value) return null;
     const lng = post.value.longitude;
     const lat = post.value.latitude;
-    const pin = `pin-l+1d5f5c(${lng},${lat})`;
+    const pin = `pin-l+373d8a(${lng},${lat})`;
     return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${lng},${lat},14/640x320@2x?access_token=${token}`;
 });
 
@@ -122,19 +124,6 @@ const hasAnyDetails = computed(() => {
         !!staticMapUrl.value
     );
 });
-
-function iconMaskStyle(url: string) {
-    return {
-        maskImage: `url(${url})`,
-        WebkitMaskImage: `url(${url})`,
-        maskSize: 'contain',
-        WebkitMaskSize: 'contain',
-        maskRepeat: 'no-repeat',
-        WebkitMaskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskPosition: 'center',
-    };
-}
 
 function ageAt(
     birthdate: string | null | undefined,
@@ -194,40 +183,19 @@ function ageAt(
 <template>
     <BottomSheet :open="open" @update:open="$emit('update:open', $event)">
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
-                    {{ t('Details') }}
-                </h2>
-                <button
-                    class="text-sand-500 dark:text-sand-400"
-                    :aria-label="t('Close')"
-                    @click="$emit('update:open', false)"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke="currentColor"
-                        class="size-5"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6 18 18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
-            </div>
+            <SheetHeader
+                :title="t('Details')"
+                @close="$emit('update:open', false)"
+            />
         </template>
 
         <div v-if="isLoading && !post" class="space-y-4 px-4 py-6">
-            <div class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
+            <div class="h-4 w-24 animate-pulse rounded bg-sand-200" />
             <div class="flex flex-wrap gap-2">
                 <div
                     v-for="n in 3"
                     :key="n"
-                    class="h-9 w-28 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
+                    class="h-9 w-28 animate-pulse rounded-full bg-sand-200"
                 />
             </div>
         </div>
@@ -236,141 +204,90 @@ function ageAt(
             v-else-if="post && hasAnyDetails"
             class="space-y-5 px-4 pt-4 pb-24"
         >
-            <section
-                v-if="(post.circles ?? []).length > 0"
-                class="space-y-3"
-            >
-                <h3
-                    class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                >
+            <section v-if="(post.circles ?? []).length > 0" class="space-y-3">
+                <h3 class="font-semibold text-brand-blue">
                     {{ t('Circles') }}
                 </h3>
                 <div class="flex flex-wrap gap-2">
-                    <RouterLink
+                    <Chip
                         v-for="circle in post.circles"
                         :key="circle.id"
+                        :label="circle.name"
+                        :photo="circle.photo"
+                        :icon-url="userIcon"
                         :to="{
                             name: 'spa.circles.show',
                             params: { circle: circle.id },
                         }"
-                        class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-3.5 pl-1 font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 transition-colors hover:bg-sand-50 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60 dark:hover:bg-sand-700"
-                    >
-                        <img
-                            v-if="circle.photo"
-                            :src="circle.photo"
-                            :alt="circle.name"
-                            class="size-7 rounded-full object-cover"
-                        />
-                        <span
-                            v-else
-                            class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
-                        >
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-3.5 bg-current"
-                                :style="iconMaskStyle(userIcon)"
-                            ></span>
-                        </span>
-                        {{ circle.name }}
-                    </RouterLink>
+                    />
                 </div>
             </section>
 
-            <section
-                v-if="(post.persons ?? []).length > 0"
-                class="space-y-3"
-            >
-                <h3
-                    class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                >
+            <section v-if="(post.persons ?? []).length > 0" class="space-y-3">
+                <h3 class="font-semibold text-brand-blue">
                     {{ t('Persons') }}
                 </h3>
                 <div class="flex flex-wrap gap-2">
-                    <component
+                    <Chip
                         v-for="person in post.persons"
                         :key="person.id"
-                        :is="person.user_username ? RouterLink : 'span'"
+                        :label="person.name"
+                        :photo="person.avatar_thumbnail"
+                        :initial="person.name.charAt(0)"
                         :to="
                             person.user_username
                                 ? {
                                       name: 'spa.profiles.show',
-                                      params: { username: person.user_username },
+                                      params: {
+                                          username: person.user_username,
+                                      },
                                   }
                                 : undefined
                         "
-                        class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-3.5 pl-1 font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60"
-                        :class="
-                            person.user_username
-                                ? 'transition-colors hover:bg-sand-50 dark:hover:bg-sand-700'
-                                : ''
-                        "
                     >
-                        <img
-                            v-if="person.avatar_thumbnail"
-                            :src="person.avatar_thumbnail"
-                            :alt="person.name"
-                            class="size-7 rounded-full object-cover"
-                        />
-                        <span
-                            v-else
-                            class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
-                        >
-                            <span
-                                class="font-display font-semibold uppercase"
-                                >{{ person.name.charAt(0) }}</span
-                            >
-                        </span>
-                        {{ person.name }}
-                        <span
+                        <template
                             v-if="
                                 ageAt(
                                     person.birthdate,
                                     post.taken_at ?? post.created_at,
                                 )
                             "
-                            class="font-normal text-sand-500 dark:text-sand-400"
+                            #meta
                         >
-                            ·
-                            {{
-                                ageAt(
-                                    person.birthdate,
-                                    post.taken_at ?? post.created_at,
-                                )
-                            }}
-                        </span>
-                    </component>
+                            <span class="font-normal text-teal-muted">
+                                ·
+                                {{
+                                    ageAt(
+                                        person.birthdate,
+                                        post.taken_at ?? post.created_at,
+                                    )
+                                }}
+                            </span>
+                        </template>
+                    </Chip>
                 </div>
             </section>
 
-            <section
-                v-if="(post.tags ?? []).length > 0"
-                class="space-y-3"
-            >
-                <h3
-                    class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                >
+            <section v-if="(post.tags ?? []).length > 0" class="space-y-3">
+                <h3 class="font-semibold text-brand-blue">
                     {{ t('Tags') }}
                 </h3>
                 <div class="flex flex-wrap gap-2">
-                    <span
+                    <Chip
                         v-for="tag in post.tags"
                         :key="tag.id"
-                        class="rounded-full bg-linear-to-r from-sage-100 to-teal-muted/30 px-3.5 py-1.5 font-semibold text-teal ring-1 ring-teal/15 ring-inset dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
-                    >
-                        {{ tag.name }}
-                    </span>
+                        :label="tag.name"
+                    />
                 </div>
             </section>
 
             <section v-if="staticMapUrl" class="space-y-3">
-                <h3
-                    class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                >
+                <h3 class="font-semibold text-brand-blue">
                     {{ t('Location') }}
                 </h3>
                 <RouterLink
                     :to="mapTarget"
-                    class="relative block aspect-[2/1] w-full overflow-hidden rounded-2xl bg-sand-100 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:ring-sand-700/60"
+                    class="relative block aspect-[2/1] w-full overflow-hidden rounded-2xl bg-sand-100 shadow-sm ring-1 ring-sand-100"
                     :aria-label="t('Open map')"
                 >
                     <img
@@ -409,10 +326,7 @@ function ageAt(
             </section>
         </div>
 
-        <div
-            v-else-if="post"
-            class="px-4 py-10 text-center text-sand-500 dark:text-sand-400"
-        >
+        <div v-else-if="post" class="px-4 py-10 text-center text-teal-muted">
             {{ t('No details for this moment.') }}
         </div>
     </BottomSheet>

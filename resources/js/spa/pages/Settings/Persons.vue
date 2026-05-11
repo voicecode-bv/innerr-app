@@ -478,10 +478,7 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout ref="layout" :title="t('Persons')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -530,17 +527,21 @@ function iconMaskStyle(url: string) {
             />
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
-                <p class="reveal-item text-sand-600 dark:text-sand-400">
-                    {{
-                        t(
-                            "Add people here who don't have an Innerr account so you can still tag them in your photos. Members of your circles are automatically taggable and don't need to be added.",
-                        )
-                    }}
-                </p>
+                <div
+                    class="reveal-item rounded-2xl bg-teal p-4 shadow-sm shadow-teal/20"
+                >
+                    <p class="leading-relaxed text-brand-sand/90">
+                        {{
+                            t(
+                                "Add people here who don't have an Innerr account so you can still tag them in your photos. Members of your circles are automatically taggable and don't need to be added.",
+                            )
+                        }}
+                    </p>
+                </div>
 
                 <ul
                     v-if="isLoading && persons.length === 0"
-                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60"
+                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm"
                 >
                     <li
                         v-for="n in 5"
@@ -548,22 +549,18 @@ function iconMaskStyle(url: string) {
                         class="flex animate-pulse items-center gap-4 px-4 py-4"
                     >
                         <div
-                            class="size-12 shrink-0 rounded-full bg-sand-200 dark:bg-sand-700"
+                            class="size-12 shrink-0 rounded-full bg-sand-200"
                         />
                         <div class="flex-1 space-y-2">
-                            <div
-                                class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700"
-                            />
-                            <div
-                                class="h-2 w-20 rounded bg-sand-200 dark:bg-sand-700"
-                            />
+                            <div class="h-3 w-32 rounded bg-sand-200" />
+                            <div class="h-2 w-20 rounded bg-sand-200" />
                         </div>
                     </li>
                 </ul>
 
                 <ul
                     v-else-if="persons.length > 0"
-                    class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg"
                 >
                     <li
                         v-for="person in persons"
@@ -579,11 +576,11 @@ function iconMaskStyle(url: string) {
                                     v-if="person.avatar_thumbnail"
                                     :src="person.avatar_thumbnail"
                                     :alt="person.name"
-                                    class="size-12 shrink-0 rounded-full object-cover"
+                                    class="avatar-ring size-12 shrink-0 rounded-full object-cover"
                                 />
                                 <span
                                     v-else
-                                    class="flex size-12 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
+                                    class="flex size-12 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
                                 >
                                     <span
                                         aria-hidden="true"
@@ -631,12 +628,10 @@ function iconMaskStyle(url: string) {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3
-                            class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
-                        >
+                        <h3 class="font-sans text-lg font-semibold text-teal">
                             {{ t('No persons yet') }}
                         </h3>
-                        <p class="mt-1 text-sand-600 dark:text-sand-400">
+                        <p class="mt-1 text-teal-muted">
                             {{
                                 t(
                                     'Add the people closest to you to tag them in your posts.',
@@ -659,11 +654,11 @@ function iconMaskStyle(url: string) {
         >
             <template #header>
                 <div class="flex items-center justify-between">
-                    <h2 class="font-semibold text-sand-700 dark:text-sand-300">
+                    <h2 class="font-semibold text-teal">
                         {{ editingPerson ? t('Edit person') : t('Add person') }}
                     </h2>
                     <button
-                        class="text-sand-500 dark:text-sand-400"
+                        class="text-teal-muted"
                         :aria-label="t('Close')"
                         @click="closeSheet"
                     >
@@ -701,12 +696,12 @@ function iconMaskStyle(url: string) {
                                 ''
                             "
                             :alt="editingPerson?.name ?? ''"
-                            class="size-24 rounded-full object-cover shadow-sm"
+                            class="avatar-ring size-24 rounded-full object-cover shadow-sm"
                             :class="photoUploading ? 'opacity-50' : ''"
                         />
                         <span
                             v-else
-                            class="flex size-24 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
+                            class="flex size-24 items-center justify-center rounded-full bg-sage-100 text-teal"
                             :class="photoUploading ? 'opacity-50' : ''"
                         >
                             <span
@@ -716,7 +711,7 @@ function iconMaskStyle(url: string) {
                             ></span>
                         </span>
                         <span
-                            class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white/70 dark:ring-sand-900"
+                            class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white/70"
                         >
                             <span
                                 aria-hidden="true"
@@ -728,7 +723,7 @@ function iconMaskStyle(url: string) {
                     <button
                         v-if="pendingPhotoPreview || editingPerson?.avatar"
                         type="button"
-                        class="text-sand-500 hover:text-blush-500 dark:text-sand-400"
+                        class="rounded-full bg-blush-50 px-3 py-1 text-xs font-medium text-blush-600 transition-colors hover:bg-blush-100"
                         @click="deletePhoto"
                     >
                         {{ t('Remove photo') }}
@@ -739,7 +734,7 @@ function iconMaskStyle(url: string) {
                     <div>
                         <label
                             for="person-name"
-                            class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                            class="font-semibold text-teal"
                         >
                             {{ t('Name') }}
                         </label>
@@ -762,7 +757,7 @@ function iconMaskStyle(url: string) {
                     <div>
                         <label
                             for="person-birthdate"
-                            class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                            class="font-semibold text-teal"
                         >
                             {{ t('Birthdate') }}
                         </label>

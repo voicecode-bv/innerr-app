@@ -27,16 +27,14 @@ function handleOutside(event: MouseEvent): void {
 }
 
 onMounted(() => document.addEventListener('mousedown', handleOutside));
-onBeforeUnmount(() =>
-    document.removeEventListener('mousedown', handleOutside),
-);
+onBeforeUnmount(() => document.removeEventListener('mousedown', handleOutside));
 </script>
 
 <template>
     <div ref="root" class="relative">
         <button
             type="button"
-            class="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 font-semibold tracking-wider text-teal uppercase shadow-sm backdrop-blur-sm transition hover:scale-105 dark:bg-sand-800/60 dark:text-sand-200"
+            class="inline-flex items-center gap-2 rounded-full bg-brand-sand/15 px-3 py-2 font-semibold tracking-wider text-brand-sand uppercase shadow-sm backdrop-blur-sm transition hover:scale-105 hover:bg-brand-sand/25"
             :aria-expanded="open"
             aria-haspopup="listbox"
             @click="open = !open"
@@ -64,9 +62,7 @@ onBeforeUnmount(() =>
                         <path d="M0 0v30h60V0z" />
                     </clipPath>
                     <clipPath id="ls-gb-clip2">
-                        <path
-                            d="M30 15h30v15zv15H0zH0V0zV0h30z"
-                        />
+                        <path d="M30 15h30v15zv15H0zH0V0zV0h30z" />
                     </clipPath>
                     <g clip-path="url(#ls-gb-clip)">
                         <path fill="#012169" d="M0 0v30h60V0z" />
@@ -111,7 +107,7 @@ onBeforeUnmount(() =>
         <ul
             v-if="open"
             role="listbox"
-            class="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-sand-200 dark:bg-sand-800 dark:ring-sand-700"
+            class="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-sand-200"
         >
             <li
                 v-for="lang in languages"
@@ -121,11 +117,11 @@ onBeforeUnmount(() =>
             >
                 <button
                     type="button"
-                    class="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-sand-50 dark:hover:bg-sand-700/60"
+                    class="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-sand-50"
                     :class="
                         i18n.locale === lang.code
-                            ? 'text-teal dark:text-sand-100'
-                            : 'text-sand-700 dark:text-sand-300'
+                            ? 'bg-sage-50 font-semibold text-teal'
+                            : 'font-medium text-teal-muted'
                     "
                     @click="selectLocale(lang.code)"
                 >
@@ -149,7 +145,9 @@ onBeforeUnmount(() =>
                             <clipPath :id="`ls-gb-list-clip-${lang.code}`">
                                 <path d="M0 0v30h60V0z" />
                             </clipPath>
-                            <g :clip-path="`url(#ls-gb-list-clip-${lang.code})`">
+                            <g
+                                :clip-path="`url(#ls-gb-list-clip-${lang.code})`"
+                            >
                                 <path fill="#012169" d="M0 0v30h60V0z" />
                                 <path
                                     d="M0 0l60 30m0-30L0 30"

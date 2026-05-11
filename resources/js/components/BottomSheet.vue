@@ -176,7 +176,9 @@ function onHandlePointerDown(event: PointerEvent) {
     }
 
     const target = event.target as HTMLElement | null;
-    if (target?.closest('button, a, input, textarea, select, [role="button"]')) {
+    if (
+        target?.closest('button, a, input, textarea, select, [role="button"]')
+    ) {
         return;
     }
 
@@ -341,7 +343,7 @@ onUnmounted(() => {
         <div
             ref="sheetRef"
             :class="[
-                'fixed inset-x-0 bottom-0 z-9999 flex flex-col rounded-2xl bg-white shadow-2xl dark:bg-sand-900',
+                'fixed inset-x-0 bottom-0 z-9999 flex flex-col rounded-2xl bg-sand shadow-2xl',
                 isDragging ? '' : 'transition-transform duration-300 ease-out',
                 displayOpen
                     ? 'translate-y-[calc(var(--drag-offset,0px)+var(--kb-inset,0px)*-1)]'
@@ -363,13 +365,11 @@ onUnmounted(() => {
                 @pointerup="endDrag"
                 @pointercancel="endDrag"
             >
-                <div
-                    class="h-1 w-10 rounded-full bg-sand-200 dark:bg-sand-700"
-                />
+                <div class="h-1 w-10 rounded-full bg-sand-200" />
             </div>
             <div
                 v-if="$slots.header"
-                class="flex-shrink-0 cursor-grab touch-none border-b border-sand-100 px-4 py-3 active:cursor-grabbing dark:border-sand-800"
+                class="flex-shrink-0 cursor-grab touch-none border-b border-sand-100 px-4 py-3 active:cursor-grabbing"
                 @pointerdown="onHandlePointerDown"
                 @pointermove="onHandlePointerMove"
                 @pointerup="endDrag"
@@ -383,7 +383,7 @@ onUnmounted(() => {
             <div
                 v-if="$slots.footer"
                 :class="[
-                    'flex-shrink-0 border-t border-sand-200 bg-white dark:border-sand-800 dark:bg-sand-900',
+                    'shrink-0 border-t border-sand-200 bg-sand',
                     open && !keyboardOpen
                         ? 'pb-24'
                         : 'pb-[env(safe-area-inset-bottom)]',

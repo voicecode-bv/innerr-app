@@ -7,11 +7,9 @@ export interface CommentUser {
 
 export interface Comment {
     id: string;
-    parent_comment_id: string | null;
     body: string;
     created_at: string;
     user: CommentUser;
     likes_count: number;
     is_liked: boolean;
-    replies: Comment[];
 }

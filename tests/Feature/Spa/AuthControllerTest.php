@@ -99,3 +99,71 @@ it('logout clears the local user and circles cache', function () {
 it('rejects logout without authentication', function () {
     $this->postJson('/api/spa/auth/logout')->assertStatus(401);
 });
+
+it('sends a password reset link via the api', function () {
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('sendPasswordResetLink')
+        ->once()
+        ->with('jane@example.com')
+        ->andReturn(['success' => true, 'message' => 'Link sent']);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->postJson('/api/spa/auth/forgot-password', [
+        'email' => 'jane@example.com',
+    ])->assertOk()->assertJsonPath('message', 'Link sent');
+});
+
+it('returns 422 when forgot-password api reports an error', function () {
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('sendPasswordResetLink')->andReturn([
+        'success' => false,
+        'message' => 'Email not found',
+    ]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->postJson('/api/spa/auth/forgot-password', [
+        'email' => 'unknown@example.com',
+    ])->assertStatus(422)->assertJsonValidationErrors('email');
+});
+
+it('validates the email field on forgot-password', function () {
+    $this->postJson('/api/spa/auth/forgot-password', [
+        'email' => 'not-an-email',
+    ])->assertStatus(422)->assertJsonValidationErrors('email');
+});
+
+it('resets the password via the api', function () {
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('resetPassword')
+        ->once()
+        ->with('jane@example.com', 'reset-token', 'newpassword123')
+        ->andReturn(['success' => true, 'message' => 'Password updated']);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->postJson('/api/spa/auth/reset-password', [
+        'token' => 'reset-token',
+        'email' => 'jane@example.com',
+        'password' => 'newpassword123',
+    ])->assertOk()->assertJsonPath('message', 'Password updated');
+});
+
+it('returns 422 when reset-password api reports validation errors', function () {
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('resetPassword')->andReturn([
+        'success' => false,
+        'errors' => ['email' => ['This password reset token is invalid.']],
+    ]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->postJson('/api/spa/auth/reset-password', [
+        'token' => 'bad-token',
+        'email' => 'jane@example.com',
+        'password' => 'newpassword123',
+    ])->assertStatus(422)->assertJsonValidationErrors('email');
+});
+
+it('requires token, email and password on reset-password', function () {
+    $this->postJson('/api/spa/auth/reset-password', [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['token', 'email', 'password']);
+});

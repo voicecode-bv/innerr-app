@@ -129,11 +129,11 @@ const ratios: { value: Ratio; label: string }[] = [
     <BottomSheet :open="open" @update:open="onSheetUpdate">
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
+                <h2 class="font-semibold text-teal">
                     {{ t('Crop photo') }}
                 </h2>
                 <button
-                    class="text-sand-500 dark:text-sand-400"
+                    class="text-sand-500"
                     :aria-label="t('Close')"
                     @click="close"
                 >
@@ -164,7 +164,7 @@ const ratios: { value: Ratio; label: string }[] = [
                     :class="
                         ratio === option.value
                             ? 'bg-teal text-white shadow-sm'
-                            : 'bg-sand-100 text-sand-700 dark:bg-sand-800 dark:text-sand-200'
+                            : 'bg-sand-100 text-sand-700'
                     "
                     @click="ratio = option.value"
                 >
@@ -187,7 +187,7 @@ const ratios: { value: Ratio; label: string }[] = [
         <template #footer>
             <div class="flex gap-3 px-4 py-3">
                 <button
-                    class="flex-1 rounded-lg bg-sand-100 py-3 font-semibold text-sand-700 transition-colors dark:bg-sand-800 dark:text-sand-200"
+                    class="flex-1 rounded-lg bg-sand-100 py-3 font-semibold text-sand-700 transition-colors"
                     :disabled="processing"
                     @click="close"
                 >

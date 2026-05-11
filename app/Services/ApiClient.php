@@ -103,6 +103,71 @@ class ApiClient
     }
 
     /**
+     * @return array{success: bool, message?: string, errors?: array<string, mixed>}
+     */
+    public function sendPasswordResetLink(string $email): array
+    {
+        try {
+            $response = $this->request()
+                ->post('/auth/forgot-password', ['email' => $email]);
+        } catch (ConnectionException) {
+            return ['success' => false, 'message' => __('Could not connect to the server')];
+        }
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => $response->json('message')];
+        }
+
+        if ($response->status() === 422) {
+            return [
+                'success' => false,
+                'errors' => $response->json('errors', []),
+                'message' => $response->json('message', __('Validation failed')),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => $response->json('message', __('Could not send password reset link')),
+        ];
+    }
+
+    /**
+     * @return array{success: bool, message?: string, errors?: array<string, mixed>}
+     */
+    public function resetPassword(string $email, string $token, string $password): array
+    {
+        try {
+            $response = $this->request()
+                ->post('/auth/reset-password', [
+                    'email' => $email,
+                    'token' => $token,
+                    'password' => $password,
+                    'password_confirmation' => $password,
+                ]);
+        } catch (ConnectionException) {
+            return ['success' => false, 'message' => __('Could not connect to the server')];
+        }
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => $response->json('message')];
+        }
+
+        if ($response->status() === 422) {
+            return [
+                'success' => false,
+                'errors' => $response->json('errors', []),
+                'message' => $response->json('message', __('Validation failed')),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => $response->json('message', __('Could not reset password')),
+        ];
+    }
+
+    /**
      * @return array{valid: bool, user?: array<string, mixed>}
      */
     public function validateToken(): array

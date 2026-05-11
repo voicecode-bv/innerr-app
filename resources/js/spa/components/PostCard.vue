@@ -282,13 +282,17 @@ function timeAgo(dateString: string): string {
 </script>
 
 <template>
-    <article class="pt-6 bg-white dark:bg-sand-900">
-        <div class="flex items-center gap-3 px-4 py-3">
+    <article class="bg-sand pt-6">
+        <div
+            class="flex items-start gap-3 px-4 py-3"
+            :class="isOwner ? 'flex-row-reverse' : ''"
+        >
             <RouterLink
                 :to="{
                     name: 'spa.profiles.show',
                     params: { username: post.user.username },
                 }"
+                class="shrink-0"
             >
                 <img
                     :src="
@@ -296,54 +300,64 @@ function timeAgo(dateString: string): string {
                         `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`
                     "
                     :alt="post.user.name"
-                    class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                    class="avatar-ring size-10 rounded-full object-cover"
                 />
             </RouterLink>
-            <div class="flex-1">
-                <RouterLink
-                    :to="{
-                        name: 'spa.profiles.show',
-                        params: { username: post.user.username },
-                    }"
-                    class="font-semibold text-sand-800 dark:text-sand-100"
-                >
-                    {{ post.user.name }}
-                </RouterLink>
-                <p
-                    v-if="post.location"
-                    class="text-sand-500 dark:text-sand-400"
-                >
-                    {{ post.location }}
-                </p>
+            <div
+                class="min-w-0 flex-1 rounded-2xl px-4 py-2.5 shadow-sm"
+                :class="
+                    isOwner
+                        ? 'rounded-tr-sm bg-teal text-white'
+                        : 'rounded-tl-sm bg-white text-teal ring-1 ring-sand-100'
+                "
+            >
+                <div class="flex items-baseline justify-between gap-2">
+                    <RouterLink
+                        :to="{
+                            name: 'spa.profiles.show',
+                            params: { username: post.user.username },
+                        }"
+                        class="truncate font-semibold"
+                        :class="isOwner ? 'text-white' : 'text-teal'"
+                    >
+                        {{ post.user.name }}
+                    </RouterLink>
+                    <p
+                        v-if="post.location"
+                        class="shrink-0 truncate text-sm"
+                        :class="isOwner ? 'text-white/70' : 'text-teal-muted'"
+                    >
+                        {{ post.location }}
+                    </p>
+                </div>
+                <template v-if="post.caption">
+                    <p
+                        ref="captionRef"
+                        class="mt-1 leading-relaxed whitespace-pre-line"
+                        :class="[
+                            isOwner ? 'text-white' : 'text-night',
+                            { 'line-clamp-2': !showFullCaption },
+                        ]"
+                    >
+                        {{ post.caption }}
+                    </p>
+                    <button
+                        v-if="isCaptionOverflowing"
+                        class="mt-1 text-sm"
+                        :class="isOwner ? 'text-white/80' : 'text-teal-muted'"
+                        @click="showFullCaption = !showFullCaption"
+                    >
+                        {{ showFullCaption ? t('less') : t('more') }}
+                    </button>
+                </template>
             </div>
-        </div>
-
-        <div v-if="post.caption" class="px-4 pb-3">
-            <p
-                ref="captionRef"
-                class="leading-relaxed whitespace-pre-line text-sand-800 dark:text-sand-200"
-                :class="{ 'line-clamp-1': !showFullCaption }"
-            >
-                {{ post.caption }}
-            </p>
-            <button
-                v-if="isCaptionOverflowing"
-                class="mt-1 text-sand-500 dark:text-sand-400"
-                @click="showFullCaption = !showFullCaption"
-            >
-                {{ showFullCaption ? t('less') : t('more') }}
-            </button>
         </div>
 
         <div
             v-if="post.media_type === 'image'"
-            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800"
+            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand"
         >
-            <button
-                class="block size-full"
-                type="button"
-                @click="openDetails"
-            >
+            <button class="block size-full" type="button" @click="openDetails">
                 <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
                 <img
                     v-if="post.media_url"
@@ -422,7 +436,7 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="isLiked ? 'bg-blush-400' : 'bg-white'"
+                            :class="isLiked ? 'bg-brand-orange' : 'bg-white'"
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
@@ -457,9 +471,7 @@ function timeAgo(dateString: string): string {
                         class="inline-block size-6 bg-current"
                         :style="iconMaskStyle(messageIcon)"
                     ></span>
-                    <span v-if="commentsCount > 0" class=" ">{{
-                        commentsCount
-                    }}</span>
+                    <span v-if="commentsCount > 0">{{ commentsCount }}</span>
                 </button>
                 <button
                     v-if="isOwner"
@@ -485,7 +497,7 @@ function timeAgo(dateString: string): string {
                 :class="[
                     isFullscreen
                         ? 'fixed inset-0 z-9999 flex items-center justify-center bg-black'
-                        : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800',
+                        : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand',
                 ]"
                 @click="openDetails"
             >
@@ -675,7 +687,9 @@ function timeAgo(dateString: string): string {
                                 />
                             </svg>
                         </div>
-                        <span class="text-white">{{ post.circles[0].name }}</span>
+                        <span class="text-white">{{
+                            post.circles[0].name
+                        }}</span>
                     </RouterLink>
                     <span
                         v-if="post.circles.length > 1"
@@ -698,7 +712,9 @@ function timeAgo(dateString: string): string {
                             <span
                                 aria-hidden="true"
                                 class="inline-block size-6 drop-shadow"
-                                :class="isLiked ? 'bg-blush-400' : 'bg-white'"
+                                :class="
+                                    isLiked ? 'bg-brand-orange' : 'bg-white'
+                                "
                                 :style="
                                     iconMaskStyle(
                                         isLiked ? heartFilledIcon : heartIcon,
@@ -733,7 +749,7 @@ function timeAgo(dateString: string): string {
                             class="inline-block size-6 bg-current"
                             :style="iconMaskStyle(messageIcon)"
                         ></span>
-                        <span v-if="commentsCount > 0" class=" ">{{
+                        <span v-if="commentsCount > 0">{{
                             commentsCount
                         }}</span>
                     </button>
@@ -759,13 +775,9 @@ function timeAgo(dateString: string): string {
 
         <div
             v-else
-            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800"
+            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand"
         >
-            <button
-                class="block size-full"
-                type="button"
-                @click="openDetails"
-            >
+            <button class="block size-full" type="button" @click="openDetails">
                 <div class="flex size-full items-center justify-center">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -773,7 +785,7 @@ function timeAgo(dateString: string): string {
                         viewBox="0 0 24 24"
                         stroke-width="1.5"
                         stroke="currentColor"
-                        class="size-12 text-sand-300 dark:text-sand-600"
+                        class="size-12 text-sand-300"
                     >
                         <path
                             stroke-linecap="round"

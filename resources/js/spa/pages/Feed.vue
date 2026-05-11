@@ -18,6 +18,7 @@ import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
+import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import searchIcon from '../../../svg/doodle-icons/search.svg';
 import starIcon from '../../../svg/doodle-icons/star.svg';
@@ -143,7 +144,7 @@ function bumpActivePostCommentsCount(delta: number): void {
     if (commentsPostId.value === null) return;
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
-    
+
     if (target) {
         target.comments_count = Math.max(0, target.comments_count + delta);
     }
@@ -167,13 +168,13 @@ function iconMaskStyle(url: string) {
     <AppLayout ref="layout" :show-header="false">
         <template #above>
             <div
-                class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-sand-200 bg-white pt-[var(--inset-top)] dark:border-sand-800 dark:bg-sand-900"
+                class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-dark-sand bg-sand pt-[var(--inset-top)]"
             >
                 <div class="flex items-center justify-between px-4 pt-2">
                     <RouterLink
                         :to="{ name: 'spa.search' }"
                         :aria-label="t('Search people')"
-                        class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100 dark:hover:bg-sand-800"
+                        class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                     >
                         <span
                             aria-hidden="true"
@@ -190,16 +191,27 @@ function iconMaskStyle(url: string) {
                                   })
                                 : t('Open notifications')
                         "
-                        class="relative flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100 dark:hover:bg-sand-800"
+                        class="relative flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-6 bg-accent"
-                            :style="iconMaskStyle(heartIcon)"
+                            class="inline-block size-6"
+                            :class="
+                                unreadNotifications > 0
+                                    ? 'bg-brand-orange'
+                                    : 'bg-accent'
+                            "
+                            :style="
+                                iconMaskStyle(
+                                    unreadNotifications > 0
+                                        ? heartFilledIcon
+                                        : heartIcon,
+                                )
+                            "
                         ></span>
                         <span
                             v-if="unreadNotifications > 0"
-                            class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white dark:ring-sand-900"
+                            class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white"
                         >
                             {{ unreadBadge }}
                         </span>
@@ -213,7 +225,7 @@ function iconMaskStyle(url: string) {
                         class="group flex shrink-0 flex-col items-center gap-1.5"
                     >
                         <div
-                            class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-sand-300 transition-transform duration-500 group-hover:rotate-90 dark:border-sand-600"
+                            class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-teal/50 transition-transform duration-500 group-hover:rotate-90"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -230,7 +242,7 @@ function iconMaskStyle(url: string) {
                                 />
                             </svg>
                         </div>
-                        <span class="text-sm text-sand-500 dark:text-sand-400">{{
+                        <span class="text-sm font-medium text-teal">{{
                             t('Circles')
                         }}</span>
                     </RouterLink>
@@ -241,8 +253,12 @@ function iconMaskStyle(url: string) {
                             :key="n"
                             class="flex shrink-0 flex-col items-center gap-1.5"
                         >
-                            <div class="size-15 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700" /> 
-                            <div class="h-3 w-12 animate-pulse rounded bg-sand-200 dark:bg-sand-700" />
+                            <div
+                                class="size-15 animate-pulse rounded-full bg-sand"
+                            />
+                            <div
+                                class="h-3 w-12 animate-pulse rounded bg-sand"
+                            />
                         </div>
                     </template>
 
@@ -257,9 +273,7 @@ function iconMaskStyle(url: string) {
                         class="flex shrink-0 flex-col items-center gap-1.5"
                     >
                         <div class="circle-ring relative rounded-full p-0.5">
-                            <div
-                                class="rounded-full bg-white p-0.5 dark:bg-sand-900"
-                            >
+                            <div class="rounded-full bg-white p-0.5">
                                 <img
                                     v-if="circle.photo"
                                     :src="circle.photo"
@@ -268,17 +282,20 @@ function iconMaskStyle(url: string) {
                                 />
                                 <div
                                     v-else
-                                    class="flex size-14 items-center justify-center rounded-full bg-sand-100 dark:bg-sand-900"
+                                    class="flex size-14 items-center justify-center rounded-full bg-sand-100"
                                 >
                                     <span
                                         aria-hidden="true"
-                                        class="inline-block size-7 bg-sand-600 dark:bg-sand-300"
+                                        class="inline-block size-7 bg-sand-600"
                                         :style="iconMaskStyle(userIcon)"
                                     ></span>
                                 </div>
                             </div>
                         </div>
-                        <span class="text-sm max-w-16 truncate text-sand-700 dark:text-sand-300">{{ circle.name }}</span>
+                        <span
+                            class="max-w-16 truncate text-sm font-medium text-teal"
+                            >{{ circle.name }}</span
+                        >
                     </RouterLink>
                 </div>
             </div>
@@ -293,23 +310,13 @@ function iconMaskStyle(url: string) {
             <template v-if="feed.items.length === 0 && feed.loading">
                 <div v-for="n in 3" :key="n" class="animate-pulse">
                     <div class="flex items-center gap-3 px-4 py-3">
-                        <div
-                            class="size-10 rounded-full bg-sand-200 dark:bg-sand-700"
-                        />
-                        <div
-                            class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700"
-                        />
+                        <div class="size-10 rounded-full bg-sand" />
+                        <div class="h-3 w-32 rounded bg-sand" />
                     </div>
-                    <div
-                        class="aspect-square w-full bg-sand-200 dark:bg-sand-700"
-                    />
+                    <div class="aspect-square w-full bg-sand" />
                     <div class="space-y-2 px-4 py-3">
-                        <div
-                            class="h-3 w-24 rounded bg-sand-200 dark:bg-sand-700"
-                        />
-                        <div
-                            class="h-3 w-48 rounded bg-sand-200 dark:bg-sand-700"
-                        />
+                        <div class="h-3 w-24 rounded bg-sand" />
+                        <div class="h-3 w-48 rounded bg-sand" />
                     </div>
                 </div>
             </template>
@@ -326,7 +333,7 @@ function iconMaskStyle(url: string) {
 
             <div
                 v-if="feed.loading && feed.items.length > 0"
-                class="flex items-center justify-center gap-2 py-6 text-sand-500 dark:text-sand-400"
+                class="flex items-center justify-center gap-2 py-6 text-sand-500"
             >
                 <span class="flex items-center gap-1">
                     <span
@@ -354,14 +361,14 @@ function iconMaskStyle(url: string) {
                     class="pointer-events-none absolute inset-0"
                 >
                     <div
-                        class="absolute top-4 -left-16 size-56 rounded-full bg-sage-200/50 blur-3xl dark:bg-sage-700/20"
+                        class="absolute top-4 -left-16 size-56 rounded-full bg-sage-200/50 blur-3xl"
                     ></div>
                     <div
-                        class="absolute -right-16 bottom-0 size-64 rounded-full bg-accent-soft/30 blur-3xl dark:bg-accent/10"
+                        class="absolute -right-16 bottom-0 size-64 rounded-full bg-accent-soft/30 blur-3xl"
                     ></div>
                 </div>
                 <div
-                    class="relative mb-5 flex size-24 rotate-[-6deg] items-center justify-center rounded-3xl bg-white shadow-lg shadow-sand-900/5 dark:bg-sand-800"
+                    class="relative mb-5 flex size-24 rotate-[-6deg] items-center justify-center rounded-3xl bg-white shadow-lg shadow-sand-900/5"
                 >
                     <span
                         aria-hidden="true"
@@ -383,9 +390,7 @@ function iconMaskStyle(url: string) {
                 >
                     {{ t('Share your first moment') }}
                 </h3>
-                <p
-                    class="relative mt-2 text-center text-sand-600 dark:text-sand-400"
-                >
+                <p class="relative mt-2 text-center text-sand-600">
                     {{
                         t(
                             'Add a photo and share it with your family and friends.',
@@ -423,14 +428,15 @@ function iconMaskStyle(url: string) {
 </template>
 
 <style scoped>
+/* circle-ring is aliased to the global .avatar-ring utility (in app.css) */
 .circle-ring {
     background: conic-gradient(
         from 0deg,
-        var(--color-accent),
-        var(--color-accent-soft),
-        var(--color-sage-400),
-        var(--color-teal-muted),
-        var(--color-accent)
+        var(--color-brand-blue),
+        var(--color-brand-green),
+        var(--color-brand-yellow),
+        var(--color-brand-orange),
+        var(--color-brand-blue)
     );
 }
 

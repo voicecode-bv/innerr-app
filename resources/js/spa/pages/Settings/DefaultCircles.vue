@@ -75,10 +75,7 @@ async function toggleCircle(circleId: string): Promise<void> {
 <template>
     <AppLayout ref="layout" :title="t('Default circles')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -111,29 +108,19 @@ async function toggleCircle(circleId: string): Promise<void> {
                 >
                     <div class="animate-pulse">
                         <div class="flex items-center gap-3">
-                            <div
-                                class="size-9 rounded-lg bg-sand-200 dark:bg-sand-700"
-                            />
-                            <div
-                                class="h-3 w-40 rounded bg-sand-200 dark:bg-sand-700"
-                            />
+                            <div class="size-9 rounded-lg bg-sand-200" />
+                            <div class="h-3 w-40 rounded bg-sand-200" />
                         </div>
-                        <div
-                            class="mt-3 h-2 w-2/3 rounded bg-sand-200 dark:bg-sand-700"
-                        />
-                        <ul
-                            class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60"
-                        >
+                        <div class="mt-3 h-2 w-2/3 rounded bg-sand-200" />
+                        <ul class="mt-3 divide-y divide-sand-100">
                             <li
                                 v-for="n in 4"
                                 :key="n"
                                 class="flex items-center justify-between gap-3 py-3"
                             >
+                                <span class="h-3 w-32 rounded bg-sand-200" />
                                 <span
-                                    class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700"
-                                />
-                                <span
-                                    class="h-8 w-14 shrink-0 rounded-full bg-sand-200 dark:bg-sand-700/60"
+                                    class="h-8 w-14 shrink-0 rounded-full bg-sand-200"
                                 />
                             </li>
                         </ul>
@@ -141,13 +128,10 @@ async function toggleCircle(circleId: string): Promise<void> {
                 </SurfaceCard>
 
                 <SurfaceCard v-else-if="circles.length > 0" class="reveal-item">
-                    <h3
-                        class="flex items-center gap-3 font-semibold text-sand-900 dark:text-sand-100"
-                    >
-                        <IconTile :icon="usersIcon" size="sm" tone="sage" />
+                    <h3 class="font-semibold text-teal">
                         {{ t('Default circles for new posts') }}
                     </h3>
-                    <p class="mt-1 text-sand-600 dark:text-sand-400">
+                    <p class="mt-1 text-teal-muted">
                         {{
                             t(
                                 'These circles will be pre-selected when you create a new post.',
@@ -155,29 +139,23 @@ async function toggleCircle(circleId: string): Promise<void> {
                         }}
                     </p>
 
-                    <ul
-                        v-if="!loaded"
-                        class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60"
-                    >
+                    <ul v-if="!loaded" class="mt-3 divide-y divide-sand-100">
                         <li
                             v-for="circle in circles"
                             :key="circle.id"
                             class="flex items-center justify-between gap-3 py-3"
                         >
                             <span
-                                class="min-w-0 flex-1 truncate text-base text-sand-800 dark:text-sand-100"
+                                class="min-w-0 flex-1 truncate text-base text-night"
                                 >{{ circle.name }}</span
                             >
                             <span
-                                class="h-8 w-14 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700/60"
+                                class="h-8 w-14 shrink-0 animate-pulse rounded-full bg-sand-200"
                             />
                         </li>
                     </ul>
 
-                    <ul
-                        v-else
-                        class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60"
-                    >
+                    <ul v-else class="mt-3 divide-y divide-sand-100">
                         <li
                             v-for="circle in circles"
                             :key="circle.id"
@@ -186,10 +164,9 @@ async function toggleCircle(circleId: string): Promise<void> {
                             <label
                                 class="flex cursor-pointer items-center justify-between gap-3 py-3"
                             >
-                                <span
-                                    class="text-base text-sand-800 dark:text-sand-100"
-                                    >{{ circle.name }}</span
-                                >
+                                <span class="text-base text-night">{{
+                                    circle.name
+                                }}</span>
                                 <button
                                     type="button"
                                     role="switch"
@@ -198,8 +175,8 @@ async function toggleCircle(circleId: string): Promise<void> {
                                     "
                                     :class="
                                         selectedIds.includes(circle.id)
-                                            ? 'bg-teal'
-                                            : 'bg-sand-300 dark:bg-sand-600'
+                                            ? 'bg-brand-green'
+                                            : 'bg-sand-300'
                                     "
                                     class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
                                     @click="toggleCircle(circle.id)"
@@ -228,12 +205,10 @@ async function toggleCircle(circleId: string): Promise<void> {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3
-                            class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
-                        >
+                        <h3 class="font-sans text-lg font-semibold text-teal">
                             {{ t('No circles yet') }}
                         </h3>
-                        <p class="mt-1 text-sand-600 dark:text-sand-400">
+                        <p class="mt-1 text-teal-muted">
                             {{
                                 t(
                                     'Create a circle to set it as a default for new posts.',

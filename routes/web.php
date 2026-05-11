@@ -20,6 +20,8 @@ Route::prefix('api/spa')->group(function () {
     Route::get('/bootstrap', SpaBootstrapController::class);
     Route::post('/auth/login', [SpaAuthController::class, 'login']);
     Route::post('/auth/register', [SpaAuthController::class, 'register']);
+    Route::post('/auth/forgot-password', [SpaAuthController::class, 'forgotPassword']);
+    Route::post('/auth/reset-password', [SpaAuthController::class, 'resetPassword']);
 
     Route::middleware('auth.api')->group(function () {
         Route::post('/auth/logout', [SpaAuthController::class, 'logout']);

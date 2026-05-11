@@ -88,6 +88,58 @@ class AuthController extends Controller
         ]);
     }
 
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $result = $this->apiClient->sendPasswordResetLink($validated['email']);
+
+        if (! $result['success']) {
+            if (! empty($result['errors'])) {
+                throw ValidationException::withMessages($result['errors']);
+            }
+
+            throw ValidationException::withMessages([
+                'email' => $result['message'] ?? __('Could not send password reset link'),
+            ]);
+        }
+
+        return response()->json([
+            'message' => $result['message'] ?? __('We have emailed your password reset link'),
+        ]);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        $result = $this->apiClient->resetPassword(
+            $validated['email'],
+            $validated['token'],
+            $validated['password'],
+        );
+
+        if (! $result['success']) {
+            if (! empty($result['errors'])) {
+                throw ValidationException::withMessages($result['errors']);
+            }
+
+            throw ValidationException::withMessages([
+                'email' => $result['message'] ?? __('Could not reset password'),
+            ]);
+        }
+
+        return response()->json([
+            'message' => $result['message'] ?? __('Your password has been reset'),
+        ]);
+    }
+
     public function logout(): JsonResponse
     {
         $user = Auth::user();

@@ -3,6 +3,8 @@ import { Dialog } from '@nativephp/mobile';
 import { computed, ref, watch } from 'vue';
 import BottomSheet from '@/components/BottomSheet.vue';
 import IconTile from '@/components/IconTile.vue';
+import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import SheetHeader from '@/components/SheetHeader.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
@@ -253,65 +255,22 @@ function canCancelInvitation(circleId: string): boolean {
 <template>
     <BottomSheet :open="open" @update:open="onSheetUpdate">
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
-                    {{ t('Invite :name to a circle', { name: personName }) }}
-                </h2>
-                <button
-                    class="text-sand-500 dark:text-sand-400"
-                    :aria-label="t('Close')"
-                    @click="close"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke="currentColor"
-                        class="size-5"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6 18 18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
-            </div>
+            <SheetHeader
+                :title="t('Invite :name to a circle', { name: personName })"
+                @close="close"
+            />
         </template>
 
         <div
             v-if="isLoading && invitableCircles.length === 0"
             class="flex items-center justify-center px-4 py-10 pb-24"
         >
-            <svg
-                class="size-6 animate-spin text-sand-400 dark:text-sand-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                />
-                <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-            </svg>
+            <LoadingSpinner />
         </div>
 
         <div v-else-if="loadError" class="px-4 py-10 pb-24 text-center">
             <p class="text-blush-500">{{ loadError }}</p>
-            <button
-                class="mt-2 text-sand-500 dark:text-sand-400"
-                @click="loadCircles()"
-            >
+            <button class="mt-2 text-teal-muted" @click="loadCircles()">
                 {{ t('Try again') }}
             </button>
         </div>
@@ -320,7 +279,7 @@ function canCancelInvitation(circleId: string): boolean {
             v-else-if="invitableCircles.length === 0"
             class="px-4 py-10 pb-24 text-center"
         >
-            <p class="text-sand-600 dark:text-sand-300">
+            <p class="text-teal-muted">
                 {{ t('No circles available to invite to') }}
             </p>
         </div>
@@ -329,7 +288,7 @@ function canCancelInvitation(circleId: string): boolean {
             <li
                 v-for="circle in invitableCircles"
                 :key="circle.id"
-                class="border-b border-sand-50 dark:border-sand-800"
+                class="border-b border-sand-50"
             >
                 <button
                     type="button"
@@ -341,7 +300,7 @@ function canCancelInvitation(circleId: string): boolean {
                         v-if="circle.photo"
                         :src="circle.photo"
                         :alt="circle.name"
-                        class="size-12 shrink-0 rounded-full object-cover"
+                        class="avatar-ring size-12 shrink-0 rounded-full object-cover"
                     />
                     <IconTile
                         v-else
@@ -351,14 +310,12 @@ function canCancelInvitation(circleId: string): boolean {
                         class="!rounded-full"
                     />
                     <div class="min-w-0 flex-1">
-                        <p
-                            class="truncate font-semibold text-sand-800 dark:text-sand-100"
-                        >
+                        <p class="truncate font-semibold text-teal">
                             {{ circle.name }}
                         </p>
                         <p
                             v-if="typeof circle.members_count === 'number'"
-                            class="truncate text-sand-500 dark:text-sand-400"
+                            class="truncate text-teal-muted"
                         >
                             {{
                                 circle.members_count === 1
@@ -376,7 +333,7 @@ function canCancelInvitation(circleId: string): boolean {
                             rowFor(circle.id).status === 'pending' ||
                             rowFor(circle.id).status === 'withdrawing'
                         "
-                        class="text-sand-500 dark:text-sand-400"
+                        class="text-teal-muted"
                     >
                         <svg
                             class="size-5 animate-spin"
@@ -408,13 +365,13 @@ function canCancelInvitation(circleId: string): boolean {
                         >
                             {{ t('Cancel invitation') }}
                         </span>
-                        <span v-else class="text-sand-500 dark:text-sand-400">
+                        <span v-else class="text-teal-muted">
                             {{ t('Invited') }}
                         </span>
                     </template>
                     <span
                         v-else-if="rowFor(circle.id).status === 'already'"
-                        class="text-sand-500 dark:text-sand-400"
+                        class="text-teal-muted"
                     >
                         {{ t('Already in circle') }}
                     </span>

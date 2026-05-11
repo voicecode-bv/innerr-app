@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
-import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -11,7 +10,6 @@ import {
     useNotificationPreferencesStore,
     type NotificationPreferences as Preferences,
 } from '@/spa/stores/notificationPreferences';
-import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -46,7 +44,6 @@ const labels = computed<Record<keyof Preferences, string>>(() => ({
     post_liked: t('Post liked'),
     post_commented: t('Post commented'),
     comment_liked: t('Comment liked'),
-    comment_replied: t('Comment replied'),
     new_circle_post: t('New circle post'),
     post_tagged: t('Tagged in a post'),
     circle_invitation_received: t('Circle invitation received'),
@@ -70,10 +67,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
 <template>
     <AppLayout ref="layout" :title="t('Push notifications')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -101,36 +95,29 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <SurfaceCard class="reveal-item">
-                    <h3
-                        class="flex items-center gap-3 font-semibold text-sand-900 dark:text-sand-100"
-                    >
-                        <IconTile :icon="bellIcon" size="sm" tone="sage" />
+                    <h3 class="font-semibold text-teal">
                         {{ t('Push notifications') }}
                     </h3>
 
                     <ul
                         v-if="!preferences"
-                        class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60"
+                        class="mt-3 divide-y divide-sand-100"
                     >
                         <li
                             v-for="(label, key) in labels"
                             :key="key"
                             class="flex items-center justify-between gap-3 py-3"
                         >
+                            <span class="text-base text-night">{{
+                                label
+                            }}</span>
                             <span
-                                class="text-base text-sand-800 dark:text-sand-100"
-                                >{{ label }}</span
-                            >
-                            <span
-                                class="h-8 w-14 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700/60"
+                                class="h-8 w-14 shrink-0 animate-pulse rounded-full bg-sand-200"
                             />
                         </li>
                     </ul>
 
-                    <ul
-                        v-else
-                        class="mt-3 divide-y divide-sand-100 dark:divide-sand-700/60"
-                    >
+                    <ul v-else class="mt-3 divide-y divide-sand-100">
                         <li
                             v-for="(label, key) in labels"
                             :key="key"
@@ -139,18 +126,17 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                             <label
                                 class="flex cursor-pointer items-center justify-between gap-3 py-3"
                             >
-                                <span
-                                    class="text-base text-sand-800 dark:text-sand-100"
-                                    >{{ label }}</span
-                                >
+                                <span class="text-base text-night">{{
+                                    label
+                                }}</span>
                                 <button
                                     type="button"
                                     role="switch"
                                     :aria-checked="preferences[key]"
                                     :class="
                                         preferences[key]
-                                            ? 'bg-teal'
-                                            : 'bg-sand-300 dark:bg-sand-600'
+                                            ? 'bg-brand-green'
+                                            : 'bg-sand-300'
                                     "
                                     class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
                                     @click="togglePreference(key)"

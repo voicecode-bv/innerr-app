@@ -9,6 +9,7 @@ import {
     watch,
 } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import Chip from '@/components/Chip.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
@@ -204,7 +205,7 @@ const staticMapUrl = computed<string | null>(() => {
     if (!token || !hasLocation.value || !post.value) return null;
     const lng = post.value.longitude;
     const lat = post.value.latitude;
-    const pin = `pin-l+1d5f5c(${lng},${lat})`;
+    const pin = `pin-l+373d8a(${lng},${lat})`;
     return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${lng},${lat},14/640x320@2x?access_token=${token}`;
 });
 
@@ -445,10 +446,7 @@ watch(
 <template>
     <AppLayout ref="layout" :title="t('Moment')">
         <template #header-left>
-            <button
-                class="flex items-center text-sand-700 dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -519,38 +517,22 @@ watch(
             />
 
             <div v-if="isLoading && !post" class="animate-pulse">
-                <div
-                    class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900"
-                >
-                    <div
-                        class="size-10 rounded-full bg-sand-200 dark:bg-sand-700"
-                    />
+                <div class="flex items-center gap-3 bg-white px-4 py-3">
+                    <div class="size-10 rounded-full bg-sand-200" />
                     <div class="space-y-2">
-                        <div
-                            class="h-3 w-32 rounded bg-sand-200 dark:bg-sand-700"
-                        />
-                        <div
-                            class="h-2 w-20 rounded bg-sand-200 dark:bg-sand-700"
-                        />
+                        <div class="h-3 w-32 rounded bg-sand-200" />
+                        <div class="h-2 w-20 rounded bg-sand-200" />
                     </div>
                 </div>
-                <div
-                    class="aspect-square w-full bg-sand-200 dark:bg-sand-700"
-                />
+                <div class="aspect-square w-full bg-sand-200" />
                 <div class="space-y-2 px-4 py-3">
-                    <div
-                        class="h-3 w-24 rounded bg-sand-200 dark:bg-sand-700"
-                    />
-                    <div
-                        class="h-3 w-48 rounded bg-sand-200 dark:bg-sand-700"
-                    />
+                    <div class="h-3 w-24 rounded bg-sand-200" />
+                    <div class="h-3 w-48 rounded bg-sand-200" />
                 </div>
             </div>
 
             <div v-if="post">
-                <div
-                    class="flex items-center gap-3 bg-white px-4 py-3 dark:bg-sand-900"
-                >
+                <div class="flex items-center gap-3 bg-sand px-4 py-3">
                     <RouterLink
                         :to="{
                             name: 'spa.profiles.show',
@@ -563,7 +545,7 @@ watch(
                                 `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`
                             "
                             :alt="post.user.name"
-                            class="size-10 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                            class="avatar-ring size-10 rounded-full object-cover"
                         />
                     </RouterLink>
                     <div class="flex-1">
@@ -572,26 +554,18 @@ watch(
                                 name: 'spa.profiles.show',
                                 params: { username: post.user.username },
                             }"
-                            class="font-semibold text-sand-800 dark:text-sand-100"
+                            class="font-semibold text-teal"
                         >
                             {{ post.user.name }}
                         </RouterLink>
-                        <p
-                            v-if="post.location"
-                            class="text-sand-500 dark:text-sand-400"
-                        >
+                        <p v-if="post.location" class="text-teal-muted">
                             {{ post.location }}
                         </p>
                     </div>
                 </div>
 
-                <div
-                    v-if="post.caption"
-                    class="bg-white px-4 pb-3 dark:bg-sand-900"
-                >
-                    <p
-                        class="leading-relaxed whitespace-pre-line text-sand-800 dark:text-sand-200"
-                    >
+                <div v-if="post.caption" class="bg-sand px-4 pb-3">
+                    <p class="leading-relaxed whitespace-pre-line text-night">
                         {{ post.caption }}
                     </p>
                 </div>
@@ -600,7 +574,7 @@ watch(
                     :class="[
                         isFullscreen
                             ? 'fixed inset-0 z-50 flex items-center justify-center bg-black'
-                            : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100 dark:bg-sand-800',
+                            : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100',
                     ]"
                 >
                     <div
@@ -609,7 +583,7 @@ watch(
                             !mediaLoaded &&
                             !isFullscreen
                         "
-                        class="absolute inset-0 animate-pulse bg-sand-200 dark:bg-sand-700"
+                        class="absolute inset-0 animate-pulse bg-sand-200"
                     />
                     <img
                         v-if="post.media_type === 'image'"
@@ -750,7 +724,9 @@ watch(
                                 aria-hidden="true"
                                 class="inline-block size-6 drop-shadow"
                                 :class="
-                                    post.is_liked ? 'bg-blush-400' : 'bg-white'
+                                    post.is_liked
+                                        ? 'bg-brand-orange'
+                                        : 'bg-white'
                                 "
                                 :style="
                                     iconMaskStyle(
@@ -776,7 +752,7 @@ watch(
                                 class="inline-block size-6 bg-current"
                                 :style="iconMaskStyle(messageIcon)"
                             ></span>
-                            <span v-if="post.comments_count > 0" class=" ">{{
+                            <span v-if="post.comments_count > 0">{{
                                 post.comments_count
                             }}</span>
                         </button>
@@ -805,45 +781,27 @@ watch(
                         (post.tags ?? []).length > 0 ||
                         staticMapUrl
                     "
-                    class="space-y-5 bg-warmwhite px-4 pt-5 pb-2 dark:bg-sand-900"
+                    class="space-y-5 bg-sand px-4 pt-5 pb-2"
                 >
                     <section
                         v-if="(post.circles ?? []).length > 0"
                         class="space-y-3"
                     >
-                        <h3
-                            class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                        >
+                        <h3 class="font-semibold text-brand-blue">
                             {{ t('Circles') }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
-                            <RouterLink
+                            <Chip
                                 v-for="circle in post.circles"
                                 :key="circle.id"
+                                :label="circle.name"
+                                :photo="circle.photo"
+                                :icon-url="userIcon"
                                 :to="{
                                     name: 'spa.circles.show',
                                     params: { circle: circle.id },
                                 }"
-                                class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-3.5 pl-1 font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 transition-colors hover:bg-sand-50 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60 dark:hover:bg-sand-700"
-                            >
-                                <img
-                                    v-if="circle.photo"
-                                    :src="circle.photo"
-                                    :alt="circle.name"
-                                    class="size-7 rounded-full object-cover"
-                                />
-                                <span
-                                    v-else
-                                    class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
-                                >
-                                    <span
-                                        aria-hidden="true"
-                                        class="inline-block size-3.5 bg-current"
-                                        :style="iconMaskStyle(userIcon)"
-                                    ></span>
-                                </span>
-                                {{ circle.name }}
-                            </RouterLink>
+                            />
                         </div>
                     </section>
 
@@ -851,9 +809,7 @@ watch(
                         v-if="(post.persons ?? []).length > 0"
                         class="space-y-3"
                     >
-                        <h3
-                            class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                        >
+                        <h3 class="font-semibold text-brand-blue">
                             {{ t('Persons') }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
@@ -863,7 +819,7 @@ watch(
                             >
                                 <span
                                     v-if="person.user_id === auth.user?.id"
-                                    class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-1 pl-1 font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60"
+                                    class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-1 pl-1 font-semibold text-teal shadow-sm ring-1 ring-sand-100"
                                 >
                                     <img
                                         v-if="person.avatar_thumbnail"
@@ -873,7 +829,7 @@ watch(
                                     />
                                     <span
                                         v-else
-                                        class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
+                                        class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal"
                                     >
                                         <span
                                             class="font-display font-semibold uppercase"
@@ -890,7 +846,7 @@ watch(
                                                         post.created_at,
                                                 )
                                             "
-                                            class="font-normal text-sand-500 dark:text-sand-400"
+                                            class="font-normal text-teal-muted"
                                         >
                                             ·
                                             {{
@@ -904,7 +860,7 @@ watch(
                                     </span>
                                     <button
                                         type="button"
-                                        class="flex size-6 items-center justify-center rounded-full bg-sand-100 text-sand-600 transition-colors hover:bg-blush-100 hover:text-blush-600 disabled:opacity-50 dark:bg-sand-700 dark:text-sand-300 dark:hover:bg-blush-900/40 dark:hover:text-blush-300"
+                                        class="flex size-6 items-center justify-center rounded-full bg-sand-100 text-teal-muted transition-colors hover:bg-blush-100 hover:text-blush-600 disabled:opacity-50"
                                         :aria-label="
                                             t('Remove yourself from this post')
                                         "
@@ -950,13 +906,11 @@ watch(
                                         </svg>
                                     </button>
                                 </span>
-                                <component
+                                <Chip
                                     v-else
-                                    :is="
-                                        person.user_username
-                                            ? RouterLink
-                                            : 'span'
-                                    "
+                                    :label="person.name"
+                                    :photo="person.avatar_thumbnail"
+                                    :initial="person.name.charAt(0)"
                                     :to="
                                         person.user_username
                                             ? {
@@ -968,30 +922,8 @@ watch(
                                               }
                                             : undefined
                                     "
-                                    class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-3.5 pl-1 font-semibold text-sand-800 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:text-sand-100 dark:ring-sand-700/60"
-                                    :class="
-                                        person.user_username
-                                            ? 'transition-colors hover:bg-sand-50 dark:hover:bg-sand-700'
-                                            : ''
-                                    "
                                 >
-                                    <img
-                                        v-if="person.avatar_thumbnail"
-                                        :src="person.avatar_thumbnail"
-                                        :alt="person.name"
-                                        class="size-7 rounded-full object-cover"
-                                    />
-                                    <span
-                                        v-else
-                                        class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal dark:bg-sage-900/40"
-                                    >
-                                        <span
-                                            class="font-display font-semibold uppercase"
-                                            >{{ person.name.charAt(0) }}</span
-                                        >
-                                    </span>
-                                    {{ person.name }}
-                                    <span
+                                    <template
                                         v-if="
                                             ageAt(
                                                 person.birthdate,
@@ -999,18 +931,22 @@ watch(
                                                     post.created_at,
                                             )
                                         "
-                                        class="font-normal text-sand-500 dark:text-sand-400"
+                                        #meta
                                     >
-                                        ·
-                                        {{
-                                            ageAt(
-                                                person.birthdate,
-                                                post.taken_at ??
-                                                    post.created_at,
-                                            )
-                                        }}
-                                    </span>
-                                </component>
+                                        <span
+                                            class="font-normal text-teal-muted"
+                                        >
+                                            ·
+                                            {{
+                                                ageAt(
+                                                    person.birthdate,
+                                                    post.taken_at ??
+                                                        post.created_at,
+                                                )
+                                            }}
+                                        </span>
+                                    </template>
+                                </Chip>
                             </template>
                         </div>
                     </section>
@@ -1019,31 +955,25 @@ watch(
                         v-if="(post.tags ?? []).length > 0"
                         class="space-y-3"
                     >
-                        <h3
-                            class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                        >
+                        <h3 class="font-semibold text-brand-blue">
                             {{ t('Tags') }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
-                            <span
+                            <Chip
                                 v-for="tag in post.tags"
                                 :key="tag.id"
-                                class="rounded-full bg-linear-to-r from-sage-100 to-teal-muted/30 px-3.5 py-1.5 font-semibold text-teal ring-1 ring-teal/15 ring-inset dark:from-sage-900/40 dark:to-teal-muted/15 dark:text-sage-200 dark:ring-sage-700/40"
-                            >
-                                {{ tag.name }}
-                            </span>
+                                :label="tag.name"
+                            />
                         </div>
                     </section>
 
                     <section v-if="staticMapUrl" class="space-y-3">
-                        <h3
-                            class="font-semibold tracking-[0.18em] text-sand-500 uppercase dark:text-sand-400"
-                        >
+                        <h3 class="font-semibold text-brand-blue">
                             {{ t('Location') }}
                         </h3>
                         <RouterLink
                             :to="mapTarget"
-                            class="relative block aspect-[2/1] w-full overflow-hidden rounded-2xl bg-sand-100 shadow-sm ring-1 ring-sand-100 dark:bg-sand-800 dark:ring-sand-700/60"
+                            class="relative block aspect-[2/1] w-full overflow-hidden rounded-2xl bg-sand-100 shadow-sm ring-1 ring-sand-100"
                             :aria-label="t('Open map')"
                         >
                             <img

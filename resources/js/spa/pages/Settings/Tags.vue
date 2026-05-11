@@ -3,7 +3,6 @@ import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
-import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -13,7 +12,6 @@ import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTagsStore, type Tag } from '@/spa/stores/tags';
 import { externalApi } from '@/spa/http/externalApi';
-import tagIcon from '../../../../svg/doodle-icons/tag.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -171,10 +169,7 @@ function lowercase(event: Event, target: { name: string }): void {
 <template>
     <AppLayout ref="layout" :title="t('Tags')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -240,9 +235,7 @@ function lowercase(event: Event, target: { name: string }): void {
                 >
                     <SurfaceCard v-if="showCreateForm" class="reveal-item">
                         <form class="space-y-3" @submit.prevent="createTag">
-                            <label
-                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
-                            >
+                            <label class="font-semibold text-teal">
                                 {{ t('New tag') }}
                             </label>
                             <input
@@ -256,7 +249,7 @@ function lowercase(event: Event, target: { name: string }): void {
                             />
                             <p
                                 v-if="createForm.errors.name"
-                                class="text-accent"
+                                class="text-blush-500"
                             >
                                 {{ createForm.errors.name }}
                             </p>
@@ -289,7 +282,7 @@ function lowercase(event: Event, target: { name: string }): void {
 
                 <ul
                     v-if="tags === null"
-                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60"
+                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm"
                 >
                     <li
                         v-for="n in 4"
@@ -297,14 +290,14 @@ function lowercase(event: Event, target: { name: string }): void {
                         class="flex items-center gap-4 px-4 py-4"
                     >
                         <div
-                            class="size-9 shrink-0 animate-pulse rounded-lg bg-sand-200 dark:bg-sand-700"
+                            class="size-9 shrink-0 animate-pulse rounded-lg bg-sand-200"
                         />
                         <div class="flex-1 space-y-2">
                             <div
-                                class="h-4 w-24 animate-pulse rounded bg-sand-200 dark:bg-sand-700"
+                                class="h-4 w-24 animate-pulse rounded bg-sand-200"
                             />
                             <div
-                                class="h-3 w-16 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70"
+                                class="h-3 w-16 animate-pulse rounded bg-sand-200/70"
                             />
                         </div>
                     </li>
@@ -312,12 +305,12 @@ function lowercase(event: Event, target: { name: string }): void {
 
                 <ul
                     v-else-if="tags.length > 0"
-                    class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg"
                 >
                     <li v-for="tag in tags" :key="tag.id" class="reveal-item">
                         <form
                             v-if="editingTagId === tag.id"
-                            class="space-y-3 bg-white/70 px-4 py-4 backdrop-blur-sm dark:bg-sand-800/60"
+                            class="space-y-3 bg-white/70 px-4 py-4 backdrop-blur-sm"
                             @submit.prevent="saveEdit(tag)"
                         >
                             <input
@@ -328,7 +321,10 @@ function lowercase(event: Event, target: { name: string }): void {
                                 autofocus
                                 @input="lowercase($event, editForm.data)"
                             />
-                            <p v-if="editForm.errors.name" class="text-accent">
+                            <p
+                                v-if="editForm.errors.name"
+                                class="text-blush-500"
+                            >
                                 {{ editForm.errors.name }}
                             </p>
                             <div
@@ -369,12 +365,6 @@ function lowercase(event: Event, target: { name: string }): void {
                             :show-chevron="false"
                             @click="startEdit(tag)"
                         >
-                            <template #leading
-                                ><IconTile
-                                    :icon="tagIcon"
-                                    size="sm"
-                                    tone="sage"
-                            /></template>
                             {{ tag.name }}
                             <template #subtitle>
                                 {{
@@ -395,18 +385,10 @@ function lowercase(event: Event, target: { name: string }): void {
                     <div
                         class="flex flex-col items-center px-2 py-4 text-center"
                     >
-                        <IconTile
-                            :icon="tagIcon"
-                            size="lg"
-                            tone="sage"
-                            class="mb-4"
-                        />
-                        <h3
-                            class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
-                        >
+                        <h3 class="font-sans text-lg font-semibold text-teal">
                             {{ t('No tags yet') }}
                         </h3>
-                        <p class="mt-1 text-sand-600 dark:text-sand-400">
+                        <p class="mt-1 text-teal-muted">
                             {{
                                 t(
                                     'Create tags to organize and filter your posts.',

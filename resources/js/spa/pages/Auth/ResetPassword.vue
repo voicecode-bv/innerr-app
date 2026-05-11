@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { onMounted, ref } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
-import AppleAuthButton from '@/spa/components/auth/AppleAuthButton.vue';
-import GoogleAuthButton from '@/spa/components/auth/GoogleAuthButton.vue';
 import LanguageSelector from '@/spa/components/LanguageSelector.vue';
 import TextField from '@/spa/components/TextField.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
-import { useAuthStore } from '@/spa/stores/auth';
-import { useI18nStore } from '@/spa/stores/i18n';
-import thumbsUpIcon from '../../../../svg/doodle-icons/thumbs-up.svg';
+import keyIcon from '../../../../svg/doodle-icons/key.svg';
 import innerrLogo from '../../../../svg/innerr-logo-on-blue.svg';
 
 function iconMaskStyle(url: string) {
@@ -28,55 +24,56 @@ function iconMaskStyle(url: string) {
 }
 
 const { t } = useTranslations();
-const i18n = useI18nStore();
-const auth = useAuthStore();
+const route = useRoute();
 const router = useRouter();
 
-const currentLocale = computed(() => i18n.locale);
-const socialAuthUrls = computed(() => auth.socialAuthUrls);
 const flashError = ref<string | null>(null);
-
-const termsUrl = computed(() =>
-    currentLocale.value === 'nl'
-        ? 'https://innerr.app/nl/voorwaarden/'
-        : 'https://innerr.app/en/terms/',
-);
+const flashSuccess = ref<string | null>(null);
 
 const form = useApiForm({
+    token: '',
     email: '',
-    name: '',
-    username: '',
     password: '',
-    terms_accepted: false,
 });
 
-const showEmailForm = ref(false);
+onMounted(() => {
+    const token = route.query.token;
+    const email = route.query.email;
+
+    if (typeof token === 'string') {
+        form.data.token = token;
+    }
+
+    if (typeof email === 'string') {
+        form.data.email = email;
+    }
+});
 
 async function submit(): Promise<void> {
     flashError.value = null;
+    flashSuccess.value = null;
 
     try {
-        await form.post<{ user: unknown; token: string; redirect_to: string }>(
-            '/api/spa/auth/register',
+        await form.post<{ message: string }>(
+            '/api/spa/auth/reset-password',
             {
-                onSuccess: async (data) => {
-                    await auth.bootstrap();
-                    router.push(data.redirect_to ?? '/');
+                onSuccess: (data) => {
+                    flashSuccess.value =
+                        data.message ?? t('Your password has been reset');
+                    setTimeout(() => {
+                        router.push({ name: 'spa.login' });
+                    }, 1500);
                 },
                 onFinish: () => form.reset('password'),
             },
         );
     } catch (error) {
         if (error instanceof ApiError) {
-            flashError.value = error.message || t('Registration failed');
+            flashError.value = error.message || t('Could not reset password');
         } else {
             flashError.value = t('Could not connect to the server');
         }
     }
-}
-
-function lowercase(value: string): string {
-    return value.toLowerCase();
 }
 </script>
 
@@ -123,20 +120,6 @@ function lowercase(value: string): string {
                     d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"
                 />
             </svg>
-            <svg
-                class="doodle doodle-2 absolute bottom-12 left-12 size-12 text-brand-sand/35"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <circle cx="12" cy="12" r="4" />
-                <path
-                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-                />
-            </svg>
         </div>
 
         <div class="relative flex items-center justify-between pt-4">
@@ -170,11 +153,11 @@ function lowercase(value: string): string {
                 <span
                     class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-green shadow-sm"
                 >
-                    {{ t("let's begin") }}
+                    {{ t('new password') }}
                     <span
                         aria-hidden="true"
-                        class="inline-block size-4 origin-bottom animate-[sprout_3s_ease-in-out_infinite] bg-current"
-                        :style="iconMaskStyle(thumbsUpIcon)"
+                        class="inline-block size-4 bg-current"
+                        :style="iconMaskStyle(keyIcon)"
                     ></span>
                 </span>
                 <h1 class="mt-4">
@@ -185,7 +168,7 @@ function lowercase(value: string): string {
                     />
                 </h1>
                 <p class="mt-3 text-base font-medium text-brand-sand/85">
-                    {{ t('Safely share with those who matter') }}
+                    {{ t('Choose a new password for your account') }}
                 </p>
             </div>
 
@@ -198,52 +181,14 @@ function lowercase(value: string): string {
                         {{ flashError }}
                     </p>
 
-                    <template v-if="!showEmailForm">
-                        <AppleAuthButton
-                            :url="socialAuthUrls.apple"
-                            :label="t('Sign up with Apple')"
-                        />
-                        <GoogleAuthButton
-                            :url="socialAuthUrls.google"
-                            :label="t('Sign up with Google')"
-                        />
-
-                        <div class="flex items-center gap-3 pt-1">
-                            <span class="h-px flex-1 bg-brand-sand/30"></span>
-                            <span
-                                class="tracking-widest text-brand-sand/60 uppercase"
-                                >{{ t('or') }}</span
-                            >
-                            <span class="h-px flex-1 bg-brand-sand/30"></span>
-                        </div>
-                    </template>
-
-                    <button
-                        v-if="showEmailForm"
-                        type="button"
-                        class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-brand-yellow transition hover:text-brand-yellow/80"
-                        @click="showEmailForm = false"
+                    <p
+                        v-if="flashSuccess"
+                        class="rounded-xl bg-brand-yellow/20 px-3 py-2 text-center text-brand-yellow"
                     >
-                        <span
-                            class="transition-transform group-hover:-translate-x-0.5"
-                            >←</span
-                        >
-                        <span>{{ t('Back') }}</span>
-                    </button>
+                        {{ flashSuccess }}
+                    </p>
 
-                    <form
-                        v-if="showEmailForm"
-                        class="space-y-3 pt-1"
-                        @submit.prevent="submit"
-                    >
-                        <TextField
-                            v-model="form.data.name"
-                            name="name"
-                            :placeholder="t('Your name')"
-                            autocomplete="name"
-                            :error="form.errors.name"
-                        />
-
+                    <form class="space-y-3" @submit.prevent="submit">
                         <TextField
                             v-model="form.data.email"
                             type="email"
@@ -254,51 +199,13 @@ function lowercase(value: string): string {
                         />
 
                         <TextField
-                            v-model="form.data.username"
-                            name="username"
-                            :placeholder="t('Username')"
-                            autocomplete="username"
-                            :error="form.errors.username"
-                            :transform="lowercase"
-                        />
-
-                        <TextField
                             v-model="form.data.password"
                             type="password"
                             name="password"
-                            :placeholder="t('Password')"
+                            :placeholder="t('New password')"
                             autocomplete="new-password"
                             :error="form.errors.password"
                         />
-
-                        <div
-                            class="flex items-start gap-3 rounded-lg bg-sand-50 px-3 py-2.5"
-                        >
-                            <input
-                                id="terms"
-                                v-model="form.data.terms_accepted"
-                                type="checkbox"
-                                class="mt-0.5 size-5 shrink-0 rounded border-sand-300 text-teal accent-teal focus:ring-teal"
-                            />
-                            <label
-                                for="terms"
-                                class="leading-relaxed text-sand-600"
-                            >
-                                {{ t('I agree to the') }}
-                                <a
-                                    :href="termsUrl"
-                                    target="_blank"
-                                    class="font-semibold text-teal decoration-accent decoration-wavy decoration-2 underline-offset-4 hover:underline"
-                                    >{{ t('Terms and Conditions') }}</a
-                                >
-                            </label>
-                        </div>
-                        <p
-                            v-if="form.errors.terms_accepted"
-                            class="mt-1 text-blush-500"
-                        >
-                            {{ form.errors.terms_accepted }}
-                        </p>
 
                         <Button
                             type="submit"
@@ -308,35 +215,31 @@ function lowercase(value: string): string {
                             :disabled="
                                 form.processing ||
                                 !form.data.email ||
-                                !form.data.name ||
-                                !form.data.username ||
                                 !form.data.password ||
-                                !form.data.terms_accepted
+                                !form.data.token
                             "
                         >
-                            {{ form.processing ? '...' : t('Create account') }}
+                            {{
+                                form.processing
+                                    ? '...'
+                                    : t('Reset password')
+                            }}
                         </Button>
-                    </form>
 
-                    <button
-                        v-else
-                        type="button"
-                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-brand-yellow transition hover:text-brand-yellow/80"
-                        @click="showEmailForm = true"
-                    >
-                        <span>{{ t('Sign up with email') }}</span>
-                        <span
-                            class="transition-transform group-hover:translate-x-0.5"
-                            >→</span
+                        <p
+                            v-if="!form.data.token"
+                            class="text-center text-brand-sand/70"
                         >
-                    </button>
+                            {{ t('Reset token is missing or invalid') }}
+                        </p>
+                    </form>
                 </div>
             </div>
         </div>
 
         <div class="relative pt-4 pb-8">
             <p class="text-center text-brand-sand/80">
-                {{ t('Already have an account?') }}
+                {{ t('Remember your password?') }}
                 <RouterLink
                     :to="{ name: 'spa.login' }"
                     class="font-semibold text-brand-yellow decoration-brand-yellow/60 decoration-wavy decoration-2 underline-offset-4 hover:underline"

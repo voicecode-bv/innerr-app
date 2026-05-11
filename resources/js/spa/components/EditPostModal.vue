@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import BottomSheet from '@/components/BottomSheet.vue';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
@@ -17,6 +17,7 @@ interface Circle {
     photo?: string | null;
     members_count?: number;
     members_can_invite?: boolean;
+    members_can_view_members?: boolean;
     is_owner?: boolean;
 }
 
@@ -63,15 +64,21 @@ const emit = defineEmits<{
 
 const { t } = useTranslations();
 
-const initialTagIds = (props.tags ?? []).map((tag) => tag.id);
-const initialPersonIds = (props.persons ?? []).map((person) => person.id);
+const initialTagIds = ref<string[]>(
+    (props.tags ?? []).map((tag) => tag.id),
+);
+const initialPersonIds = ref<string[]>(
+    (props.persons ?? []).map((person) => person.id),
+);
+const initialCircleIds = ref<string[]>(props.circles.map((c) => c.id));
+const initialCaption = ref<string>(props.caption ?? '');
 
 const form = useApiForm(
     {
         caption: props.caption ?? '',
-        circle_ids: props.circles.map((c) => c.id),
-        tag_ids: initialTagIds,
-        person_ids: initialPersonIds,
+        circle_ids: [...initialCircleIds.value],
+        tag_ids: [...initialTagIds.value],
+        person_ids: [...initialPersonIds.value],
     },
     externalApi,
 );
@@ -113,7 +120,7 @@ watch(
         // Keep originally-tagged persons selectable; drop only persons that
         // were just added in this session and lost their circle.
         form.data.person_ids = form.data.person_ids.filter(
-            (id) => visibleIds.has(id) || initialPersonIds.includes(id),
+            (id) => visibleIds.has(id) || initialPersonIds.value.includes(id),
         );
     },
 );
@@ -126,16 +133,10 @@ function sameIds(a: string[], b: string[]): boolean {
 }
 
 const hasChanges = computed(() => {
-    if ((form.data.caption ?? '') !== (props.caption ?? '')) return true;
-    if (
-        !sameIds(
-            form.data.circle_ids,
-            props.circles.map((c) => c.id),
-        )
-    )
-        return true;
-    if (!sameIds(form.data.tag_ids, initialTagIds)) return true;
-    if (!sameIds(form.data.person_ids, initialPersonIds)) return true;
+    if ((form.data.caption ?? '') !== initialCaption.value) return true;
+    if (!sameIds(form.data.circle_ids, initialCircleIds.value)) return true;
+    if (!sameIds(form.data.tag_ids, initialTagIds.value)) return true;
+    if (!sameIds(form.data.person_ids, initialPersonIds.value)) return true;
     return false;
 });
 
@@ -149,11 +150,19 @@ watch(
     (isOpen) => {
         if (!isOpen) return;
 
+        // Refresh baseline-snapshots zodat hasChanges altijd vergelijkt met
+        // de actuele post-state (anders blijven oude tag/person ids hangen
+        // tussen edit-sessies in op dezelfde gemounte modal).
+        initialCaption.value = props.caption ?? '';
+        initialCircleIds.value = props.circles.map((c) => c.id);
+        initialTagIds.value = (props.tags ?? []).map((tag) => tag.id);
+        initialPersonIds.value = (props.persons ?? []).map((p) => p.id);
+
         form.errors = {};
-        form.data.caption = props.caption ?? '';
-        form.data.circle_ids = props.circles.map((c) => c.id);
-        form.data.tag_ids = (props.tags ?? []).map((tag) => tag.id);
-        form.data.person_ids = (props.persons ?? []).map((person) => person.id);
+        form.data.caption = initialCaption.value;
+        form.data.circle_ids = [...initialCircleIds.value];
+        form.data.tag_ids = [...initialTagIds.value];
+        form.data.person_ids = [...initialPersonIds.value];
     },
 );
 
@@ -208,11 +217,11 @@ async function submit(): Promise<void> {
     <BottomSheet :open="open" @update:open="onSheetUpdate">
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
+                <h2 class="font-semibold text-teal">
                     {{ t('Edit post') }}
                 </h2>
                 <button
-                    class="text-sand-500 dark:text-sand-400"
+                    class="text-teal-muted"
                     :aria-label="t('Close')"
                     @click="close"
                 >
@@ -238,7 +247,7 @@ async function submit(): Promise<void> {
             <section>
                 <label
                     for="edit-post-caption"
-                    class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                    class="font-semibold text-teal"
                 >
                     {{ t('Caption') }}
                 </label>
@@ -248,7 +257,7 @@ async function submit(): Promise<void> {
                     :placeholder="t('Write a caption...')"
                     rows="4"
                     maxlength="2200"
-                    class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-sand-800 placeholder-sand-400 focus:ring-0 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
+                    class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-night placeholder-teal-muted/50 focus:ring-0 focus:outline-none"
                 />
                 <p v-if="form.errors.caption" class="mt-1 text-blush-500">
                     {{ form.errors.caption }}

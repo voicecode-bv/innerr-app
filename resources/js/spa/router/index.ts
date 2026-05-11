@@ -35,6 +35,18 @@ const routes: RouteRecordRaw[] = [
         meta: { guest: true },
     },
     {
+        path: '/forgot-password',
+        name: 'spa.forgot-password',
+        component: () => import('@/spa/pages/Auth/ForgotPassword.vue'),
+        meta: { guest: true },
+    },
+    {
+        path: '/password-reset',
+        name: 'spa.password-reset',
+        component: () => import('@/spa/pages/Auth/ResetPassword.vue'),
+        meta: { guest: true },
+    },
+    {
         path: '/oauth-callback',
         name: 'spa.oauth-callback',
         alias: '/oauth/callback',
@@ -46,6 +58,12 @@ const routes: RouteRecordRaw[] = [
         path: '/onboarding/intro',
         name: 'spa.onboarding.intro',
         component: () => import('@/spa/pages/Onboarding/Intro.vue'),
+        meta: { auth: true },
+    },
+    {
+        path: '/onboarding/birthdate',
+        name: 'spa.onboarding.birthdate',
+        component: () => import('@/spa/pages/Onboarding/BirthDate.vue'),
         meta: { auth: true },
     },
     {

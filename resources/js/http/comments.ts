@@ -37,13 +37,8 @@ export function fetchComments(postId: string): Promise<Comment[]> {
     return request<Comment[]>(`/posts/${postId}/comments`, 'GET');
 }
 
-export function postComment(
-    postId: string,
-    body: string,
-    parentCommentId: string | null = null,
-): Promise<Comment> {
+export function postComment(postId: string, body: string): Promise<Comment> {
     return request<Comment>(`/posts/${postId}/comments`, 'POST', {
         body,
-        parent_comment_id: parentCommentId,
     });
 }

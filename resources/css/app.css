@@ -23,66 +23,154 @@
     --font-sans: 'DM Sans';
     --font-display: 'Fraunces';
 
-    --color-sand-50: #fdf8f3;
-    --color-sand-100: #f9efe4;
-    --color-sand-200: #f0dcc6;
-    --color-sand-300: #e4c4a0;
-    --color-sand-400: #d4a373;
-    --color-sand-500: #c48b56;
-    --color-sand-600: #a06e3e;
-    --color-sand-700: #7d5530;
-    --color-sand-800: #5c3f24;
-    --color-sand-900: #3d2a18;
+    /* ──────────────────────────────────────────────────────────
+       Brand palette (May 2026) — synced with innerr-website
+       Sand, Green, Blue, Yellow, Orange — five-color system
+       Sand = page background, Blue (teal) = primary
+       ────────────────────────────────────────────────────────── */
+    --color-brand-sand: #fcfaf3;
+    --color-brand-green: #4e9e3e;
+    --color-brand-blue: #373d8a;
+    --color-brand-yellow: #f5eb69;
+    --color-brand-orange: #f49710;
 
-    --color-sage-50: #f4f7f4;
-    --color-sage-100: #e5ece5;
-    --color-sage-200: #c8d8c8;
-    --color-sage-300: #a3bda3;
-    --color-sage-400: #7d9e7d;
-    --color-sage-500: #5e825e;
-    --color-sage-600: #4a6b4a;
-    --color-sage-700: #3a573a;
-    --color-sage-800: #2d432d;
-    --color-sage-900: #1f2e1f;
+    /* Surfaces — sand is the page background */
+    --color-sand: #fcfaf3;
+    --color-dark-sand: #efe2c7;
+    --color-cream: #f5efdc;
 
-    --color-blush-50: #fef5f5;
-    --color-blush-100: #fde8e8;
-    --color-blush-200: #facece;
-    --color-blush-300: #f5a8a8;
-    --color-blush-400: #ee7d7d;
-    --color-blush-500: #e25858;
-    --color-blush-600: #c93c3c;
-    --color-blush-700: #a02e2e;
-    --color-blush-800: #7a2323;
-    --color-blush-900: #551919;
+    --color-night: #1a1f4a;
+    --color-muted: #5a607a;
 
-    /* Brand palette aligned with innerr-website */
-    --color-cream: #fbf4ea;
-    --color-warmwhite: #fefaf3;
-    --color-teal: #1d5f5c;
-    --color-teal-light: #2a7a76;
-    --color-teal-muted: #4a9b97;
-    --color-night: #162020;
-    --color-accent: #c25a2e;
-    --color-accent-soft: #f4a47e;
+    /* Primary — formerly "teal", now Brand Blue */
+    --color-teal: #373d8a;
+    --color-teal-light: #4a52a8;
+    --color-teal-muted: #6e76c2;
+
+    /* Accent — in the app the accent role IS the brand primary (blue),
+       so all existing text-accent / bg-accent / accent-soft icon usages
+       render in brand blue. Use --color-brand-orange explicitly when you
+       actually need the orange. */
+    --color-accent: #373d8a;
+    --color-accent-soft: #6e76c2;
+
+    /* Sand tonal scale — warm neutrals */
+    --color-sand-50: #fdfbf6;
+    --color-sand-100: #f8f1e1;
+    --color-sand-200: #efe2c7;
+    --color-sand-300: #e2cda3;
+    --color-sand-400: #d2b176;
+    --color-sand-500: #b6904d;
+    --color-sand-600: #957237;
+    --color-sand-700: #735628;
+    --color-sand-800: #523d1e;
+    --color-sand-900: #322513;
+
+    /* Sage tonal scale — aligned with Brand Green */
+    --color-sage-50: #f0f7ee;
+    --color-sage-100: #dcedd8;
+    --color-sage-200: #b8dbb0;
+    --color-sage-300: #91c586;
+    --color-sage-400: #6cae5e;
+    --color-sage-500: #4e9e3e;
+    --color-sage-600: #3d7e31;
+    --color-sage-700: #2f6126;
+    --color-sage-800: #234819;
+    --color-sage-900: #18310f;
+
+    /* Blush — kept warm/red for semantic "destructive" UI */
+    --color-blush-50: #fef3f0;
+    --color-blush-100: #fde0d6;
+    --color-blush-200: #f9bba8;
+    --color-blush-300: #f1957a;
+    --color-blush-400: #e5664b;
+    --color-blush-500: #d2402b;
+    --color-blush-600: #b22d1e;
+    --color-blush-700: #8a2218;
+    --color-blush-800: #631810;
+    --color-blush-900: #3f0e08;
 }
 
 #app {
     /* @apply flex h-dvh flex-col; */
-    /* @apply fixed inset-0 flex flex-col bg-white text-sand-900 dark:bg-sand-900 dark:text-sand-100; */
+    /* @apply fixed inset-0 flex flex-col bg-white text-sand-900; */
     /* top: var(--inset-top, 0px); */
 }
 
 @utility field {
-    @apply w-full rounded-lg border-[1.5px] border-sand-200 bg-white px-5 py-4 font-light text-night placeholder-sand-400 transition-colors outline-none focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
+    @apply w-full rounded-full border-2 border-teal/20 bg-white px-6 py-4 text-base font-medium text-night placeholder-teal-muted/80 outline-none transition-all duration-200 hover:border-teal/40 focus:border-teal focus:ring-4 focus:ring-teal/15;
 }
 
 @utility field-area {
-    @apply w-full resize-none rounded-lg border-[1.5px] border-sand-200 bg-white px-5 py-4 font-light text-night placeholder-sand-400 transition-colors outline-none focus:border-teal dark:border-sand-700 dark:bg-sand-800 dark:text-sand-100 dark:placeholder-sand-500;
+    @apply w-full resize-none rounded-3xl border-2 border-teal/20 bg-white px-6 py-4 text-base font-medium text-night placeholder-teal-muted/80 outline-none transition-all duration-200 hover:border-teal/40 focus:border-teal focus:ring-4 focus:ring-teal/15;
 }
 
 @utility no-scrollbar {
     @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
+/* Verberg het standaard kalender-icoontje in date/datetime inputs.
+   Het maakt het veld voller dan we willen en past niet bij onze brand-stijl;
+   gebruikers kunnen de picker nog steeds openen door op het veld te tikken. */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator,
+input[type='month']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator,
+input[type='week']::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+    appearance: none;
+    opacity: 0;
+    width: 0;
+    pointer-events: none;
+}
+input[type='date'],
+input[type='datetime-local'],
+input[type='month'],
+input[type='time'],
+input[type='week'] {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Onderdruk de native clear-X bij type="search" — we leveren een eigen
+   knop die brand-conform is. */
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration,
+input[type='search']::-webkit-search-results-button,
+input[type='search']::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+}
+
+/* Brand gradient ring rondom avatars en circles.
+   Werkt direct op een <img> of <div> — geen wrapper nodig.
+
+   Layout van buiten naar binnen:
+     - 2px conic-gradient border (brand-blue → green → yellow → orange → blue)
+     - 2px witte spacer-ring (zelfde tussenring als de Feed circles)
+     - de eigenlijke foto / inhoud
+
+   Truc: transparante 2px border met background-clip border-box voor de
+   gradient en 2px padding met witte padding-box voor de spacer. Voor
+   <img> krimpt de foto netjes binnen het content-box, zodat er echte
+   ruimte tussen ring en foto blijft. */
+.avatar-ring {
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    padding: 2px;
+    background:
+        linear-gradient(#fff, #fff) padding-box,
+        conic-gradient(
+                from 0deg,
+                var(--color-brand-blue),
+                var(--color-brand-green),
+                var(--color-brand-yellow),
+                var(--color-brand-orange),
+                var(--color-brand-blue)
+            )
+            border-box;
 }
 
 /* Subtle staggered reveal voor lijst-/kaart-items op pagina mount.
@@ -142,9 +230,9 @@
 @utility shimmer {
     background: linear-gradient(
         110deg,
-        var(--color-sand-100) 30%,
-        var(--color-sand-200) 50%,
-        var(--color-sand-100) 70%
+        var(--color-sand) 30%,
+        var(--color-sand-100) 50%,
+        var(--color-sand) 70%
     );
     background-size: 200% 100%;
     animation: shimmer 1.8s linear infinite;
@@ -153,9 +241,9 @@
 .dark .shimmer {
     background: linear-gradient(
         110deg,
-        var(--color-sand-800) 30%,
-        var(--color-sand-700) 50%,
-        var(--color-sand-800) 70%
+        var(--color-sand-900) 30%,
+        var(--color-sand-800) 50%,
+        var(--color-sand-900) 70%
     );
     background-size: 200% 100%;
     animation: shimmer 1.8s linear infinite;

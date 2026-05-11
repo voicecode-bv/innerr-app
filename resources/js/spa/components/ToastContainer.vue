@@ -4,9 +4,9 @@ import { useToastsStore } from '@/spa/stores/toasts';
 const toasts = useToastsStore();
 
 const variantClasses: Record<string, string> = {
-    success: 'bg-sage-100 text-sage-800 dark:bg-sage-900/80 dark:text-sage-100',
-    error: 'bg-blush-100 text-blush-800 dark:bg-blush-900/80 dark:text-blush-100',
-    info: 'bg-sand-100 text-sand-800 dark:bg-sand-800 dark:text-sand-100',
+    success: 'bg-sage-100 text-sage-800',
+    error: 'bg-blush-100 text-blush-800',
+    info: 'bg-sand-100 text-sand-800',
 };
 </script>
 

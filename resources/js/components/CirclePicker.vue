@@ -9,6 +9,7 @@ interface Circle {
     photo?: string | null;
     members_count?: number;
     members_can_invite?: boolean;
+    members_can_view_members?: boolean;
     is_owner?: boolean;
 }
 
@@ -48,14 +49,25 @@ function iconMaskStyle(url: string) {
     };
 }
 
+// Circles met afgeschermde leden-lijst zijn alleen zichtbaar voor de owner —
+// een niet-eigenaar mag er niet naartoe posten omdat ze niet kunnen zien wie
+// er mee leest.
+const visibleCircles = computed(() =>
+    props.circles.filter(
+        (circle) =>
+            circle.is_owner === true ||
+            circle.members_can_view_members !== false,
+    ),
+);
+
 const allSelected = computed(
     () =>
-        props.circles.length > 0 &&
-        props.selectedIds.length === props.circles.length,
+        visibleCircles.value.length > 0 &&
+        props.selectedIds.length === visibleCircles.value.length,
 );
 
 const sortedCircles = computed(() =>
-    [...props.circles].sort((a, b) =>
+    [...visibleCircles.value].sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     ),
 );
@@ -84,7 +96,7 @@ function toggleAll() {
     } else {
         emit(
             'update:selectedIds',
-            props.circles.map((c) => c.id),
+            visibleCircles.value.map((c) => c.id),
         );
     }
 }
@@ -95,7 +107,7 @@ function toggleAll() {
         <div class="mb-3 flex items-center justify-between gap-2">
             <button
                 type="button"
-                class="flex items-center gap-1.5 tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                class="flex items-center gap-1.5 font-semibold text-teal"
                 @click="isCollapsed = !isCollapsed"
             >
                 {{ t('Share with circles') }}
@@ -116,13 +128,11 @@ function toggleAll() {
                 </svg>
             </button>
 
-            <span
-                v-if="isCollapsed"
-                class="truncate text-sand-500 dark:text-sand-400"
-                >{{ summaryText }}</span
-            >
+            <span v-if="isCollapsed" class="truncate text-teal-muted">{{
+                summaryText
+            }}</span>
             <button
-                v-else-if="circles.length > 0"
+                v-else-if="visibleCircles.length > 0"
                 type="button"
                 class="text-teal hover:text-teal-light"
                 @click="toggleAll"
@@ -152,10 +162,10 @@ function toggleAll() {
                     :class="
                         selectedIds.includes(circle.id)
                             ? 'circle-ring'
-                            : 'bg-sand-200 dark:bg-sand-700'
+                            : 'bg-sand-200'
                     "
                 >
-                    <div class="rounded-full bg-white p-0.5 dark:bg-sand-900">
+                    <div class="rounded-full bg-white p-0.5">
                         <img
                             v-if="circle.photo"
                             :src="circle.photo"
@@ -169,7 +179,7 @@ function toggleAll() {
                         />
                         <div
                             v-else
-                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 transition-opacity dark:bg-sand-900"
+                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 transition-opacity"
                             :class="
                                 selectedIds.includes(circle.id)
                                     ? ''
@@ -178,7 +188,7 @@ function toggleAll() {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-7 bg-sand-600 dark:bg-sand-300"
+                                class="inline-block size-7 bg-teal"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </div>
@@ -186,7 +196,7 @@ function toggleAll() {
 
                     <div
                         v-if="selectedIds.includes(circle.id)"
-                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white dark:ring-sand-900"
+                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -208,8 +218,8 @@ function toggleAll() {
                     class="max-w-16 truncate"
                     :class="
                         selectedIds.includes(circle.id)
-                            ? 'text-sand-900 dark:text-sand-100'
-                            : 'text-sand-500 dark:text-sand-400'
+                            ? 'font-medium text-teal'
+                            : 'text-teal-muted'
                     "
                 >
                     {{ circle.name }}

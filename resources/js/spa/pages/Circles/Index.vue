@@ -65,10 +65,7 @@ async function createCircle(): Promise<void> {
 <template>
     <AppLayout ref="layout" :title="t('Circles')">
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -133,7 +130,7 @@ async function createCircle(): Promise<void> {
                     <SurfaceCard v-if="showCreateForm">
                         <form class="space-y-3" @submit.prevent="createCircle">
                             <label
-                                class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                                class="tracking-wider text-sand-500 uppercase"
                             >
                                 {{ t('New circle') }}
                             </label>
@@ -176,7 +173,7 @@ async function createCircle(): Promise<void> {
 
                 <ul
                     v-if="circles === null"
-                    class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm dark:divide-sand-700/60 dark:bg-sand-800/60"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm"
                 >
                     <li
                         v-for="n in 3"
@@ -184,14 +181,14 @@ async function createCircle(): Promise<void> {
                         class="flex items-center gap-4 px-4 py-4"
                     >
                         <div
-                            class="size-12 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
+                            class="size-12 shrink-0 animate-pulse rounded-full bg-sand-200"
                         />
                         <div class="flex-1 space-y-2">
                             <div
-                                class="h-4 w-32 animate-pulse rounded bg-sand-200 dark:bg-sand-700"
+                                class="h-4 w-32 animate-pulse rounded bg-sand-200"
                             />
                             <div
-                                class="h-3 w-20 animate-pulse rounded bg-sand-200/70 dark:bg-sand-700/70"
+                                class="h-3 w-20 animate-pulse rounded bg-sand-200/70"
                             />
                         </div>
                     </li>
@@ -199,7 +196,7 @@ async function createCircle(): Promise<void> {
 
                 <ul
                     v-else-if="circles.length > 0"
-                    class="divide-y divide-sand-100 overflow-hidden rounded-lg dark:divide-sand-700/60"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg"
                 >
                     <li v-for="circle in circles" :key="circle.id">
                         <CircleListItem
@@ -219,12 +216,10 @@ async function createCircle(): Promise<void> {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3
-                            class="font-sans text-lg font-semibold text-teal dark:text-sand-100"
-                        >
+                        <h3 class="font-sans text-lg font-semibold text-teal">
                             {{ t('No circles yet') }}
                         </h3>
-                        <p class="mt-1 text-sand-600 dark:text-sand-400">
+                        <p class="mt-1 text-sand-600">
                             {{
                                 t(
                                     'Create a circle to share moments with specific people.',

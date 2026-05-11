@@ -5,7 +5,6 @@ export interface NotificationPreferences {
     post_liked: boolean;
     post_commented: boolean;
     comment_liked: boolean;
-    comment_replied: boolean;
     new_circle_post: boolean;
     post_tagged: boolean;
     circle_invitation_received: boolean;

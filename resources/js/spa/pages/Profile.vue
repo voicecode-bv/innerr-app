@@ -11,6 +11,7 @@ import {
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
 import { type PostData } from '@/spa/components/PostCard.vue';
+import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -180,10 +181,7 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout ref="layout" :title="t('Profile')">
         <template #header-left>
-            <button
-                class="flex items-center text-sand-700 dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -204,7 +202,7 @@ function iconMaskStyle(url: string) {
         <template v-if="profile && isOwnProfile" #header-right>
             <RouterLink
                 :to="{ name: 'spa.settings' }"
-                class="flex items-center text-sand-700 dark:text-sand-300"
+                class="flex items-center text-teal"
                 :aria-label="t('Open settings')"
             >
                 <span
@@ -222,7 +220,7 @@ function iconMaskStyle(url: string) {
             />
 
             <div>
-                <div v-if="profile" class="bg-white px-4 py-6 dark:bg-sand-900">
+                <div v-if="profile" class="bg-sand px-4 py-6">
                     <div class="flex items-center gap-4">
                         <button
                             type="button"
@@ -239,12 +237,12 @@ function iconMaskStyle(url: string) {
                                     `https://ui-avatars.com/api/?name=${profile.name}&background=f0dcc6&color=5c3f24&size=128`
                                 "
                                 :alt="profile.name"
-                                class="size-20 rounded-full object-cover ring-2 ring-sand-200 dark:ring-sand-700"
+                                class="avatar-ring size-20 rounded-full object-cover"
                                 :class="{ 'opacity-60': avatarUploading }"
                             />
                             <span
                                 v-if="isOwnProfile"
-                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white dark:ring-sand-900"
+                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -273,73 +271,71 @@ function iconMaskStyle(url: string) {
                             >
                                 {{ profile.name }}
                             </h2>
-                            <p class="text-sand-500 dark:text-sand-400">
+                            <p class="text-teal-muted">
                                 @{{ profile.username }}
                             </p>
                             <div>
-                                <span
-                                    class="text-sand-700 dark:text-sand-200"
-                                    >{{ profile.posts_count }}</span
-                                >
-                                <span
-                                    class="ml-1 text-sand-500 dark:text-sand-400"
-                                    >{{
-                                        profile.posts_count === 1
-                                            ? t('moment')
-                                            : t('moments')
-                                    }}</span
-                                >
+                                <span class="font-medium text-teal">{{
+                                    profile.posts_count
+                                }}</span>
+                                <span class="ml-1 text-teal-muted">{{
+                                    profile.posts_count === 1
+                                        ? t('moment')
+                                        : t('moments')
+                                }}</span>
                             </div>
-                            <p
-                                v-if="profile.bio"
-                                class="text-sand-700 dark:text-sand-300"
-                            >
+                            <p v-if="profile.bio" class="text-night">
                                 {{ profile.bio }}
                             </p>
                         </div>
                     </div>
 
                     <div v-if="isOwnProfile" class="mt-4 flex gap-2">
-                        <RouterLink
+                        <Button
+                            variant="primary"
+                            size="lg"
                             :to="{ name: 'spa.settings.edit-profile' }"
-                            class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                            class="flex-1"
                         >
                             {{ t('Edit') }}
-                        </RouterLink>
-                        <button
-                            type="button"
-                            class="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="lg"
+                            class="flex-1"
                             @click="shareProfile"
                         >
                             {{ t('Share') }}
-                        </button>
+                        </Button>
                     </div>
-                    <button
+                    <Button
                         v-else
-                        type="button"
-                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal/20 bg-cream px-6 py-3 text-teal transition-all hover:-translate-y-0.5 hover:bg-warmwhite"
+                        variant="primary"
+                        size="lg"
+                        block
+                        class="mt-4"
                         @click="openInviteSheet"
                     >
                         {{ t('Invite') }}
-                    </button>
+                    </Button>
                 </div>
 
-                <div class="h-2 bg-warmwhite dark:bg-sand-900" />
+                <div class="h-2 bg-sand" />
 
                 <div
                     v-if="feed.items.length === 0 && feed.loading"
-                    class="grid grid-cols-3 gap-0.5 bg-warmwhite dark:bg-sand-900"
+                    class="grid grid-cols-3 gap-1 bg-sand px-1"
                 >
                     <div
                         v-for="n in 30"
                         :key="n"
-                        class="aspect-square animate-pulse bg-sand-200 dark:bg-sand-700"
+                        class="aspect-square animate-pulse rounded-lg bg-sand-100"
                     />
                 </div>
 
                 <div
                     id="profile-posts-grid"
-                    class="grid grid-cols-3 gap-0.5 bg-warmwhite dark:bg-sand-900"
+                    class="grid grid-cols-3 gap-1 bg-sand px-1"
                 >
                     <RouterLink
                         v-for="post in feed.items"
@@ -348,14 +344,14 @@ function iconMaskStyle(url: string) {
                             name: 'spa.posts.show',
                             params: { post: post.id },
                         }"
-                        class="relative block aspect-square overflow-hidden bg-warmwhite dark:bg-sand-900"
+                        class="relative block aspect-square overflow-hidden rounded-lg bg-sand"
                     >
                         <div
                             v-if="
                                 !loadedMedia[mediaKey(post)] &&
                                 post.media_type !== 'unknown'
                             "
-                            class="absolute inset-0 animate-pulse bg-sand-200 dark:bg-sand-700"
+                            class="absolute inset-0 animate-pulse bg-sand"
                         />
                         <img
                             v-if="post.media_type === 'image'"
@@ -408,7 +404,7 @@ function iconMaskStyle(url: string) {
 
                 <div
                     v-if="feed.loading && feed.items.length > 0"
-                    class="flex items-center justify-center gap-2 py-6 text-sand-500 dark:text-sand-400"
+                    class="flex items-center justify-center gap-2 py-6 text-teal-muted"
                 >
                     {{ t('Loading more...') }}
                 </div>
@@ -421,7 +417,7 @@ function iconMaskStyle(url: string) {
                 >
                     <div
                         aria-hidden="true"
-                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40"
+                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -443,9 +439,7 @@ function iconMaskStyle(url: string) {
                             />
                         </svg>
                     </div>
-                    <h3
-                        class="font-display text-lg font-semibold text-sand-800 dark:text-sand-200"
-                    >
+                    <h3 class="font-display text-lg font-semibold text-teal">
                         {{ t('No moments yet') }}
                     </h3>
                 </div>

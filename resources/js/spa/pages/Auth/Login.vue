@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
+import Button from '@/components/Button.vue';
 import AppleAuthButton from '@/spa/components/auth/AppleAuthButton.vue';
 import GoogleAuthButton from '@/spa/components/auth/GoogleAuthButton.vue';
-import Button from '@/components/Button.vue';
 import LanguageSelector from '@/spa/components/LanguageSelector.vue';
+import TextField from '@/spa/components/TextField.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import handIcon from '../../../../svg/doodle-icons/hand.svg';
-import innerrLogo from '../../../../svg/innerr-logo.svg';
+import innerrLogo from '../../../../svg/innerr-logo-on-blue.svg';
 
 function iconMaskStyle(url: string) {
     return {
@@ -55,12 +56,11 @@ const form = useApiForm({
     password: '',
 });
 
-const showPassword = ref(false);
 const showEmailForm = ref(false);
 
 async function submit(): Promise<void> {
     flashError.value = null;
-    
+
     try {
         await form.post<{ user: unknown; token: string; redirect_to: string }>(
             '/api/spa/auth/login',
@@ -84,42 +84,35 @@ async function submit(): Promise<void> {
 
 <template>
     <div
-        class="nativephp-safe-area relative flex h-dvh flex-col overflow-hidden bg-warmwhite px-6 dark:bg-sand-900"
+        class="nativephp-safe-area relative isolate flex h-dvh flex-col overflow-hidden bg-brand-blue px-6"
     >
         <div
             aria-hidden="true"
-            class="pointer-events-none absolute inset-0 overflow-hidden"
+            class="pointer-events-none absolute inset-0 -z-10"
         >
-            <div
-                class="absolute -top-24 -left-24 size-72 rounded-full bg-sage-200/60 blur-3xl dark:bg-sage-700/20"
-            ></div>
-            <div
-                class="absolute top-1/4 -right-28 size-80 rounded-full bg-accent-soft/40 blur-3xl dark:bg-accent/10"
-            ></div>
-            <div
-                class="absolute -bottom-32 left-1/4 size-96 rounded-full bg-sand-200/50 blur-3xl dark:bg-sand-700/30"
-            ></div>
-        </div>
-
-        <div aria-hidden="true" class="pointer-events-none absolute inset-0">
             <svg
-                class="doodle doodle-1 absolute top-28 left-8 size-5 text-accent/70"
+                class="doodle doodle-1 absolute top-28 left-8 size-12 text-brand-yellow/65"
                 viewBox="0 0 24 24"
-                fill="currentColor"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
             >
+                <circle cx="12" cy="12" r="4" />
                 <path
-                    d="M12 2l2.1 6.9L21 11l-6.9 2.1L12 20l-2.1-6.9L3 11l6.9-2.1z"
+                    d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
                 />
             </svg>
             <svg
-                class="doodle doodle-2 absolute top-20 right-10 size-4 text-teal/60"
+                class="doodle doodle-2 absolute top-20 right-10 size-10 text-brand-sand/40"
                 viewBox="0 0 24 24"
                 fill="currentColor"
             >
                 <circle cx="12" cy="12" r="6" />
             </svg>
             <svg
-                class="doodle doodle-3 absolute top-1/2 right-6 size-6 text-accent/50"
+                class="doodle doodle-3 absolute top-1/2 right-6 size-14 text-brand-yellow/50"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -129,12 +122,38 @@ async function submit(): Promise<void> {
                 <path d="M3 12 Q 7 6, 11 12 T 19 12" />
             </svg>
             <svg
-                class="doodle doodle-4 absolute bottom-32 left-6 size-5 text-sage-500/70"
+                class="doodle doodle-4 absolute bottom-32 left-6 size-12 text-brand-yellow/65"
                 viewBox="0 0 24 24"
                 fill="currentColor"
             >
                 <path
                     d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"
+                />
+            </svg>
+            <svg
+                class="doodle doodle-1 absolute right-12 bottom-24 size-12 text-brand-sand/35"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M8 14.5c1 1.5 2.5 2.2 4 2.2s3-.7 4-2.2" />
+                <circle
+                    cx="9"
+                    cy="10"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"
+                />
+                <circle
+                    cx="15"
+                    cy="10"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"
                 />
             </svg>
         </div>
@@ -146,7 +165,7 @@ async function submit(): Promise<void> {
         <div class="relative flex flex-1 flex-col items-center justify-center">
             <div class="mb-8 text-center">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-sage-700 shadow-sm dark:bg-sage-900/50 dark:text-sage-300"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-green shadow-sm"
                 >
                     {{ t('welcome back') }}
                     <span
@@ -162,7 +181,7 @@ async function submit(): Promise<void> {
                         class="mx-auto h-16 w-auto"
                     />
                 </h1>
-                <p class="mt-3 text-sand-600 dark:text-sand-400">
+                <p class="mt-3 text-base font-medium text-brand-sand/85">
                     {{ t('Safely share with those who matter') }}
                 </p>
             </div>
@@ -171,7 +190,7 @@ async function submit(): Promise<void> {
                 <div class="space-y-3">
                     <p
                         v-if="flashError"
-                        class="rounded-xl bg-blush-50 px-3 py-2 text-center text-blush-600 dark:bg-blush-900/20"
+                        class="rounded-xl bg-blush-50 px-3 py-2 text-center text-blush-600"
                     >
                         {{ flashError }}
                     </p>
@@ -187,23 +206,19 @@ async function submit(): Promise<void> {
                         />
 
                         <div class="flex items-center gap-3 pt-1">
+                            <span class="h-px flex-1 bg-brand-sand/30"></span>
                             <span
-                                class="h-px flex-1 bg-sand-200 dark:bg-sand-700"
-                            ></span>
-                            <span
-                                class="tracking-widest text-sand-400 uppercase dark:text-sand-500"
+                                class="tracking-widest text-brand-sand/60 uppercase"
                                 >{{ t('or') }}</span
                             >
-                            <span
-                                class="h-px flex-1 bg-sand-200 dark:bg-sand-700"
-                            ></span>
+                            <span class="h-px flex-1 bg-brand-sand/30"></span>
                         </div>
                     </template>
 
                     <button
                         v-if="showEmailForm"
                         type="button"
-                        class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-teal transition hover:text-teal-light"
+                        class="group -ml-1 inline-flex items-center gap-1 rounded-full py-1 text-brand-yellow transition hover:text-brand-yellow/80"
                         @click="showEmailForm = false"
                     >
                         <span
@@ -218,47 +233,27 @@ async function submit(): Promise<void> {
                         class="space-y-3 pt-1"
                         @submit.prevent="submit"
                     >
-                        <div>
-                            <input
-                                v-model="form.data.email"
-                                type="email"
-                                name="email"
-                                :placeholder="t('Email address')"
-                                autocomplete="email"
-                                class="field"
-                                :class="
-                                    form.errors.email
-                                        ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400'
-                                        : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'
-                                "
-                            />
-                        </div>
+                        <TextField
+                            v-model="form.data.email"
+                            type="email"
+                            name="email"
+                            :placeholder="t('Email address')"
+                            autocomplete="email"
+                            :error="form.errors.email"
+                        />
 
-                        <div class="relative">
-                            <input
-                                v-model="form.data.password"
-                                :type="showPassword ? 'text' : 'password'"
-                                name="password"
-                                :placeholder="t('Password')"
-                                autocomplete="current-password"
-                                class="field pr-16"
-                                :class="
-                                    form.errors.password
-                                        ? 'border-blush-400 focus:border-blush-400 focus:ring-1 focus:ring-blush-400'
-                                        : 'border-sand-200 focus:border-sand-400 focus:ring-1 focus:ring-sand-400 dark:border-sand-700'
-                                "
-                            />
-                            <button
-                                type="button"
-                                class="absolute top-1/2 right-3 -translate-y-1/2 text-sand-400 dark:text-sand-500"
-                                @click="showPassword = !showPassword"
-                            >
-                                {{ showPassword ? t('Hide') : t('Show') }}
-                            </button>
-                        </div>
+                        <TextField
+                            v-model="form.data.password"
+                            type="password"
+                            name="password"
+                            :placeholder="t('Password')"
+                            autocomplete="current-password"
+                            :error="form.errors.password"
+                        />
 
                         <Button
                             type="submit"
+                            variant="inverse"
                             size="lg"
                             block
                             :disabled="
@@ -269,12 +264,19 @@ async function submit(): Promise<void> {
                         >
                             {{ form.processing ? '...' : t('Log in') }}
                         </Button>
+
+                        <RouterLink
+                            :to="{ name: 'spa.forgot-password' }"
+                            class="block text-center text-brand-sand/80 underline decoration-brand-yellow/60 decoration-wavy decoration-2 underline-offset-4 hover:text-brand-yellow"
+                        >
+                            {{ t('Forgot password?') }}
+                        </RouterLink>
                     </form>
 
                     <button
                         v-else
                         type="button"
-                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-teal transition hover:text-teal-light"
+                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-brand-yellow transition hover:text-brand-yellow/80"
                         @click="showEmailForm = true"
                     >
                         <span>{{ t('Log in with email') }}</span>
@@ -288,11 +290,11 @@ async function submit(): Promise<void> {
         </div>
 
         <div class="relative pt-4 pb-8">
-            <p class="text-center text-sand-500 dark:text-sand-400">
+            <p class="text-center text-brand-sand/80">
                 {{ t('New to innerr?') }}
                 <a
                     href="/register"
-                    class="font-semibold text-teal decoration-accent decoration-wavy decoration-2 underline-offset-4 hover:underline"
+                    class="font-semibold text-brand-yellow decoration-brand-yellow/60 decoration-wavy decoration-2 underline-offset-4 hover:underline"
                 >
                     {{ t('Create an account') }}
                 </a>

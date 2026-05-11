@@ -2,6 +2,8 @@
 import { onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import BottomSheet from '@/components/BottomSheet.vue';
+import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import SheetHeader from '@/components/SheetHeader.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 
@@ -158,62 +160,15 @@ function onSheetUpdate(value: boolean): void {
 <template>
     <BottomSheet :open="open" @update:open="onSheetUpdate">
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-sand-700 dark:text-sand-300">
-                    {{ t('Likes') }}
-                    <span
-                        v-if="total > 0"
-                        class="font-normal text-sand-400 dark:text-sand-500"
-                        >({{ total }})</span
-                    >
-                </h2>
-                <button
-                    class="text-sand-500 dark:text-sand-400"
-                    :aria-label="t('Close')"
-                    @click="close"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke="currentColor"
-                        class="size-5"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6 18 18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
-            </div>
+            <SheetHeader :title="t('Likes')" @close="close" />
         </template>
 
+        
         <div
             v-if="isLoading"
             class="flex items-center justify-center px-4 py-10 pb-24"
         >
-            <svg
-                class="size-6 animate-spin text-sand-400 dark:text-sand-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                />
-                <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-            </svg>
+            <LoadingSpinner />
         </div>
 
         <div
@@ -221,10 +176,7 @@ function onSheetUpdate(value: boolean): void {
             class="px-4 py-10 pb-24 text-center"
         >
             <p class="text-blush-500">{{ loadError }}</p>
-            <button
-                class="mt-2 text-sand-500 dark:text-sand-400"
-                @click="loadPage(1)"
-            >
+            <button class="mt-2 text-teal-muted" @click="loadPage(1)">
                 {{ t('Try again') }}
             </button>
         </div>
@@ -233,7 +185,7 @@ function onSheetUpdate(value: boolean): void {
             v-else-if="hasLoaded && users.length === 0"
             class="px-4 py-10 pb-24 text-center"
         >
-            <p class="text-sand-600 dark:text-sand-300">
+            <p class="text-teal-muted">
                 {{ t('No likes yet') }}
             </p>
         </div>
@@ -246,7 +198,7 @@ function onSheetUpdate(value: boolean): void {
                     name: 'spa.profiles.show',
                     params: { username: user.username },
                 }"
-                class="flex items-center gap-3 border-b border-sand-50 px-4 py-3 dark:border-sand-800"
+                class="flex items-center gap-3 border-b border-sand-50 px-4 py-3"
                 @click="close"
             >
                 <img
@@ -255,23 +207,17 @@ function onSheetUpdate(value: boolean): void {
                         `https://ui-avatars.com/api/?name=${user.name}&background=f0dcc6&color=5c3f24&size=64`
                     "
                     :alt="user.name"
-                    class="size-10 rounded-full object-cover"
+                    class="avatar-ring size-10 rounded-full object-cover"
                 />
                 <div class="min-w-0 flex-1">
-                    <p
-                        class="truncate font-semibold text-sand-800 dark:text-sand-100"
-                    >
-                        {{ user.name }}
-                    </p>
-                    <p class="truncate text-sand-500 dark:text-sand-400">
-                        @{{ user.username }}
-                    </p>
+                    <p class="truncate leading-none font-semibold text-teal">{{ user.name }}</p>
+                    <p class="truncate text-teal-muted">@{{ user.username }}</p>
                 </div>
             </RouterLink>
 
             <div
                 v-if="isLoadingMore"
-                class="flex items-center justify-center gap-2 px-4 py-4 text-sand-500 dark:text-sand-400"
+                class="flex items-center justify-center gap-2 px-4 py-4 text-teal-muted"
             >
                 {{ t('Loading more...') }}
             </div>

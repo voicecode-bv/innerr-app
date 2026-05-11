@@ -71,8 +71,7 @@ const GOOGLE_PRODUCT_IDS = [
 ];
 
 const APPLE_MANAGE_URL = 'https://apps.apple.com/account/subscriptions';
-const GOOGLE_MANAGE_URL =
-    'https://play.google.com/store/account/subscriptions';
+const GOOGLE_MANAGE_URL = 'https://play.google.com/store/account/subscriptions';
 
 const SHOW_DEBUG =
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
@@ -106,7 +105,9 @@ const renewalDisclaimer = computed(() =>
 );
 
 const logPrefix = computed(() =>
-    platform.value === 'google' ? '[GoogleSubscriptions]' : '[AppleSubscriptions]',
+    platform.value === 'google'
+        ? '[GoogleSubscriptions]'
+        : '[AppleSubscriptions]',
 );
 
 const productList = ref<Product[]>([]);
@@ -461,10 +462,7 @@ onMounted(async () => {
         <Confetti :active="showConfetti" />
 
         <template #header-left>
-            <button
-                class="flex items-center text-teal dark:text-sand-300"
-                @click="goBack"
-            >
+            <button class="flex items-center text-teal" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -493,7 +491,7 @@ onMounted(async () => {
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <section
                     v-if="isPremium"
-                    class="premium-hero reveal-item relative overflow-hidden rounded-2xl bg-gradient-to-br from-sage-200 via-sand-100 to-sand-200 p-6 text-center shadow-sm dark:from-sage-900/50 dark:via-sand-800/60 dark:to-sand-900/60"
+                    class="premium-hero reveal-item relative overflow-hidden rounded-2xl bg-gradient-to-br from-sage-200 via-sand-100 to-sand-200 p-6 text-center shadow-sm"
                 >
                     <span
                         aria-hidden="true"
@@ -535,11 +533,11 @@ onMounted(async () => {
 
                     <div class="relative">
                         <div
-                            class="crown-stage mx-auto flex size-24 items-center justify-center rounded-full bg-white/70 shadow-inner dark:bg-sand-900/40"
+                            class="crown-stage mx-auto flex size-24 items-center justify-center rounded-full bg-white/70 shadow-inner"
                         >
                             <span
                                 aria-hidden="true"
-                                class="crown-icon block size-14 bg-teal dark:bg-sage-100"
+                                class="crown-icon block size-14 bg-teal"
                                 :style="{
                                     maskImage: `url(${crownIcon})`,
                                     WebkitMaskImage: `url(${crownIcon})`,
@@ -554,13 +552,11 @@ onMounted(async () => {
                         </div>
 
                         <h3
-                            class="mt-5 font-display text-xl font-semibold text-teal dark:text-sand-100"
+                            class="mt-5 font-display text-xl font-semibold text-teal"
                         >
                             {{ t('You are a premium member') }}
                         </h3>
-                        <p
-                            class="mx-auto mt-2 max-w-xs text-sand-700 dark:text-sand-300"
-                        >
+                        <p class="mx-auto mt-2 max-w-xs text-night">
                             {{
                                 t(
                                     'Thanks for supporting Innerr. Enjoy all premium features.',
@@ -573,9 +569,9 @@ onMounted(async () => {
                                 activeEntitlement?.productId ||
                                 activeEntitlement?.expirationDate
                             "
-                            class="mx-auto mt-5 inline-flex flex-col items-center gap-1 rounded-full bg-white/60 px-4 py-2 text-sand-600 backdrop-blur-sm dark:bg-sand-900/40 dark:text-sand-300"
+                            class="mx-auto mt-5 inline-flex flex-col items-center gap-1 rounded-full bg-white/60 px-4 py-2 text-teal-muted backdrop-blur-sm"
                         >
-                            <span v-if="activeEntitlement?.productId" class="">
+                            <span v-if="activeEntitlement?.productId">
                                 {{
                                     formatSubscriptionLabel(
                                         activeEntitlement.productId,
@@ -614,13 +610,11 @@ onMounted(async () => {
                         />
                         <div class="min-w-0 flex-1">
                             <h3
-                                class="font-display text-xl font-semibold text-teal dark:text-sand-100"
+                                class="font-display text-xl font-semibold text-teal"
                             >
                                 {{ t('Inner Gives') }}
                             </h3>
-                            <p
-                                class="mt-1 leading-relaxed text-sand-700 dark:text-sand-300"
-                            >
+                            <p class="mt-1 leading-relaxed text-night">
                                 {{
                                     t(
                                         "Innerr donates 10% of every paid subscription to a Dutch foundation for children's care.",
@@ -642,19 +636,19 @@ onMounted(async () => {
                 <template v-else>
                     <div v-if="isLoading" class="space-y-4">
                         <div
-                            class="h-48 animate-pulse rounded-2xl bg-sand-100 dark:bg-sand-700/60"
+                            class="h-48 animate-pulse rounded-2xl bg-sand-100"
                         />
                         <div
-                            class="h-48 animate-pulse rounded-2xl bg-sand-100 dark:bg-sand-700/60"
+                            class="h-48 animate-pulse rounded-2xl bg-sand-100"
                         />
                     </div>
 
                     <div
                         v-else-if="productList.length === 0"
-                        class="space-y-3 rounded-lg bg-sand-100/70 p-4 text-sand-600 dark:bg-sand-800/60 dark:text-sand-300"
+                        class="space-y-3 rounded-lg bg-sand-100/70 p-4 text-teal-muted"
                     >
                         <p>{{ t('No products available right now.') }}</p>
-                        <details v-if="SHOW_DEBUG" class="">
+                        <details v-if="SHOW_DEBUG">
                             <summary class="cursor-pointer">
                                 {{ t('Debug info') }}
                             </summary>
@@ -677,7 +671,7 @@ onMounted(async () => {
                             </p>
                             <pre
                                 v-if="debugRaw"
-                                class="mt-1 max-h-60 overflow-auto rounded bg-sand-200/60 p-2 dark:bg-sand-900/60"
+                                class="mt-1 max-h-60 overflow-auto rounded bg-sand-200/60 p-2"
                                 >{{ debugRaw }}</pre
                             >
                         </details>
@@ -689,33 +683,26 @@ onMounted(async () => {
                         :key="tier.key"
                         class="reveal-item"
                     >
-                        <div class="flex items-start gap-3">
-                            <IconTile :icon="tier.icon" size="md" tone="sage" />
-                            <div class="min-w-0 flex-1">
-                                <h3
-                                    class="font-display text-lg font-semibold text-teal dark:text-sand-100"
-                                >
-                                    {{ tier.title }}
-                                </h3>
-                                <p
-                                    class="mt-1 text-sand-700 dark:text-sand-300"
-                                >
-                                    {{ tier.description }}
-                                </p>
-                            </div>
-                        </div>
+                        <h3
+                            class="font-display text-lg font-semibold text-teal"
+                        >
+                            {{ tier.title }}
+                        </h3>
+                        <p class="mt-1 text-night">
+                            {{ tier.description }}
+                        </p>
 
                         <div
                             v-if="tier.monthly && tier.yearly"
-                            class="mt-4 flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5 dark:bg-sand-800/60"
+                            class="mt-4 flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5"
                         >
                             <button
                                 type="button"
                                 class="flex-1 rounded-full px-3 py-2 transition"
                                 :class="
                                     selectedPeriod[tier.key] === 'monthly'
-                                        ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
-                                        : 'text-sand-500 dark:text-sand-400'
+                                        ? 'bg-white text-teal shadow-sm'
+                                        : 'text-teal-muted'
                                 "
                                 @click="selectedPeriod[tier.key] = 'monthly'"
                             >
@@ -726,8 +713,8 @@ onMounted(async () => {
                                 class="flex-1 rounded-full px-3 py-2 transition"
                                 :class="
                                     selectedPeriod[tier.key] === 'yearly'
-                                        ? 'bg-white text-teal shadow-sm dark:bg-sand-900 dark:text-sand-100'
-                                        : 'text-sand-500 dark:text-sand-400'
+                                        ? 'bg-white text-teal shadow-sm'
+                                        : 'text-teal-muted'
                                 "
                                 @click="selectedPeriod[tier.key] = 'yearly'"
                             >
@@ -737,7 +724,7 @@ onMounted(async () => {
                                         yearlySavings(tier) &&
                                         yearlySavings(tier)! > 0
                                     "
-                                    class="ml-1 rounded-full bg-sage-200 px-1.5 py-0.5 font-semibold text-sage-800 dark:bg-sage-800/60 dark:text-sage-100"
+                                    class="ml-1 rounded-full bg-sage-200 px-1.5 py-0.5 font-semibold text-sage-800"
                                 >
                                     -{{ yearlySavings(tier) }}%
                                 </span>
@@ -747,11 +734,11 @@ onMounted(async () => {
                         <div v-if="selectedProduct(tier)" class="mt-4">
                             <div class="flex items-baseline gap-2">
                                 <span
-                                    class="font-display text-2xl font-semibold text-teal dark:text-sand-100"
+                                    class="font-display text-2xl font-semibold text-teal"
                                 >
                                     {{ selectedProduct(tier)!.price_formatted }}
                                 </span>
-                                <span class="text-sand-500 dark:text-sand-400">
+                                <span class="text-teal-muted">
                                     {{
                                         selectedPeriod[tier.key] === 'yearly'
                                             ? t('/ year')
@@ -764,7 +751,7 @@ onMounted(async () => {
                                     selectedPeriod[tier.key] === 'yearly' &&
                                     monthlyEquivalent(tier)
                                 "
-                                class="mt-1 text-sand-500 dark:text-sand-400"
+                                class="mt-1 text-teal-muted"
                             >
                                 {{
                                     t(':price per month, billed yearly', {
@@ -774,7 +761,7 @@ onMounted(async () => {
                             </p>
                             <p
                                 v-if="selectedProduct(tier)!.introductory_offer"
-                                class="mt-1 text-sage-700 dark:text-sage-200"
+                                class="mt-1 text-sage-700"
                             >
                                 {{
                                     t('Start with :price for :count :unit', {
@@ -809,7 +796,7 @@ onMounted(async () => {
 
                         <p
                             v-else
-                            class="mt-4 rounded-lg bg-sand-100/70 p-3 text-sand-600 dark:bg-sand-800/60 dark:text-sand-300"
+                            class="mt-4 rounded-lg bg-sand-100/70 p-3 text-teal-muted"
                         >
                             {{ t('This plan is currently unavailable.') }}
                         </p>
@@ -829,30 +816,28 @@ onMounted(async () => {
                         }}
                     </Button>
 
-                    <p
-                        class="mt-2 leading-relaxed text-sand-500 dark:text-sand-400"
-                    >
+                    <p class="mt-2 leading-relaxed text-teal-muted">
                         {{ renewalDisclaimer }}
                     </p>
 
                     <div class="flex flex-col items-center gap-2 text-center">
                         <button
                             type="button"
-                            class="text-teal underline-offset-4 hover:underline dark:text-sand-200"
+                            class="text-teal underline-offset-4 hover:underline"
                             @click="openExternal(termsUrl)"
                         >
                             {{ t('Terms of Use') }}
                         </button>
                         <button
                             type="button"
-                            class="text-teal underline-offset-4 hover:underline dark:text-sand-200"
+                            class="text-teal underline-offset-4 hover:underline"
                             @click="openExternal(privacyUrl)"
                         >
                             {{ t('Privacy Policy') }}
                         </button>
                         <button
                             type="button"
-                            class="text-teal underline-offset-4 hover:underline dark:text-sand-200"
+                            class="text-teal underline-offset-4 hover:underline"
                             @click="openExternal(MANAGE_SUBSCRIPTIONS_URL)"
                         >
                             {{ t('Manage subscription') }}
@@ -862,20 +847,20 @@ onMounted(async () => {
 
                 <p
                     v-if="message"
-                    class="rounded-lg bg-sage-100/70 p-3 text-sage-700 dark:bg-sage-800/40 dark:text-sage-200"
+                    class="rounded-lg bg-sage-100/70 p-3 text-sage-700"
                 >
                     {{ message }}
                 </p>
                 <p
                     v-if="errorMessage"
-                    class="rounded-lg bg-blush-50 p-3 text-blush-700 dark:bg-blush-900/30 dark:text-blush-200"
+                    class="rounded-lg bg-blush-50 p-3 text-blush-700"
                 >
                     {{ errorMessage }}
                 </p>
 
                 <details
                     v-if="SHOW_DEBUG && purchaseDebug"
-                    class="rounded-lg bg-sand-100/70 p-3 text-sand-700 dark:bg-sand-800/60 dark:text-sand-200"
+                    class="rounded-lg bg-sand-100/70 p-3 text-night"
                     open
                 >
                     <summary class="flex cursor-pointer items-center gap-2">
@@ -892,18 +877,18 @@ onMounted(async () => {
                         />
                         {{ purchaseDebug.label }}
                         <span
-                            class="ml-auto tracking-wide text-sand-500 uppercase dark:text-sand-400"
+                            class="ml-auto tracking-wide text-teal-muted uppercase"
                         >
                             {{ purchaseDebug.outcome }}
                         </span>
                     </summary>
                     <pre
-                        class="mt-2 max-h-80 overflow-auto rounded bg-sand-200/60 p-2 dark:bg-sand-900/60"
+                        class="mt-2 max-h-80 overflow-auto rounded bg-sand-200/60 p-2"
                         >{{ purchaseDebug.payload }}</pre
                     >
                     <button
                         type="button"
-                        class="mt-2 text-teal underline-offset-2 hover:underline dark:text-sand-200"
+                        class="mt-2 text-teal underline-offset-2 hover:underline"
                         @click="purchaseDebug = null"
                     >
                         {{ t('Clear debug') }}

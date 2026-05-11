@@ -41,6 +41,7 @@ interface Circle {
     photo?: string | null;
     members_count?: number;
     members_can_invite?: boolean;
+    members_can_view_members?: boolean;
     is_owner?: boolean;
 }
 
@@ -452,7 +453,7 @@ function iconMaskStyle(url: string) {
     <AppLayout :title="t('New post')">
         <template #header-left>
             <button
-                class="flex items-center text-sand-700 dark:text-sand-300"
+                class="flex items-center text-sand-700"
                 :aria-label="t('Back')"
                 @click="goBack"
             >
@@ -474,7 +475,7 @@ function iconMaskStyle(url: string) {
         </template>
 
         <div class="relative mt-10 flex min-h-full flex-col">
-            <div class="flex-shrink-0 px-4 pt-4">
+            <div class="shrink-0 px-4 pt-4">
                 <div
                     class="flex items-center justify-center gap-1.5"
                     :aria-label="
@@ -493,12 +494,12 @@ function iconMaskStyle(url: string) {
                                 ? 'w-8 bg-teal'
                                 : step - 1 < currentStep
                                   ? 'w-4 bg-teal/60'
-                                  : 'w-4 bg-sand-200 dark:bg-sand-700'
+                                  : 'w-4 bg-sand-200'
                         "
                     />
                 </div>
                 <p
-                    class="mt-3 text-center tracking-widest text-sand-500 uppercase dark:text-sand-400"
+                    class="mt-3 text-center tracking-widest text-sand-500 uppercase"
                 >
                     {{
                         t('Step :current of :total', {
@@ -508,11 +509,11 @@ function iconMaskStyle(url: string) {
                     }}
                 </p>
                 <h2
-                    class="mt-1 text-center font-display text-2xl font-semibold text-teal dark:text-sage-100"
+                    class="mt-1 text-center font-display text-2xl font-semibold text-teal"
                 >
                     {{ stepHeading }}
                 </h2>
-                <p class="mt-1 text-center text-sand-600 dark:text-sand-400">
+                <p class="mt-1 text-center text-sand-600">
                     {{ stepSubtitle }}
                 </p>
             </div>
@@ -520,7 +521,7 @@ function iconMaskStyle(url: string) {
             <div class="relative mt-6 flex-1 space-y-5 px-4 pb-6">
                 <section
                     v-show="currentStep === 0"
-                    class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm dark:bg-sand-800/60"
+                    class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm"
                 >
                     <div v-if="mediaPreview" class="relative">
                         <video
@@ -571,11 +572,11 @@ function iconMaskStyle(url: string) {
 
                     <button
                         v-else
-                        class="flex w-full flex-col items-center justify-center gap-3 px-8 py-14 active:bg-sand-100/40 dark:active:bg-sand-800/40"
+                        class="flex w-full flex-col items-center justify-center gap-3 px-8 py-14 active:bg-sand-100/40"
                         @click="openSourcePicker"
                     >
                         <div
-                            class="flex size-20 items-center justify-center rounded-2xl bg-sage-100 text-teal dark:bg-sage-900/40"
+                            class="flex size-20 items-center justify-center rounded-2xl bg-sage-100 text-teal"
                         >
                             <span
                                 aria-hidden="true"
@@ -583,7 +584,7 @@ function iconMaskStyle(url: string) {
                                 :style="iconMaskStyle(cameraIcon)"
                             ></span>
                         </div>
-                        <span class="text-sand-600 dark:text-sand-300">{{
+                        <span class="text-sand-600">{{
                             t('Add a photo')
                         }}</span>
                     </button>
@@ -598,11 +599,11 @@ function iconMaskStyle(url: string) {
 
                 <section
                     v-show="currentStep === 1"
-                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60"
+                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <label
                         for="post-caption"
-                        class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                        class="tracking-wider text-sand-500 uppercase"
                     >
                         {{ t('Caption') }}
                     </label>
@@ -612,7 +613,7 @@ function iconMaskStyle(url: string) {
                         :placeholder="t('Write a caption...')"
                         rows="6"
                         maxlength="2200"
-                        class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-sand-800 placeholder-sand-400 focus:ring-0 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
+                        class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-sand-800 placeholder-sand-400 focus:ring-0 focus:outline-none"
                     />
                     <p v-if="form.errors.caption" class="mt-1 text-blush-500">
                         {{ form.errors.caption }}
@@ -621,7 +622,7 @@ function iconMaskStyle(url: string) {
 
                 <section
                     v-show="currentStep === 2"
-                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60"
+                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <CirclePicker
                         v-if="circles.length > 0"
@@ -631,7 +632,7 @@ function iconMaskStyle(url: string) {
                         layout="grid"
                         @update:selected-ids="form.data.circle_ids = $event"
                     />
-                    <p v-else class="text-sand-600 dark:text-sand-400">
+                    <p v-else class="text-sand-600">
                         {{
                             t(
                                 'Create a circle to set it as a default for new posts.',
@@ -642,7 +643,7 @@ function iconMaskStyle(url: string) {
 
                 <template v-if="currentStep === 3">
                     <section
-                        class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60"
+                        class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
                     >
                         <PersonPicker
                             :persons="availablePersons"
@@ -653,7 +654,7 @@ function iconMaskStyle(url: string) {
                     </section>
 
                     <section
-                        class="relative z-10 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:bg-sand-800/60"
+                        class="relative z-10 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
                     >
                         <TagSelector
                             :available-tags="availableTags"
@@ -666,7 +667,7 @@ function iconMaskStyle(url: string) {
             </div>
 
             <div
-                class="sticky bottom-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur-md dark:border-sand-800 dark:bg-sand-900/95"
+                class="sticky bottom-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur-md"
                 :style="{
                     paddingBottom:
                         'max(var(--inset-bottom, 0px), env(safe-area-inset-bottom, 0px), 1.25rem)',
@@ -675,7 +676,7 @@ function iconMaskStyle(url: string) {
                 <div class="flex items-center justify-between gap-3 px-4 pt-3">
                     <button
                         type="button"
-                        class="rounded-lg px-5 py-2.5 text-sand-700 transition active:bg-sand-100 dark:text-sand-200 dark:active:bg-sand-800"
+                        class="rounded-lg px-5 py-2.5 text-sand-700 transition active:bg-sand-100"
                         @click="goBack"
                     >
                         {{ currentStep === 0 ? t('Cancel') : t('Back') }}
@@ -716,52 +717,46 @@ function iconMaskStyle(url: string) {
                     >
                         <div
                             v-if="showSourcePicker"
-                            class="w-full max-w-sm overflow-hidden rounded-lg bg-white dark:bg-sand-800"
+                            class="w-full max-w-sm overflow-hidden rounded-lg bg-white"
                         >
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50"
                                 @click="openCamera"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-sand-500 dark:bg-sand-400"
+                                    class="inline-block size-5 bg-sand-500"
                                     :style="iconMaskStyle(cameraIcon)"
                                 ></span>
                                 {{ t('Take a photo') }}
                             </button>
-                            <div
-                                class="mx-5 border-t border-sand-100 dark:border-sand-700"
-                            />
+                            <div class="mx-5 border-t border-sand-100" />
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50"
                                 @click="recordVideo"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-sand-500 dark:bg-sand-400"
+                                    class="inline-block size-5 bg-sand-500"
                                     :style="iconMaskStyle(videoCameraIcon)"
                                 ></span>
                                 {{ t('Record a video') }}
                             </button>
-                            <div
-                                class="mx-5 border-t border-sand-100 dark:border-sand-700"
-                            />
+                            <div class="mx-5 border-t border-sand-100" />
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50 dark:text-sand-200 dark:active:bg-sand-700"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50"
                                 @click="selectFromGallery"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-sand-500 dark:bg-sand-400"
+                                    class="inline-block size-5 bg-sand-500"
                                     :style="iconMaskStyle(photoIcon)"
                                 ></span>
                                 {{ t('Choose from gallery') }}
                             </button>
-                            <div
-                                class="border-t border-sand-100 dark:border-sand-700"
-                            />
+                            <div class="border-t border-sand-100" />
                             <button
-                                class="w-full py-3.5 text-center font-semibold text-sand-500 active:bg-sand-50 dark:text-sand-400 dark:active:bg-sand-700"
+                                class="w-full py-3.5 text-center font-semibold text-sand-500 active:bg-sand-50"
                                 @click="showSourcePicker = false"
                             >
                                 {{ t('Cancel') }}

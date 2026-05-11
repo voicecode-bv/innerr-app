@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { RouterLink, type RouteLocationRaw } from 'vue-router';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'inverse' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 const props = withDefaults(
@@ -11,6 +12,8 @@ const props = withDefaults(
         type?: 'button' | 'submit' | 'reset';
         disabled?: boolean;
         block?: boolean;
+        to?: RouteLocationRaw;
+        href?: string;
     }>(),
     {
         variant: 'primary',
@@ -18,23 +21,35 @@ const props = withDefaults(
         type: 'button',
         disabled: false,
         block: false,
+        to: undefined,
+        href: undefined,
     },
 );
 
 const base =
-    'inline-flex items-center justify-center gap-2 rounded-lg whitespace-nowrap transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40';
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40';
 
 const variants: Record<Variant, string> = {
-    primary: 'bg-teal text-white hover:bg-teal-light shadow-sm',
-    secondary: 'bg-cream text-teal border border-teal/20 hover:bg-warmwhite',
-    ghost: 'bg-transparent text-teal hover:bg-teal/5',
-    danger: 'bg-white text-accent border border-accent/30 hover:bg-accent/5 dark:bg-transparent',
+    primary:
+        'rounded-full bg-teal text-white font-medium hover:bg-teal-light shadow-lg shadow-teal/20',
+    // Inverse — yellow on green text. Use on dark brand surfaces (Brand
+    // Blue, Brand Green, Brand Orange) where the solid teal primary would
+    // disappear.
+    inverse:
+        'rounded-full bg-brand-yellow text-brand-green font-semibold hover:bg-brand-yellow/90 shadow-lg shadow-night/30',
+    secondary:
+        'rounded-full bg-white text-teal font-medium border border-sand-200 hover:bg-sand-50',
+    ghost: 'rounded-full bg-transparent text-teal-muted font-medium hover:bg-teal/5',
+    // Destructive — only ever solid blush. Use for log out, delete account,
+    // remove person, leave circle. Pair with a confirm dialog before the
+    // action actually fires.
+    danger: 'rounded-full bg-blush-600 text-white font-semibold hover:bg-blush-700 shadow-sm shadow-blush-600/20 focus-visible:ring-blush-400/40',
 };
 
 const sizes: Record<Size, string> = {
-    sm: 'px-4 py-2 ',
-    md: 'px-5 py-3 ',
-    lg: 'px-6 py-4 ',
+    sm: 'px-4 py-2',
+    md: 'px-5 py-3',
+    lg: 'px-6 py-4',
 };
 
 const classes = computed(() => [
@@ -46,7 +61,13 @@ const classes = computed(() => [
 </script>
 
 <template>
-    <button :type="type" :disabled="disabled" :class="classes">
+    <RouterLink v-if="to" :to="to" :class="classes">
+        <slot />
+    </RouterLink>
+    <a v-else-if="href" :href="href" :class="classes">
+        <slot />
+    </a>
+    <button v-else :type="type" :disabled="disabled" :class="classes">
         <slot />
     </button>
 </template>

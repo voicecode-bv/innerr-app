@@ -16,9 +16,9 @@ const props = withDefaults(
 
 const toneClasses = computed(() => {
     const map: Record<Tone, string> = {
-        default: 'bg-white/70 dark:bg-sand-800/60',
-        muted: 'bg-white/50 dark:bg-sand-800/60',
-        subtle: 'bg-white/20 dark:bg-sand-800/60',
+        default: 'bg-white/70',
+        muted: 'bg-white/50',
+        subtle: 'bg-white/20',
     };
     return map[props.tone];
 });
@@ -26,7 +26,7 @@ const toneClasses = computed(() => {
 
 <template>
     <div
-        class="rounded-lg shadow-sm backdrop-blur-sm dark:border-sand-700/50"
+        class="rounded-lg shadow-sm backdrop-blur-sm"
         :class="[toneClasses, padded ? 'p-5' : '']"
     >
         <slot />

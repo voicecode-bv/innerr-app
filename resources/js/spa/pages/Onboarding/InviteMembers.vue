@@ -113,36 +113,23 @@ function continueOnboarding(): void {
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-warmwhite px-6 text-sand-900 dark:bg-sand-900 dark:text-sand-100"
+        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-teal"
     >
-        <div
-            aria-hidden="true"
-            class="pointer-events-none absolute inset-0 overflow-hidden"
-        >
-            <div
-                class="absolute -top-24 -left-24 size-72 rounded-full bg-sage-200/60 blur-3xl dark:bg-sage-700/20"
-            ></div>
-            <div
-                class="absolute top-1/3 -right-28 size-80 rounded-full bg-accent-soft/40 blur-3xl dark:bg-accent/10"
-            ></div>
-            <div
-                class="absolute -bottom-32 left-1/4 size-96 rounded-full bg-sand-200/50 blur-3xl dark:bg-sand-700/30"
-            ></div>
-        </div>
-
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
             <div class="mb-10 text-center">
-                <p class="truncate tracking-widest text-accent uppercase">
+                <span
+                    class="inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm"
+                >
                     {{ circle?.name ?? ' ' }}
-                </p>
+                </span>
                 <h1
                     class="mt-3 font-display text-4xl font-black tracking-tight text-teal"
                 >
                     {{ t('Invite your people') }}
                 </h1>
-                <p class="mt-3 text-sand-600 dark:text-sand-400">
+                <p class="mt-3 text-teal-muted">
                     {{
                         t(
                             'Add family or friends to this circle. They will be able to see what you share.',
@@ -153,18 +140,18 @@ function continueOnboarding(): void {
 
             <div class="w-full max-w-sm space-y-5">
                 <form
-                    class="relative rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm dark:border-sand-700/50 dark:bg-sand-800/60"
+                    class="relative rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
                     @submit.prevent="submit"
                 >
                     <label
                         for="invite-identifier"
-                        class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
+                        class="tracking-wider text-teal-muted uppercase"
                     >
                         {{ t('Username or email') }}
                     </label>
                     <div class="mt-3 flex items-center gap-3">
                         <div
-                            class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sage-100 text-teal dark:bg-sage-900/40"
+                            class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sage-100 text-teal"
                         >
                             <span
                                 aria-hidden="true"
@@ -179,7 +166,7 @@ function continueOnboarding(): void {
                             :placeholder="t('Username or email...')"
                             autocapitalize="none"
                             autocomplete="off"
-                            class="min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-sand-900 placeholder-sand-400 focus:ring-0 focus:outline-none dark:text-sand-100 dark:placeholder-sand-500"
+                            class="min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-teal placeholder-teal-muted/50 focus:ring-0 focus:outline-none"
                         />
                         <button
                             type="submit"
@@ -215,9 +202,7 @@ function continueOnboarding(): void {
 
                 <div v-if="invited.length > 0">
                     <div class="mb-3 flex items-center justify-between">
-                        <p
-                            class="tracking-wider text-sand-500 uppercase dark:text-sand-400"
-                        >
+                        <p class="tracking-wider text-teal-muted uppercase">
                             {{ t('Invited') }}
                         </p>
                         <span
@@ -230,17 +215,16 @@ function continueOnboarding(): void {
                         <li
                             v-for="identifier in invited"
                             :key="identifier"
-                            class="flex items-center gap-3 rounded-full bg-white/70 px-4 py-2.5 shadow-sm dark:border-sand-700/50 dark:bg-sand-800/60"
+                            class="flex items-center gap-3 rounded-full bg-white/70 px-4 py-2.5 shadow-sm"
                         >
                             <span
                                 aria-hidden="true"
                                 class="inline-block size-5 shrink-0 bg-teal"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
-                            <span
-                                class="truncate text-sand-800 dark:text-sand-100"
-                                >{{ identifier }}</span
-                            >
+                            <span class="truncate text-teal">{{
+                                identifier
+                            }}</span>
                         </li>
                     </ul>
                 </div>
