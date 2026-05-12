@@ -230,7 +230,8 @@ class ApiClient
     {
         $request = Http::baseUrl(config('api-client.base_url'))
             ->timeout(config('api-client.timeout'))
-            ->acceptJson();
+            ->acceptJson()
+            ->withHeaders(['Accept-Language' => app()->getLocale()]);
 
         if (app()->isLocal()) {
             $request->withoutVerifying();
