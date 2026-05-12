@@ -95,11 +95,15 @@ async function loadPage(page: number): Promise<void> {
     const isFirst = page === 1;
     if (isFirst && commentsCache.get<Comment>(props.postId)) {
         seedCommentsFromCache();
+        scrollToBottom();
         return;
     }
 
     const seededFromStale =
         isFirst && !hasLoaded.value && seedCommentsFromCache();
+    if (seededFromStale) {
+        scrollToBottom();
+    }
 
     if (isFirst && !seededFromStale) {
         isLoading.value = true;
@@ -125,6 +129,7 @@ async function loadPage(page: number): Promise<void> {
                 result.meta.current_page,
                 result.meta.last_page,
             );
+            scrollToBottom();
         } else {
             const incoming = result.data.filter((c) => {
                 if (seenIds.has(c.id)) return false;
@@ -354,6 +359,17 @@ function scrollToComment(commentId: string): void {
     });
 }
 
+function scrollToBottom(): void {
+    nextTick(() => {
+        const last = comments.value[comments.value.length - 1];
+        if (!last) return;
+        const el = document.querySelector(`[data-comment-id="${last.id}"]`);
+        if (el instanceof HTMLElement) {
+            el.scrollIntoView({ behavior: 'auto', block: 'end' });
+        }
+    });
+}
+
 async function submitComment(): Promise<void> {
     const value = body.value.trim();
     if (!value || isSubmitting.value) return;
@@ -470,7 +486,7 @@ defineExpose({
             >
                 <button
                     v-if="comment.user.id === authUserId"
-                    class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 font-semibold text-white"
+                    class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 px-4 font-semibold text-white"
                     :style="{ width: `${ACTION_WIDTH}px` }"
                     :aria-label="t('Delete comment')"
                     @click="requestDelete(comment)"
