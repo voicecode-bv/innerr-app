@@ -816,7 +816,7 @@ onMounted(async () => {
                         }}
                     </Button>
 
-                    <p class="mt-2 leading-relaxed text-teal-muted">
+                    <p class="mt-2 text-center leading-relaxed text-teal-muted">
                         {{ renewalDisclaimer }}
                     </p>
 
