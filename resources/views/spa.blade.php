@@ -9,5 +9,7 @@
  </head>
  <body class="relative bg-sand text-night font-sans text-base antialiased">
  <div id="spa-app"></div>
+ <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+ <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade"/></noscript>
  </body>
 </html>
