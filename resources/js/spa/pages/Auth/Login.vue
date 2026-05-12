@@ -292,12 +292,12 @@ async function submit(): Promise<void> {
         <div class="relative pt-4 pb-8">
             <p class="text-center text-brand-sand/80">
                 {{ t('New to innerr?') }}
-                <a
-                    href="/register"
+                <RouterLink
+                    :to="{ name: 'spa.register' }"
                     class="font-semibold text-brand-yellow decoration-brand-yellow/60 decoration-wavy decoration-2 underline-offset-4 hover:underline"
                 >
                     {{ t('Create an account') }}
-                </a>
+                </RouterLink>
             </p>
         </div>
     </div>

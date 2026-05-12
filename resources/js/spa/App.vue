@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
+import { computed } from 'vue';
+import { RouterView, useRoute } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 
 useNetworkStatus();
+
+const route = useRoute();
+const isGuestRoute = computed(() => route.meta.guest === true);
 </script>
 
 <template>
@@ -11,6 +15,11 @@ useNetworkStatus();
     <div
         aria-hidden="true"
         class="pointer-events-none fixed inset-0 -z-20 bg-sand"
+    />
+    <div
+        v-if="isGuestRoute"
+        aria-hidden="true"
+        class="pointer-events-none fixed inset-0 -z-10 bg-brand-blue"
     />
 
     <RouterView v-slot="{ Component }">
