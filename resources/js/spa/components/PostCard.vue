@@ -289,10 +289,7 @@ function timeAgo(dateString: string): string {
 
 <template>
     <article class="bg-sand pt-6">
-        <div
-            class="flex items-start gap-3 px-4 py-3"
-            :class="isOwner ? 'flex-row-reverse' : ''"
-        >
+        <div class="flex items-start gap-3 px-4 py-3">
             <RouterLink
                 :to="{
                     name: 'spa.profiles.show',
@@ -310,12 +307,7 @@ function timeAgo(dateString: string): string {
                 />
             </RouterLink>
             <div
-                class="min-w-0 flex-1 rounded-2xl px-4 py-2.5 shadow-sm"
-                :class="
-                    isOwner
-                        ? 'rounded-tr-sm bg-teal text-white'
-                        : 'rounded-tl-sm bg-white text-teal ring-1 ring-sand-100'
-                "
+                class="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-white px-4 py-2.5 text-teal shadow-sm ring-1 ring-sand-100"
             >
                 <div class="flex items-baseline justify-between gap-2">
                     <RouterLink
@@ -323,15 +315,13 @@ function timeAgo(dateString: string): string {
                             name: 'spa.profiles.show',
                             params: { username: post.user.username },
                         }"
-                        class="truncate font-semibold"
-                        :class="isOwner ? 'text-white' : 'text-teal'"
+                        class="truncate font-semibold text-teal"
                     >
                         {{ post.user.name }}
                     </RouterLink>
                     <p
                         v-if="post.location"
-                        class="shrink-0 truncate text-sm"
-                        :class="isOwner ? 'text-white/70' : 'text-teal-muted'"
+                        class="shrink-0 truncate text-sm text-teal-muted"
                     >
                         {{ post.location }}
                     </p>
@@ -339,18 +329,14 @@ function timeAgo(dateString: string): string {
                 <template v-if="post.caption">
                     <p
                         ref="captionRef"
-                        class="mt-1 leading-relaxed whitespace-pre-line"
-                        :class="[
-                            isOwner ? 'text-white' : 'text-night',
-                            { 'line-clamp-2': !showFullCaption },
-                        ]"
+                        class="mt-1 leading-relaxed whitespace-pre-line text-night"
+                        :class="{ 'line-clamp-2': !showFullCaption }"
                     >
                         {{ post.caption }}
                     </p>
                     <button
                         v-if="isCaptionOverflowing"
-                        class="mt-1 text-sm"
-                        :class="isOwner ? 'text-white/80' : 'text-teal-muted'"
+                        class="mt-1 text-sm text-teal-muted"
                         @click="showFullCaption = !showFullCaption"
                     >
                         {{ showFullCaption ? t('less') : t('more') }}
