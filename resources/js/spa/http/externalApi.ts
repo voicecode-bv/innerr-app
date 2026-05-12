@@ -120,11 +120,13 @@ async function performCall<T>(
         );
     }
 
-    if (response.status === 204) {
+    const text = await response.text();
+
+    if (text.length === 0) {
         return undefined as T;
     }
 
-    return (await response.json()) as T;
+    return JSON.parse(text) as T;
 }
 
 function call<T>(method: string, path: string, body?: unknown): Promise<T> {

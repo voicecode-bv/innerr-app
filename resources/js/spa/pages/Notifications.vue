@@ -100,6 +100,7 @@ const optimisticallyRead = ref<Set<string>>(new Set());
 
 const hiddenNotificationTypes = new Set<string>([
     'circle-ownership-transfer-requested',
+    'circle-invitation-received',
 ]);
 
 function isRead(notification: Notification): boolean {

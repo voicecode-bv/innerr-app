@@ -129,9 +129,7 @@ async function createCircle(): Promise<void> {
                 >
                     <SurfaceCard v-if="showCreateForm">
                         <form class="space-y-3" @submit.prevent="createCircle">
-                            <label
-                                class="tracking-wider text-sand-500 uppercase"
-                            >
+                            <label class="font-semibold text-teal">
                                 {{ t('New circle') }}
                             </label>
                             <input
