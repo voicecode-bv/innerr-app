@@ -271,31 +271,44 @@ function lowercase(value: string): string {
                             :error="form.errors.password"
                         />
 
-                        <div
-                            class="flex items-start gap-3 rounded-lg bg-sand-50 px-3 py-2.5"
+                        <label
+                            for="terms"
+                            class="flex cursor-pointer items-start gap-3 rounded-2xl bg-brand-sand/10 px-4 py-3 leading-relaxed text-brand-sand/90 ring-1 ring-brand-sand/15 backdrop-blur-sm transition hover:bg-brand-sand/15"
                         >
-                            <input
-                                id="terms"
-                                v-model="form.data.terms_accepted"
-                                type="checkbox"
-                                class="mt-0.5 size-5 shrink-0 rounded border-sand-300 text-teal accent-teal focus:ring-teal"
-                            />
-                            <label
-                                for="terms"
-                                class="leading-relaxed text-sand-600"
-                            >
+                            <span class="relative mt-0.5 size-5 shrink-0">
+                                <input
+                                    id="terms"
+                                    v-model="form.data.terms_accepted"
+                                    type="checkbox"
+                                    class="peer absolute inset-0 size-5 cursor-pointer appearance-none rounded-md border-2 border-brand-sand/40 bg-transparent checked:border-brand-yellow checked:bg-brand-yellow focus:ring-2 focus:ring-brand-yellow/40 focus:ring-offset-0 focus:outline-none"
+                                />
+                                <svg
+                                    aria-hidden="true"
+                                    viewBox="0 0 20 20"
+                                    class="pointer-events-none absolute inset-0 hidden size-5 text-brand-blue peer-checked:block"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <polyline points="5 10.5 8.5 14 15 6.5" />
+                                </svg>
+                            </span>
+                            <span>
                                 {{ t('I agree to the') }}
                                 <a
                                     :href="termsUrl"
                                     target="_blank"
-                                    class="font-semibold text-teal decoration-accent decoration-wavy decoration-2 underline-offset-4 hover:underline"
+                                    class="font-semibold text-brand-yellow decoration-brand-yellow/60 decoration-wavy decoration-2 underline-offset-4 hover:underline"
+                                    @click.stop
                                     >{{ t('Terms and Conditions') }}</a
                                 >
-                            </label>
-                        </div>
+                            </span>
+                        </label>
                         <p
                             v-if="form.errors.terms_accepted"
-                            class="mt-1 text-blush-500"
+                            class="-mt-1 px-1 text-brand-yellow"
                         >
                             {{ form.errors.terms_accepted }}
                         </p>

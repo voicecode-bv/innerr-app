@@ -90,6 +90,7 @@ const emit = defineEmits<{
     (e: 'openLikes', postId: string): void;
     (e: 'openDetails', postId: string): void;
     (e: 'postUpdated', postId: string): void;
+    (e: 'postDeleted', postId: string): void;
 }>();
 
 function openLikes(): void {
@@ -145,6 +146,11 @@ async function openEditModal(event: Event): Promise<void> {
 function onPostUpdated(): void {
     postCache.invalidate(props.post.id);
     emit('postUpdated', props.post.id);
+}
+
+function onPostDeleted(postId: string): void {
+    postCache.invalidate(postId);
+    emit('postDeleted', postId);
 }
 const showFullCaption = ref(false);
 const captionRef = ref<HTMLParagraphElement>();
@@ -815,6 +821,7 @@ function timeAgo(dateString: string): string {
             :available-persons="editAvailablePersons"
             @update:open="isEditModalOpen = $event"
             @updated="onPostUpdated"
+            @deleted="onPostDeleted"
         />
     </article>
 </template>

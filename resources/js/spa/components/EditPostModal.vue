@@ -1,6 +1,15 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue';
+import { Dialog, Events, Off, On } from '@nativephp/mobile';
+import {
+    computed,
+    defineAsyncComponent,
+    onMounted,
+    onUnmounted,
+    ref,
+    watch,
+} from 'vue';
 import BottomSheet from '@/components/BottomSheet.vue';
+import Button from '@/components/Button.vue';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
 
@@ -60,13 +69,14 @@ const props = withDefaults(
 const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
     (e: 'updated'): void;
+    (e: 'deleted', postId: string): void;
 }>();
+
+const DELETE_CONFIRM_ID = 'edit-post-delete-confirm';
 
 const { t } = useTranslations();
 
-const initialTagIds = ref<string[]>(
-    (props.tags ?? []).map((tag) => tag.id),
-);
+const initialTagIds = ref<string[]>((props.tags ?? []).map((tag) => tag.id));
 const initialPersonIds = ref<string[]>(
     (props.persons ?? []).map((person) => person.id),
 );
@@ -178,6 +188,40 @@ function onSheetUpdate(value: boolean): void {
     }
 }
 
+const isDeleting = ref(false);
+
+async function requestDelete(): Promise<void> {
+    if (isDeleting.value || form.processing) return;
+    await Dialog.alert()
+        .confirm(
+            t('Delete post'),
+            t('Are you sure you want to delete this post?'),
+        )
+        .id(DELETE_CONFIRM_ID);
+}
+
+async function handleButtonPressed(payload: {
+    index: number;
+    id?: string | null;
+}): Promise<void> {
+    if (payload.id !== DELETE_CONFIRM_ID || payload.index !== 1) return;
+    if (isDeleting.value) return;
+
+    isDeleting.value = true;
+    try {
+        await externalApi.delete(`/posts/${props.postId}`);
+        emit('deleted', props.postId);
+        close();
+    } catch {
+        // ignore — modal blijft open zodat de gebruiker opnieuw kan proberen
+    } finally {
+        isDeleting.value = false;
+    }
+}
+
+onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
+onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
+
 async function submit(): Promise<void> {
     const payload = {
         caption: form.data.caption,
@@ -245,10 +289,7 @@ async function submit(): Promise<void> {
 
         <div class="space-y-5 px-4 py-4">
             <section>
-                <label
-                    for="edit-post-caption"
-                    class="font-semibold text-teal"
-                >
+                <label for="edit-post-caption" class="font-semibold text-teal">
                     {{ t('Caption') }}
                 </label>
                 <textarea
@@ -290,13 +331,64 @@ async function submit(): Promise<void> {
                     @update:selected-ids="form.data.tag_ids = $event"
                 />
             </section>
+
+            <section class="border-t border-sand-100 pt-5">
+                <Button
+                    variant="danger"
+                    size="lg"
+                    block
+                    :disabled="isDeleting || form.processing"
+                    @click="requestDelete"
+                >
+                    <svg
+                        v-if="!isDeleting"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.75"
+                        stroke="currentColor"
+                        class="size-5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                        />
+                    </svg>
+                    <svg
+                        v-else
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        class="size-5 animate-spin"
+                    >
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            stroke-opacity="0.25"
+                        />
+                        <path
+                            d="M22 12a10 10 0 0 1-10 10"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                    {{ isDeleting ? t('Deleting...') : t('Delete post') }}
+                </Button>
+            </section>
         </div>
 
         <template #footer>
             <div class="px-4 py-3">
-                <button
+                <Button
+                    variant="primary"
+                    size="lg"
+                    block
                     :disabled="!canSave"
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-teal py-3 font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
                     @click="submit"
                 >
                     <svg
@@ -322,7 +414,7 @@ async function submit(): Promise<void> {
                         />
                     </svg>
                     {{ form.processing ? t('Saving...') : t('Save') }}
-                </button>
+                </Button>
             </div>
         </template>
     </BottomSheet>

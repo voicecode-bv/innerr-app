@@ -282,6 +282,12 @@ async function deletePost(): Promise<void> {
         .id('delete-post-confirm');
 }
 
+function onPostDeleted(postId: string): void {
+    postCache.invalidate(postId);
+    useFeedCacheStore().clear();
+    router.push({ name: 'spa.home' });
+}
+
 async function handleButtonPressed(payload: {
     index: number;
     id?: string | null;
@@ -1048,6 +1054,7 @@ watch(
             :available-persons="editAvailablePersons"
             @update:open="isEditModalOpen = $event"
             @updated="loadPost"
+            @deleted="onPostDeleted"
         />
     </AppLayout>
 </template>

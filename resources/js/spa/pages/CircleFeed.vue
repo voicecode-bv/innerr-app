@@ -106,6 +106,21 @@ function openDetailsForPost(postId: string): void {
     isDetailsOpen.value = true;
 }
 
+async function onPostUpdated(): Promise<void> {
+    feedCache.invalidate(feedKey.value);
+    await feed.softRefresh();
+}
+
+async function onPostDeleted(postId: string): Promise<void> {
+    feed.items.splice(
+        0,
+        feed.items.length,
+        ...feed.items.filter((p) => p.id !== postId),
+    );
+    feedCache.invalidate(feedKey.value);
+    await feed.softRefresh();
+}
+
 function activeLikesCount(): number {
     if (likesPostId.value === null) return 0;
     const target = feed.items.find((p) => p.id === likesPostId.value);
@@ -203,6 +218,8 @@ function goBack(): void {
                 @open-comments="openCommentsForPost"
                 @open-likes="openLikesForPost"
                 @open-details="openDetailsForPost"
+                @post-updated="onPostUpdated"
+                @post-deleted="onPostDeleted"
             />
 
             <div

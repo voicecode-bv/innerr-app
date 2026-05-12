@@ -394,6 +394,15 @@ async function submit(): Promise<void> {
 
     router.push({ name: 'spa.home' });
 
+    // De router.afterEach POST naar /api/spa/edge/active-tab herstelt de
+    // native bottom-nav (die we in onMounted hebben gewist). Op de
+    // single-threaded native PHP-runtime kan die fire-and-forget POST achter
+    // de upload hieronder gequeued raken en bij netwerkdruk silently falen,
+    // waardoor de gebruiker op de feed terechtkomt zonder bottom-nav. Doe
+    // dezelfde call hier expliciet en wacht 'm af zodat de bar terug is
+    // vóór de upload start; afterEach's tweede call is een no-op duplicate.
+    await api.post('/api/spa/edge/active-tab', { path: '/' }).catch(() => null);
+
     try {
         await form.post('/api/spa/posts');
         feedCache.invalidate('home');

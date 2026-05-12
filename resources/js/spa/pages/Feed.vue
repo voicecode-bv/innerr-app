@@ -124,6 +124,16 @@ async function onPostUpdated(): Promise<void> {
     await feed.softRefresh();
 }
 
+async function onPostDeleted(postId: string): Promise<void> {
+    feed.items.splice(
+        0,
+        feed.items.length,
+        ...feed.items.filter((p) => p.id !== postId),
+    );
+    feedCache.invalidate(FEED_KEY);
+    await feed.softRefresh();
+}
+
 function activeLikesCount(): number {
     if (likesPostId.value === null) return 0;
 
@@ -329,6 +339,7 @@ function iconMaskStyle(url: string) {
                 @open-likes="openLikesForPost"
                 @open-details="openDetailsForPost"
                 @post-updated="onPostUpdated"
+                @post-deleted="onPostDeleted"
             />
 
             <div
