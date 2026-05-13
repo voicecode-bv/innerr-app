@@ -462,7 +462,7 @@ function iconMaskStyle(url: string) {
     <AppLayout :title="t('New post')">
         <template #header-left>
             <button
-                class="flex items-center text-sand-700"
+                class="flex items-center text-teal"
                 :aria-label="t('Back')"
                 @click="goBack"
             >
@@ -508,7 +508,7 @@ function iconMaskStyle(url: string) {
                     />
                 </div>
                 <p
-                    class="mt-3 text-center tracking-widest text-sand-500 uppercase"
+                    class="mt-3 text-center tracking-widest text-teal-muted uppercase"
                 >
                     {{
                         t('Step :current of :total', {
@@ -522,7 +522,7 @@ function iconMaskStyle(url: string) {
                 >
                     {{ stepHeading }}
                 </h2>
-                <p class="mt-1 text-center text-sand-600">
+                <p class="mt-1 text-center text-teal-muted">
                     {{ stepSubtitle }}
                 </p>
             </div>
@@ -593,7 +593,7 @@ function iconMaskStyle(url: string) {
                                 :style="iconMaskStyle(cameraIcon)"
                             ></span>
                         </div>
-                        <span class="text-sand-600">{{
+                        <span class="text-teal-muted">{{
                             t('Add a photo')
                         }}</span>
                     </button>
@@ -612,7 +612,7 @@ function iconMaskStyle(url: string) {
                 >
                     <label
                         for="post-caption"
-                        class="tracking-wider text-sand-500 uppercase"
+                        class="tracking-wider text-teal-muted uppercase"
                     >
                         {{ t('Caption') }}
                     </label>
@@ -622,7 +622,7 @@ function iconMaskStyle(url: string) {
                         :placeholder="t('Write a caption...')"
                         rows="6"
                         maxlength="2200"
-                        class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-sand-800 placeholder-sand-400 focus:ring-0 focus:outline-none"
+                        class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-night placeholder-teal-muted/60 focus:ring-0 focus:outline-none"
                     />
                     <p v-if="form.errors.caption" class="mt-1 text-blush-500">
                         {{ form.errors.caption }}
@@ -641,7 +641,7 @@ function iconMaskStyle(url: string) {
                         layout="grid"
                         @update:selected-ids="form.data.circle_ids = $event"
                     />
-                    <p v-else class="text-sand-600">
+                    <p v-else class="text-teal-muted">
                         {{
                             t(
                                 'Create a circle to set it as a default for new posts.',
@@ -685,7 +685,7 @@ function iconMaskStyle(url: string) {
                 <div class="flex items-center justify-between gap-3 px-4 pt-3">
                     <button
                         type="button"
-                        class="rounded-lg px-5 py-2.5 text-sand-700 transition active:bg-sand-100"
+                        class="rounded-lg px-5 py-2.5 text-teal transition active:bg-sand-100"
                         @click="goBack"
                     >
                         {{ currentStep === 0 ? t('Cancel') : t('Back') }}
@@ -729,43 +729,43 @@ function iconMaskStyle(url: string) {
                             class="w-full max-w-sm overflow-hidden rounded-lg bg-white"
                         >
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
                                 @click="openCamera"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-sand-500"
+                                    class="inline-block size-5 bg-teal"
                                     :style="iconMaskStyle(cameraIcon)"
                                 ></span>
                                 {{ t('Take a photo') }}
                             </button>
                             <div class="mx-5 border-t border-sand-100" />
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
                                 @click="recordVideo"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-sand-500"
+                                    class="inline-block size-5 bg-teal"
                                     :style="iconMaskStyle(videoCameraIcon)"
                                 ></span>
                                 {{ t('Record a video') }}
                             </button>
                             <div class="mx-5 border-t border-sand-100" />
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-sand-700 active:bg-sand-50"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
                                 @click="selectFromGallery"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-sand-500"
+                                    class="inline-block size-5 bg-teal"
                                     :style="iconMaskStyle(photoIcon)"
                                 ></span>
                                 {{ t('Choose from gallery') }}
                             </button>
                             <div class="border-t border-sand-100" />
                             <button
-                                class="w-full py-3.5 text-center font-semibold text-sand-500 active:bg-sand-50"
+                                class="w-full py-3.5 text-center font-semibold text-teal-muted active:bg-sand-50"
                                 @click="showSourcePicker = false"
                             >
                                 {{ t('Cancel') }}
