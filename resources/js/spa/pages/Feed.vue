@@ -5,6 +5,7 @@ import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
 import PostDetailsSheet from '@/spa/components/PostDetailsSheet.vue';
+import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -38,6 +39,8 @@ const unreadBadge = computed(() =>
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 const sentinelRef = ref<HTMLElement | null>(null);
+const permissionCardRef =
+    useTemplateRef<InstanceType<typeof PushPermissionCard>>('permissionCard');
 
 const circles = computed(() => circlesStore.items);
 
@@ -87,7 +90,12 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
         circlesStore.invalidate();
         feedCache.invalidate(FEED_KEY);
         notificationsStore.invalidate();
-        await Promise.all([loadCircles(), loadUnreadCount(), feed.reset()]);
+        await Promise.all([
+            loadCircles(),
+            loadUnreadCount(),
+            feed.reset(),
+            permissionCardRef.value?.refresh() ?? Promise.resolve(),
+        ]);
     },
     containerRef,
 });
@@ -120,6 +128,13 @@ function openDetailsForPost(postId: string): void {
 }
 
 async function onPostUpdated(): Promise<void> {
+    feedCache.invalidate(FEED_KEY);
+    await feed.softRefresh();
+}
+
+async function onPushPermissionChanged(): Promise<void> {
+    // Nadat de gebruiker de native prompt heeft beantwoord — granted óf denied
+    // — willen we een verse feed tonen zonder visuele schok.
     feedCache.invalidate(FEED_KEY);
     await feed.softRefresh();
 }
@@ -315,6 +330,13 @@ function iconMaskStyle(url: string) {
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
+            />
+
+            <PushPermissionCard
+                ref="permissionCard"
+                class="mx-4 mt-6"
+                dismissible
+                @permission-changed="onPushPermissionChanged"
             />
 
             <template v-if="feed.items.length === 0 && feed.loading">
