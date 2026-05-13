@@ -266,6 +266,13 @@
     "These circles will be pre-selected when you create a new post.": "These circles will be pre-selected when you create a new post.",
 
     "Push notifications": "Push notifications",
+    "Push notifications are off": "Push notifications are off",
+    "You disabled push notifications for this app on your device. Open your device settings to turn them back on.": "You disabled push notifications for this app on your device. Open your device settings to turn them back on.",
+    "Enable push notifications": "Enable push notifications",
+    "Turn on push notifications to receive alerts about activity in your circles.": "Turn on push notifications to receive alerts about activity in your circles.",
+    "Turn on": "Turn on",
+    "Enabling…": "Enabling…",
+    "Dismiss": "Dismiss",
     "Post liked": "Post liked",
     "Post commented": "Post commented",
     "Comment liked": "Comment liked",

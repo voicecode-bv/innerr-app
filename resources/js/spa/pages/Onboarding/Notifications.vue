@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { Events, On, PushNotifications } from '@nativephp/mobile';
 import { onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Events, On, PushNotifications } from '@nativephp/mobile';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { useAuthStore } from '@/spa/stores/auth';
 import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
+import { useAuthStore } from '@/spa/stores/auth';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../../svg/doodle-icons/message.svg';
@@ -76,11 +76,13 @@ onUnmounted(() => {
 
 async function completeOnboarding(): Promise<void> {
     trackOnboardingStep('notifications');
+
     try {
         await externalApi.post('/onboarding/complete');
     } catch {
         // Niet kritiek; bootstrap haalt straks alsnog onboarded-status op.
     }
+
     await auth.bootstrap();
     router.push('/');
 }
@@ -88,13 +90,16 @@ async function completeOnboarding(): Promise<void> {
 async function enableNotifications(): Promise<void> {
     try {
         await PushNotifications.enroll();
-        const result = await PushNotifications.getToken();
-        if (result?.token) {
-            await sendToken(result.token);
+        // getToken() levert de token-string zelf op (of null) — geen { token }.
+        const token = await PushNotifications.getToken();
+
+        if (token) {
+            await sendToken(token);
         }
     } catch {
         // Permission denied of niet beschikbaar — door naar complete.
     }
+
     await completeOnboarding();
 }
 
@@ -121,7 +126,7 @@ function skip(): void {
                 >
                     {{ t('Stay in the loop') }}
                 </h1>
-                <p class="mt-3 mx-auto max-w-xs text-teal-muted">
+                <p class="mx-auto mt-3 max-w-xs text-teal-muted">
                     {{
                         t(
                             "Enable notifications so you never miss a moment. We'll let you know when:",

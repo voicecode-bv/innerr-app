@@ -286,6 +286,13 @@
     "These circles will be pre-selected when you create a new post.": "Deze kringen worden automatisch geselecteerd wanneer je een nieuw bericht maakt.",
 
     "Push notifications": "Pushmeldingen",
+    "Push notifications are off": "Pushmeldingen staan uit",
+    "You disabled push notifications for this app on your device. Open your device settings to turn them back on.": "Je hebt pushmeldingen voor deze app uitgezet op je apparaat. Open je apparaatinstellingen om ze weer aan te zetten.",
+    "Enable push notifications": "Pushmeldingen inschakelen",
+    "Turn on push notifications to receive alerts about activity in your circles.": "Zet pushmeldingen aan om op de hoogte te blijven van wat er in je kringen gebeurt.",
+    "Turn on": "Aanzetten",
+    "Enabling…": "Bezig met inschakelen…",
+    "Dismiss": "Sluiten",
     "Post liked": "Bericht geliked",
     "Post commented": "Reactie op bericht",
     "Comment liked": "Reactie geliked",

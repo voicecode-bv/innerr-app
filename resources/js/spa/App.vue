@@ -2,8 +2,10 @@
 import { computed } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
+import { usePushNotifications } from '@/composables/usePushNotifications';
 
 useNetworkStatus();
+usePushNotifications();
 
 const route = useRoute();
 const isGuestRoute = computed(() => route.meta.guest === true);

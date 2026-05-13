@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
+import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import {
-    useNotificationPreferencesStore,
-    type NotificationPreferences as Preferences,
-} from '@/spa/stores/notificationPreferences';
+import { useTranslations } from '@/spa/composables/useTranslations';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useNotificationPreferencesStore } from '@/spa/stores/notificationPreferences';
+import type { NotificationPreferences as Preferences } from '@/spa/stores/notificationPreferences';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -23,10 +22,15 @@ function goBack(): void {
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
+const permissionCardRef =
+    useTemplateRef<InstanceType<typeof PushPermissionCard>>('permissionCard');
 
 async function loadPreferences(force = false): Promise<void> {
     try {
-        if (force) prefsStore.invalidate();
+        if (force) {
+            prefsStore.invalidate();
+        }
+
         await prefsStore.ensureLoaded();
     } catch {
         // negeren — UI valt terug op skeleton
@@ -34,11 +38,18 @@ async function loadPreferences(force = false): Promise<void> {
 }
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
-    onRefresh: () => loadPreferences(true),
+    onRefresh: async () => {
+        await Promise.all([
+            loadPreferences(true),
+            permissionCardRef.value?.refresh() ?? Promise.resolve(),
+        ]);
+    },
     containerRef,
 });
 
-onMounted(loadPreferences);
+onMounted(() => {
+    void loadPreferences();
+});
 
 const labels = computed<Record<keyof Preferences, string>>(() => ({
     post_liked: t('Post liked'),
@@ -94,6 +105,8 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
             />
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
+                <PushPermissionCard ref="permissionCard" />
+
                 <SurfaceCard class="reveal-item">
                     <h3 class="font-semibold text-teal">
                         {{ t('Push notifications') }}
