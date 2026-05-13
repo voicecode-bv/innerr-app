@@ -17,6 +17,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
 import { externalApi } from '@/spa/http/externalApi';
+import deleteIcon from '../../../svg/doodle-icons/delete.svg';
 import sendIcon from '../../../svg/doodle-icons/send.svg';
 
 interface Comment {
@@ -72,7 +73,6 @@ const hasLoaded = ref(false);
 const currentPage = ref(0);
 const lastPage = ref(1);
 
-const commentInput = useTemplateRef<HTMLInputElement>('commentInput');
 const sentinelRef = useTemplateRef<HTMLDivElement>('sentinel');
 let observer: IntersectionObserver | null = null;
 const seenIds = new Set<string>();
@@ -179,10 +179,6 @@ watch(
     () => props.open,
     (isOpen) => {
         if (!isOpen) return;
-
-        nextTick(() => {
-            commentInput.value?.focus({ preventScroll: true });
-        });
 
         if (!hasLoaded.value) {
             void loadPage(1);
@@ -486,12 +482,16 @@ defineExpose({
             >
                 <button
                     v-if="comment.user.id === authUserId"
-                    class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 px-4 font-semibold text-white"
+                    class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 text-white"
                     :style="{ width: `${ACTION_WIDTH}px` }"
                     :aria-label="t('Delete comment')"
                     @click="requestDelete(comment)"
                 >
-                    {{ t('Delete') }}
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-6 bg-current"
+                        :style="iconMaskStyle(deleteIcon)"
+                    ></span>
                 </button>
                 <div
                     class="bg-sand"
@@ -535,7 +535,6 @@ defineExpose({
                 @submit.prevent="submitComment"
             >
                 <input
-                    ref="commentInput"
                     v-model="body"
                     type="text"
                     inputmode="text"
