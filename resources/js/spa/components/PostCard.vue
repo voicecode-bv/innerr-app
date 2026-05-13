@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Share } from '@nativephp/mobile';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
@@ -10,6 +11,7 @@ import { useCirclesStore } from '@/spa/stores/circles';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
+import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
@@ -37,6 +39,8 @@ export interface PostData {
         photo: string | null;
     }[];
     is_liked: boolean;
+    is_downloadable?: boolean;
+    original_media_url?: string | null;
     likes_count: number;
     comments_count: number;
 }
@@ -102,6 +106,27 @@ const auth = useAuthStore();
 
 const authUserId = computed(() => auth.user?.id ?? null);
 const isOwner = computed(() => props.post.user.id === authUserId.value);
+const canDownload = computed(() => {
+    if (
+        props.post.media_type !== 'image' &&
+        props.post.media_type !== 'video'
+    ) {
+        return false;
+    }
+
+    return props.post.is_downloadable === true;
+});
+
+async function downloadMedia(): Promise<void> {
+    const url = props.post.original_media_url ?? props.post.media_url;
+
+    if (!url) {
+        return;
+    }
+
+    await Share.url('', '', url);
+}
+
 const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
 const commentsCount = ref(props.post.comments_count);
@@ -121,8 +146,13 @@ const editAvailablePersons = ref<AvailablePerson[]>([]);
 async function openEditModal(event: Event): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
-    if (isLoadingEdit.value) return;
+
+    if (isLoadingEdit.value) {
+        return;
+    }
+
     isLoadingEdit.value = true;
+
     try {
         const [postResponse, circles, tags, persons] = await Promise.all([
             externalApi.get<{ data: FullPost }>(`/posts/${props.post.id}`),
@@ -186,7 +216,11 @@ watch(
 async function measureCaptionOverflow(): Promise<void> {
     await nextTick();
     const el = captionRef.value;
-    if (!el || showFullCaption.value) return;
+
+    if (!el || showFullCaption.value) {
+        return;
+    }
+
     isCaptionOverflowing.value = el.scrollHeight > el.clientHeight + 1;
 }
 
@@ -257,30 +291,44 @@ function timeAgo(dateString: string): string {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return t('just now');
-    if (seconds < 3600)
+    if (seconds < 60) {
+        return t('just now');
+    }
+
+    if (seconds < 3600) {
         return t(':count min ago', { count: Math.floor(seconds / 60) });
-    if (seconds < 86400)
+    }
+
+    if (seconds < 86400) {
         return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    }
+
     if (seconds < 604800) {
         const days = Math.floor(seconds / 86400);
+
         return t(days === 1 ? ':count day ago' : ':count days ago', {
             count: days,
         });
     }
+
     if (seconds < 2592000) {
         const weeks = Math.floor(seconds / 604800);
+
         return t(weeks === 1 ? ':count week ago' : ':count weeks ago', {
             count: weeks,
         });
     }
+
     if (seconds < 31536000) {
         const months = Math.floor(seconds / 2592000);
+
         return t(months === 1 ? ':count month ago' : ':count months ago', {
             count: months,
         });
     }
+
     const years = Math.floor(seconds / 31536000);
+
     return t(years === 1 ? ':count year ago' : ':count years ago', {
         count: years,
     });
@@ -369,6 +417,19 @@ function timeAgo(dateString: string): string {
                         >{{ t('Uploading...') }}</span
                     >
                 </div>
+            </button>
+            <button
+                v-if="canDownload"
+                type="button"
+                class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                :aria-label="t('Download')"
+                @click.stop="downloadMedia"
+            >
+                <span
+                    aria-hidden="true"
+                    class="inline-block size-4 bg-current"
+                    :style="iconMaskStyle(downloadIcon)"
+                ></span>
             </button>
             <div
                 v-if="post.circles && post.circles.length > 0"
@@ -530,6 +591,19 @@ function timeAgo(dateString: string): string {
                             : 'top-3 left-3',
                     ]"
                 >
+                    <button
+                        v-if="!isFullscreen && canDownload"
+                        type="button"
+                        class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                        :aria-label="t('Download')"
+                        @click.stop="downloadMedia"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-4 bg-current"
+                            :style="iconMaskStyle(downloadIcon)"
+                        ></span>
+                    </button>
                     <button
                         class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                         @click="toggleMute"

@@ -17,6 +17,7 @@ export interface Circle {
     members_count?: number;
     members_can_invite?: boolean;
     members_can_view_members?: boolean;
+    members_can_download?: boolean;
     is_owner?: boolean;
     created_at?: string;
     pending_invitations?: CirclePendingInvitation[];

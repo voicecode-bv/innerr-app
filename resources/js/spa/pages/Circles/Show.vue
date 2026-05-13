@@ -6,19 +6,19 @@ import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useCirclesStore } from '@/spa/stores/circles';
-import { externalApi } from '@/spa/http/externalApi';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
+import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useCirclesStore } from '@/spa/stores/circles';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import mailIcon from '../../../../svg/doodle-icons/mail.svg';
 import sendIcon from '../../../../svg/doodle-icons/send.svg';
-import userIcon from '../../../../svg/doodle-icons/user.svg';
 import userAddIcon from '../../../../svg/doodle-icons/user-add.svg';
 import userRemoveIcon from '../../../../svg/doodle-icons/user-remove.svg';
+import userIcon from '../../../../svg/doodle-icons/user.svg';
 
 interface Member {
     id: string;
@@ -43,6 +43,7 @@ interface Circle {
     members: Member[] | null;
     members_can_invite: boolean;
     members_can_view_members: boolean;
+    members_can_download: boolean;
     is_owner: boolean;
     created_at: string;
     pending_invitations?: Invitation[];
@@ -99,9 +100,13 @@ const editForm = useApiForm({ name: '' }, externalApi);
 const memberForm = useApiForm({ identifier: '' }, externalApi);
 
 async function toggleMembersCanInvite(): Promise<void> {
-    if (!circle.value) return;
+    if (!circle.value) {
+        return;
+    }
+
     const next = !circle.value.members_can_invite;
     circle.value.members_can_invite = next;
+
     try {
         await externalApi.put(`/circles/${circleId.value}/settings`, {
             members_can_invite: next,
@@ -112,9 +117,13 @@ async function toggleMembersCanInvite(): Promise<void> {
 }
 
 async function toggleMembersCanViewMembers(): Promise<void> {
-    if (!circle.value) return;
+    if (!circle.value) {
+        return;
+    }
+
     const next = !circle.value.members_can_view_members;
     circle.value.members_can_view_members = next;
+
     try {
         await externalApi.put(`/circles/${circleId.value}/settings`, {
             members_can_view_members: next,
@@ -124,13 +133,32 @@ async function toggleMembersCanViewMembers(): Promise<void> {
     }
 }
 
+async function toggleMembersCanDownload(): Promise<void> {
+    if (!circle.value) {
+        return;
+    }
+
+    const next = !circle.value.members_can_download;
+    circle.value.members_can_download = next;
+
+    try {
+        await externalApi.put(`/circles/${circleId.value}/settings`, {
+            members_can_download: next,
+        });
+    } catch {
+        circle.value.members_can_download = !next;
+    }
+}
+
 async function updateCircle(): Promise<void> {
     await editForm.put(`/circles/${circleId.value}`, {
         onSuccess: () => {
             isEditing.value = false;
+
             if (circle.value) {
                 circle.value.name = editForm.data.name;
             }
+
             circlesStore.update(circleId.value, { name: editForm.data.name });
         },
     });
@@ -167,20 +195,26 @@ function friendlyInviteError(
     }
 
     const normalized = apiMessage.toLowerCase();
+
     if (normalized.includes('selected') && normalized.includes('invalid')) {
         return field === 'email'
             ? t('No account found for this email address.')
             : t('No account found for this username.');
     }
+
     if (normalized.includes('already')) {
         return t('This person is already in the circle.');
     }
+
     return t('Failed to invite member');
 }
 
 async function addMember(): Promise<void> {
     const id = memberForm.data.identifier.trim();
-    if (!id) return;
+
+    if (!id) {
+        return;
+    }
 
     const isEmail = id.includes('@');
     const field: 'email' | 'username' = isEmail ? 'email' : 'username';
@@ -197,6 +231,7 @@ async function addMember(): Promise<void> {
         setTimeout(() => {
             inviteSent.value = false;
         }, 3000);
+
         // Refetch circle om de bijgewerkte pending_invitations op te halen.
         try {
             const response = await externalApi.get<{ data: Circle }>(
@@ -239,8 +274,10 @@ async function handleMediaSelected(payload: {
         payload.cancelled ||
         !payload.files.length ||
         !circle.value
-    )
+    ) {
         return;
+    }
+
     try {
         await api.post(`/api/spa/circles/${circleId.value}/photo`, {
             photo_path: payload.files[0].path,
@@ -290,6 +327,7 @@ async function handleButtonPressed(payload: {
         // Optimistic: verwijder direct uit lijst, rollback bij fout.
         const previous = invitations.value;
         invitations.value = invitations.value.filter((i) => i.id !== id);
+
         try {
             await externalApi.delete(
                 `/circles/${circleId.value}/invitations/${id}`,
@@ -298,6 +336,7 @@ async function handleButtonPressed(payload: {
             invitations.value = previous;
         }
     }
+
     if (
         payload.id === 'remove-member-confirm' &&
         payload.index === 1 &&
@@ -305,7 +344,11 @@ async function handleButtonPressed(payload: {
     ) {
         const id = pendingMemberId;
         pendingMemberId = null;
-        if (!circle.value) return;
+
+        if (!circle.value) {
+            return;
+        }
+
         // Optimistic: verwijder member direct uit lijst, rollback bij fout.
         const previousMembers = circle.value.members;
         const previousCount = circle.value.members_count;
@@ -313,6 +356,7 @@ async function handleButtonPressed(payload: {
             (m) => m.id !== id,
         );
         circle.value.members_count = Math.max(0, previousCount - 1);
+
         try {
             await externalApi.delete(
                 `/circles/${circleId.value}/members/${id}`,
@@ -324,8 +368,10 @@ async function handleButtonPressed(payload: {
             }
         }
     }
+
     if (payload.id === 'leave-circle-confirm' && payload.index === 1) {
         isLeaving.value = true;
+
         try {
             await externalApi.post(`/circles/${circleId.value}/leave`);
             circlesStore.remove(circleId.value);
@@ -336,8 +382,10 @@ async function handleButtonPressed(payload: {
             isLeaving.value = false;
         }
     }
+
     if (payload.id === 'delete-circle-confirm' && payload.index === 1) {
         isDeleting.value = true;
+
         try {
             await externalApi.delete(`/circles/${circleId.value}`);
             circlesStore.remove(circleId.value);
@@ -361,7 +409,10 @@ onUnmounted(() => {
 });
 
 function startEdit(): void {
-    if (!circle.value) return;
+    if (!circle.value) {
+        return;
+    }
+
     editForm.data.name = circle.value.name;
     isEditing.value = !isEditing.value;
 }
@@ -636,6 +687,47 @@ function maskStyle(icon: string) {
                                     <span
                                         :class="
                                             circle.members_can_view_members
+                                                ? 'translate-x-7'
+                                                : 'translate-x-1'
+                                        "
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                    />
+                                </button>
+                            </label>
+                        </div>
+
+                        <div class="mt-4 border-t border-sand-100 pt-4">
+                            <label
+                                class="flex cursor-pointer items-center justify-between gap-3"
+                            >
+                                <span>
+                                    <span
+                                        class="block font-semibold text-teal"
+                                        >{{
+                                            t('Members can download media')
+                                        }}</span
+                                    >
+                                    <span class="block text-teal-muted">{{
+                                        t(
+                                            'Allow members to save photos and videos shared in this circle.',
+                                        )
+                                    }}</span>
+                                </span>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    :aria-checked="circle.members_can_download"
+                                    :class="
+                                        circle.members_can_download
+                                            ? 'bg-brand-green'
+                                            : 'bg-sand-300'
+                                    "
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    @click="toggleMembersCanDownload"
+                                >
+                                    <span
+                                        :class="
+                                            circle.members_can_download
                                                 ? 'translate-x-7'
                                                 : 'translate-x-1'
                                         "
