@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7478ccf86e85db3ae164811d5e90f668",
+    "content-hash": "d30ef78ebf1ced316c9935e2a2061ced",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -7859,6 +7859,64 @@
                 }
             ],
             "time": "2025-12-27T19:49:13+00:00"
+        },
+        {
+            "name": "voicecode-bv/mobile-photos",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/voicecode-bv/mobile-photos.git",
+                "reference": "3d9eb5138b5331daa89312c03164ff9c674048df"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/voicecode-bv/mobile-photos/zipball/3d9eb5138b5331daa89312c03164ff9c674048df",
+                "reference": "3d9eb5138b5331daa89312c03164ff9c674048df",
+                "shasum": ""
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Voicecode\\Mobile\\Photos\\PhotosServiceProvider"
+                    ]
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Voicecode\\Mobile\\Photos\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Voicecode",
+                    "email": "info@voicecode.nl"
+                }
+            ],
+            "description": "Save remote images and videos directly to the device photo library for NativePHP Mobile.",
+            "keywords": [
+                "camera-roll",
+                "gallery",
+                "mobile",
+                "nativephp",
+                "photos"
+            ],
+            "support": {
+                "issues": "https://github.com/voicecode-bv/mobile-photos/issues",
+                "source": "https://github.com/voicecode-bv/mobile-photos/tree/v1.0.0"
+            },
+            "time": "2026-05-14T10:28:28+00:00"
         },
         {
             "name": "voku/portable-ascii",

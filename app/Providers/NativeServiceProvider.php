@@ -3,13 +3,18 @@
 namespace App\Providers;
 
 use Codingwithrk\PackageInfo\PackageInfoServiceProvider;
+use Developernauts\NativephpInappPurchases\NativephpInappPurchasesServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Native\Mobile\Providers\BrowserServiceProvider;
 use Native\Mobile\Providers\CameraServiceProvider;
+use Native\Mobile\Providers\DeviceServiceProvider;
 use Native\Mobile\Providers\DialogServiceProvider;
 use Native\Mobile\Providers\NetworkServiceProvider;
 use Native\Mobile\Providers\PushNotificationsServiceProvider;
 use Native\Mobile\Providers\SecureStorageServiceProvider;
+use Native\Mobile\Providers\ShareServiceProvider;
+use Native\Mobile\Providers\SystemServiceProvider;
+use Voicecode\Mobile\Photos\PhotosServiceProvider;
 
 class NativeServiceProvider extends ServiceProvider
 {
@@ -49,14 +54,11 @@ class NativeServiceProvider extends ServiceProvider
             PackageInfoServiceProvider::class,
             BrowserServiceProvider::class,
             NetworkServiceProvider::class,
-            \Developernauts\NativephpInappPurchases\NativephpInappPurchasesServiceProvider::class,
-            \Native\Mobile\Providers\SystemServiceProvider::class,
-            \Native\Mobile\Providers\DeviceServiceProvider::class,
-            \Native\Mobile\Providers\ShareServiceProvider::class,
-        
-        
-        
-        
+            NativephpInappPurchasesServiceProvider::class,
+            SystemServiceProvider::class,
+            DeviceServiceProvider::class,
+            ShareServiceProvider::class,
+            PhotosServiceProvider::class,
 
         ];
     }

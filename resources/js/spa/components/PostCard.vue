@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Share } from '@nativephp/mobile';
+import { BridgeCall, Dialog } from '@nativephp/mobile';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
@@ -117,14 +117,53 @@ const canDownload = computed(() => {
     return props.post.is_downloadable === true;
 });
 
+const isDownloading = ref(false);
+
 async function downloadMedia(): Promise<void> {
+    if (isDownloading.value) {
+        return;
+    }
+
     const url = props.post.original_media_url ?? props.post.media_url;
 
     if (!url) {
         return;
     }
 
-    await Share.url('', '', url);
+    const type =
+        props.post.media_type === 'video' ? 'video' : 'image';
+
+    isDownloading.value = true;
+
+    try {
+        const response = (await BridgeCall('Photos.Save', { url, type })) as
+            | { status?: string; code?: string; message?: string }
+            | undefined;
+
+        if (response?.status === 'saved') {
+            await Dialog.toast(
+                type === 'video'
+                    ? t('Video saved to your photos')
+                    : t('Photo saved to your photos'),
+            );
+
+            return;
+        }
+
+        const code = response?.code ?? 'UNKNOWN_ERROR';
+        const message =
+            code === 'PERMISSION_DENIED'
+                ? t('Allow photo library access in Settings to save media.')
+                : t('Could not save to your photos. Please try again.');
+
+        await Dialog.toast(message);
+    } catch {
+        await Dialog.toast(
+            t('Could not save to your photos. Please try again.'),
+        );
+    } finally {
+        isDownloading.value = false;
+    }
 }
 
 const isLiked = ref(props.post.is_liked);
@@ -395,7 +434,7 @@ function timeAgo(dateString: string): string {
 
         <div
             v-if="post.media_type === 'image'"
-            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand"
+            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand transform-gpu"
         >
             <button class="block size-full" type="button" @click="openDetails">
                 <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
@@ -421,8 +460,9 @@ function timeAgo(dateString: string): string {
             <button
                 v-if="canDownload"
                 type="button"
-                class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-                :aria-label="t('Download')"
+                class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                :aria-label="t('Save to photos')"
+                :disabled="isDownloading"
                 @click.stop="downloadMedia"
             >
                 <span
@@ -550,7 +590,7 @@ function timeAgo(dateString: string): string {
                 :class="[
                     isFullscreen
                         ? 'fixed inset-0 z-9999 flex items-center justify-center bg-black'
-                        : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand',
+                        : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand transform-gpu',
                 ]"
                 @click="openDetails"
             >
@@ -594,8 +634,9 @@ function timeAgo(dateString: string): string {
                     <button
                         v-if="!isFullscreen && canDownload"
                         type="button"
-                        class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-                        :aria-label="t('Download')"
+                        class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                        :aria-label="t('Save to photos')"
+                        :disabled="isDownloading"
                         @click.stop="downloadMedia"
                     >
                         <span

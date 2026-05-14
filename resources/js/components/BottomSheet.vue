@@ -13,7 +13,8 @@ const sheetRef = useTemplateRef<HTMLDivElement>('sheetRef');
 
 const isIos =
     typeof navigator !== 'undefined' &&
-    /iP(hone|ad|od)/.test(navigator.userAgent);
+    (/iP(hone|ad|od)/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
 let focusOutTimer: number | null = null;
 let savedBodyOverflow = '';
@@ -112,7 +113,35 @@ function blockBackgroundTouchMove(event: TouchEvent): void {
 
 function setKeyboardInset(offset: number) {
     document.documentElement.style.setProperty('--kb-inset', `${offset}px`);
-    keyboardOpen.value = offset > 0;
+}
+
+function isTextInputFocused(): boolean {
+    const active = document.activeElement as HTMLElement | null;
+
+    if (!active || !sheetRef.value?.contains(active)) {
+        return false;
+    }
+
+    if (active.tagName === 'TEXTAREA' || active.isContentEditable) {
+        return true;
+    }
+
+    if (active.tagName === 'INPUT') {
+        const type = (active as HTMLInputElement).type;
+        return ![
+            'button',
+            'submit',
+            'reset',
+            'checkbox',
+            'radio',
+            'file',
+            'image',
+            'range',
+            'color',
+        ].includes(type);
+    }
+
+    return false;
 }
 
 function readOffset(): number {
@@ -146,6 +175,10 @@ function onFocusIn() {
         focusOutTimer = null;
     }
 
+    if (isTextInputFocused()) {
+        keyboardOpen.value = true;
+    }
+
     sampleRepeatedly();
 }
 
@@ -162,6 +195,7 @@ function onFocusOut(event: FocusEvent) {
 
     focusOutTimer = window.setTimeout(() => {
         setKeyboardInset(0);
+        keyboardOpen.value = false;
         focusOutTimer = null;
     }, 50);
 }
@@ -285,6 +319,7 @@ watch(
                 { capture: true },
             );
             setKeyboardInset(0);
+            keyboardOpen.value = false;
         }
     },
 );
@@ -386,7 +421,7 @@ onUnmounted(() => {
                     'shrink-0 border-t border-sand-200 bg-sand',
                     open && !keyboardOpen
                         ? 'pb-24'
-                        : 'pb-[env(safe-area-inset-bottom)]',
+                        : '',
                 ]"
             >
                 <slot name="footer" />

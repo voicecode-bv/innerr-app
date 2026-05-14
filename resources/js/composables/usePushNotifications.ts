@@ -1,11 +1,35 @@
 import { Events, Off, On, PushNotifications } from '@nativephp/mobile';
 import { onMounted, onUnmounted, watch } from 'vue';
+import { usePlatform } from '@/spa/composables/usePlatform';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 
+async function resolvePlatform(): Promise<'ios' | 'android' | null> {
+    const { isIos, isAndroid, ensureDetected } = usePlatform();
+
+    await ensureDetected();
+
+    if (isIos.value) {
+        return 'ios';
+    }
+
+    if (isAndroid.value) {
+        return 'android';
+    }
+
+    return null;
+}
+
 async function sendToken(token: string): Promise<void> {
     try {
-        await externalApi.post('/device-token', { token });
+        const platform = await resolvePlatform();
+        const payload: { token: string; platform?: 'ios' | 'android' } = { token };
+
+        if (platform) {
+            payload.platform = platform;
+        }
+
+        await externalApi.post('/device-token', payload);
     } catch {
         // Niet kritiek; volgende app-launch of token-rotatie probeert opnieuw.
     }
