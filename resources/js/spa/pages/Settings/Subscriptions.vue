@@ -10,6 +10,7 @@ import SurfaceCard from '@/components/SurfaceCard.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
@@ -45,6 +46,11 @@ type Entitlement = {
     productId: string;
     expirationDate?: string | null;
     environment: string;
+};
+
+type NativeTransaction = {
+    purchaseToken?: string;
+    productId?: string;
 };
 
 type Tier = {
@@ -188,6 +194,7 @@ type EntitlementResponse = {
     is_premium?: boolean;
     entitlements?: Entitlement[];
 };
+type ApiSubscriptionResponse = { is_paid?: boolean };
 
 async function loadProducts(): Promise<void> {
     try {
@@ -217,13 +224,54 @@ async function loadProducts(): Promise<void> {
     }
 }
 
+async function verifyGooglePurchase(
+    transaction: NativeTransaction,
+    fallbackProductId: string,
+): Promise<boolean> {
+    if (platform.value !== 'google') {
+        return false;
+    }
+
+    const purchaseToken = transaction.purchaseToken;
+    const productId = transaction.productId ?? fallbackProductId;
+
+    if (!purchaseToken || !productId) {
+        return false;
+    }
+
+    try {
+        await externalApi.post('/subscription/iap/google/verify', {
+            purchase_token: purchaseToken,
+            product_id: productId,
+        });
+
+        return true;
+    } catch {
+        // Webhooks via Google Play RTDN vangen het uiteindelijk alsnog op,
+        // dus we falen niet hard — refreshEntitlement laat de juiste
+        // (mogelijk nog niet-paid) state zien.
+        return false;
+    }
+}
+
 async function refreshEntitlement(): Promise<void> {
     try {
         const result = (await checkEntitlement()) as EntitlementResponse;
-        isPremium.value = Boolean(result.is_premium);
         entitlements.value = result.entitlements ?? [];
     } catch {
         // Niet kritiek voor de UI; laat huidige waarde staan.
+    }
+
+    // De native StoreKit/Billing-laag kan stale/sandbox/family-shared
+    // entitlements rapporteren die niet horen bij een echt abonnement.
+    // De backend is de single source of truth: een subscription wordt pas
+    // 'paid' nadat Apple/Google webhooks of receipt-verificatie bevestigen.
+    try {
+        const sub =
+            await externalApi.get<ApiSubscriptionResponse>('/subscription/me');
+        isPremium.value = Boolean(sub.is_paid);
+    } catch {
+        isPremium.value = false;
     }
 }
 
@@ -256,6 +304,11 @@ async function purchase(productId: string): Promise<void> {
                 ),
             };
         }
+
+        await verifyGooglePurchase(
+            (result.transaction ?? {}) as NativeTransaction,
+            productId,
+        );
         await refreshEntitlement();
     } catch (err) {
         const e = err as {
@@ -318,6 +371,13 @@ async function restore(): Promise<void> {
         }
         message.value =
             (result.message as string | undefined) ?? t('Purchases restored.');
+
+        const restoredTransactions = (result.transactions ??
+            []) as NativeTransaction[];
+        await Promise.all(
+            restoredTransactions.map((tx) => verifyGooglePurchase(tx, '')),
+        );
+
         await refreshEntitlement();
     } catch (err) {
         const e = err as {
