@@ -356,4 +356,20 @@ return [
             'landscape_right' => false,
         ],
     ],
+
+    'permissions' => [
+        'NSCameraUsageDescription' => 'To upload media to your circles, Innerr requires camera access.',
+        'NSMicrophoneUsageDescription' => 'To make new recordings, Innerr requires microphone access to record video with audio.',
+        'NSPhotoLibraryUsageDescription' => 'Before you can post media to your circles, Innerr requires photo library access to select media.',
+        'NSPhotoLibraryAddUsageDescription' => 'To download media, Innerr needs permission to save photos and videos to your library.',
+    ],
+
+    'permission_localizations' => [
+        'nl' => [
+            'NSCameraUsageDescription' => 'Om media te delen in je circles, heeft Innerr toegang tot je camera nodig.',
+            'NSMicrophoneUsageDescription' => 'Om nieuwe opnames te maken, heeft Innerr toegang tot je microfoon nodig zodat video met geluid kan worden opgenomen.',
+            'NSPhotoLibraryUsageDescription' => 'Voordat je media in je circles kunt plaatsen, heeft Innerr toegang tot je fotobibliotheek nodig om media te selecteren.',
+            'NSPhotoLibraryAddUsageDescription' => 'Om media te downloaden, heeft Innerr toestemming nodig om foto\'s en video\'s op te slaan in je bibliotheek.',
+        ],
+    ],
 ];
