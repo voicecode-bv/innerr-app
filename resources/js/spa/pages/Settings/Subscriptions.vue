@@ -51,6 +51,8 @@ type Entitlement = {
 type NativeTransaction = {
     purchaseToken?: string;
     productId?: string;
+    originalId?: number | string;
+    id?: number | string;
 };
 
 type Tier = {
@@ -254,6 +256,35 @@ async function verifyGooglePurchase(
     }
 }
 
+async function verifyApplePurchase(
+    transaction: NativeTransaction,
+): Promise<boolean> {
+    if (platform.value !== 'apple') {
+        return false;
+    }
+
+    // De IAP-bridge exposeert geen JWS — we sturen alleen de originalId.
+    // De API doet de daadwerkelijke verificatie via de App Store Server API.
+    const rawId = transaction.originalId ?? transaction.id;
+    const originalTransactionId =
+        rawId === undefined || rawId === null ? '' : String(rawId);
+
+    if (!originalTransactionId || originalTransactionId === '0') {
+        return false;
+    }
+
+    try {
+        await externalApi.post('/subscription/iap/apple/verify', {
+            original_transaction_id: originalTransactionId,
+        });
+
+        return true;
+    } catch {
+        // Apple App Store Server Notifications vangen het alsnog op.
+        return false;
+    }
+}
+
 async function refreshEntitlement(): Promise<void> {
     try {
         const result = (await checkEntitlement()) as EntitlementResponse;
@@ -305,10 +336,15 @@ async function purchase(productId: string): Promise<void> {
             };
         }
 
-        await verifyGooglePurchase(
-            (result.transaction ?? {}) as NativeTransaction,
-            productId,
-        );
+        const purchasedTransaction = (result.transaction ??
+            {}) as NativeTransaction;
+
+        if (platform.value === 'google') {
+            await verifyGooglePurchase(purchasedTransaction, productId);
+        } else {
+            await verifyApplePurchase(purchasedTransaction);
+        }
+
         await refreshEntitlement();
     } catch (err) {
         const e = err as {
@@ -374,9 +410,16 @@ async function restore(): Promise<void> {
 
         const restoredTransactions = (result.transactions ??
             []) as NativeTransaction[];
-        await Promise.all(
-            restoredTransactions.map((tx) => verifyGooglePurchase(tx, '')),
-        );
+
+        if (platform.value === 'google') {
+            await Promise.all(
+                restoredTransactions.map((tx) => verifyGooglePurchase(tx, '')),
+            );
+        } else {
+            await Promise.all(
+                restoredTransactions.map((tx) => verifyApplePurchase(tx)),
+            );
+        }
 
         await refreshEntitlement();
     } catch (err) {
