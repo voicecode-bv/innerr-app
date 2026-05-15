@@ -73,6 +73,13 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true },
     },
     {
+        path: '/onboarding/circles/:circle/permissions',
+        name: 'spa.onboarding.circle-permissions',
+        component: () =>
+            import('@/spa/pages/Onboarding/CirclePermissions.vue'),
+        meta: { auth: true },
+    },
+    {
         path: '/onboarding/circles/:circle/invite',
         name: 'spa.onboarding.invite-members',
         component: () => import('@/spa/pages/Onboarding/InviteMembers.vue'),

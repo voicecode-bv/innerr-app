@@ -4,6 +4,7 @@ export type OnboardingStep =
     | 'intro'
     | 'birthdate'
     | 'first_circle'
+    | 'circle_permissions'
     | 'invite_members'
     | 'notifications';
 

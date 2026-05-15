@@ -41,7 +41,7 @@ async function submit(): Promise<void> {
         onSuccess: (response) => {
             trackOnboardingStep('first_circle');
             router.push({
-                name: 'spa.onboarding.invite-members',
+                name: 'spa.onboarding.circle-permissions',
                 params: { circle: response.data.id },
             });
         },
