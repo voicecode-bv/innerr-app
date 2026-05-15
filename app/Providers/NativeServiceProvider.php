@@ -59,7 +59,6 @@ class NativeServiceProvider extends ServiceProvider
             DeviceServiceProvider::class,
             ShareServiceProvider::class,
             PhotosServiceProvider::class,
-
         ];
     }
 }
