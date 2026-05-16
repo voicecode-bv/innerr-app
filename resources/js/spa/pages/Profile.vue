@@ -2,6 +2,7 @@
 import { Camera, Events, Off, On, Share } from '@nativephp/mobile';
 import {
     computed,
+    defineAsyncComponent,
     onMounted,
     onUnmounted,
     reactive,
@@ -24,6 +25,10 @@ import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
+
+const ImageCropModal = defineAsyncComponent(
+    () => import('@/components/ImageCropModal.vue'),
+);
 
 interface Profile {
     id: string;
@@ -92,10 +97,30 @@ function goBack(): void {
 }
 
 const avatarUploading = ref(false);
+const showCropModal = ref(false);
+const cropSource = ref<string | null>(null);
 
 async function pickAvatar(): Promise<void> {
     if (avatarUploading.value) return;
     await Camera.pickImages().all();
+}
+
+async function loadPreview(path: string): Promise<string | null> {
+    try {
+        const response = await fetch(
+            `/native-media?path=${encodeURIComponent(path)}`,
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const { data_url } = await response.json();
+
+        return data_url;
+    } catch {
+        return null;
+    }
 }
 
 async function handleMediaSelected(payload: {
@@ -113,12 +138,52 @@ async function handleMediaSelected(payload: {
         return;
     }
 
+    const preview = await loadPreview(payload.files[0].path);
+
+    if (!preview) {
+        return;
+    }
+
+    cropSource.value = preview;
+    showCropModal.value = true;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(
+            null,
+            Array.from(bytes.subarray(i, i + chunkSize)),
+        );
+    }
+
+    return btoa(binary);
+}
+
+async function handleCropped(blob: Blob, dataUrl: string): Promise<void> {
+    showCropModal.value = false;
+    cropSource.value = null;
+
+    if (!profile.value) {
+        return;
+    }
+
     avatarUploading.value = true;
+
+    const previousAvatar = profile.value.avatar;
+    profile.value.avatar = dataUrl;
+
     try {
+        const buffer = await blob.arrayBuffer();
+        const base64 = arrayBufferToBase64(buffer);
+
         const response = await api.post<{ avatar: string | null }>(
             '/api/spa/settings/profile/avatar',
             {
-                avatar_path: payload.files[0].path,
+                avatar_data: base64,
             },
         );
         if (profile.value) {
@@ -128,7 +193,9 @@ async function handleMediaSelected(payload: {
             auth.user.avatar = response.avatar;
         }
     } catch {
-        // ignore — avatar blijft op huidige waarde
+        if (profile.value) {
+            profile.value.avatar = previousAvatar;
+        }
     } finally {
         avatarUploading.value = false;
     }
@@ -451,6 +518,14 @@ function iconMaskStyle(url: string) {
             v-model:open="inviteSheetOpen"
             :username="profile.username"
             :person-name="profile.name"
+        />
+
+        <ImageCropModal
+            :open="showCropModal"
+            :src="cropSource"
+            locked-ratio="1:1"
+            @update:open="showCropModal = $event"
+            @cropped="handleCropped"
         />
     </AppLayout>
 </template>

@@ -2,16 +2,23 @@
 import { computed, ref, useTemplateRef, watch } from 'vue';
 import { Cropper } from 'vue-advanced-cropper';
 import BottomSheet from '@/components/BottomSheet.vue';
+import { readExif } from '@/composables/useExif';
+import type { ExifData } from '@/composables/useExif';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { readExif, type ExifData } from '@/composables/useExif';
 import 'vue-advanced-cropper/dist/style.css';
 
 type Ratio = '1:1' | '5:4';
 
-const props = defineProps<{
-    open: boolean;
-    src: string | null;
-}>();
+const props = withDefaults(
+    defineProps<{
+        open: boolean;
+        src: string | null;
+        lockedRatio?: Ratio | null;
+    }>(),
+    {
+        lockedRatio: null,
+    },
+);
 
 const emit = defineEmits<{
     (e: 'update:open', value: boolean): void;
@@ -21,7 +28,7 @@ const emit = defineEmits<{
 const { t } = useTranslations();
 
 const cropperRef = useTemplateRef<InstanceType<typeof Cropper>>('cropperRef');
-const ratio = ref<Ratio>('1:1');
+const ratio = ref<Ratio>(props.lockedRatio ?? '1:1');
 const processing = ref(false);
 
 const aspectRatio = computed<number>(() => (ratio.value === '1:1' ? 1 : 5 / 4));
@@ -36,7 +43,7 @@ watch(
     () => props.open,
     (isOpen) => {
         if (isOpen) {
-            ratio.value = '1:1';
+            ratio.value = props.lockedRatio ?? '1:1';
             processing.value = false;
         }
     },
@@ -156,7 +163,7 @@ const ratios: { value: Ratio; label: string }[] = [
         </template>
 
         <div class="flex flex-col gap-4 px-4 py-4">
-            <div class="flex flex-wrap gap-2">
+            <div v-if="lockedRatio === null" class="flex flex-wrap gap-2">
                 <button
                     v-for="option in ratios"
                     :key="option.value"

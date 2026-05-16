@@ -66,3 +66,59 @@ it('uploads avatar and persists URL on local user', function () {
 
     expect($user->fresh()->avatar)->toBe('https://api.example.com/avatars/42.jpg');
 });
+
+it('uploads avatar from base64 payload and persists URL on local user', function () {
+    $user = User::factory()->create();
+
+    $apiResponse = new Response(Http::response([
+        'user' => ['avatar' => 'https://api.example.com/avatars/99.jpg'],
+    ], 200)->wait());
+
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('attach')
+        ->once()
+        ->withArgs(function ($field, $contents, $filename, $headers) {
+            return $field === 'avatar'
+                && is_string($contents)
+                && $contents !== ''
+                && $filename === 'avatar.jpg'
+                && ($headers['Content-Type'] ?? null) === 'image/jpeg';
+        })
+        ->andReturnSelf();
+    $pending->shouldReceive('post')->once()->with('/profile/avatar')->andReturn($apiResponse);
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $this->app->instance(ApiClient::class, $client);
+
+    $base64 = base64_encode(file_get_contents($this->tempPath));
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/settings/profile/avatar', [
+            'avatar_data' => $base64,
+        ]);
+
+    $response->assertOk()->assertJsonPath('avatar', 'https://api.example.com/avatars/99.jpg');
+
+    expect($user->fresh()->avatar)->toBe('https://api.example.com/avatars/99.jpg');
+});
+
+it('returns 422 when neither avatar_path nor avatar_data is provided', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/settings/profile/avatar', [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['avatar_path', 'avatar_data']);
+});
+
+it('returns 422 when avatar_data is not valid base64', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/settings/profile/avatar', [
+            'avatar_data' => '###not-base64###',
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('avatar_data');
+});

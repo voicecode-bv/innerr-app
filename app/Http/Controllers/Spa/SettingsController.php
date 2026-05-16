@@ -21,31 +21,50 @@ class SettingsController extends Controller
     public function updateAvatar(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'avatar_path' => ['required', 'string'],
+            'avatar_path' => ['required_without:avatar_data', 'nullable', 'string'],
+            'avatar_data' => ['required_without:avatar_path', 'nullable', 'string'],
         ]);
 
-        $path = $validated['avatar_path'];
+        if (! empty($validated['avatar_data'])) {
+            $contents = base64_decode($validated['avatar_data'], true);
 
-        if (! file_exists($path)) {
-            throw ValidationException::withMessages(['avatar_path' => __('Image file not found.')]);
+            if ($contents === false || $contents === '') {
+                throw ValidationException::withMessages(['avatar_data' => __('Invalid image data.')]);
+            }
+
+            if (strlen($contents) > 20 * 1024 * 1024) {
+                throw ValidationException::withMessages(['avatar_data' => __('Image is too large.')]);
+            }
+
+            $mimeType = 'image/jpeg';
+            $extension = 'jpg';
+            $errorField = 'avatar_data';
+        } else {
+            $path = $validated['avatar_path'];
+
+            if (! file_exists($path)) {
+                throw ValidationException::withMessages(['avatar_path' => __('Image file not found.')]);
+            }
+
+            $contents = file_get_contents($path);
+            $mimeType = File::mimeType($path);
+            $extension = match ($mimeType) {
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/heic' => 'heic',
+                'image/heif' => 'heif',
+                default => pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg',
+            };
+            $errorField = 'avatar_path';
         }
 
-        $mimeType = File::mimeType($path);
-        $extension = match ($mimeType) {
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/heic' => 'heic',
-            'image/heif' => 'heif',
-            default => pathinfo($path, PATHINFO_EXTENSION) ?: 'jpg',
-        };
-
         $response = $this->apiClient->authenticated()
-            ->attach('avatar', file_get_contents($path), 'avatar.'.$extension, ['Content-Type' => $mimeType])
+            ->attach('avatar', $contents, 'avatar.'.$extension, ['Content-Type' => $mimeType])
             ->post('/profile/avatar');
 
         if (! $response->successful()) {
             throw ValidationException::withMessages([
-                'avatar_path' => $response->json('message', __('Failed to upload photo')),
+                $errorField => $response->json('message', __('Failed to upload photo')),
             ]);
         }
 

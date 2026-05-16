@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { Camera, Events, Off, On } from '@nativephp/mobile';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
+
+const ImageCropModal = defineAsyncComponent(
+    () => import('@/components/ImageCropModal.vue'),
+);
 
 interface EditableProfile {
     id: number;
@@ -35,6 +39,9 @@ const searchable = ref(true);
 const processing = ref(false);
 const errors = ref<Record<string, string>>({});
 
+const showCropModal = ref(false);
+const cropSource = ref<string | null>(null);
+
 function goBack(): void {
     router.push({ name: 'spa.settings' });
 }
@@ -58,8 +65,29 @@ async function loadProfile(): Promise<void> {
 onMounted(loadProfile);
 
 async function pickAvatar(): Promise<void> {
-    if (avatarUploading.value) return;
+    if (avatarUploading.value) {
+        return;
+    }
+
     await Camera.pickImages().all();
+}
+
+async function loadPreview(path: string): Promise<string | null> {
+    try {
+        const response = await fetch(
+            `/native-media?path=${encodeURIComponent(path)}`,
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const { data_url } = await response.json();
+
+        return data_url;
+    } catch {
+        return null;
+    }
 }
 
 async function handleMediaSelected(payload: {
@@ -71,20 +99,56 @@ async function handleMediaSelected(payload: {
         return;
     }
 
+    const preview = await loadPreview(payload.files[0].path);
+
+    if (!preview) {
+        return;
+    }
+
+    cropSource.value = preview;
+    showCropModal.value = true;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(
+            null,
+            Array.from(bytes.subarray(i, i + chunkSize)),
+        );
+    }
+
+    return btoa(binary);
+}
+
+async function handleCropped(blob: Blob, dataUrl: string): Promise<void> {
+    showCropModal.value = false;
+    cropSource.value = null;
     avatarUploading.value = true;
+
+    const previousAvatar = avatar.value;
+    avatar.value = dataUrl;
+
     try {
+        const buffer = await blob.arrayBuffer();
+        const base64 = arrayBufferToBase64(buffer);
+
         const response = await api.post<{ avatar: string | null }>(
             '/api/spa/settings/profile/avatar',
             {
-                avatar_path: payload.files[0].path,
+                avatar_data: base64,
             },
         );
         avatar.value = response.avatar;
+
         if (auth.user) {
             auth.user.avatar = response.avatar;
         }
     } catch {
-        // ignore — avatar blijft op huidige waarde
+        avatar.value = previousAvatar;
     } finally {
         avatarUploading.value = false;
     }
@@ -110,9 +174,11 @@ async function save(): Promise<void> {
     try {
         await externalApi.patch('/profile', payload);
         bio.value = payload.bio ?? '';
+
         if (auth.user) {
             auth.user.bio = payload.bio;
         }
+
         saved.value = true;
         setTimeout(() => {
             saved.value = false;
@@ -221,10 +287,7 @@ async function save(): Promise<void> {
                 <SurfaceCard class="reveal-item">
                     <form class="space-y-5" @submit.prevent="save">
                         <div>
-                            <label
-                                for="bio"
-                                class="font-semibold text-teal"
-                            >
+                            <label for="bio" class="font-semibold text-teal">
                                 {{ t('Bio') }}
                             </label>
                             <textarea
@@ -346,5 +409,13 @@ async function save(): Promise<void> {
                 </SurfaceCard>
             </div>
         </div>
+
+        <ImageCropModal
+            :open="showCropModal"
+            :src="cropSource"
+            locked-ratio="1:1"
+            @update:open="showCropModal = $event"
+            @cropped="handleCropped"
+        />
     </AppLayout>
 </template>
