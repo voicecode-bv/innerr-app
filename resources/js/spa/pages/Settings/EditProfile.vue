@@ -19,6 +19,7 @@ interface EditableProfile {
     avatar: string | null;
     bio: string | null;
     birthdate: string | null;
+    searchable: boolean;
 }
 
 const { t } = useTranslations();
@@ -30,6 +31,7 @@ const avatarUploading = ref(false);
 const avatar = ref<string | null>(null);
 const bio = ref('');
 const birthdate = ref('');
+const searchable = ref(true);
 const processing = ref(false);
 const errors = ref<Record<string, string>>({});
 
@@ -45,6 +47,7 @@ async function loadProfile(): Promise<void> {
         avatar.value = response.data.avatar;
         bio.value = response.data.bio ?? '';
         birthdate.value = response.data.birthdate ?? '';
+        searchable.value = response.data.searchable ?? true;
     } catch {
         // ignore — gebruiker krijgt lege velden
     } finally {
@@ -101,10 +104,11 @@ async function save(): Promise<void> {
     const payload = {
         bio: trimmedBio === '' ? null : trimmedBio,
         birthdate: birthdate.value === '' ? null : birthdate.value,
+        searchable: searchable.value,
     };
 
     try {
-        await externalApi.put('/profile', payload);
+        await externalApi.patch('/profile', payload);
         bio.value = payload.bio ?? '';
         if (auth.user) {
             auth.user.bio = payload.bio;
@@ -263,6 +267,53 @@ async function save(): Promise<void> {
                                 class="mt-1 text-blush-500"
                             >
                                 {{ errors.birthdate }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label
+                                class="flex cursor-pointer items-start justify-between gap-3"
+                            >
+                                <span class="flex-1">
+                                    <span class="block font-semibold text-teal">
+                                        {{ t('Findable via search') }}
+                                    </span>
+                                    <span class="mt-1 block text-teal-muted">
+                                        {{
+                                            t(
+                                                'Turn this off to hide your profile from search results.',
+                                            )
+                                        }}
+                                    </span>
+                                </span>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    :aria-checked="searchable"
+                                    :aria-label="t('Findable via search')"
+                                    :class="
+                                        searchable
+                                            ? 'bg-brand-green'
+                                            : 'bg-sand-300'
+                                    "
+                                    class="relative mt-1 inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    @click="searchable = !searchable"
+                                >
+                                    <span
+                                        :class="
+                                            searchable
+                                                ? 'translate-x-7'
+                                                : 'translate-x-1'
+                                        "
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                    />
+                                </button>
+                            </label>
+                            <p
+                                v-if="errors.searchable"
+                                class="mt-1 text-blush-500"
+                            >
+                                {{ errors.searchable }}
                             </p>
                         </div>
 
