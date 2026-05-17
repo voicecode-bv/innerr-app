@@ -353,6 +353,8 @@
     "Too many invitations sent. Please try again later.": "Trop d'invitations envoyées. Veuillez réessayer plus tard.",
     "Try again": "Réessayer",
     "Failed to load comments": "Échec du chargement des commentaires",
+    "1 reaction hidden from other circles": "1 réaction masquée d'autres cercles",
+    ":count reactions hidden from other circles": ":count réactions masquées d'autres cercles",
     "Failed to load likes": "Échec du chargement des j'aime",
     "Show likes": "Afficher les j'aime",
     "No likes yet": "Pas encore de j'aime",

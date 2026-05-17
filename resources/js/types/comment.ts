@@ -7,9 +7,10 @@ export interface CommentUser {
 
 export interface Comment {
     id: string;
-    body: string;
+    is_visible?: boolean;
+    body?: string;
     created_at: string;
-    user: CommentUser;
-    likes_count: number;
-    is_liked: boolean;
+    user?: CommentUser;
+    likes_count?: number;
+    is_liked?: boolean;
 }

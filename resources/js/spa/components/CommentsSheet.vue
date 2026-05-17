@@ -13,26 +13,32 @@ import BottomSheet from '@/components/BottomSheet.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import SheetHeader from '@/components/SheetHeader.vue';
 import CommentBubble from '@/spa/components/CommentBubble.vue';
+import HiddenCommentsNotice from '@/spa/components/HiddenCommentsNotice.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
-import { externalApi } from '@/spa/http/externalApi';
 import deleteIcon from '../../../svg/doodle-icons/delete.svg';
 import sendIcon from '../../../svg/doodle-icons/send.svg';
 
 interface Comment {
     id: string;
-    body: string;
+    is_visible?: boolean;
+    body?: string;
     created_at: string;
-    user: {
+    user?: {
         id: string;
         name: string;
         username: string;
         avatar: string | null;
     };
-    is_liked: boolean;
-    likes_count: number;
+    is_liked?: boolean;
+    likes_count?: number;
 }
+
+type RenderItem =
+    | { kind: 'comment'; comment: Comment }
+    | { kind: 'hidden'; count: number; key: string };
 
 interface Meta {
     current_page: number;
@@ -77,30 +83,72 @@ const sentinelRef = useTemplateRef<HTMLDivElement>('sentinel');
 let observer: IntersectionObserver | null = null;
 const seenIds = new Set<string>();
 
+// Groepeert opeenvolgende verborgen comments tot één compacte melding,
+// zodat de timeline-volgorde behouden blijft (visible — N verborgen — visible …).
+const renderItems = computed<RenderItem[]>(() => {
+    const out: RenderItem[] = [];
+    let hiddenRun: Comment[] = [];
+    const flush = () => {
+        if (hiddenRun.length === 0) {
+return;
+}
+
+        out.push({
+            kind: 'hidden',
+            count: hiddenRun.length,
+            key: `h-${hiddenRun[0].id}`,
+        });
+        hiddenRun = [];
+    };
+
+    for (const c of comments.value) {
+        if (c.is_visible === false) {
+            hiddenRun.push(c);
+        } else {
+            flush();
+            out.push({ kind: 'comment', comment: c });
+        }
+    }
+
+    flush();
+
+    return out;
+});
+
 function seedCommentsFromCache(): boolean {
     const cached = commentsCache.getStale<Comment>(props.postId);
-    if (!cached) return false;
+
+    if (!cached) {
+return false;
+}
+
     comments.value = cached.comments;
     currentPage.value = cached.currentPage;
     lastPage.value = cached.lastPage;
     seenIds.clear();
+
     for (const c of cached.comments) {
         seenIds.add(c.id);
     }
+
     hasLoaded.value = true;
+
     return true;
 }
 
 async function loadPage(page: number): Promise<void> {
     const isFirst = page === 1;
+
     if (isFirst && commentsCache.get<Comment>(props.postId)) {
         seedCommentsFromCache();
         scrollToBottom();
+
         return;
     }
 
     const seededFromStale =
         isFirst && !hasLoaded.value && seedCommentsFromCache();
+
     if (seededFromStale) {
         scrollToBottom();
     }
@@ -110,6 +158,7 @@ async function loadPage(page: number): Promise<void> {
     } else if (!isFirst) {
         isLoadingMore.value = true;
     }
+
     loadError.value = null;
 
     try {
@@ -120,9 +169,11 @@ async function loadPage(page: number): Promise<void> {
         if (isFirst) {
             seenIds.clear();
             comments.value = result.data;
+
             for (const c of result.data) {
                 seenIds.add(c.id);
             }
+
             commentsCache.set<Comment>(
                 props.postId,
                 result.data,
@@ -132,8 +183,12 @@ async function loadPage(page: number): Promise<void> {
             scrollToBottom();
         } else {
             const incoming = result.data.filter((c) => {
-                if (seenIds.has(c.id)) return false;
+                if (seenIds.has(c.id)) {
+return false;
+}
+
                 seenIds.add(c.id);
+
                 return true;
             });
             comments.value = [...comments.value, ...incoming];
@@ -157,8 +212,10 @@ function loadMore(): void {
         isLoadingMore.value ||
         isLoading.value ||
         currentPage.value >= lastPage.value
-    )
-        return;
+    ) {
+return;
+}
+
     void loadPage(currentPage.value + 1);
 }
 
@@ -178,7 +235,9 @@ function attachObserver(target: HTMLElement): void {
 watch(
     () => props.open,
     (isOpen) => {
-        if (!isOpen) return;
+        if (!isOpen) {
+return;
+}
 
         if (!hasLoaded.value) {
             void loadPage(1);
@@ -205,6 +264,7 @@ watch(
         currentPage.value = 0;
         lastPage.value = 1;
         swipedId.value = null;
+
         if (props.open) {
             void loadPage(1);
         }
@@ -227,14 +287,19 @@ function rowTransform(commentId: string): string {
     if (touchingId.value === commentId) {
         return `translate3d(${touchOffset.value}px, 0, 0)`;
     }
+
     if (swipedId.value === commentId) {
         return `translate3d(-${ACTION_WIDTH}px, 0, 0)`;
     }
+
     return 'translate3d(0, 0, 0)';
 }
 
 function onSwipeStart(event: TouchEvent, comment: Comment): void {
-    if (comment.user.id !== authUserId.value) return;
+    if (comment.user?.id !== authUserId.value) {
+return;
+}
+
     touchStartX.value = event.touches[0].clientX;
     touchingId.value = comment.id;
     touchOffset.value = swipedId.value === comment.id ? -ACTION_WIDTH : 0;
@@ -245,14 +310,20 @@ function onSwipeStart(event: TouchEvent, comment: Comment): void {
 }
 
 function onSwipeMove(event: TouchEvent): void {
-    if (touchingId.value === null) return;
+    if (touchingId.value === null) {
+return;
+}
+
     const dx = event.touches[0].clientX - touchStartX.value;
     const baseOffset = swipedId.value === touchingId.value ? -ACTION_WIDTH : 0;
     touchOffset.value = Math.max(-ACTION_WIDTH, Math.min(0, baseOffset + dx));
 }
 
 function onSwipeEnd(): void {
-    if (touchingId.value === null) return;
+    if (touchingId.value === null) {
+return;
+}
+
     swipedId.value =
         touchOffset.value <= -ACTION_WIDTH / 2 ? touchingId.value : null;
     touchingId.value = null;
@@ -266,7 +337,10 @@ function closeSwipe(): void {
 let pendingDeleteComment: Comment | null = null;
 
 async function requestDelete(comment: Comment): Promise<void> {
-    if (comment.user.id !== authUserId.value) return;
+    if (comment.user?.id !== authUserId.value) {
+return;
+}
+
     pendingDeleteComment = comment;
     swipedId.value = null;
     await Dialog.alert()
@@ -281,10 +355,16 @@ async function handleButtonPressed(payload: {
     index: number;
     id?: string | null;
 }): Promise<void> {
-    if (payload.id !== 'delete-comment-confirm' || payload.index !== 1) return;
+    if (payload.id !== 'delete-comment-confirm' || payload.index !== 1) {
+return;
+}
+
     const target = pendingDeleteComment;
     pendingDeleteComment = null;
-    if (target) await deleteComment(target);
+
+    if (target) {
+await deleteComment(target);
+}
 }
 
 onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
@@ -296,7 +376,10 @@ onUnmounted(() => {
 
 async function deleteComment(comment: Comment): Promise<void> {
     const backupIndex = comments.value.findIndex((c) => c.id === comment.id);
-    if (backupIndex === -1) return;
+
+    if (backupIndex === -1) {
+return;
+}
 
     comments.value = comments.value.filter((c) => c.id !== comment.id);
 
@@ -312,11 +395,13 @@ async function deleteComment(comment: Comment): Promise<void> {
 }
 
 async function toggleCommentLike(comment: Comment): Promise<void> {
-    if (comment.user.id === authUserId.value) return;
+    if (!comment.user || comment.user.id === authUserId.value) {
+return;
+}
 
-    const wasLiked = comment.is_liked;
+    const wasLiked = comment.is_liked ?? false;
     comment.is_liked = !wasLiked;
-    comment.likes_count += wasLiked ? -1 : 1;
+    comment.likes_count = (comment.likes_count ?? 0) + (wasLiked ? -1 : 1);
 
     try {
         if (wasLiked) {
@@ -333,6 +418,7 @@ async function toggleCommentLike(comment: Comment): Promise<void> {
 function makeOptimisticComment(content: string): Comment {
     return {
         id: `optimistic-${crypto.randomUUID()}`,
+        is_visible: true,
         body: content,
         created_at: new Date().toISOString(),
         user: {
@@ -349,6 +435,7 @@ function makeOptimisticComment(content: string): Comment {
 function scrollToComment(commentId: string): void {
     nextTick(() => {
         const el = document.querySelector(`[data-comment-id="${commentId}"]`);
+
         if (el instanceof HTMLElement) {
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -358,8 +445,13 @@ function scrollToComment(commentId: string): void {
 function scrollToBottom(): void {
     nextTick(() => {
         const last = comments.value[comments.value.length - 1];
-        if (!last) return;
+
+        if (!last) {
+return;
+}
+
         const el = document.querySelector(`[data-comment-id="${last.id}"]`);
+
         if (el instanceof HTMLElement) {
             el.scrollIntoView({ behavior: 'auto', block: 'end' });
         }
@@ -368,7 +460,10 @@ function scrollToBottom(): void {
 
 async function submitComment(): Promise<void> {
     const value = body.value.trim();
-    if (!value || isSubmitting.value) return;
+
+    if (!value || isSubmitting.value) {
+return;
+}
 
     const optimistic = makeOptimisticComment(value);
     comments.value = [...comments.value, optimistic];
@@ -379,6 +474,7 @@ async function submitComment(): Promise<void> {
     body.value = '';
 
     isSubmitting.value = true;
+
     try {
         const response = await externalApi.post<{ data: Comment }>(
             `/posts/${props.postId}/comments`,
@@ -431,6 +527,7 @@ defineExpose({
         currentPage.value = 0;
         lastPage.value = 1;
         swipedId.value = null;
+
         if (props.open) {
             await loadPage(1);
         }
@@ -474,46 +571,58 @@ defineExpose({
         </div>
 
         <div v-else class="space-y-3 px-3 py-3">
-            <div
-                v-for="comment in comments"
-                :key="comment.id"
-                :data-comment-id="comment.id"
-                class="relative overflow-hidden"
-            >
-                <button
-                    v-if="comment.user.id === authUserId"
-                    class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 text-white"
-                    :style="{ width: `${ACTION_WIDTH}px` }"
-                    :aria-label="t('Delete comment')"
-                    @click="requestDelete(comment)"
-                >
-                    <span
-                        aria-hidden="true"
-                        class="inline-block size-6 bg-current"
-                        :style="iconMaskStyle(deleteIcon)"
-                    ></span>
-                </button>
+            <template v-for="item in renderItems" :key="item.kind === 'hidden' ? item.key : item.comment.id">
+                <HiddenCommentsNotice
+                    v-if="item.kind === 'hidden'"
+                    :count="item.count"
+                />
                 <div
-                    class="bg-sand"
-                    :class="
-                        touchingId === comment.id
-                            ? ''
-                            : 'transition-transform duration-200 ease-out'
-                    "
-                    :style="{ transform: rowTransform(comment.id) }"
-                    @touchstart.passive="onSwipeStart($event, comment)"
-                    @touchmove.passive="onSwipeMove"
-                    @touchend="onSwipeEnd"
-                    @touchcancel="onSwipeEnd"
-                    @click="closeSwipe"
+                    v-else-if="item.comment.user"
+                    :data-comment-id="item.comment.id"
+                    class="relative overflow-hidden"
                 >
-                    <CommentBubble
-                        :comment="comment"
-                        @like="toggleCommentLike(comment)"
-                        @navigate="close"
-                    />
+                    <button
+                        v-if="item.comment.user.id === authUserId"
+                        class="absolute inset-y-0 right-0 flex items-center justify-center bg-blush-500 text-white"
+                        :style="{ width: `${ACTION_WIDTH}px` }"
+                        :aria-label="t('Delete comment')"
+                        @click="requestDelete(item.comment)"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-6 bg-current"
+                            :style="iconMaskStyle(deleteIcon)"
+                        ></span>
+                    </button>
+                    <div
+                        class="bg-sand"
+                        :class="
+                            touchingId === item.comment.id
+                                ? ''
+                                : 'transition-transform duration-200 ease-out'
+                        "
+                        :style="{ transform: rowTransform(item.comment.id) }"
+                        @touchstart.passive="onSwipeStart($event, item.comment)"
+                        @touchmove.passive="onSwipeMove"
+                        @touchend="onSwipeEnd"
+                        @touchcancel="onSwipeEnd"
+                        @click="closeSwipe"
+                    >
+                        <CommentBubble
+                            :comment="{
+                                id: item.comment.id,
+                                body: item.comment.body ?? '',
+                                created_at: item.comment.created_at,
+                                user: item.comment.user,
+                                is_liked: item.comment.is_liked ?? false,
+                                likes_count: item.comment.likes_count ?? 0,
+                            }"
+                            @like="toggleCommentLike(item.comment)"
+                            @navigate="close"
+                        />
+                    </div>
                 </div>
-            </div>
+            </template>
 
             <div
                 v-if="isLoadingMore"

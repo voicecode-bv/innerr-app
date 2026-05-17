@@ -70,6 +70,7 @@ class BootstrapController extends Controller
             'token' => $user ? $this->apiClient->getToken() : null,
             'locale' => app()->getLocale(),
             'api_base' => $apiBase,
+            'app_version' => (string) config('nativephp.version'),
             'social_auth_urls' => [
                 'google' => $apiBase.'/oauth/google/redirect',
                 'apple' => $apiBase.'/oauth/apple/redirect',

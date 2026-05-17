@@ -82,6 +82,7 @@ async function bootstrap(): Promise<void> {
             baseUrl: data.api_base,
             auth: () => ({ token: auth.token, clear: () => auth.clear() }),
             locale: () => i18n.locale,
+            appVersion: () => auth.appVersion,
             onUnauthorized: () => {
                 router.push({ name: 'spa.login' });
             },

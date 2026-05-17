@@ -27,6 +27,7 @@ interface BootstrapPayload {
     token: string | null;
     locale: string;
     api_base: string;
+    app_version: string;
     social_auth_urls: { google: string; apple: string };
 }
 
@@ -35,6 +36,7 @@ export const useAuthStore = defineStore('spa-auth', {
         user: null as User | null,
         token: null as string | null,
         apiBase: '' as string,
+        appVersion: '' as string,
         socialAuthUrls: { google: '', apple: '' },
     }),
     actions: {
@@ -50,6 +52,7 @@ export const useAuthStore = defineStore('spa-auth', {
             const data = await api.get<BootstrapPayload>('/api/spa/bootstrap');
             this.user = data.user;
             this.apiBase = data.api_base;
+            this.appVersion = data.app_version;
             this.socialAuthUrls = data.social_auth_urls;
 
             // BFF token blijft de bron van waarheid voor backwards-compat.

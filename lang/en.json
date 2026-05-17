@@ -370,6 +370,8 @@
     "Too many invitations sent. Please try again later.": "Too many invitations sent. Please try again later.",
     "Try again": "Try again",
     "Failed to load comments": "Failed to load comments",
+    "1 reaction hidden from other circles": "1 reaction hidden from other circles",
+    ":count reactions hidden from other circles": ":count reactions hidden from other circles",
     "Failed to load likes": "Failed to load likes",
     "Show likes": "Show likes",
     "No likes yet": "No likes yet",

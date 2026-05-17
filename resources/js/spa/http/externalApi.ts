@@ -25,17 +25,20 @@ interface AuthLike {
 let baseUrl: string | null = null;
 let authResolver: (() => AuthLike) | null = null;
 let localeResolver: (() => string) | null = null;
+let appVersionResolver: (() => string) | null = null;
 let unauthorizedHandler: (() => void) | null = null;
 
 export function configureExternalApi(opts: {
     baseUrl: string;
     auth: () => AuthLike;
     locale: () => string;
+    appVersion: () => string;
     onUnauthorized: () => void;
 }): void {
     baseUrl = opts.baseUrl.replace(/\/+$/, '');
     authResolver = opts.auth;
     localeResolver = opts.locale;
+    appVersionResolver = opts.appVersion;
     unauthorizedHandler = opts.onUnauthorized;
 }
 
@@ -52,6 +55,7 @@ async function performCall<T>(
 
     const auth = authResolver?.();
     const locale = localeResolver?.();
+    const appVersion = appVersionResolver?.();
     const headers: Record<string, string> = { Accept: 'application/json' };
 
     if (auth?.token) {
@@ -60,6 +64,10 @@ async function performCall<T>(
 
     if (locale) {
         headers['Accept-Language'] = locale;
+    }
+
+    if (appVersion) {
+        headers['X-App-Version'] = appVersion;
     }
 
     if (body !== undefined) {

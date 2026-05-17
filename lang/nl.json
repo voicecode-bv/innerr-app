@@ -379,6 +379,8 @@
     "Too many invitations sent. Please try again later.": "Te veel uitnodigingen verstuurd. Probeer het later opnieuw.",
     "Try again": "Opnieuw proberen",
     "Failed to load comments": "Reacties laden mislukt",
+    "1 reaction hidden from other circles": "1 reactie uit andere kringen verborgen",
+    ":count reactions hidden from other circles": ":count reacties uit andere kringen verborgen",
     "Failed to load likes": "Likes laden mislukt",
     "Show likes": "Likes tonen",
     "No likes yet": "Nog geen likes",
