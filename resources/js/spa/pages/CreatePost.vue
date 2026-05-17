@@ -11,7 +11,13 @@ import {
 import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
+import { readExif } from '@/composables/useExif';
 import type { ExifData } from '@/composables/useExif';
+import MediaCarousel from '@/spa/components/MediaCarousel.vue';
+import type { CarouselItem } from '@/spa/components/MediaCarousel.vue';
+import type { PostData } from '@/spa/components/PostCard.vue';
+import { useApiForm } from '@/spa/composables/useApiForm';
+import { uploadInChunks } from '@/spa/composables/useChunkedUpload';
 
 const ImageCropModal = defineAsyncComponent(
     () => import('@/components/ImageCropModal.vue'),
@@ -19,17 +25,15 @@ const ImageCropModal = defineAsyncComponent(
 const TagSelector = defineAsyncComponent(
     () => import('@/spa/components/TagSelector.vue'),
 );
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { useApiForm } from '@/spa/composables/useApiForm';
+import { api, ApiError } from '@/spa/http/apiClient';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { useTagsStore } from '@/spa/stores/tags';
-import type { PostData } from '@/spa/components/PostCard.vue';
-import { api, ApiError } from '@/spa/http/apiClient';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import cropIcon from '../../../svg/doodle-icons/crop.svg';
 import photoIcon from '../../../svg/doodle-icons/photo.svg';
@@ -60,6 +64,17 @@ interface Person {
     circle_ids?: string[];
 }
 
+interface MediaItem {
+    id: string;
+    path: string;
+    isVideo: boolean;
+    mimeType: string;
+    preview: string;
+    exif: ExifData;
+}
+
+const MAX_PHOTOS = 10;
+
 const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
@@ -77,7 +92,11 @@ const availableTags = computed<Tag[]>(() => tagsStore.items ?? []);
 const allPersons = computed<Person[]>(() => personsStore.items ?? []);
 const availablePersons = computed<Person[]>(() => {
     const selected = form.data.circle_ids;
-    if (selected.length === 0) return [];
+
+    if (selected.length === 0) {
+        return [];
+    }
+
     return allPersons.value.filter((person) =>
         (person.circle_ids ?? []).some((id) => selected.includes(id)),
     );
@@ -101,30 +120,55 @@ async function loadFormData(): Promise<void> {
     }
 }
 
+const items = ref<MediaItem[]>([]);
+const activeIndex = ref(0);
+
 const form = useApiForm({
-    media_path: null as string | null,
+    media_paths: [] as string[],
+    media_metadata: [] as ExifData[],
     caption: '',
     circle_ids: [] as string[],
     tag_ids: [] as string[],
     person_ids: [] as string[],
 });
 
-const mediaPreview = ref<string | null>(null);
-const mediaIsVideo = ref(false);
 const showSourcePicker = ref(false);
 const showCropModal = ref(false);
+const cropTargetIndex = ref(0);
+const uploading = ref(false);
 
 // Wizard-stappen: 0=media, 1=caption, 2=cirkels, 3=tags & personen.
 const TOTAL_STEPS = 4;
 const currentStep = ref(0);
 
-const hasMedia = computed(() => form.data.media_path !== null);
+const hasMedia = computed(() => items.value.length > 0);
 const hasMetadata = computed(
     () => form.data.tag_ids.length > 0 || form.data.person_ids.length > 0,
 );
 const hasCircles = computed(() => form.data.circle_ids.length > 0);
+const hasVideo = computed(() => items.value.some((i) => i.isVideo));
+const canAddMore = computed(
+    () => !hasVideo.value && items.value.length < MAX_PHOTOS,
+);
+
+watch(
+    items,
+    (next) => {
+        form.data.media_paths = next.map((i) => i.path);
+        form.data.media_metadata = next.map((i) => i.exif);
+
+        if (activeIndex.value >= next.length) {
+            activeIndex.value = Math.max(0, next.length - 1);
+        }
+    },
+    { deep: true },
+);
 
 const canAdvance = computed(() => {
+    if (uploading.value) {
+        return false;
+    }
+
     switch (currentStep.value) {
         case 0:
             return hasMedia.value;
@@ -172,20 +216,34 @@ const primaryLabel = computed(() => {
     if (currentStep.value === TOTAL_STEPS - 1) {
         return form.processing ? t('Sharing...') : t('Share');
     }
+
     if (currentStep.value === 1 && !form.data.caption.trim()) {
         return t('Skip');
     }
+
     if (currentStep.value === 3 && !hasMetadata.value) {
         return t('Skip');
     }
+
     return t('Next');
 });
+
+const carouselItems = computed<CarouselItem[]>(() =>
+    items.value.map((item) => ({
+        id: item.id,
+        url: item.preview,
+        type: item.isVideo ? 'video' : 'image',
+    })),
+);
 
 // Drop tagged persons that are no longer in any of the selected circles.
 watch(
     () => form.data.circle_ids,
     () => {
-        if (form.data.person_ids.length === 0) return;
+        if (form.data.person_ids.length === 0) {
+            return;
+        }
+
         const stillVisible = new Set(availablePersons.value.map((p) => p.id));
         form.data.person_ids = form.data.person_ids.filter((id) =>
             stillVisible.has(id),
@@ -196,17 +254,24 @@ watch(
 function goNext(): void {
     if (currentStep.value === TOTAL_STEPS - 1) {
         submit();
+
         return;
     }
-    if (!canAdvance.value) return;
+
+    if (!canAdvance.value) {
+        return;
+    }
+
     currentStep.value = Math.min(TOTAL_STEPS - 1, currentStep.value + 1);
 }
 
 function goBack(): void {
     if (currentStep.value === 0) {
         router.push({ name: 'spa.home' });
+
         return;
     }
+
     currentStep.value = Math.max(0, currentStep.value - 1);
 }
 
@@ -216,7 +281,17 @@ function openSourcePicker(): void {
 
 async function selectFromGallery(): Promise<void> {
     showSourcePicker.value = false;
-    await Camera.pickImages().all();
+    const remaining = MAX_PHOTOS - items.value.length;
+
+    if (remaining <= 0) {
+        return;
+    }
+
+    // Chain volgt het patroon uit de mobile-camera README: images() ipv all()
+    // omdat het iOS PHPicker filter `.any(of:)` icm selectionLimit > 1 op
+    // sommige iOS-versies onbetrouwbaar in multi-select valt. Video's pakken
+    // we via een aparte flow.
+    await Camera.pickImages().images().multiple(true).maxItems(remaining);
 }
 
 async function openCamera(): Promise<void> {
@@ -226,6 +301,16 @@ async function openCamera(): Promise<void> {
 
 async function recordVideo(): Promise<void> {
     showSourcePicker.value = false;
+
+    if (items.value.length > 0) {
+        void Dialog.alert(
+            t("Can't add a video"),
+            t('Videos can only be shared on their own, without photos.'),
+        );
+
+        return;
+    }
+
     await Camera.recordVideo();
 }
 
@@ -234,30 +319,85 @@ async function loadPreview(path: string): Promise<string | null> {
         const response = await fetch(
             `/native-media?path=${encodeURIComponent(path)}`,
         );
-        if (!response.ok) return null;
+
+        if (!response.ok) {
+            return null;
+        }
+
         const { data_url } = await response.json();
+
         return data_url;
     } catch {
         return null;
     }
 }
 
+async function dataUrlToBlob(dataUrl: string): Promise<Blob | null> {
+    try {
+        const res = await fetch(dataUrl);
+
+        return await res.blob();
+    } catch {
+        return null;
+    }
+}
+
+function makeItem(
+    path: string,
+    mimeType: string,
+    preview: string,
+    exif: ExifData,
+): MediaItem {
+    return {
+        id: crypto.randomUUID(),
+        path,
+        isVideo: mimeType.startsWith('video/'),
+        mimeType,
+        preview,
+        exif,
+    };
+}
+
+async function appendItem(path: string, mimeType: string): Promise<void> {
+    const preview = await loadPreview(path);
+
+    if (!preview) {
+        return;
+    }
+
+    let exif: ExifData = { taken_at: null, latitude: null, longitude: null };
+
+    if (!mimeType.startsWith('video/')) {
+        const blob = await dataUrlToBlob(preview);
+
+        if (blob) {
+            exif = await readExif(blob);
+        }
+    }
+
+    items.value.push(makeItem(path, mimeType, preview, exif));
+}
+
 async function handlePhotoTaken(payload: {
     path: string;
     mimeType: string;
 }): Promise<void> {
-    form.data.media_path = payload.path;
-    mediaPreview.value = await loadPreview(payload.path);
-    mediaIsVideo.value = false;
+    if (hasVideo.value || items.value.length >= MAX_PHOTOS) {
+        return;
+    }
+
+    await appendItem(payload.path, payload.mimeType);
 }
 
 async function handleVideoRecorded(payload: {
     path: string;
     mimeType: string;
 }): Promise<void> {
-    form.data.media_path = payload.path;
-    mediaPreview.value = await loadPreview(payload.path);
-    mediaIsVideo.value = true;
+    if (items.value.length > 0) {
+        return;
+    }
+
+    await appendItem(payload.path, payload.mimeType);
 }
 
 async function handleMediaSelected(payload: {
@@ -265,36 +405,54 @@ async function handleMediaSelected(payload: {
     files: { path: string; mimeType: string }[];
     cancelled: boolean;
 }): Promise<void> {
-    if (!payload.success || payload.cancelled || !payload.files.length) return;
+    if (!payload.success || payload.cancelled || !payload.files.length) {
+        return;
+    }
 
-    const file = payload.files[0];
-    form.data.media_path = file.path;
-    mediaPreview.value = await loadPreview(file.path);
-    mediaIsVideo.value = file.mimeType?.startsWith('video/') ?? false;
+    const hasIncomingVideo = payload.files.some((f) =>
+        f.mimeType?.startsWith('video/'),
+    );
+
+    if (
+        hasIncomingVideo &&
+        (items.value.length > 0 || payload.files.length > 1)
+    ) {
+        void Dialog.alert(
+            t("Can't combine media"),
+            t('Videos can only be shared on their own, without photos.'),
+        );
+
+        return;
+    }
+
+    for (const file of payload.files) {
+        if (items.value.length >= MAX_PHOTOS) {
+            break;
+        }
+
+        await appendItem(file.path, file.mimeType ?? '');
+    }
 }
 
-function removeMedia(): void {
-    form.data.media_path = null;
-    mediaPreview.value = null;
-    mediaIsVideo.value = false;
+function removeItem(index: number): void {
+    items.value.splice(index, 1);
+
+    if (items.value.length === 0) {
+        activeIndex.value = 0;
+    } else if (activeIndex.value >= items.value.length) {
+        activeIndex.value = items.value.length - 1;
+    }
 }
 
 function openCropModal(): void {
-    if (!mediaPreview.value || mediaIsVideo.value) return;
-    showCropModal.value = true;
-}
+    const item = items.value[activeIndex.value];
 
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    const chunkSize = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-        binary += String.fromCharCode.apply(
-            null,
-            Array.from(bytes.subarray(i, i + chunkSize)),
-        );
+    if (!item || item.isVideo) {
+        return;
     }
-    return btoa(binary);
+
+    cropTargetIndex.value = activeIndex.value;
+    showCropModal.value = true;
 }
 
 async function handleCropped(
@@ -302,24 +460,29 @@ async function handleCropped(
     dataUrl: string,
     exif: ExifData,
 ): Promise<void> {
-    const buffer = await blob.arrayBuffer();
-    const base64 = arrayBufferToBase64(buffer);
+    const target = items.value[cropTargetIndex.value];
+
+    if (!target) {
+        showCropModal.value = false;
+
+        return;
+    }
+
+    uploading.value = true;
 
     try {
-        const response = await api.post<{ path: string }>(
-            '/posts/cropped-media',
-            {
-                data: base64,
-                taken_at: exif.taken_at,
-                latitude: exif.latitude,
-                longitude: exif.longitude,
-            },
-        );
-        form.data.media_path = response.path;
-        mediaPreview.value = dataUrl;
+        const path = await uploadInChunks(blob, exif);
+        target.path = path;
+        target.preview = dataUrl;
+        target.exif = exif;
         showCropModal.value = false;
     } catch {
-        // crop submit failed; user kan retry
+        void Dialog.alert(
+            t('Upload failed'),
+            t('Could not upload the cropped photo. Please try again.'),
+        );
+    } finally {
+        uploading.value = false;
     }
 }
 
@@ -349,8 +512,9 @@ onUnmounted(() => {
 
 function buildOptimisticPost(): PostData {
     const tempId = `optimistic-${crypto.randomUUID()}`;
-    const isVideo = mediaIsVideo.value;
-    const previewUrl = mediaPreview.value ?? '';
+    const first = items.value[0];
+    const isVideo = first?.isVideo ?? false;
+    const previewUrl = first?.preview ?? '';
     const selectedCircles = circles.value
         .filter((c) => form.data.circle_ids.includes(c.id))
         .map((c) => ({ id: c.id, name: c.name, photo: c.photo ?? null }));
@@ -362,6 +526,15 @@ function buildOptimisticPost(): PostData {
         thumbnail_url: isVideo ? previewUrl : null,
         thumbnail_small_url: isVideo ? previewUrl : null,
         media_status: 'processing',
+        media: items.value.map((item, index) => ({
+            id: `${tempId}-${index}`,
+            url: item.preview,
+            type: item.isVideo ? 'video' : 'image',
+            status: 'processing',
+            thumbnail_url: item.isVideo ? item.preview : null,
+            thumbnail_small_url: item.isVideo ? item.preview : null,
+            sort_order: index,
+        })),
         caption: form.data.caption ?? null,
         location: null,
         created_at: new Date().toISOString(),
@@ -379,14 +552,22 @@ function buildOptimisticPost(): PostData {
 }
 
 async function submit(): Promise<void> {
-    if (form.processing || !hasMedia.value || !hasCircles.value) return;
+    if (
+        form.processing ||
+        uploading.value ||
+        !hasMedia.value ||
+        !hasCircles.value
+    ) {
+        return;
+    }
 
-    const hasPreview = !!mediaPreview.value;
+    const hasPreview = !!items.value[0]?.preview;
     const optimistic = hasPreview ? buildOptimisticPost() : null;
     const targetCircleIds = [...form.data.circle_ids];
 
     if (optimistic) {
         feedCache.prepend('home', optimistic);
+
         for (const circleId of targetCircleIds) {
             feedCache.prepend(`circle:${circleId}`, optimistic);
         }
@@ -406,12 +587,14 @@ async function submit(): Promise<void> {
     try {
         await form.post('/api/spa/posts');
         feedCache.invalidate('home');
+
         for (const circleId of targetCircleIds) {
             feedCache.invalidate(`circle:${circleId}`);
         }
     } catch (error) {
         if (optimistic) {
             feedCache.removeItem('home', optimistic.id);
+
             for (const circleId of targetCircleIds) {
                 feedCache.removeItem(`circle:${circleId}`, optimistic.id);
             }
@@ -456,6 +639,12 @@ function iconMaskStyle(url: string) {
         WebkitMaskPosition: 'center',
     };
 }
+
+const activeItemIsImage = computed(() => {
+    const item = items.value[activeIndex.value];
+
+    return item ? !item.isVideo : false;
+});
 </script>
 
 <template>
@@ -532,23 +721,33 @@ function iconMaskStyle(url: string) {
                     v-show="currentStep === 0"
                     class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm"
                 >
-                    <div v-if="mediaPreview" class="relative">
-                        <video
-                            v-if="mediaIsVideo"
-                            :src="mediaPreview"
-                            class="w-full object-cover"
-                            controls
+                    <div
+                        v-if="hasMedia"
+                        class="relative aspect-square overflow-hidden"
+                    >
+                        <MediaCarousel
+                            :items="carouselItems"
+                            :active-index="activeIndex"
+                            @update:active-index="activeIndex = $event"
                         />
-                        <img
-                            v-else
-                            :src="mediaPreview"
-                            class="w-full object-cover"
-                            :alt="t('Selected photo')"
-                        />
+
+                        <p
+                            v-if="items.length > 1"
+                            class="absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white backdrop-blur-sm"
+                        >
+                            {{
+                                t('Photo :index of :total', {
+                                    index: activeIndex + 1,
+                                    total: items.length,
+                                })
+                            }}
+                        </p>
+
                         <button
-                            v-if="!mediaIsVideo"
+                            v-if="activeItemIsImage"
                             class="absolute top-3 left-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                             :aria-label="t('Crop photo')"
+                            :disabled="uploading"
                             @click="openCropModal"
                         >
                             <span
@@ -559,8 +758,9 @@ function iconMaskStyle(url: string) {
                         </button>
                         <button
                             class="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-                            :aria-label="t('Cancel')"
-                            @click="removeMedia"
+                            :aria-label="t('Remove this photo')"
+                            :disabled="uploading"
+                            @click="removeItem(activeIndex)"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -576,6 +776,29 @@ function iconMaskStyle(url: string) {
                                     d="M6 18 18 6M6 6l12 12"
                                 />
                             </svg>
+                        </button>
+
+                        <button
+                            v-if="canAddMore"
+                            class="absolute right-3 bottom-3 flex items-center gap-2 rounded-full bg-black/50 px-3 py-2 text-xs text-white backdrop-blur-sm"
+                            :disabled="uploading"
+                            @click="openSourcePicker"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="2"
+                                stroke="currentColor"
+                                class="size-4"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M12 4.5v15m7.5-7.5h-15"
+                                />
+                            </svg>
+                            {{ t('Add more') }}
                         </button>
                     </div>
 
@@ -599,10 +822,10 @@ function iconMaskStyle(url: string) {
                     </button>
 
                     <p
-                        v-if="form.errors.media_path"
+                        v-if="form.errors.media_path || form.errors.media_paths"
                         class="px-5 pb-4 text-blush-500"
                     >
-                        {{ form.errors.media_path }}
+                        {{ form.errors.media_path || form.errors.media_paths }}
                     </p>
                 </section>
 
@@ -739,18 +962,20 @@ function iconMaskStyle(url: string) {
                                 ></span>
                                 {{ t('Take a photo') }}
                             </button>
-                            <div class="mx-5 border-t border-sand-100" />
-                            <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
-                                @click="recordVideo"
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    class="inline-block size-5 bg-teal"
-                                    :style="iconMaskStyle(videoCameraIcon)"
-                                ></span>
-                                {{ t('Record a video') }}
-                            </button>
+                            <template v-if="items.length === 0">
+                                <div class="mx-5 border-t border-sand-100" />
+                                <button
+                                    class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
+                                    @click="recordVideo"
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        class="inline-block size-5 bg-teal"
+                                        :style="iconMaskStyle(videoCameraIcon)"
+                                    ></span>
+                                    {{ t('Record a video') }}
+                                </button>
+                            </template>
                             <div class="mx-5 border-t border-sand-100" />
                             <button
                                 class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
@@ -778,7 +1003,7 @@ function iconMaskStyle(url: string) {
 
         <ImageCropModal
             :open="showCropModal"
-            :src="mediaPreview"
+            :src="items[cropTargetIndex]?.preview ?? null"
             @update:open="showCropModal = $event"
             @cropped="handleCropped"
         />

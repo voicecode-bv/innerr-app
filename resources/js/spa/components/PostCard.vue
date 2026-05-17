@@ -3,6 +3,7 @@ import { BridgeCall, Dialog } from '@nativephp/mobile';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
+import MediaCarousel from '@/spa/components/MediaCarousel.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { externalApi } from '@/spa/http/externalApi';
@@ -17,6 +18,16 @@ import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
 import pencilIcon from '../../../svg/doodle-icons/pencil-3.svg';
 
+export interface PostMediaItem {
+    id: string;
+    url: string;
+    type: 'image' | 'video';
+    status?: 'processing' | 'ready' | 'failed';
+    thumbnail_url?: string | null;
+    thumbnail_small_url?: string | null;
+    sort_order?: number;
+}
+
 export interface PostData {
     id: string;
     media_url: string;
@@ -24,6 +35,7 @@ export interface PostData {
     thumbnail_url: string | null;
     thumbnail_small_url: string | null;
     media_status: 'processing' | 'ready' | 'failed';
+    media?: PostMediaItem[];
     caption: string | null;
     location: string | null;
     created_at: string;
@@ -130,8 +142,7 @@ async function downloadMedia(): Promise<void> {
         return;
     }
 
-    const type =
-        props.post.media_type === 'video' ? 'video' : 'image';
+    const type = props.post.media_type === 'video' ? 'video' : 'image';
 
     isDownloading.value = true;
 
@@ -165,6 +176,19 @@ async function downloadMedia(): Promise<void> {
         isDownloading.value = false;
     }
 }
+
+const carouselItems = computed(() =>
+    (props.post.media ?? []).map((m) => ({
+        id: m.id,
+        url: m.url,
+        type: m.type,
+        thumbnail: m.thumbnail_url ?? null,
+    })),
+);
+
+const hasMultipleMedia = computed(() => carouselItems.value.length > 1);
+
+const activeMediaIndex = ref(0);
 
 const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
@@ -433,8 +457,30 @@ function timeAgo(dateString: string): string {
         </div>
 
         <div
-            v-if="post.media_type === 'image'"
-            class="relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand transform-gpu"
+            v-if="hasMultipleMedia"
+            class="relative mx-3 aspect-square transform-gpu overflow-hidden rounded-2xl bg-sand"
+            @click="openDetails"
+        >
+            <MediaCarousel
+                :items="carouselItems"
+                :active-index="activeMediaIndex"
+                @update:active-index="activeMediaIndex = $event"
+            />
+            <span
+                class="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-xs text-white backdrop-blur-sm"
+            >
+                {{
+                    t('Photo :index of :total', {
+                        index: activeMediaIndex + 1,
+                        total: carouselItems.length,
+                    })
+                }}
+            </span>
+        </div>
+
+        <div
+            v-else-if="post.media_type === 'image'"
+            class="relative mx-3 aspect-square transform-gpu overflow-hidden rounded-2xl bg-sand"
         >
             <button class="block size-full" type="button" @click="openDetails">
                 <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
@@ -590,7 +636,7 @@ function timeAgo(dateString: string): string {
                 :class="[
                     isFullscreen
                         ? 'fixed inset-0 z-9999 flex items-center justify-center bg-black'
-                        : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand transform-gpu',
+                        : 'relative mx-3 aspect-square transform-gpu overflow-hidden rounded-2xl bg-sand',
                 ]"
                 @click="openDetails"
             >

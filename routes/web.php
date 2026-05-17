@@ -11,6 +11,7 @@ use App\Http\Controllers\Spa\EdgeController as SpaEdgeController;
 use App\Http\Controllers\Spa\PersonsController as SpaPersonsController;
 use App\Http\Controllers\Spa\PostsController as SpaPostsController;
 use App\Http\Controllers\Spa\SettingsController as SpaSettingsController;
+use App\Http\Controllers\UploadSessionController;
 use Illuminate\Support\Facades\Route;
 
 // SPA BFF — alleen wat technisch niet client-side kan: bootstrap-mirror,
@@ -47,6 +48,10 @@ Route::middleware('auth.api')->group(function () {
     Route::get('/native-media', [PostActionController::class, 'serveMedia'])->name('native-media');
     Route::post('/posts/cropped-media', [PostActionController::class, 'storeCroppedMedia'])->name('posts.cropped-media');
 
+    Route::post('/posts/upload-session', [UploadSessionController::class, 'init'])->name('posts.upload-session.init');
+    Route::post('/posts/upload-session/{upload}/chunk', [UploadSessionController::class, 'chunk'])->name('posts.upload-session.chunk');
+    Route::delete('/posts/upload-session/{upload}', [UploadSessionController::class, 'abort'])->name('posts.upload-session.abort');
+
     Route::get('/photos/map', [MapController::class, 'photos'])->name('photos.map');
     Route::get('/profiles/{username}/photos/map', [MapController::class, 'profilePhotos'])->name('profiles.photos.map');
     Route::get('/circles/{circle}/photos/map', [MapController::class, 'circlePhotos'])->name('circles.photos.map')->whereUuid('circle');
@@ -54,5 +59,5 @@ Route::middleware('auth.api')->group(function () {
 
 // SPA shell — vangt alle overige routes (incl. /, /login, /spa-test/*, etc.).
 Route::get('/{any?}', fn () => view('spa'))
-    ->where('any', '^(?!api/|oauth/|media-proxy|native-media|posts/cropped-media|photos/map|profiles/[^/]+/photos/map|circles/[^/]+/photos/map).*$')
+    ->where('any', '^(?!api/|oauth/|media-proxy|native-media|posts/cropped-media|posts/upload-session|photos/map|profiles/[^/]+/photos/map|circles/[^/]+/photos/map).*$')
     ->name('spa.shell');
