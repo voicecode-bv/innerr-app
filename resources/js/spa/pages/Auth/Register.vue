@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import Button from '@/components/Button.vue';
 import AppleAuthButton from '@/spa/components/auth/AppleAuthButton.vue';
 import GoogleAuthButton from '@/spa/components/auth/GoogleAuthButton.vue';
 import LanguageSelector from '@/spa/components/LanguageSelector.vue';
 import TextField from '@/spa/components/TextField.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
+import { useInviteRedeem } from '@/spa/composables/useInviteRedeem';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -30,7 +31,7 @@ function iconMaskStyle(url: string) {
 const { t } = useTranslations();
 const i18n = useI18nStore();
 const auth = useAuthStore();
-const router = useRouter();
+const { redirectAfterAuth } = useInviteRedeem();
 
 const currentLocale = computed(() => i18n.locale);
 const socialAuthUrls = computed(() => auth.socialAuthUrls);
@@ -61,7 +62,7 @@ async function submit(): Promise<void> {
             {
                 onSuccess: async (data) => {
                     await auth.bootstrap();
-                    router.push(data.redirect_to ?? '/');
+                    await redirectAfterAuth(data.redirect_to ?? '/');
                 },
                 onFinish: () => form.reset('password'),
             },

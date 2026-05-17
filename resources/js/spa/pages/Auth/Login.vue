@@ -7,6 +7,7 @@ import GoogleAuthButton from '@/spa/components/auth/GoogleAuthButton.vue';
 import LanguageSelector from '@/spa/components/LanguageSelector.vue';
 import TextField from '@/spa/components/TextField.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
+import { useInviteRedeem } from '@/spa/composables/useInviteRedeem';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -30,6 +31,7 @@ const { t } = useTranslations();
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const { redirectAfterAuth } = useInviteRedeem();
 
 const socialAuthUrls = computed(() => auth.socialAuthUrls);
 
@@ -67,7 +69,7 @@ async function submit(): Promise<void> {
             {
                 onSuccess: async (data) => {
                     await auth.bootstrap();
-                    router.push(data.redirect_to ?? '/');
+                    await redirectAfterAuth(data.redirect_to ?? '/');
                 },
                 onFinish: () => form.reset('password'),
             },

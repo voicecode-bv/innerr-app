@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useAuthStore } from '@/spa/stores/auth';
+import { useInviteRedeem } from '@/spa/composables/useInviteRedeem';
 import { secureStorage, TOKEN_KEY } from '@/spa/composables/useSecureStorage';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { useAuthStore } from '@/spa/stores/auth';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const { t } = useTranslations();
+const { redirectAfterAuth } = useInviteRedeem();
 
 function failTo(errorCode: string): void {
     router.replace({ name: 'spa.login', query: { oauth_error: errorCode } });
@@ -16,14 +18,18 @@ function failTo(errorCode: string): void {
 
 onMounted(async () => {
     const errorParam = route.query.error;
+
     if (typeof errorParam === 'string' && errorParam !== '') {
         failTo(errorParam);
+
         return;
     }
 
     const tokenParam = route.query.token;
+
     if (typeof tokenParam !== 'string' || tokenParam === '') {
         failTo('missing_token');
+
         return;
     }
 
@@ -32,12 +38,10 @@ onMounted(async () => {
 
     try {
         const data = await auth.bootstrap();
+
         if (data.user) {
-            router.replace(
-                data.user.onboarded
-                    ? { name: 'spa.home' }
-                    : { name: 'spa.onboarding.intro' },
-            );
+            const fallback = data.user.onboarded ? '/' : '/onboarding/intro';
+            await redirectAfterAuth(fallback);
         } else {
             failTo('invalid_token');
         }

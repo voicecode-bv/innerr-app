@@ -6,6 +6,7 @@ import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
+import ShareInviteLinkSection from '@/spa/components/ShareInviteLinkSection.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -85,6 +86,7 @@ const isEditing = ref(false);
 const inviteSent = ref(false);
 const isDeleting = ref(false);
 const isLeaving = ref(false);
+const inviteMethod = ref<'identifier' | 'link'>('identifier');
 
 const canInvite = computed(
     () => circle.value?.is_owner || circle.value?.members_can_invite,
@@ -742,8 +744,46 @@ function maskStyle(icon: string) {
 
                 <SurfaceCard v-if="canInvite" data-tour="circle.invite">
                     <h3 class="font-semibold text-teal">
-                        {{ t('Invite someone') }}
+                        {{ t('Invite to this circle') }}
                     </h3>
+                    <p class="mt-1 text-teal-muted">
+                        {{ t('How would you like to invite people?') }}
+                    </p>
+
+                    <div
+                        role="tablist"
+                        class="mt-3 grid grid-cols-2 gap-1 rounded-full bg-sand-100 p-1"
+                    >
+                        <button
+                            type="button"
+                            role="tab"
+                            :aria-selected="inviteMethod === 'identifier'"
+                            :class="[
+                                'rounded-full px-3 py-2 text-sm font-medium transition',
+                                inviteMethod === 'identifier'
+                                    ? 'bg-white text-teal shadow-sm'
+                                    : 'text-teal-muted hover:text-teal',
+                            ]"
+                            @click="inviteMethod = 'identifier'"
+                        >
+                            {{ t('Username or email') }}
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            :aria-selected="inviteMethod === 'link'"
+                            :class="[
+                                'rounded-full px-3 py-2 text-sm font-medium transition',
+                                inviteMethod === 'link'
+                                    ? 'bg-white text-teal shadow-sm'
+                                    : 'text-teal-muted hover:text-teal',
+                            ]"
+                            @click="inviteMethod = 'link'"
+                        >
+                            {{ t('Share a link') }}
+                        </button>
+                    </div>
+
                     <Transition
                         enter-active-class="transition duration-200 ease-out"
                         enter-from-class="opacity-0"
@@ -754,8 +794,9 @@ function maskStyle(icon: string) {
                         mode="out-in"
                     >
                         <div
-                            v-if="inviteSent"
-                            class="mt-3 flex items-center gap-2 rounded-lg bg-sage-100/70 px-4 py-3 text-sage-700"
+                            v-if="inviteMethod === 'identifier' && inviteSent"
+                            key="sent"
+                            class="mt-4 flex items-center gap-2 rounded-lg bg-sage-100/70 px-4 py-3 text-sage-700"
                         >
                             <IconTile
                                 :icon="sendIcon"
@@ -766,8 +807,9 @@ function maskStyle(icon: string) {
                             {{ t('Invitation sent!') }}
                         </div>
                         <form
-                            v-else
-                            class="mt-3 space-y-3"
+                            v-else-if="inviteMethod === 'identifier'"
+                            key="form"
+                            class="mt-4 space-y-3"
                             @submit.prevent="addMember"
                         >
                             <input
@@ -800,6 +842,12 @@ function maskStyle(icon: string) {
                                 </Button>
                             </div>
                         </form>
+                        <div v-else key="link" class="mt-4">
+                            <ShareInviteLinkSection
+                                :circle-id="circle.id"
+                                :circle-name="circle.name"
+                            />
+                        </div>
                     </Transition>
                 </SurfaceCard>
 

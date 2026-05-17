@@ -15,6 +15,7 @@ declare module 'vue-router' {
         onboarded?: boolean;
         iosOnly?: boolean;
         mobileOnly?: boolean;
+        public?: boolean;
     }
 }
 
@@ -51,6 +52,15 @@ const routes: RouteRecordRaw[] = [
         name: 'spa.oauth-callback',
         alias: '/oauth/callback',
         component: () => import('@/spa/pages/Auth/OAuthCallback.vue'),
+    },
+
+    // Invite landing (public — guest en ingelogd mogen erbij)
+    {
+        path: '/invite/:token',
+        alias: '/join/:token',
+        name: 'spa.invite.show',
+        component: () => import('@/spa/pages/InviteLanding.vue'),
+        meta: { public: true },
     },
 
     // Onboarding (auth, no onboarded check)
@@ -259,6 +269,11 @@ export const router = createRouter({
 
 router.beforeEach(async (to) => {
     const auth = useAuthStore();
+
+    if (to.meta.public) {
+        // Public routes (zoals invite landing) zijn voor zowel guests als ingelogde users.
+        return;
+    }
 
     if (to.meta.auth && !auth.user) {
         return { name: 'spa.login' };
