@@ -383,6 +383,32 @@ function openLikes(): void {
     isLikesSheetOpen.value = true;
 }
 
+async function toggleLike(): Promise<void> {
+    if (!post.value || isOwner.value) {
+        return;
+    }
+
+    const wasLiked = post.value.is_liked;
+    post.value.is_liked = !wasLiked;
+    post.value.likes_count += wasLiked ? -1 : 1;
+
+    try {
+        if (wasLiked) {
+            await externalApi.delete(`/posts/${post.value.id}/like`);
+        } else {
+            await externalApi.post(`/posts/${post.value.id}/like`);
+        }
+        // Refresh shadow info zoals first_visible_liker — anders blijft de
+        // "X en N anderen" regel hangen op de oude liker.
+        postCache.invalidate(post.value.id);
+    } catch {
+        if (post.value) {
+            post.value.is_liked = wasLiked;
+            post.value.likes_count += wasLiked ? 1 : -1;
+        }
+    }
+}
+
 function openComments(): void {
     isCommentsSheetOpen.value = true;
 }
@@ -953,33 +979,50 @@ watch(
                         v-if="!isFullscreen"
                         class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
                     >
-                        <button
-                            class="flex items-center gap-1"
-                            :aria-label="t('Show likes')"
-                            @click="openLikes"
-                        >
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-6 drop-shadow"
-                                :class="
-                                    post.is_liked
-                                        ? 'bg-brand-orange'
-                                        : 'bg-white'
+                        <div class="flex items-center gap-1">
+                            <button
+                                v-if="!isOwner"
+                                class="flex"
+                                :aria-label="
+                                    post.is_liked ? t('Unlike') : t('Like')
                                 "
-                                :style="
-                                    iconMaskStyle(
+                                @click="toggleLike"
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-6 drop-shadow"
+                                    :class="
                                         post.is_liked
-                                            ? heartFilledIcon
-                                            : heartIcon,
-                                    )
-                                "
-                            ></span>
+                                            ? 'bg-brand-orange'
+                                            : 'bg-white'
+                                    "
+                                    :style="
+                                        iconMaskStyle(
+                                            post.is_liked
+                                                ? heartFilledIcon
+                                                : heartIcon,
+                                        )
+                                    "
+                                ></span>
+                            </button>
+                            <button
+                                v-else
+                                class="flex"
+                                :aria-label="t('Show likes')"
+                                @click="openLikes"
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-6 bg-white drop-shadow"
+                                    :style="iconMaskStyle(heartIcon)"
+                                ></span>
+                            </button>
                             <span
                                 v-if="post.likes_count > 0"
                                 class="text-white drop-shadow"
                                 >{{ post.likes_count }}</span
                             >
-                        </button>
+                        </div>
                         <button
                             class="flex items-center gap-1 text-white drop-shadow"
                             :aria-label="t('Comments')"
