@@ -84,6 +84,7 @@ async function performCall<T>(
             headers,
             body: body !== undefined ? JSON.stringify(body) : undefined,
             credentials: 'omit',
+            cache: 'no-store',
         });
     } catch {
         throw new NetworkError();
