@@ -112,14 +112,26 @@ export const useFeatureTourStore = defineStore('spa-feature-tour', {
                 return;
             }
 
-            // Server is authoritative zodra het endpoint bestaat: overschrijf
+            // Server is authoritatief zodra het endpoint bestaat: overschrijf
             // localStorage maar laat een lopende client-side tour (status =
-            // running) ongemoeid — de gebruiker is dan midden in de tour.
+            // running) ongemoeid. De gebruiker is dan midden in de tour.
             this.completedSegments = remote.segments;
 
             if (remote.completed_at) {
                 this.status = 'completed';
                 this.activeIndex = getSegments().length;
+                this.persist();
+
+                return;
+            }
+
+            // Bestaande gebruikers die de tour nog nooit gezien hebben (geen
+            // server-side started_at, geen completed_at) en die nu niet midden
+            // in een tour zitten: één keer automatisch aanbieden.
+            if (remote.started_at === null && this.status === 'idle') {
+                this.start();
+
+                return;
             }
 
             this.persist();

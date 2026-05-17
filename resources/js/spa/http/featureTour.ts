@@ -1,6 +1,7 @@
 import { externalApi } from '@/spa/http/externalApi';
 
 export interface FeatureTourStatus {
+    started_at: string | null;
     completed_at: string | null;
     segments: string[];
 }
