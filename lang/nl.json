@@ -365,6 +365,7 @@
     "Invalid cropped image": "Ongeldige bijgesneden afbeelding",
     "Tags": "Labels",
     "Location": "Locatie",
+    "No location set": "Geen locatie bekend",
     "Tag name...": "Labelnaam...",
     "New tag": "Nieuw label",
     "Add tag": "Label toevoegen",

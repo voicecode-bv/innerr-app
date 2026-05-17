@@ -4,7 +4,6 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
-import PostDetailsSheet from '@/spa/components/PostDetailsSheet.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -88,9 +87,6 @@ const isCommentsOpen = ref(false);
 const likesPostId = ref<string | null>(null);
 const isLikesOpen = ref(false);
 
-const detailsPostId = ref<string | null>(null);
-const isDetailsOpen = ref(false);
-
 function openCommentsForPost(postId: string): void {
     commentsPostId.value = postId;
     isCommentsOpen.value = true;
@@ -99,11 +95,6 @@ function openCommentsForPost(postId: string): void {
 function openLikesForPost(postId: string): void {
     likesPostId.value = postId;
     isLikesOpen.value = true;
-}
-
-function openDetailsForPost(postId: string): void {
-    detailsPostId.value = postId;
-    isDetailsOpen.value = true;
 }
 
 async function onPostUpdated(): Promise<void> {
@@ -217,7 +208,6 @@ function goBack(): void {
                 :post="post"
                 @open-comments="openCommentsForPost"
                 @open-likes="openLikesForPost"
-                @open-details="openDetailsForPost"
                 @post-updated="onPostUpdated"
                 @post-deleted="onPostDeleted"
             />
@@ -286,11 +276,5 @@ function goBack(): void {
             @update:open="isLikesOpen = $event"
         />
 
-        <PostDetailsSheet
-            v-if="detailsPostId !== null"
-            :open="isDetailsOpen"
-            :post-id="detailsPostId"
-            @update:open="isDetailsOpen = $event"
-        />
     </AppLayout>
 </template>

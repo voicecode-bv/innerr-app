@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
+import { BridgeCall, Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     onMounted,
@@ -15,6 +15,8 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
+import MediaCarousel from '@/spa/components/MediaCarousel.vue';
+import type { PostMediaItem } from '@/spa/components/PostCard.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
@@ -26,6 +28,7 @@ import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { externalApi } from '@/spa/http/externalApi';
+import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
@@ -85,6 +88,7 @@ interface Post {
     media_type: string;
     thumbnail_url: string | null;
     media_status: 'processing' | 'ready' | 'failed';
+    media?: PostMediaItem[];
     caption: string | null;
     location: string | null;
     latitude: number | null;
@@ -93,6 +97,8 @@ interface Post {
     taken_at: string | null;
     user: User;
     is_liked: boolean;
+    is_downloadable?: boolean;
+    original_media_url?: string | null;
     likes_count: number;
     comments_count: number;
     circles?: Circle[];
@@ -221,12 +227,93 @@ const { isMuted, isFullscreen, toggleMute, toggleFullscreen } =
     useVideoFullscreen(videoRef);
 const mediaLoaded = ref(false);
 
+const carouselItems = computed(() =>
+    (post.value?.media ?? []).map((m) => ({
+        id: m.id,
+        url: m.url,
+        type: m.type,
+        thumbnail: m.thumbnail_url ?? null,
+    })),
+);
+const hasMultipleMedia = computed(() => carouselItems.value.length > 1);
+const activeMediaIndex = ref(0);
+
 watch(
     () => post.value?.media_url,
     () => {
         mediaLoaded.value = false;
+        activeMediaIndex.value = 0;
     },
 );
+
+const canDownload = computed(() => {
+    if (!post.value) {
+        return false;
+    }
+
+    if (
+        post.value.media_type !== 'image' &&
+        post.value.media_type !== 'video'
+    ) {
+        return false;
+    }
+
+    return post.value.is_downloadable === true;
+});
+
+const isDownloading = ref(false);
+
+async function downloadMedia(): Promise<void> {
+    if (!post.value || isDownloading.value) {
+        return;
+    }
+
+    // Bij multi-photo posts downloaden we de slide die nu zichtbaar is — anders
+    // kan de gebruiker de andere foto's nooit opslaan.
+    const activeItem = post.value.media?.[activeMediaIndex.value];
+    const url = activeItem
+        ? (activeItem.original_url ?? activeItem.url)
+        : (post.value.original_media_url ?? post.value.media_url);
+    const itemType = activeItem ? activeItem.type : post.value.media_type;
+
+    if (!url) {
+        return;
+    }
+
+    const type = itemType === 'video' ? 'video' : 'image';
+
+    isDownloading.value = true;
+
+    try {
+        const response = (await BridgeCall('Photos.Save', { url, type })) as
+            | { status?: string; code?: string; message?: string }
+            | undefined;
+
+        if (response?.status === 'saved') {
+            await Dialog.toast(
+                type === 'video'
+                    ? t('Video saved to your photos')
+                    : t('Photo saved to your photos'),
+            );
+
+            return;
+        }
+
+        const code = response?.code ?? 'UNKNOWN_ERROR';
+        const message =
+            code === 'PERMISSION_DENIED'
+                ? t('Allow photo library access in Settings to save media.')
+                : t('Could not save to your photos. Please try again.');
+
+        await Dialog.toast(message);
+    } catch {
+        await Dialog.toast(
+            t('Could not save to your photos. Please try again.'),
+        );
+    } finally {
+        isDownloading.value = false;
+    }
+}
 
 const isLikesSheetOpen = ref(false);
 const isCommentsSheetOpen = ref(false);
@@ -583,8 +670,16 @@ watch(
                             : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100',
                     ]"
                 >
+                    <MediaCarousel
+                        v-if="hasMultipleMedia && !isFullscreen"
+                        :items="carouselItems"
+                        :active-index="activeMediaIndex"
+                        @update:active-index="activeMediaIndex = $event"
+                    />
+
                     <div
                         v-if="
+                            !hasMultipleMedia &&
                             post.media_type === 'image' &&
                             !mediaLoaded &&
                             !isFullscreen
@@ -592,7 +687,7 @@ watch(
                         class="absolute inset-0 animate-pulse bg-sand-200"
                     />
                     <img
-                        v-if="post.media_type === 'image'"
+                        v-if="!hasMultipleMedia && post.media_type === 'image'"
                         :src="post.media_url"
                         :alt="post.caption ?? t('Photo')"
                         :class="[
@@ -633,6 +728,72 @@ watch(
                         }}</span>
                     </div>
 
+                    <button
+                        v-if="
+                            canDownload &&
+                            post.media_type === 'image' &&
+                            !isFullscreen
+                        "
+                        type="button"
+                        class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                        :aria-label="t('Save to photos')"
+                        :disabled="isDownloading"
+                        @click="downloadMedia"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-4 bg-current"
+                            :style="iconMaskStyle(downloadIcon)"
+                        ></span>
+                    </button>
+
+                    <div
+                        v-if="(post.circles ?? []).length > 0 && !isFullscreen"
+                        class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
+                    >
+                        <RouterLink
+                            :to="{
+                                name: 'spa.circles.show',
+                                params: { circle: post.circles![0].id },
+                            }"
+                            class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
+                        >
+                            <img
+                                v-if="post.circles![0].photo"
+                                :src="post.circles![0].photo!"
+                                :alt="post.circles![0].name"
+                                class="size-5 rounded-full object-cover"
+                            />
+                            <div
+                                v-else
+                                class="flex size-5 items-center justify-center rounded-full bg-white/20"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                    class="size-3 text-white"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
+                                    />
+                                </svg>
+                            </div>
+                            <span class="max-w-32 truncate text-white">{{
+                                post.circles![0].name
+                            }}</span>
+                        </RouterLink>
+                        <span
+                            v-if="post.circles!.length > 1"
+                            class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
+                            >+{{ post.circles!.length - 1 }}</span
+                        >
+                    </div>
+
                     <div
                         v-if="
                             post.media_type === 'video' &&
@@ -645,6 +806,20 @@ watch(
                                 : 'top-3 left-3',
                         ]"
                     >
+                        <button
+                            v-if="canDownload && !isFullscreen"
+                            type="button"
+                            class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                            :aria-label="t('Save to photos')"
+                            :disabled="isDownloading"
+                            @click="downloadMedia"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-4 bg-current"
+                                :style="iconMaskStyle(downloadIcon)"
+                            ></span>
+                        </button>
                         <button
                             class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                             @click="toggleMute"
@@ -780,15 +955,7 @@ watch(
                     </div>
                 </div>
 
-                <div
-                    v-if="
-                        (post.circles ?? []).length > 0 ||
-                        (post.persons ?? []).length > 0 ||
-                        (post.tags ?? []).length > 0 ||
-                        staticMapUrl
-                    "
-                    class="space-y-5 bg-sand px-4 pt-5 pb-2"
-                >
+                <div class="space-y-5 bg-sand px-4 pt-5 pb-2">
                     <section
                         v-if="(post.circles ?? []).length > 0"
                         class="space-y-3"
@@ -823,28 +990,16 @@ watch(
                                 v-for="person in post.persons"
                                 :key="person.id"
                             >
-                                <span
+                                <div
                                     v-if="person.user_id === auth.user?.id"
-                                    class="inline-flex items-center gap-2 rounded-full bg-white py-1 pr-1 pl-1 font-semibold text-teal shadow-sm ring-1 ring-sand-100"
+                                    class="inline-flex items-center gap-1"
                                 >
-                                    <img
-                                        v-if="person.avatar_thumbnail"
-                                        :src="person.avatar_thumbnail"
-                                        :alt="person.name"
-                                        class="size-7 rounded-full object-cover"
-                                    />
-                                    <span
-                                        v-else
-                                        class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal"
+                                    <Chip
+                                        :label="person.name"
+                                        :photo="person.avatar_thumbnail"
+                                        :initial="person.name.charAt(0)"
                                     >
-                                        <span
-                                            class="font-display font-semibold uppercase"
-                                            >{{ person.name.charAt(0) }}</span
-                                        >
-                                    </span>
-                                    <span class="pl-1">
-                                        {{ person.name }}
-                                        <span
+                                        <template
                                             v-if="
                                                 ageAt(
                                                     person.birthdate,
@@ -852,21 +1007,25 @@ watch(
                                                         post.created_at,
                                                 )
                                             "
-                                            class="font-normal text-teal-muted"
+                                            #meta
                                         >
-                                            ·
-                                            {{
-                                                ageAt(
-                                                    person.birthdate,
-                                                    post.taken_at ??
-                                                        post.created_at,
-                                                )
-                                            }}
-                                        </span>
-                                    </span>
+                                            <span
+                                                class="font-normal text-teal-muted"
+                                            >
+                                                ·
+                                                {{
+                                                    ageAt(
+                                                        person.birthdate,
+                                                        post.taken_at ??
+                                                            post.created_at,
+                                                    )
+                                                }}
+                                            </span>
+                                        </template>
+                                    </Chip>
                                     <button
                                         type="button"
-                                        class="flex size-6 items-center justify-center rounded-full bg-sand-100 text-teal-muted transition-colors hover:bg-blush-100 hover:text-blush-600 disabled:opacity-50"
+                                        class="flex size-7 items-center justify-center rounded-full bg-white text-teal-muted shadow-sm ring-1 ring-sand-100 transition-colors hover:bg-blush-100 hover:text-blush-600 disabled:opacity-50"
                                         :aria-label="
                                             t('Remove yourself from this post')
                                         "
@@ -911,7 +1070,7 @@ watch(
                                             />
                                         </svg>
                                     </button>
-                                </span>
+                                </div>
                                 <Chip
                                     v-else
                                     :label="person.name"
@@ -973,11 +1132,12 @@ watch(
                         </div>
                     </section>
 
-                    <section v-if="staticMapUrl" class="space-y-3">
+                    <section class="space-y-3">
                         <h3 class="font-semibold text-brand-blue">
                             {{ t('Location') }}
                         </h3>
                         <RouterLink
+                            v-if="staticMapUrl"
                             :to="mapTarget"
                             class="relative block aspect-[2/1] w-full overflow-hidden rounded-2xl bg-sand-100 shadow-sm ring-1 ring-sand-100"
                             :aria-label="t('Open map')"
@@ -1017,6 +1177,32 @@ watch(
                                 }}</span>
                             </div>
                         </RouterLink>
+
+                        <div
+                            v-else
+                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 text-teal-muted ring-1 ring-sand-100"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="size-7 opacity-60"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                                />
+                            </svg>
+                            <p>{{ t('No location set') }}</p>
+                        </div>
                     </section>
                 </div>
             </div>

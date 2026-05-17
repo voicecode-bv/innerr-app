@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BridgeCall, Dialog } from '@nativephp/mobile';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -105,7 +105,6 @@ interface AvailablePerson extends FullPostPerson {
 const emit = defineEmits<{
     (e: 'openComments', postId: string): void;
     (e: 'openLikes', postId: string): void;
-    (e: 'openDetails', postId: string): void;
     (e: 'postUpdated', postId: string): void;
     (e: 'postDeleted', postId: string): void;
 }>();
@@ -320,10 +319,17 @@ function iconMaskStyle(url: string) {
     };
 }
 
+const router = useRouter();
+
 function openDetails(): void {
-    if (!isFullscreen.value) {
-        emit('openDetails', props.post.id);
+    if (isFullscreen.value) {
+        return;
     }
+
+    router.push({
+        name: 'spa.posts.show',
+        params: { post: props.post.id },
+    });
 }
 
 async function toggleLike(): Promise<void> {
