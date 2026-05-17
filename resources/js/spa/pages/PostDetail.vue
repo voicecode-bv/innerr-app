@@ -16,7 +16,10 @@ import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
-import type { PostMediaItem } from '@/spa/components/PostCard.vue';
+import type {
+    PostFirstVisibleLiker,
+    PostMediaItem,
+} from '@/spa/components/PostCard.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
@@ -100,6 +103,7 @@ interface Post {
     is_downloadable?: boolean;
     original_media_url?: string | null;
     likes_count: number;
+    first_visible_liker?: PostFirstVisibleLiker | null;
     comments_count: number;
     circles?: Circle[];
     tags?: Tag[];
@@ -314,6 +318,59 @@ async function downloadMedia(): Promise<void> {
         isDownloading.value = false;
     }
 }
+
+// "X en N anderen vinden dit leuk" — first_visible_liker is de meest recente
+// liker uit een gedeelde circle. Bij geen visible liker maar wel likes
+// (alleen hidden) tonen we de placeholder-variant zonder naam.
+const likesSummary = computed<{
+    text: string;
+    avatar: string | null;
+} | null>(() => {
+    if (!post.value) {
+        return null;
+    }
+
+    const total = post.value.likes_count;
+
+    if (total === 0) {
+        return null;
+    }
+
+    const visible = post.value.first_visible_liker ?? null;
+    const others = visible ? total - 1 : total;
+    const isMe = visible !== null && visible.id === auth.user?.id;
+    const displayName = isMe ? t('You') : (visible?.name ?? '');
+
+    if (visible && others === 0) {
+        return {
+            text: isMe
+                ? t('You like this')
+                : t(':name likes this', { name: displayName }),
+            avatar: visible.avatar,
+        };
+    }
+
+    if (visible) {
+        return {
+            text:
+                others === 1
+                    ? t(':name and 1 other like this', { name: displayName })
+                    : t(':name and :count others like this', {
+                          name: displayName,
+                          count: others,
+                      }),
+            avatar: visible.avatar,
+        };
+    }
+
+    return {
+        text:
+            others === 1
+                ? t('1 person likes this')
+                : t(':count people like this', { count: others }),
+        avatar: null,
+    };
+});
 
 const isLikesSheetOpen = ref(false);
 const isCommentsSheetOpen = ref(false);
@@ -954,6 +1011,33 @@ watch(
                         }}</span>
                     </div>
                 </div>
+
+                <button
+                    v-if="likesSummary"
+                    type="button"
+                    class="mt-2 flex w-full items-center gap-2 bg-sand px-4 py-2 text-left text-teal active:bg-sand-100/40"
+                    @click="openLikes"
+                >
+                    <img
+                        v-if="likesSummary.avatar"
+                        :src="likesSummary.avatar"
+                        alt=""
+                        class="avatar-ring size-6 shrink-0 rounded-full object-cover"
+                    />
+                    <span
+                        v-else
+                        aria-hidden="true"
+                        class="flex size-6 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
+                    >
+                        <span
+                            class="inline-block size-3.5 bg-current"
+                            :style="iconMaskStyle(userIcon)"
+                        ></span>
+                    </span>
+                    <span class="min-w-0 truncate text-teal-muted">
+                        {{ likesSummary.text }}
+                    </span>
+                </button>
 
                 <div class="space-y-5 bg-sand px-4 pt-5 pb-2">
                     <section

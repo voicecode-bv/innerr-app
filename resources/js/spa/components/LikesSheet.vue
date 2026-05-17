@@ -6,12 +6,27 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import SheetHeader from '@/components/SheetHeader.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import userIcon from '../../../svg/doodle-icons/user.svg';
 
 interface LikeUser {
     id: string;
-    name: string;
-    username: string;
-    avatar: string | null;
+    is_visible?: boolean;
+    name?: string;
+    username?: string;
+    avatar?: string | null;
+}
+
+function iconMaskStyle(url: string) {
+    return {
+        maskImage: `url(${url})`,
+        WebkitMaskImage: `url(${url})`,
+        maskSize: 'contain',
+        WebkitMaskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        WebkitMaskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskPosition: 'center',
+    };
 }
 
 interface Meta {
@@ -191,29 +206,54 @@ function onSheetUpdate(value: boolean): void {
         </div>
 
         <div v-else class="pb-24">
-            <RouterLink
-                v-for="user in users"
-                :key="user.id"
-                :to="{
-                    name: 'spa.profiles.show',
-                    params: { username: user.username },
-                }"
-                class="flex items-center gap-3 border-b border-sand-50 px-4 py-3"
-                @click="close"
-            >
-                <img
-                    :src="
-                        user.avatar ??
-                        `https://ui-avatars.com/api/?name=${user.name}&background=f0dcc6&color=5c3f24&size=64`
-                    "
-                    :alt="user.name"
-                    class="avatar-ring size-10 rounded-full object-cover"
-                />
-                <div class="min-w-0 flex-1">
-                    <p class="truncate leading-none font-semibold text-teal">{{ user.name }}</p>
-                    <p class="truncate text-teal-muted">@{{ user.username }}</p>
+            <template v-for="user in users" :key="user.id">
+                <RouterLink
+                    v-if="user.is_visible !== false && user.username"
+                    :to="{
+                        name: 'spa.profiles.show',
+                        params: { username: user.username },
+                    }"
+                    class="flex items-center gap-3 border-b border-sand-50 px-4 py-3"
+                    @click="close"
+                >
+                    <img
+                        :src="
+                            user.avatar ??
+                            `https://ui-avatars.com/api/?name=${user.name}&background=f0dcc6&color=5c3f24&size=64`
+                        "
+                        :alt="user.name"
+                        class="avatar-ring size-10 rounded-full object-cover"
+                    />
+                    <div class="min-w-0 flex-1">
+                        <p
+                            class="truncate leading-none font-semibold text-teal"
+                        >
+                            {{ user.name }}
+                        </p>
+                        <p class="truncate text-teal-muted">
+                            @{{ user.username }}
+                        </p>
+                    </div>
+                </RouterLink>
+
+                <div
+                    v-else
+                    class="flex items-center gap-3 border-b border-sand-50 px-4 py-3"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
+                    >
+                        <span
+                            class="inline-block size-5 bg-current"
+                            :style="iconMaskStyle(userIcon)"
+                        ></span>
+                    </span>
+                    <p class="truncate text-teal-muted italic">
+                        {{ t('Hidden person') }}
+                    </p>
                 </div>
-            </RouterLink>
+            </template>
 
             <div
                 v-if="isLoadingMore"

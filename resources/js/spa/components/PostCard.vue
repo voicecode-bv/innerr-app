@@ -17,6 +17,7 @@ import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
 import pencilIcon from '../../../svg/doodle-icons/pencil-3.svg';
+import userIcon from '../../../svg/doodle-icons/user.svg';
 
 export interface PostMediaItem {
     id: string;
@@ -27,6 +28,13 @@ export interface PostMediaItem {
     thumbnail_url?: string | null;
     thumbnail_small_url?: string | null;
     sort_order?: number;
+}
+
+export interface PostFirstVisibleLiker {
+    id: string;
+    name: string;
+    username: string;
+    avatar: string | null;
 }
 
 export interface PostData {
@@ -55,6 +63,7 @@ export interface PostData {
     is_downloadable?: boolean;
     original_media_url?: string | null;
     likes_count: number;
+    first_visible_liker?: PostFirstVisibleLiker | null;
     comments_count: number;
 }
 
@@ -199,6 +208,55 @@ const activeMediaIndex = ref(0);
 const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
 const commentsCount = ref(props.post.comments_count);
+
+// "X en N anderen vinden dit leuk" — first_visible_liker is de meest recente
+// liker uit een gedeelde circle. Bij geen visible liker maar wel likes (alleen
+// hidden) tonen we de placeholder-variant.
+const likesSummary = computed<{
+    text: string;
+    avatar: string | null;
+} | null>(() => {
+    const total = likesCount.value;
+
+    if (total === 0) {
+        return null;
+    }
+
+    const visible = props.post.first_visible_liker ?? null;
+    const others = visible ? total - 1 : total;
+    const isMe = visible !== null && visible.id === authUserId.value;
+    const displayName = isMe ? t('You') : (visible?.name ?? '');
+
+    if (visible && others === 0) {
+        return {
+            text: isMe
+                ? t('You like this')
+                : t(':name likes this', { name: displayName }),
+            avatar: visible.avatar,
+        };
+    }
+
+    if (visible) {
+        return {
+            text:
+                others === 1
+                    ? t(':name and 1 other like this', { name: displayName })
+                    : t(':name and :count others like this', {
+                          name: displayName,
+                          count: others,
+                      }),
+            avatar: visible.avatar,
+        };
+    }
+
+    return {
+        text:
+            others === 1
+                ? t('1 person likes this')
+                : t(':count people like this', { count: others }),
+        avatar: null,
+    };
+});
 
 const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
@@ -1087,6 +1145,33 @@ function timeAgo(dateString: string): string {
                 </div>
             </button>
         </div>
+
+        <button
+            v-if="likesSummary"
+            type="button"
+            class="mt-2 flex w-full items-center gap-2 px-4 py-1 text-left text-teal active:bg-sand-100/40"
+            @click="openLikes"
+        >
+            <img
+                v-if="likesSummary.avatar"
+                :src="likesSummary.avatar"
+                alt=""
+                class="avatar-ring size-6 shrink-0 rounded-full object-cover"
+            />
+            <span
+                v-else
+                aria-hidden="true"
+                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
+            >
+                <span
+                    class="inline-block size-3.5 bg-current"
+                    :style="iconMaskStyle(userIcon)"
+                ></span>
+            </span>
+            <span class="min-w-0 truncate text-teal-muted">
+                {{ likesSummary.text }}
+            </span>
+        </button>
 
         <EditPostModal
             v-if="editPost && isOwner"
