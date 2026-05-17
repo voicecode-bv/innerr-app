@@ -21,6 +21,7 @@ import pencilIcon from '../../../svg/doodle-icons/pencil-3.svg';
 export interface PostMediaItem {
     id: string;
     url: string;
+    original_url?: string | null;
     type: 'image' | 'video';
     status?: 'processing' | 'ready' | 'failed';
     thumbnail_url?: string | null;
@@ -136,13 +137,19 @@ async function downloadMedia(): Promise<void> {
         return;
     }
 
-    const url = props.post.original_media_url ?? props.post.media_url;
+    // Bij multi-photo posts downloaden we de slide die nu zichtbaar is, niet
+    // altijd item 0 — anders kan de gebruiker de andere foto's nooit opslaan.
+    const activeItem = props.post.media?.[activeMediaIndex.value];
+    const url = activeItem
+        ? (activeItem.original_url ?? activeItem.url)
+        : (props.post.original_media_url ?? props.post.media_url);
+    const itemType = activeItem ? activeItem.type : props.post.media_type;
 
     if (!url) {
         return;
     }
 
-    const type = props.post.media_type === 'video' ? 'video' : 'image';
+    const type = itemType === 'video' ? 'video' : 'image';
 
     isDownloading.value = true;
 
@@ -466,16 +473,136 @@ function timeAgo(dateString: string): string {
                 :active-index="activeMediaIndex"
                 @update:active-index="activeMediaIndex = $event"
             />
-            <span
-                class="pointer-events-none absolute top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-xs text-white backdrop-blur-sm"
+
+            <button
+                v-if="canDownload"
+                type="button"
+                class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                :aria-label="t('Save to photos')"
+                :disabled="isDownloading"
+                @click.stop="downloadMedia"
             >
-                {{
-                    t('Photo :index of :total', {
-                        index: activeMediaIndex + 1,
-                        total: carouselItems.length,
-                    })
-                }}
-            </span>
+                <span
+                    aria-hidden="true"
+                    class="inline-block size-4 bg-current"
+                    :style="iconMaskStyle(downloadIcon)"
+                ></span>
+            </button>
+
+            <div
+                v-if="post.circles && post.circles.length > 0"
+                class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
+            >
+                <RouterLink
+                    :to="{
+                        name: 'spa.circles.show',
+                        params: { circle: post.circles[0].id },
+                    }"
+                    class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
+                    @click.stop
+                >
+                    <img
+                        v-if="post.circles[0].photo"
+                        :src="post.circles[0].photo"
+                        :alt="post.circles[0].name"
+                        class="size-5 rounded-full object-cover"
+                    />
+                    <div
+                        v-else
+                        class="flex size-5 items-center justify-center rounded-full bg-white/20"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="size-3 text-white"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
+                            />
+                        </svg>
+                    </div>
+                    <span class="max-w-32 truncate text-white">{{
+                        post.circles[0].name
+                    }}</span>
+                </RouterLink>
+                <span
+                    v-if="post.circles.length > 1"
+                    class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
+                    >+{{ post.circles.length - 1 }}</span
+                >
+            </div>
+
+            <div
+                class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
+            >
+                <div class="pointer-events-auto flex items-center gap-1">
+                    <button
+                        v-if="post.user.id !== authUserId"
+                        class="flex"
+                        @click.stop="toggleLike"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-6 drop-shadow"
+                            :class="isLiked ? 'bg-brand-orange' : 'bg-white'"
+                            :style="
+                                iconMaskStyle(
+                                    isLiked ? heartFilledIcon : heartIcon,
+                                )
+                            "
+                        ></span>
+                    </button>
+                    <button
+                        v-else
+                        class="flex"
+                        :aria-label="t('Show likes')"
+                        @click.stop="openLikes"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-6 bg-white drop-shadow"
+                            :style="iconMaskStyle(heartIcon)"
+                        ></span>
+                    </button>
+                    <span
+                        v-if="likesCount > 0"
+                        class="text-white drop-shadow"
+                        >{{ likesCount }}</span
+                    >
+                </div>
+                <button
+                    class="pointer-events-auto flex items-center gap-1 text-white drop-shadow"
+                    @click.stop="openComments"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-6 bg-current"
+                        :style="iconMaskStyle(messageIcon)"
+                    ></span>
+                    <span v-if="commentsCount > 0">{{ commentsCount }}</span>
+                </button>
+                <button
+                    v-if="isOwner"
+                    class="pointer-events-auto flex items-center text-white drop-shadow disabled:opacity-50"
+                    :aria-label="t('Edit post')"
+                    :disabled="isLoadingEdit"
+                    @click.stop="openEditModal"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-6 bg-current"
+                        :style="iconMaskStyle(pencilIcon)"
+                    ></span>
+                </button>
+                <span class="ml-auto text-white/80 drop-shadow">{{
+                    timeAgo(post.created_at)
+                }}</span>
+            </div>
         </div>
 
         <div
