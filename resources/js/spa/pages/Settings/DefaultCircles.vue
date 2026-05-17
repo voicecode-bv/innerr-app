@@ -134,7 +134,11 @@ async function toggleCircle(circleId: string): Promise<void> {
                     </div>
                 </SurfaceCard>
 
-                <SurfaceCard v-else-if="circles.length > 0" class="reveal-item">
+                <SurfaceCard
+                    v-else-if="circles.length > 0"
+                    data-tour="default-circles.list"
+                    class="reveal-item"
+                >
                     <h3 class="font-semibold text-teal">
                         {{ t('Default circles for new posts') }}
                     </h3>

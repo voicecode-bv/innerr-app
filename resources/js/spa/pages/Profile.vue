@@ -271,6 +271,7 @@ function iconMaskStyle(url: string) {
                 :to="{ name: 'spa.settings' }"
                 class="flex items-center text-teal"
                 :aria-label="t('Open settings')"
+                data-tour="profile.settings"
             >
                 <span
                     aria-hidden="true"
@@ -287,7 +288,11 @@ function iconMaskStyle(url: string) {
             />
 
             <div>
-                <div v-if="profile" class="bg-sand px-4 py-6">
+                <div
+                    v-if="profile"
+                    data-tour="profile.header"
+                    class="bg-sand px-4 py-6"
+                >
                     <div class="flex items-center gap-4">
                         <button
                             type="button"

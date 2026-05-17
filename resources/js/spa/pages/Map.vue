@@ -55,7 +55,7 @@ function handlePostClick(postId: string): void {
             </button>
         </template>
 
-        <div class="relative mt-10 flex-1">
+        <div data-tour="map.surface" class="relative mt-10 flex-1">
             <PhotoMap
                 v-if="mapboxToken"
                 :mapbox-token="mapboxToken"

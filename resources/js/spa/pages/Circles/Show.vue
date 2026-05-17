@@ -484,6 +484,7 @@ function maskStyle(icon: string) {
                     v-if="circle.is_owner"
                     class="flex size-9 items-center justify-center rounded-full bg-white/80 text-teal shadow-sm transition hover:bg-white"
                     :aria-label="t('Edit circle')"
+                    data-tour="circle.permissions"
                     @click="startEdit"
                 >
                     <svg
@@ -739,7 +740,7 @@ function maskStyle(icon: string) {
                     </SurfaceCard>
                 </Transition>
 
-                <SurfaceCard v-if="canInvite">
+                <SurfaceCard v-if="canInvite" data-tour="circle.invite">
                     <h3 class="font-semibold text-teal">
                         {{ t('Invite someone') }}
                     </h3>
@@ -802,7 +803,10 @@ function maskStyle(icon: string) {
                     </Transition>
                 </SurfaceCard>
 
-                <SurfaceCard v-if="canSeeMembers && members.length > 0">
+                <SurfaceCard
+                    v-if="canSeeMembers && members.length > 0"
+                    data-tour="circle.members"
+                >
                     <h3 class="font-semibold text-teal">
                         {{ t('Members') }}
                     </h3>

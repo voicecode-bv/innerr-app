@@ -6,6 +6,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useFeatureTourStore } from '@/spa/stores/featureTour';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../../svg/doodle-icons/message.svg';
@@ -14,6 +15,7 @@ import settingIcon from '../../../../svg/doodle-icons/setting.svg';
 const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
+const featureTourStore = useFeatureTourStore();
 
 function iconMaskStyle(url: string) {
     return {
@@ -84,6 +86,9 @@ async function completeOnboarding(): Promise<void> {
     }
 
     await auth.bootstrap();
+    // Start de feature-tour zodra de gebruiker op het hoofdscherm landt; de
+    // FeatureTourMount in App.vue mount nu omdat `auth.user.onboarded` true is.
+    featureTourStore.start();
     router.push('/');
 }
 

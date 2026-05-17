@@ -11,6 +11,7 @@ import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useFeatureTourStore } from '@/spa/stores/featureTour';
 import { useI18nStore } from '@/spa/stores/i18n';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 import circleIcon from '../../../../svg/doodle-icons/circle.svg';
@@ -20,12 +21,14 @@ import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
 import globeIcon from '../../../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
+import questionIcon from '../../../../svg/doodle-icons/question.svg';
 import tagIcon from '../../../../svg/doodle-icons/tag.svg';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
 const i18n = useI18nStore();
 const auth = useAuthStore();
+const featureTour = useFeatureTourStore();
 const router = useRouter();
 const { isIos, isAndroid } = usePlatform();
 
@@ -125,6 +128,11 @@ async function setLocale(locale: string): Promise<void> {
     });
 }
 
+function restartTour(): void {
+    featureTour.restart();
+    router.push({ name: 'spa.home' });
+}
+
 async function logout(): Promise<void> {
     await Dialog.alert()
         .confirm(t('Log out'), t('Are you sure you want to log out?'))
@@ -222,6 +230,25 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                                 {{ t(item.label) }}
                             </span>
                         </RouterLink>
+                    </li>
+                    <li class="reveal-item">
+                        <button
+                            type="button"
+                            class="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-sand-50"
+                            @click="restartTour"
+                        >
+                            <IconTile
+                                :icon="questionIcon"
+                                size="md"
+                                tone="teal"
+                                class="shrink-0"
+                            />
+                            <span
+                                class="flex-1 text-base leading-snug font-semibold text-teal"
+                            >
+                                {{ t('Replay tour') }}
+                            </span>
+                        </button>
                     </li>
                 </ul>
 

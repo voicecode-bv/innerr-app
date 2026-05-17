@@ -63,6 +63,7 @@ function goBack(): void {
                 class="relative space-y-4 px-4 pt-4 pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
             >
                 <div
+                    data-tour="give.hero"
                     class="reveal-item rounded-lg bg-teal p-6 shadow-sm shadow-teal/20"
                 >
                     <div class="flex flex-col items-center gap-4 text-center">
@@ -111,11 +112,7 @@ function goBack(): void {
                 <div
                     class="reveal-item flex flex-col items-center gap-4 rounded-lg bg-brand-green p-6 text-center shadow-sm shadow-sage-900/20"
                 >
-                    <IconTile
-                        :icon="heartFilledIcon"
-                        size="lg"
-                        tone="yellow"
-                    />
+                    <IconTile :icon="heartFilledIcon" size="lg" tone="yellow" />
                     <p
                         class="font-display text-6xl leading-none font-semibold text-brand-yellow"
                     >

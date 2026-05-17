@@ -3,12 +3,21 @@ import { computed } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { usePushNotifications } from '@/composables/usePushNotifications';
+import FeatureTourMount from '@/spa/components/FeatureTourMount.vue';
+import { useAuthStore } from '@/spa/stores/auth';
 
 useNetworkStatus();
 usePushNotifications();
 
 const route = useRoute();
+const auth = useAuthStore();
 const isGuestRoute = computed(() => route.meta.guest === true);
+// Feature-tour pas mounten als de gebruiker is ingelogd én voorbij de
+// onboarding. Anders zou de tour kunnen proberen te starten op een lazy
+// onboarding-route waar de bijbehorende selectors niet bestaan.
+const showFeatureTour = computed(
+    () => auth.user !== null && auth.user.onboarded === true,
+);
 </script>
 
 <template>
@@ -37,4 +46,6 @@ const isGuestRoute = computed(() => route.meta.guest === true);
             <component :is="Component" />
         </Transition>
     </RouterView>
+
+    <FeatureTourMount v-if="showFeatureTour" />
 </template>

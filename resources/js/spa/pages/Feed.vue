@@ -190,6 +190,7 @@ function iconMaskStyle(url: string) {
                     <RouterLink
                         :to="{ name: 'spa.search' }"
                         :aria-label="t('Search people')"
+                        data-tour="feed.search"
                         class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                     >
                         <span
@@ -207,6 +208,7 @@ function iconMaskStyle(url: string) {
                                   })
                                 : t('Open notifications')
                         "
+                        data-tour="feed.notifications"
                         class="relative flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                     >
                         <span
@@ -234,6 +236,7 @@ function iconMaskStyle(url: string) {
                     </RouterLink>
                 </div>
                 <div
+                    data-tour="feed.circles-strip"
                     class="no-scrollbar flex gap-3 overflow-x-auto px-4 pt-1 pb-3"
                 >
                     <RouterLink

@@ -560,6 +560,7 @@ function iconMaskStyle(url: string) {
 
                 <ul
                     v-else-if="persons.length > 0"
+                    data-tour="persons.list"
                     class="divide-y divide-sand-100 overflow-hidden rounded-lg"
                 >
                     <li
@@ -618,7 +619,11 @@ function iconMaskStyle(url: string) {
                     </li>
                 </ul>
 
-                <SurfaceCard v-else-if="!isLoading" class="reveal-item">
+                <SurfaceCard
+                    v-else-if="!isLoading"
+                    data-tour="persons.list"
+                    class="reveal-item"
+                >
                     <div
                         class="flex flex-col items-center px-2 py-4 text-center"
                     >

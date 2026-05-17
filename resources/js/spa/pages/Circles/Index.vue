@@ -86,6 +86,7 @@ async function createCircle(): Promise<void> {
             <button
                 class="flex size-9 items-center justify-center rounded-full bg-teal text-white shadow-sm transition hover:bg-teal-light"
                 :aria-label="t('Create circle')"
+                data-tour="circles.create"
                 @click="showCreateForm = !showCreateForm"
             >
                 <svg
@@ -194,6 +195,7 @@ async function createCircle(): Promise<void> {
 
                 <ul
                     v-else-if="circles.length > 0"
+                    data-tour="circles.list"
                     class="divide-y divide-sand-100 overflow-hidden rounded-lg"
                 >
                     <li v-for="circle in circles" :key="circle.id">
