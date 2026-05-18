@@ -1,0 +1,34 @@
+{
+    "name": "innerr/native-media",
+    "description": "Native media staging and thumbnail generation for NativePHP Mobile (bypasses PHP scheme handler for large videos)",
+    "type": "nativephp-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Innerr"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "nativephp/mobile": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Innerr\\NativeMedia\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Innerr\\NativeMedia\\NativeMediaServiceProvider"
+            ],
+            "aliases": {
+                "NativeMedia": "Innerr\\NativeMedia\\Facades\\NativeMedia"
+            }
+        },
+        "nativephp": {
+            "manifest": "nativephp.json"
+        }
+    }
+}

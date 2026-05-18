@@ -5,6 +5,7 @@ namespace App\Providers;
 use Codingwithrk\PackageInfo\PackageInfoServiceProvider;
 use Developernauts\NativephpInappPurchases\NativephpInappPurchasesServiceProvider;
 use Illuminate\Support\ServiceProvider;
+use Innerr\NativeMedia\NativeMediaServiceProvider;
 use Native\Mobile\Providers\BrowserServiceProvider;
 use Native\Mobile\Providers\CameraServiceProvider;
 use Native\Mobile\Providers\DeviceServiceProvider;
@@ -59,6 +60,7 @@ class NativeServiceProvider extends ServiceProvider
             DeviceServiceProvider::class,
             ShareServiceProvider::class,
             PhotosServiceProvider::class,
+            NativeMediaServiceProvider::class,
         ];
     }
 }

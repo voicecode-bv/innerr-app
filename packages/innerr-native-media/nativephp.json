@@ -1,0 +1,39 @@
+{
+    "namespace": "NativeMedia",
+    "bridge_functions": [
+        {
+            "name": "NativeMedia.Stage",
+            "android": "app.innerr.nativemedia.NativeMediaFunctions.Stage",
+            "ios": "NativeMediaFunctions.Stage",
+            "description": "Stage a local media file under the WebView-serveable assets directory and return a URL that the WebView can fetch directly (bypasses PHP scheme handler)"
+        },
+        {
+            "name": "NativeMedia.Thumbnail",
+            "android": "app.innerr.nativemedia.NativeMediaFunctions.Thumbnail",
+            "ios": "NativeMediaFunctions.Thumbnail",
+            "description": "Generate a thumbnail (JPEG data URL) for a local image or video file using native frameworks"
+        },
+        {
+            "name": "NativeMedia.Release",
+            "android": "app.innerr.nativemedia.NativeMediaFunctions.Release",
+            "ios": "NativeMediaFunctions.Release",
+            "description": "Release a previously staged media file (deletes the staged copy)"
+        }
+    ],
+    "android": {
+        "min_version": 26,
+        "permissions": [],
+        "dependencies": {
+            "implementation": []
+        }
+    },
+    "ios": {
+        "min_version": "18.2",
+        "info_plist": {},
+        "dependencies": {
+            "swift_packages": [],
+            "pods": []
+        }
+    },
+    "events": []
+}

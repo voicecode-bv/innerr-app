@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Camera, Dialog, Edge, Events, Off, On } from '@nativephp/mobile';
+import { NativeMedia } from '@innerr/native-media';
 import {
     computed,
     defineAsyncComponent,
@@ -70,7 +71,10 @@ interface MediaItem {
     isVideo: boolean;
     mimeType: string;
     preview: string;
+    thumbnail?: string;
     exif: ExifData;
+    /** Token from NativeMedia.stage so we can release the staged copy. */
+    stagedToken?: string;
 }
 
 const MAX_PHOTOS = 10;
@@ -136,6 +140,9 @@ const showSourcePicker = ref(false);
 const showCropModal = ref(false);
 const cropTargetIndex = ref(0);
 const uploading = ref(false);
+// Houdt de laatste failure-reason vast zodat we 'm in de Dialog kunnen tonen
+// als appendItem voor een video stilletjes faalt op een echt device.
+const videoFailureReason = ref<string | null>(null);
 
 // Wizard-stappen: 0=media, 1=caption, 2=cirkels, 3=tags & personen.
 const TOTAL_STEPS = 4;
@@ -233,6 +240,7 @@ const carouselItems = computed<CarouselItem[]>(() =>
         id: item.id,
         url: item.preview,
         type: item.isVideo ? 'video' : 'image',
+        thumbnail: item.thumbnail ?? null,
     })),
 );
 
@@ -294,6 +302,23 @@ async function selectFromGallery(): Promise<void> {
     await Camera.pickImages().images().multiple(true).maxItems(remaining);
 }
 
+async function selectVideoFromGallery(): Promise<void> {
+    showSourcePicker.value = false;
+
+    if (items.value.length > 0) {
+        void Dialog.alert(
+            t("Can't add a video"),
+            t('Videos can only be shared on their own, without photos.'),
+        );
+
+        return;
+    }
+
+    // Video uit camera roll: single-select via .videos() — combineren met
+    // photos in één picker is op iOS te onbetrouwbaar (zie selectFromGallery).
+    await Camera.pickImages().videos().multiple(false).maxItems(1);
+}
+
 async function openCamera(): Promise<void> {
     showSourcePicker.value = false;
     await Camera.getPhoto();
@@ -314,27 +339,60 @@ async function recordVideo(): Promise<void> {
     await Camera.recordVideo();
 }
 
-async function loadPreview(path: string): Promise<string | null> {
+// Native staging: kopieert/hardlinkt het bestand naar `Documents/app/public/_media/`
+// zodat de WebView het via de bestaande `/_assets/...` fast-path streamt
+// (range-aware, chunked, no PHP roundtrip). Voorkomt de OOM-kill van het
+// PHP-proces die optrad toen we videos als base64 door PHP probeerden te jagen.
+async function stageMedia(
+    path: string,
+    mimeType: string,
+): Promise<{ url: string; token: string } | null> {
     try {
-        const response = await fetch(
-            `/native-media?path=${encodeURIComponent(path)}`,
-        );
+        const result = await NativeMedia.stage(path, mimeType || undefined);
+        console.log('[CreatePost media] staged', {
+            path,
+            url: result.url,
+            mime: result.mime,
+            sizeMb: +(result.size / 1024 / 1024).toFixed(2),
+        });
 
-        if (!response.ok) {
-            return null;
-        }
+        return { url: result.url, token: result.token };
+    } catch (error) {
+        console.error('[CreatePost media] stage failed', {
+            path,
+            error: String(error),
+        });
+        videoFailureReason.value = `stage failed: ${String(error)}`;
 
-        const { data_url } = await response.json();
-
-        return data_url;
-    } catch {
         return null;
     }
 }
 
-async function dataUrlToBlob(dataUrl: string): Promise<Blob | null> {
+async function generateThumbnail(path: string): Promise<string | undefined> {
     try {
-        const res = await fetch(dataUrl);
+        const thumb = await NativeMedia.thumbnail(path, {
+            maxSize: 512,
+            timeSeconds: 0.1,
+        });
+
+        return thumb.dataUrl;
+    } catch (error) {
+        console.warn('[CreatePost media] thumbnail failed (non-fatal)', {
+            path,
+            error: String(error),
+        });
+
+        return undefined;
+    }
+}
+
+async function fetchBlob(url: string): Promise<Blob | null> {
+    try {
+        const res = await fetch(url);
+
+        if (!res.ok) {
+            return null;
+        }
 
         return await res.blob();
     } catch {
@@ -347,6 +405,8 @@ function makeItem(
     mimeType: string,
     preview: string,
     exif: ExifData,
+    stagedToken: string,
+    thumbnail?: string,
 ): MediaItem {
     return {
         id: crypto.randomUUID(),
@@ -354,28 +414,57 @@ function makeItem(
         isVideo: mimeType.startsWith('video/'),
         mimeType,
         preview,
+        thumbnail,
         exif,
+        stagedToken,
     };
 }
 
 async function appendItem(path: string, mimeType: string): Promise<void> {
-    const preview = await loadPreview(path);
+    const isVideo = mimeType.startsWith('video/');
+    console.log('[CreatePost media] appendItem', {
+        path,
+        mimeType,
+        isVideo,
+        existingItems: items.value.length,
+    });
 
-    if (!preview) {
+    videoFailureReason.value = null;
+    const staged = await stageMedia(path, mimeType);
+
+    if (!staged) {
+        const reason = videoFailureReason.value ?? 'unknown';
+        void Dialog.alert(
+            t(isVideo ? 'Could not load video' : 'Could not load photo'),
+            t('Media preview failed: :reason', { reason }),
+        );
+
         return;
     }
 
     let exif: ExifData = { taken_at: null, latitude: null, longitude: null };
+    let thumbnail: string | undefined;
 
-    if (!mimeType.startsWith('video/')) {
-        const blob = await dataUrlToBlob(preview);
+    if (isVideo) {
+        thumbnail = await generateThumbnail(path);
+    } else {
+        // EXIF lezen we via een fetch op de staged URL — de WebView's asset
+        // fast-path streamt het bestand zonder PHP-roundtrip.
+        const blob = await fetchBlob(staged.url);
 
         if (blob) {
             exif = await readExif(blob);
         }
     }
 
-    items.value.push(makeItem(path, mimeType, preview, exif));
+    items.value.push(
+        makeItem(path, mimeType, staged.url, exif, staged.token, thumbnail),
+    );
+    console.log('[CreatePost media] item pushed', {
+        isVideo,
+        totalItems: items.value.length,
+        hasThumbnail: thumbnail !== undefined,
+    });
 }
 
 async function handlePhotoTaken(payload: {
@@ -393,11 +482,33 @@ async function handleVideoRecorded(payload: {
     path: string;
     mimeType: string;
 }): Promise<void> {
+    console.log('[CreatePost video] VideoRecorded event', {
+        path: payload?.path,
+        mimeType: payload?.mimeType,
+        existingItems: items.value.length,
+    });
+
     if (items.value.length > 0) {
+        console.warn(
+            '[CreatePost video] VideoRecorded ignored: items already present',
+        );
+
         return;
     }
 
-    await appendItem(payload.path, payload.mimeType);
+    if (!payload?.path) {
+        console.error('[CreatePost video] VideoRecorded payload missing path', {
+            payload,
+        });
+        void Dialog.alert(
+            t('Could not load video'),
+            t('No file path returned from the camera.'),
+        );
+
+        return;
+    }
+
+    await appendItem(payload.path, payload.mimeType ?? '');
 }
 
 async function handleMediaSelected(payload: {
@@ -435,7 +546,11 @@ async function handleMediaSelected(payload: {
 }
 
 function removeItem(index: number): void {
-    items.value.splice(index, 1);
+    const [removed] = items.value.splice(index, 1);
+
+    if (removed?.stagedToken) {
+        void NativeMedia.release(removed.stagedToken);
+    }
 
     if (items.value.length === 0) {
         activeIndex.value = 0;
@@ -472,6 +587,15 @@ async function handleCropped(
 
     try {
         const path = await uploadInChunks(blob, exif);
+
+        // De originele staged kopie hoort niet meer bij het zichtbare beeld;
+        // gooi 'm weg. De gecropte data-URL is klein genoeg om als preview te
+        // gebruiken zonder nieuwe stage-call.
+        if (target.stagedToken) {
+            void NativeMedia.release(target.stagedToken);
+            target.stagedToken = undefined;
+        }
+
         target.path = path;
         target.preview = dataUrl;
         target.exif = exif;
@@ -508,6 +632,14 @@ onUnmounted(() => {
     Off(Events.Camera.PhotoTaken, handlePhotoTaken);
     Off(Events.Camera.VideoRecorded, handleVideoRecorded);
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
+
+    // Vrijgeven van eventuele resterende staged kopieen — als de gebruiker de
+    // pagina verlaat zonder te posten, anders blijven ze op disk staan.
+    for (const item of items.value) {
+        if (item.stagedToken) {
+            void NativeMedia.release(item.stagedToken);
+        }
+    }
 });
 
 function buildOptimisticPost(): PostData {
@@ -515,6 +647,12 @@ function buildOptimisticPost(): PostData {
     const first = items.value[0];
     const isVideo = first?.isVideo ?? false;
     const previewUrl = first?.preview ?? '';
+    // Voor video gebruiken we de native gegenereerde JPEG-thumbnail als
+    // poster terwijl de server de upload nog verwerkt — de video-URL zelf
+    // kan op dat moment nog niet als afbeelding renderen.
+    const firstPoster = isVideo
+        ? (first?.thumbnail ?? previewUrl)
+        : previewUrl;
     const selectedCircles = circles.value
         .filter((c) => form.data.circle_ids.includes(c.id))
         .map((c) => ({ id: c.id, name: c.name, photo: c.photo ?? null }));
@@ -523,18 +661,24 @@ function buildOptimisticPost(): PostData {
         id: tempId,
         media_url: previewUrl,
         media_type: isVideo ? 'video' : 'image',
-        thumbnail_url: isVideo ? previewUrl : null,
-        thumbnail_small_url: isVideo ? previewUrl : null,
+        thumbnail_url: isVideo ? firstPoster : null,
+        thumbnail_small_url: isVideo ? firstPoster : null,
         media_status: 'processing',
-        media: items.value.map((item, index) => ({
-            id: `${tempId}-${index}`,
-            url: item.preview,
-            type: item.isVideo ? 'video' : 'image',
-            status: 'processing',
-            thumbnail_url: item.isVideo ? item.preview : null,
-            thumbnail_small_url: item.isVideo ? item.preview : null,
-            sort_order: index,
-        })),
+        media: items.value.map((item, index) => {
+            const poster = item.isVideo
+                ? (item.thumbnail ?? item.preview)
+                : null;
+
+            return {
+                id: `${tempId}-${index}`,
+                url: item.preview,
+                type: item.isVideo ? 'video' : 'image',
+                status: 'processing',
+                thumbnail_url: poster,
+                thumbnail_small_url: poster,
+                sort_order: index,
+            };
+        }),
         caption: form.data.caption ?? null,
         location: null,
         created_at: new Date().toISOString(),
@@ -986,8 +1130,26 @@ const activeItemIsImage = computed(() => {
                                     class="inline-block size-5 bg-teal"
                                     :style="iconMaskStyle(photoIcon)"
                                 ></span>
-                                {{ t('Choose from gallery') }}
+                                {{
+                                    items.length === 0
+                                        ? t('Choose photos from gallery')
+                                        : t('Choose from gallery')
+                                }}
                             </button>
+                            <template v-if="items.length === 0">
+                                <div class="mx-5 border-t border-sand-100" />
+                                <button
+                                    class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
+                                    @click="selectVideoFromGallery"
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        class="inline-block size-5 bg-teal"
+                                        :style="iconMaskStyle(videoCameraIcon)"
+                                    ></span>
+                                    {{ t('Choose video from gallery') }}
+                                </button>
+                            </template>
                             <div class="border-t border-sand-100" />
                             <button
                                 class="w-full py-3.5 text-center font-semibold text-teal-muted active:bg-sand-50"

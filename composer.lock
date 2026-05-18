@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "57dfa3336a4c795fb084e65aeecd18a2",
+    "content-hash": "e9aed4fe9f3f8f04a92a17df0d8cb0ac",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1492,6 +1492,51 @@
                 }
             ],
             "time": "2025-08-22T14:27:06+00:00"
+        },
+        {
+            "name": "innerr/native-media",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/innerr-native-media",
+                "reference": "491df21029a53afe523bff441d2b0c56b21edfc3"
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Innerr\\NativeMedia\\NativeMediaServiceProvider"
+                    ],
+                    "aliases": {
+                        "NativeMedia": "Innerr\\NativeMedia\\Facades\\NativeMedia"
+                    }
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Innerr\\NativeMedia\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Innerr"
+                }
+            ],
+            "description": "Native media staging and thumbnail generation for NativePHP Mobile (bypasses PHP scheme handler for large videos)",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "laravel/framework",

@@ -10,6 +10,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@nativephp/mobile': path.resolve(__dirname, 'vendor/nativephp/mobile/resources/dist/native.js'),
+            '@innerr/native-media': path.resolve(__dirname, 'packages/innerr-native-media/resources/js/index.ts'),
         },
     },
     build: {

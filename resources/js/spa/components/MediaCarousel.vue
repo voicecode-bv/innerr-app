@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 
 export interface CarouselItem {
     id: string;
@@ -239,12 +240,13 @@ onBeforeUnmount(() => {
                 :key="item.id"
                 class="relative size-full shrink-0 snap-center snap-always"
             >
-                <video
+                <VideoPlayer
                     v-if="item.type === 'video'"
                     :src="item.url"
-                    :poster="item.thumbnail ?? undefined"
+                    :poster="item.thumbnail"
                     class="size-full object-cover"
                     controls
+                    crossorigin="anonymous"
                 />
                 <img
                     v-else

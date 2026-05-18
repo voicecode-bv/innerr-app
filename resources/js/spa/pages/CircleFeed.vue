@@ -8,9 +8,10 @@ import PostCard from '@/spa/components/PostCard.vue';
 import type {PostData} from '@/spa/components/PostCard.vue';
 import {
     useInfiniteScroll
-    
+
 } from '@/spa/composables/useInfiniteScroll';
 import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';

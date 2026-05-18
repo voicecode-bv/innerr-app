@@ -9,9 +9,10 @@ import type {PostData} from '@/spa/components/PostCard.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
 import {
     useInfiniteScroll
-    
+
 } from '@/spa/composables/useInfiniteScroll';
 import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
@@ -80,6 +81,12 @@ const feed = useInfiniteScroll<PostData>(fetchFeed, sentinelRef, {
     initialItems: cached?.items,
     initialLastPage: cached?.lastPage,
 });
+
+// Zolang er posts in de feed staan met media_status='processing' (typisch een
+// vers ge-uploade video die nog getranscodeerd wordt), refreshen we de feed
+// elke 5s. Zodra de server status 'ready' meldt is de poll uitgeschakeld en
+// switcht de PostCard van spinner+poster naar de echte VideoPlayer.
+useProcessingPoll(feed.items, () => feed.softRefresh());
 
 onMounted(() => {
     // Cache toonbaar maar verlopen → fetch op de achtergrond zonder lege flits.

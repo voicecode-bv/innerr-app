@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Spa;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PostActionController;
 use App\Services\ApiClient;
-use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 /**
  * BFF-only endpoint voor post-creation — NativePhp Camera levert een file://
@@ -20,12 +21,33 @@ use Illuminate\Validation\ValidationException;
  * Ondersteunt zowel single (legacy `media_path`) als multi (`media_paths[]` +
  * optioneel `media_metadata[]`). EXIF per item komt uit `media_metadata` of
  * valt terug op de `.exif.json` sidecar naast het bestand.
+ *
+ * Videos lopen via een chunked upload flow: het BFF stream-leest het lokale
+ * file:// pad in `UPLOAD_CHUNK_BYTES`-stukjes naar `/api/uploads/{id}/chunk`,
+ * wisselt op finalize het verkregen `upload_token` in via het `media_token(s)`
+ * veld op `/api/posts`. Zo blijft elk individueel HTTP-request klein genoeg
+ * voor de huidige api-client timeout en geheugens, ook bij 200+ MB clips.
  */
 class PostsController extends Controller
 {
     private const MAX_MEDIA_ITEMS = 10;
 
     private const EXIF_KEYS = ['taken_at', 'latitude', 'longitude'];
+
+    /**
+     * Per-chunk timeout voor BFF → externe API. Op trage cellulaire netwerken
+     * kan een 4 MB chunk een paar tientallen seconden duren; we geven ruim
+     * budget zodat één hapering geen abort triggert. De `api-client.timeout`
+     * config blijft 15s voor reguliere requests.
+     */
+    private const CHUNK_HTTP_TIMEOUT = 120;
+
+    /**
+     * Mime types die we via chunked upload routen ipv multipart-attach. Foto's
+     * passen meestal in één request en de bestaande multipart code is daar al
+     * op afgestemd; chunked uploaden voor foto's voegt enkel overhead toe.
+     */
+    private const CHUNKED_MIME_PREFIXES = ['video/'];
 
     public function __construct(protected ApiClient $apiClient) {}
 
@@ -88,18 +110,25 @@ class PostsController extends Controller
             $data['media_metadata'] = json_encode(array_values($perItemExif));
         }
 
-        $request = $this->apiClient->authenticated();
-        $openHandles = [];
+        $mimeTypes = array_map(
+            fn (string $path): string => File::mimeType($path) ?: 'application/octet-stream',
+            $paths,
+        );
+
+        $shouldChunkAll = $paths !== [] && array_reduce(
+            $mimeTypes,
+            fn (bool $carry, string $mime): bool => $carry && $this->shouldUseChunkedUpload($mime),
+            true,
+        );
 
         try {
-            $request = $this->attachMedia($request, $paths, $openHandles);
-            $response = $request->post('/posts', $data);
-        } finally {
-            foreach ($openHandles as $handle) {
-                if (is_resource($handle)) {
-                    fclose($handle);
-                }
-            }
+            $response = $shouldChunkAll
+                ? $this->postWithChunkedUploads($paths, $mimeTypes, $data)
+                : $this->postWithMultipartAttach($paths, $data);
+        } catch (RuntimeException $e) {
+            throw ValidationException::withMessages([
+                $isLegacySingle ? 'media_path' : 'media_paths.0' => $e->getMessage(),
+            ]);
         }
 
         foreach ($paths as $path) {
@@ -125,30 +154,226 @@ class PostsController extends Controller
     }
 
     /**
+     * Multipart attach path — voor afbeeldingen die in één request passen.
+     *
      * @param  list<string>  $paths
-     * @param  array<int, resource>  $openHandles  collected so the caller can fclose() after the HTTP call.
+     * @param  array<string, mixed>  $data
      */
-    private function attachMedia(PendingRequest $request, array $paths, array &$openHandles): PendingRequest
+    private function postWithMultipartAttach(array $paths, array $data): Response
     {
+        $request = $this->apiClient->authenticated();
         $multi = count($paths) > 1;
+        $openHandles = [];
 
-        foreach ($paths as $index => $path) {
-            $mimeType = File::mimeType($path) ?: 'application/octet-stream';
-            $filename = pathinfo($path, PATHINFO_FILENAME).'.'.$this->extensionFor($path, $mimeType);
-            $handle = fopen($path, 'r');
+        try {
+            foreach ($paths as $index => $path) {
+                $mimeType = File::mimeType($path) ?: 'application/octet-stream';
+                $filename = pathinfo($path, PATHINFO_FILENAME).'.'.$this->extensionFor($path, $mimeType);
+                $handle = fopen($path, 'r');
 
-            if ($handle === false) {
-                throw ValidationException::withMessages([
-                    $multi ? "media_paths.{$index}" : 'media_path' => __('Could not read media file.'),
-                ]);
+                if ($handle === false) {
+                    throw ValidationException::withMessages([
+                        $multi ? "media_paths.{$index}" : 'media_path' => __('Could not read media file.'),
+                    ]);
+                }
+
+                $openHandles[] = $handle;
+                $fieldName = $multi ? 'media[]' : 'media';
+                $request = $request->attach($fieldName, $handle, $filename, ['Content-Type' => $mimeType]);
             }
 
-            $openHandles[] = $handle;
-            $fieldName = $multi ? 'media[]' : 'media';
-            $request = $request->attach($fieldName, $handle, $filename, ['Content-Type' => $mimeType]);
+            return $request->post('/posts', $data);
+        } finally {
+            foreach ($openHandles as $handle) {
+                if (is_resource($handle)) {
+                    fclose($handle);
+                }
+            }
+        }
+    }
+
+    /**
+     * Chunked upload path: chunked POST naar `/api/uploads/{id}/chunk`,
+     * verzilver de upload_token(s) via `/api/posts` zonder een multipart body.
+     *
+     * @param  list<string>  $paths
+     * @param  list<string>  $mimeTypes
+     * @param  array<string, mixed>  $data
+     */
+    private function postWithChunkedUploads(array $paths, array $mimeTypes, array $data): Response
+    {
+        $tokens = [];
+        $sessionIdsToAbort = [];
+
+        try {
+            foreach ($paths as $index => $path) {
+                [$tokens[], $sessionId] = $this->uploadFileInChunks($path, $mimeTypes[$index]);
+                $sessionIdsToAbort[] = $sessionId;
+            }
+
+            if (count($tokens) === 1) {
+                $data['media_token'] = $tokens[0];
+            } else {
+                $data['media_tokens'] = $tokens;
+            }
+
+            $response = $this->apiClient->authenticated()->post('/posts', $data);
+
+            // De API ruimt geconsumeerde sessions zelf op bij een 2xx; alleen
+            // bij non-2xx moeten wij hier nog een abort sturen.
+            if (! $response->successful()) {
+                $this->abortSessions($sessionIdsToAbort);
+            }
+
+            return $response;
+        } catch (\Throwable $e) {
+            $this->abortSessions($sessionIdsToAbort);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Initialiseer een upload-session bij de externe API en stream `$path` in
+     * chunks van `chunk_size` bytes naar `/api/uploads/{id}/chunk`. Geeft
+     * `[upload_token, session_id]` terug; bij faal wordt de session aan de
+     * binnenkant al geaborted.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function uploadFileInChunks(string $path, string $mimeType): array
+    {
+        $init = $this->apiClient->authenticated()->post('/uploads');
+
+        if (! $init->successful()) {
+            throw new RuntimeException(__('Could not initialise upload session.'));
         }
 
-        return $request;
+        $uploadId = (string) $init->json('upload_id');
+        $chunkSize = max(1, (int) $init->json('chunk_size'));
+        $maxChunks = max(1, (int) $init->json('max_chunks'));
+        $maxTotalBytes = (int) $init->json('max_total_bytes');
+
+        $fileSize = filesize($path) ?: 0;
+
+        if ($fileSize === 0) {
+            $this->abortSessions([$uploadId]);
+
+            throw new RuntimeException(__('Could not read media file.'));
+        }
+
+        if ($maxTotalBytes > 0 && $fileSize > $maxTotalBytes) {
+            $this->abortSessions([$uploadId]);
+
+            throw new RuntimeException(__('Media file is too large.'));
+        }
+
+        $chunkCount = max(1, (int) ceil($fileSize / $chunkSize));
+
+        if ($chunkCount > $maxChunks) {
+            $this->abortSessions([$uploadId]);
+
+            throw new RuntimeException(__('Media file is too large.'));
+        }
+
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            $this->abortSessions([$uploadId]);
+
+            throw new RuntimeException(__('Could not read media file.'));
+        }
+
+        try {
+            for ($sequence = 0; $sequence < $chunkCount; $sequence++) {
+                $buffer = fread($handle, $chunkSize);
+
+                if ($buffer === false || $buffer === '') {
+                    throw new RuntimeException(__('Could not read media file.'));
+                }
+
+                $isFinal = $sequence === $chunkCount - 1;
+                $response = $this->postChunk($uploadId, $sequence, $buffer, $isFinal, $mimeType);
+
+                try {
+                    if (! $response->successful()) {
+                        $response->throw();
+                    }
+                } catch (RequestException $e) {
+                    throw new RuntimeException($e->response->json('message') ?? __('Upload failed.'));
+                }
+
+                if ($isFinal) {
+                    $token = $response->json('upload_token');
+
+                    if (! is_string($token)) {
+                        throw new RuntimeException(__('Upload finalisation returned no token.'));
+                    }
+
+                    return [$token, $uploadId];
+                }
+            }
+
+            throw new RuntimeException(__('Upload finalisation never reached.'));
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    private function postChunk(string $uploadId, int $sequence, string $bytes, bool $isFinal, string $mimeType): Response
+    {
+        // Wrap raw bytes in een memory-resource zodat we geen tempfile per chunk
+        // hoeven te schrijven. Het PendingRequest gebruikt Guzzle multipart en
+        // verbruikt de stream lazy.
+        $stream = fopen('php://temp', 'r+');
+
+        if ($stream === false) {
+            throw new RuntimeException(__('Upload failed.'));
+        }
+
+        try {
+            fwrite($stream, $bytes);
+            rewind($stream);
+
+            $request = $this->apiClient->authenticated()
+                ->timeout(self::CHUNK_HTTP_TIMEOUT)
+                ->attach('chunk', $stream, "chunk_{$sequence}", ['Content-Type' => 'application/octet-stream']);
+
+            return $request->post("/uploads/{$uploadId}/chunk", [
+                'sequence' => $sequence,
+                'final' => $isFinal ? '1' : '0',
+                'mime_type' => $mimeType,
+            ]);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+    }
+
+    /**
+     * @param  list<string>  $sessionIds
+     */
+    private function abortSessions(array $sessionIds): void
+    {
+        foreach (array_unique($sessionIds) as $id) {
+            try {
+                $this->apiClient->authenticated()->delete("/uploads/{$id}");
+            } catch (\Throwable) {
+                // Best-effort; serverside GC ruimt anders later op.
+            }
+        }
+    }
+
+    private function shouldUseChunkedUpload(string $mimeType): bool
+    {
+        foreach (self::CHUNKED_MIME_PREFIXES as $prefix) {
+            if (str_starts_with($mimeType, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

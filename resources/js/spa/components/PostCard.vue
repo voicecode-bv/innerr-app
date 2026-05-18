@@ -4,6 +4,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
+import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { externalApi } from '@/spa/http/externalApi';
@@ -313,7 +314,18 @@ const showFullCaption = ref(false);
 const captionRef = ref<HTMLParagraphElement>();
 const isCaptionOverflowing = ref(false);
 const mediaLoaded = ref(false);
-const videoRef = ref<HTMLVideoElement>();
+
+// VideoPlayer wrapper exposes its underlying <video> via `videoRef`. We
+// proxieren dat zodat useVideoFullscreen z'n eigen reactive Ref behoudt en
+// blijft re-evalueren als de gebruiker een andere post in beeld scrolt.
+const videoPlayerRef = ref<{ videoRef: HTMLVideoElement | null } | null>(null);
+const videoRef = ref<HTMLVideoElement | undefined>(undefined);
+watch(
+    () => videoPlayerRef.value?.videoRef ?? null,
+    (el) => {
+        videoRef.value = el ?? undefined;
+    },
+);
 const {
     isMuted,
     isFullscreen,
@@ -839,11 +851,11 @@ function timeAgo(dateString: string): string {
                     "
                     class="absolute inset-0 shimmer"
                 />
-                <video
+                <VideoPlayer
                     v-if="post.media_status === 'ready'"
-                    ref="videoRef"
+                    ref="videoPlayerRef"
                     :src="post.media_url"
-                    :poster="post.thumbnail_url ?? undefined"
+                    :poster="post.thumbnail_url"
                     :class="[
                         isFullscreen
                             ? 'max-h-full max-w-full object-contain'
@@ -851,7 +863,6 @@ function timeAgo(dateString: string): string {
                         'transition-opacity duration-500',
                         mediaLoaded ? 'opacity-100' : 'opacity-0',
                     ]"
-                    playsinline
                     muted
                     autoplay
                     loop
@@ -962,9 +973,11 @@ function timeAgo(dateString: string): string {
                         class="size-full object-cover"
                     />
                     <div
-                        class="absolute inset-0 flex items-center justify-center bg-black/20"
+                        class="absolute inset-0 flex items-center justify-center bg-black/35 px-6"
                     >
-                        <div class="flex flex-col items-center gap-2">
+                        <div
+                            class="flex max-w-xs flex-col items-center gap-3 text-center"
+                        >
                             <svg
                                 class="size-8 animate-spin text-white"
                                 xmlns="http://www.w3.org/2000/svg"
@@ -985,9 +998,16 @@ function timeAgo(dateString: string): string {
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                 />
                             </svg>
-                            <span class="text-white">{{
-                                t('Processing video...')
-                            }}</span>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-semibold text-white">{{
+                                    t('Processing your video')
+                                }}</span>
+                                <span class="text-white/85">{{
+                                    t(
+                                        'It will appear in your feed automatically when ready.',
+                                    )
+                                }}</span>
+                            </div>
                         </div>
                     </div>
                 </template>

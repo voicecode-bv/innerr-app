@@ -11,26 +11,27 @@ import {
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import Chip from '@/components/Chip.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
+import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import type {
     PostFirstVisibleLiker,
     PostMediaItem,
 } from '@/spa/components/PostCard.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
+import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
-import { usePersonsStore } from '@/spa/stores/persons';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
-import { useTagsStore } from '@/spa/stores/tags';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
-import { externalApi } from '@/spa/http/externalApi';
+import { useTagsStore } from '@/spa/stores/tags';
 import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -131,10 +132,13 @@ const postCache = usePostCacheStore();
 
 function seedPostFromCache(): boolean {
     const cached = postCache.get<Post>(postId.value);
+
     if (cached) {
         post.value = cached;
+
         return true;
     }
+
     return false;
 }
 
@@ -175,16 +179,23 @@ const isOwner = computed(() => post.value?.user.id === auth.user?.id);
 const isUntaggingSelf = ref(false);
 
 async function untagSelf(): Promise<void> {
-    if (!post.value || isUntaggingSelf.value) return;
+    if (!post.value || isUntaggingSelf.value) {
+return;
+}
+
     await Dialog.alert()
         .confirm(t('Remove tag'), t('Remove yourself from this post?'))
         .id('untag-self-confirm');
 }
 
 async function performUntagSelf(): Promise<void> {
-    if (!post.value) return;
+    if (!post.value) {
+return;
+}
+
     isUntaggingSelf.value = true;
     const postId = post.value.id;
+
     try {
         const response = await externalApi.delete<{ data: Post }>(
             `/posts/${postId}/tagged-self`,
@@ -212,21 +223,34 @@ const hasLocation = computed(
 
 const staticMapUrl = computed<string | null>(() => {
     const token = serviceKeys.mapboxToken;
-    if (!token || !hasLocation.value || !post.value) return null;
+
+    if (!token || !hasLocation.value || !post.value) {
+return null;
+}
+
     const lng = post.value.longitude;
     const lat = post.value.latitude;
     const pin = `pin-l+373d8a(${lng},${lat})`;
+
     return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${lng},${lat},14/640x320@2x?access_token=${token}`;
 });
 
 const mapTarget = computed(() => {
     const firstCircle = post.value?.circles?.[0];
+
     return firstCircle
         ? { name: 'spa.circles.map', params: { circle: firstCircle.id } }
         : { name: 'spa.map' };
 });
 
-const videoRef = ref<HTMLVideoElement>();
+const videoPlayerRef = ref<{ videoRef: HTMLVideoElement | null } | null>(null);
+const videoRef = ref<HTMLVideoElement | undefined>(undefined);
+watch(
+    () => videoPlayerRef.value?.videoRef ?? null,
+    (el) => {
+        videoRef.value = el ?? undefined;
+    },
+);
 const { isMuted, isFullscreen, toggleMute, toggleFullscreen } =
     useVideoFullscreen(videoRef);
 const mediaLoaded = ref(false);
@@ -398,6 +422,7 @@ async function toggleLike(): Promise<void> {
         } else {
             await externalApi.post(`/posts/${post.value.id}/like`);
         }
+
         // Refresh shadow info zoals first_visible_liker — anders blijft de
         // "X en N anderen" regel hangen op de oude liker.
         postCache.invalidate(post.value.id);
@@ -418,7 +443,10 @@ const personsStore = usePersonsStore();
 const tagsStore = useTagsStore();
 
 async function openEditModal(): Promise<void> {
-    if (!post.value) return;
+    if (!post.value) {
+return;
+}
+
     try {
         const [circles, tags, persons] = await Promise.all([
             circlesStore.ensureLoaded().catch(() => [] as AvailableCircle[]),
@@ -431,16 +459,20 @@ async function openEditModal(): Promise<void> {
     } catch {
         // open anyway with empty available lists
     }
+
     isEditModalOpen.value = true;
 }
 
 function onCommentAdded(): void {
-    if (post.value) post.value.comments_count += 1;
+    if (post.value) {
+post.value.comments_count += 1;
+}
 }
 
 function onCommentDeleted(): void {
-    if (post.value)
-        post.value.comments_count = Math.max(0, post.value.comments_count - 1);
+    if (post.value) {
+post.value.comments_count = Math.max(0, post.value.comments_count - 1);
+}
 }
 
 async function deletePost(): Promise<void> {
@@ -464,6 +496,7 @@ async function handleButtonPressed(payload: {
 }): Promise<void> {
     if (payload.id === 'delete-post-confirm' && payload.index === 1) {
         isDeleting.value = true;
+
         try {
             await externalApi.delete(`/posts/${postId.value}`);
             postCache.invalidate(postId.value);
@@ -476,6 +509,7 @@ async function handleButtonPressed(payload: {
         } finally {
             isDeleting.value = false;
         }
+
         return;
     }
 
@@ -512,11 +546,16 @@ function ageAt(
     birthdate: string | null | undefined,
     atDateString: string,
 ): string | null {
-    if (!birthdate) return null;
+    if (!birthdate) {
+return null;
+}
+
     const birth = new Date(birthdate);
     const at = new Date(atDateString);
-    if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth)
-        return null;
+
+    if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth) {
+return null;
+}
 
     const totalDays = Math.floor((at.getTime() - birth.getTime()) / 86_400_000);
 
@@ -528,9 +567,11 @@ function ageAt(
 
     let years = at.getFullYear() - birth.getFullYear();
     let months = at.getMonth() - birth.getMonth();
+
     if (at.getDate() < birth.getDate()) {
         months -= 1;
     }
+
     if (months < 0) {
         years -= 1;
         months += 12;
@@ -538,6 +579,7 @@ function ageAt(
 
     if (years === 0 && months === 0) {
         const weeks = Math.floor(totalDays / 7);
+
         return t(weeks === 1 ? ':count week' : ':count weeks', {
             count: weeks,
         });
@@ -556,6 +598,7 @@ function ageAt(
         const monthPart = t(months === 1 ? ':count month' : ':count months', {
             count: months,
         });
+
         return `${yearPart} ${monthPart}`;
     }
 
@@ -567,30 +610,44 @@ function timeAgo(dateString: string): string {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return t('just now');
-    if (seconds < 3600)
-        return t(':count min ago', { count: Math.floor(seconds / 60) });
-    if (seconds < 86400)
-        return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    if (seconds < 60) {
+return t('just now');
+}
+
+    if (seconds < 3600) {
+return t(':count min ago', { count: Math.floor(seconds / 60) });
+}
+
+    if (seconds < 86400) {
+return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+}
+
     if (seconds < 604800) {
         const days = Math.floor(seconds / 86400);
+
         return t(days === 1 ? ':count day ago' : ':count days ago', {
             count: days,
         });
     }
+
     if (seconds < 2592000) {
         const weeks = Math.floor(seconds / 604800);
+
         return t(weeks === 1 ? ':count week ago' : ':count weeks ago', {
             count: weeks,
         });
     }
+
     if (seconds < 31536000) {
         const months = Math.floor(seconds / 2592000);
+
         return t(months === 1 ? ':count month ago' : ':count months ago', {
             count: months,
         });
     }
+
     const years = Math.floor(seconds / 31536000);
+
     return t(years === 1 ? ':count year ago' : ':count years ago', {
         count: years,
     });
@@ -599,7 +656,10 @@ function timeAgo(dateString: string): string {
 watch(
     () => route.params.post,
     () => {
-        if (route.name !== 'spa.posts.show') return;
+        if (route.name !== 'spa.posts.show') {
+return;
+}
+
         post.value = null;
         isLikesSheetOpen.value = false;
         isCommentsSheetOpen.value = false;
@@ -783,33 +843,74 @@ watch(
                         decoding="async"
                         @load="mediaLoaded = true"
                     />
-                    <video
+                    <VideoPlayer
                         v-else-if="
                             post.media_type === 'video' &&
                             post.media_status === 'ready'
                         "
-                        ref="videoRef"
+                        ref="videoPlayerRef"
                         :src="post.media_url"
-                        :poster="post.thumbnail_url ?? undefined"
+                        :poster="post.thumbnail_url"
                         :class="
                             isFullscreen
                                 ? 'max-h-full max-w-full object-contain'
                                 : 'size-full object-cover'
                         "
-                        playsinline
                         muted
                         autoplay
                         loop
                         preload="metadata"
                     />
-                    <div
-                        v-else-if="post.media_type === 'video'"
-                        class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20"
-                    >
-                        <span class="text-white">{{
-                            t('Processing video...')
-                        }}</span>
-                    </div>
+                    <template v-else-if="post.media_type === 'video'">
+                        <img
+                            v-if="post.thumbnail_url"
+                            :src="post.thumbnail_url"
+                            :alt="post.caption ?? t('Moment')"
+                            :class="
+                                isFullscreen
+                                    ? 'max-h-full max-w-full object-contain'
+                                    : 'size-full object-cover'
+                            "
+                        />
+                        <div
+                            class="absolute inset-0 flex items-center justify-center bg-black/35 px-6"
+                        >
+                            <div
+                                class="flex max-w-xs flex-col items-center gap-3 text-center"
+                            >
+                                <svg
+                                    class="size-8 animate-spin text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    />
+                                </svg>
+                                <div class="flex flex-col gap-1">
+                                    <span class="font-semibold text-white">{{
+                                        t('Processing your video')
+                                    }}</span>
+                                    <span class="text-white/85">{{
+                                        t(
+                                            'It will appear in your feed automatically when ready.',
+                                        )
+                                    }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
 
                     <button
                         v-if="
