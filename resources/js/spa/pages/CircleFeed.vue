@@ -54,15 +54,50 @@ const cached = feedCache.get<PostData>(feedKey.value);
 async function fetchCircleFeed(
     page: number,
 ): Promise<PaginatedResponse<PostData>> {
+    const existingBeforeFetch =
+        feedCache.get<PostData>(feedKey.value)?.items ?? [];
     const response = await externalApi.get<PaginatedResponse<PostData>>(
         `/circles/${circleId.value}/feed?page=${page}`,
     );
 
     if (page === 1) {
+        preserveLocalThumbnails(response.data, existingBeforeFetch);
         feedCache.set(feedKey.value, response.data, response.meta.last_page);
     }
 
     return response;
+}
+
+// Zie Feed.vue voor de motivatie. Behoudt de lokale data-URL thumbnail van
+// een optimistic of een nog-processing post zodat de PostCard tijdens een
+// poll niet leeg flikkert terwijl de CDN-poster nog laadt of ontbreekt.
+function preserveLocalThumbnails(
+    fresh: PostData[],
+    existing: readonly PostData[],
+): void {
+    const knownById = new Map(existing.map((p) => [p.id, p]));
+    const optimisticPool = existing
+        .filter((p) => p.id.startsWith('optimistic-') && p.thumbnail_url)
+        .slice();
+
+    for (const post of fresh) {
+        const known = knownById.get(post.id);
+
+        if (known?.thumbnail_url && !post.thumbnail_url) {
+            post.thumbnail_url = known.thumbnail_url;
+            post.thumbnail_small_url ??= known.thumbnail_small_url;
+            continue;
+        }
+
+        if (!known && !post.thumbnail_url && optimisticPool.length > 0) {
+            const donor = optimisticPool.shift();
+
+            if (donor?.thumbnail_url) {
+                post.thumbnail_url = donor.thumbnail_url;
+                post.thumbnail_small_url ??= donor.thumbnail_small_url;
+            }
+        }
+    }
 }
 
 const feed = useInfiniteScroll<PostData>(fetchCircleFeed, sentinelRef, {
@@ -70,6 +105,10 @@ const feed = useInfiniteScroll<PostData>(fetchCircleFeed, sentinelRef, {
     initialItems: cached?.items,
     initialLastPage: cached?.lastPage,
 });
+
+// Auto-refresh terwijl een post nog in `media_status='processing'` staat — zie
+// de comment in Feed.vue voor de motivatie.
+useProcessingPoll(feed.items, () => feed.softRefresh());
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: async () => {

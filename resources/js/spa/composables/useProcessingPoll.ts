@@ -1,5 +1,5 @@
-import { computed, onUnmounted, watch } from 'vue';
-import type { Ref } from 'vue';
+import { computed, onUnmounted, toValue, watch } from 'vue';
+import type { MaybeRefOrGetter } from 'vue';
 
 /**
  * Item shape we care about: anything with an optional `media_status` field.
@@ -27,15 +27,23 @@ interface Options {
  * `media_status: 'processing'` and transcodes asynchronously. Without polling
  * the SPA's feed cache stays on 'processing' until the user manually pulls to
  * refresh — even though the video is already playable.
+ *
+ * `items` accepts a Ref, a computed, a getter or a plain reactive array —
+ * `useInfiniteScroll` returns a `reactive({ items })` for example, so the
+ * "items" field is already the array, not a Ref.
  */
 export function useProcessingPoll<T extends ProcessingAware>(
-    items: Ref<readonly T[]>,
+    items: MaybeRefOrGetter<readonly T[] | undefined | null>,
     refresh: () => Promise<unknown> | unknown,
     { intervalMs = 5000, timeoutMs = 5 * 60 * 1000 }: Options = {},
 ): void {
-    const hasProcessing = computed(() =>
-        items.value.some((item) => item.media_status === 'processing'),
-    );
+    const hasProcessing = computed(() => {
+        const current = toValue(items);
+
+        return Array.isArray(current)
+            ? current.some((item) => item.media_status === 'processing')
+            : false;
+    });
 
     let intervalHandle: ReturnType<typeof setInterval> | null = null;
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;

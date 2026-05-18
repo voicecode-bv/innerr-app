@@ -65,15 +65,56 @@ async function loadUnreadCount(): Promise<void> {
 const cached = feedCache.get<PostData>(FEED_KEY);
 
 async function fetchFeed(page: number): Promise<PaginatedResponse<PostData>> {
+    const existingBeforeFetch = feedCache.get<PostData>(FEED_KEY)?.items ?? [];
     const response = await externalApi.get<PaginatedResponse<PostData>>(
         `/feed?page=${page}`,
     );
 
     if (page === 1) {
+        preserveLocalThumbnails(response.data, existingBeforeFetch);
         feedCache.set(FEED_KEY, response.data, response.meta.last_page);
     }
 
     return response;
+}
+
+// Behoud client-side gegenereerde thumbnails (van NativeMedia.thumbnail, zit
+// op de optimistic post als `data:image/jpeg;base64,…`) zodra een verse
+// API-respons de optimistic vervangt door de echte post — of de bestaande
+// echte post nog op `processing` staat zonder CDN-poster. Zonder dit zou de
+// thumbnail wegvallen tijdens de eerste poll na een upload, want de PostCard
+// remount op de nieuwe id en de CDN-poster is op dat moment ofwel nog niet
+// klaar (`thumbnail_url === null`), ofwel haalbaar maar met netwerk-latentie.
+function preserveLocalThumbnails(
+    fresh: PostData[],
+    existing: readonly PostData[],
+): void {
+    const knownById = new Map(existing.map((p) => [p.id, p]));
+    const optimisticPool = existing
+        .filter((p) => p.id.startsWith('optimistic-') && p.thumbnail_url)
+        .slice();
+
+    for (const post of fresh) {
+        const known = knownById.get(post.id);
+
+        if (known?.thumbnail_url && !post.thumbnail_url) {
+            post.thumbnail_url = known.thumbnail_url;
+            post.thumbnail_small_url ??= known.thumbnail_small_url;
+            continue;
+        }
+
+        // Optimistic→real swap: de verse post heeft een id die we nog niet
+        // kennen, en er staat nog een optimistic in de cache met dezelfde
+        // strekking. Verplaats z'n data-URL thumbnail naar de nieuwe post.
+        if (!known && !post.thumbnail_url && optimisticPool.length > 0) {
+            const donor = optimisticPool.shift();
+
+            if (donor?.thumbnail_url) {
+                post.thumbnail_url = donor.thumbnail_url;
+                post.thumbnail_small_url ??= donor.thumbnail_small_url;
+            }
+        }
+    }
 }
 
 const feed = useInfiniteScroll<PostData>(fetchFeed, sentinelRef, {

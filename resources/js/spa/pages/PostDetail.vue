@@ -23,6 +23,7 @@ import type {
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
+import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -160,6 +161,12 @@ async function refresh(): Promise<void> {
         commentsSheetRef.value?.reload() ?? Promise.resolve(),
     ]);
 }
+
+// Auto-refresh terwijl de post nog in `media_status='processing'` staat (bv.
+// vers ge-uploade video die nog getranscodeerd wordt). Zodra de server status
+// 'ready' meldt, switcht de UI van spinner+poster naar de echte VideoPlayer.
+const postItems = computed(() => (post.value ? [post.value] : []));
+useProcessingPoll(postItems, loadPost);
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: refresh,

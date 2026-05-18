@@ -729,11 +729,38 @@ async function submit(): Promise<void> {
     await api.post('/api/spa/edge/active-tab', { path: '/' }).catch(() => null);
 
     try {
-        await form.post('/api/spa/posts');
-        feedCache.invalidate('home');
+        // Pak de echte post-id uit de response en swap die in de cache zodat
+        // de PostCard zijn id (de v-for key) behoudt over de eerstvolgende
+        // softRefresh heen. Zonder deze swap remount Vue de hele PostCard van
+        // `optimistic-…` naar `019e…` en flikkert de thumbnail weg tijdens
+        // het laden van de CDN poster.
+        let realPostId: string | undefined;
 
-        for (const circleId of targetCircleIds) {
-            feedCache.invalidate(`circle:${circleId}`);
+        await form.post<{ data: { id: string } }>('/api/spa/posts', {
+            onSuccess: (response) => {
+                realPostId = response?.data?.id;
+            },
+        });
+
+        if (optimistic && realPostId) {
+            const swapped: PostData = { ...optimistic, id: realPostId };
+            feedCache.replaceById('home', optimistic.id, swapped);
+
+            for (const circleId of targetCircleIds) {
+                feedCache.replaceById(
+                    `circle:${circleId}`,
+                    optimistic.id,
+                    swapped,
+                );
+            }
+        } else {
+            // Geen id terug? Val terug op het oude gedrag: cache leegmaken
+            // zodat de eerstvolgende mount een verse fetch doet.
+            feedCache.invalidate('home');
+
+            for (const circleId of targetCircleIds) {
+                feedCache.invalidate(`circle:${circleId}`);
+            }
         }
     } catch (error) {
         if (optimistic) {

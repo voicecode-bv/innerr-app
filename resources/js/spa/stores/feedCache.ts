@@ -94,6 +94,35 @@ return;
             };
             writeStorage(this.entries);
         },
+        // Vervang een item op zijn huidige positie door een nieuw item met
+        // (meestal) een andere id. Use case: een optimistic post heeft id
+        // `optimistic-…`; zodra de server de echte id retourneert willen we
+        // die zonder visuele remount van de PostCard erin substitueren —
+        // anders flikkert de thumbnail tijdens de eerstvolgende softRefresh.
+        replaceById<T extends FeedItem>(
+            key: string,
+            oldId: string,
+            replacement: T,
+        ): void {
+            const existing = this.entries[key];
+
+            if (!existing) {
+                return;
+            }
+
+            const index = existing.items.findIndex(
+                (item) => item.id === oldId,
+            );
+
+            if (index === -1) {
+                return;
+            }
+
+            const items = [...existing.items];
+            items[index] = replacement as FeedItem;
+            this.entries[key] = { ...existing, items };
+            writeStorage(this.entries);
+        },
         invalidate(key: string): void {
             delete this.entries[key];
             writeStorage(this.entries);
