@@ -20,10 +20,14 @@ export const useTagsStore = defineStore('spa-tags', {
             if (this.items && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.items;
             }
+
             return this.refresh();
         },
         async refresh(): Promise<Tag[]> {
-            if (this.loading) return this.loading;
+            if (this.loading) {
+return this.loading;
+}
+
             this.loading = (async () => {
                 try {
                     const resp = await externalApi.get<{ data: Tag[] }>(
@@ -31,11 +35,13 @@ export const useTagsStore = defineStore('spa-tags', {
                     );
                     this.items = resp.data;
                     this.loadedAt = Date.now();
+
                     return this.items;
                 } finally {
                     this.loading = null;
                 }
             })();
+
             return this.loading;
         },
         invalidate(): void {
@@ -45,13 +51,19 @@ export const useTagsStore = defineStore('spa-tags', {
             this.items = [tag, ...(this.items ?? [])];
         },
         update(id: string, patch: Partial<Tag>): void {
-            if (!this.items) return;
+            if (!this.items) {
+return;
+}
+
             this.items = this.items.map((t) =>
                 t.id === id ? { ...t, ...patch } : t,
             );
         },
         remove(id: string): void {
-            if (!this.items) return;
+            if (!this.items) {
+return;
+}
+
             this.items = this.items.filter((t) => t.id !== id);
         },
         clear(): void {

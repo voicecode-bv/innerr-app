@@ -1,4 +1,5 @@
-import { onMounted, onUnmounted, reactive, ref, watch, type Ref } from 'vue';
+import { onMounted, onUnmounted, reactive, ref, watch  } from 'vue';
+import type {Ref} from 'vue';
 
 export interface PaginatedResponse<T> {
     data: T[];
@@ -42,9 +43,13 @@ export function useInfiniteScroll<T>(
 
     let observer: IntersectionObserver | null = null;
     const seenIds = new Set<string | number>();
+
     for (const item of initialItems) {
         const id = (item as { id?: string | number }).id;
-        if (id !== undefined) seenIds.add(id);
+
+        if (id !== undefined) {
+seenIds.add(id);
+}
     }
 
     async function loadMore(): Promise<void> {
@@ -60,10 +65,15 @@ export function useInfiniteScroll<T>(
 
             for (const item of response.data) {
                 const id = (item as { id?: string | number }).id;
+
                 if (id !== undefined) {
-                    if (seenIds.has(id)) continue;
+                    if (seenIds.has(id)) {
+continue;
+}
+
                     seenIds.add(id);
                 }
+
                 items.value.push(item);
             }
 
@@ -92,7 +102,10 @@ export function useInfiniteScroll<T>(
     // Achtergrond-refresh die page 1 ophaalt en items pas swapt zodra de
     // response binnen is — voorkomt een lege flits tussen "stale toon" en "verse".
     async function softRefresh(): Promise<PaginatedResponse<T> | null> {
-        if (loading.value) return null;
+        if (loading.value) {
+return null;
+}
+
         loading.value = true;
         error.value = null;
 
@@ -101,18 +114,28 @@ export function useInfiniteScroll<T>(
 
             const fresh: T[] = [];
             const freshSeen = new Set<string | number>();
+
             for (const item of response.data) {
                 const id = (item as { id?: string | number }).id;
+
                 if (id !== undefined) {
-                    if (freshSeen.has(id)) continue;
+                    if (freshSeen.has(id)) {
+continue;
+}
+
                     freshSeen.add(id);
                 }
+
                 fresh.push(item);
             }
 
             items.value = fresh;
             seenIds.clear();
-            for (const id of freshSeen) seenIds.add(id);
+
+            for (const id of freshSeen) {
+seenIds.add(id);
+}
+
             lastPage.value = response.meta.last_page;
             page.value = response.meta.current_page + 1;
             finished.value = page.value > lastPage.value;
@@ -120,6 +143,7 @@ export function useInfiniteScroll<T>(
             return response;
         } catch (e) {
             error.value = e instanceof Error ? e : new Error(String(e));
+
             return null;
         } finally {
             loading.value = false;

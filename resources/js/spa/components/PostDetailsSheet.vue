@@ -5,9 +5,9 @@ import BottomSheet from '@/components/BottomSheet.vue';
 import Chip from '@/components/Chip.vue';
 import SheetHeader from '@/components/SheetHeader.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { externalApi } from '@/spa/http/externalApi';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
-import { externalApi } from '@/spa/http/externalApi';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
 interface Circle {
@@ -60,17 +60,21 @@ const isLoading = ref(false);
 
 async function load(postId: string): Promise<void> {
     const cached = postCache.get<Post>(postId);
+
     if (cached) {
         post.value = cached;
     } else {
         post.value = postCache.getStale<Post>(postId);
         isLoading.value = post.value === null;
     }
+
     try {
         const data = await externalApi.get<{ data: Post }>(`/posts/${postId}`);
+
         if (props.postId === postId) {
             post.value = data.data;
         }
+
         postCache.set(postId, data.data);
     } catch {
         // negeren — sheet blijft op cache of leeg
@@ -84,8 +88,14 @@ async function load(postId: string): Promise<void> {
 watch(
     () => [props.open, props.postId] as const,
     ([open, id]) => {
-        if (!open || !id) return;
-        if (post.value?.id !== id) post.value = null;
+        if (!open || !id) {
+return;
+}
+
+        if (post.value?.id !== id) {
+post.value = null;
+}
+
         load(id);
     },
     { immediate: true },
@@ -101,22 +111,31 @@ const hasLocation = computed(
 
 const staticMapUrl = computed<string | null>(() => {
     const token = serviceKeys.mapboxToken;
-    if (!token || !hasLocation.value || !post.value) return null;
+
+    if (!token || !hasLocation.value || !post.value) {
+return null;
+}
+
     const lng = post.value.longitude;
     const lat = post.value.latitude;
     const pin = `pin-l+373d8a(${lng},${lat})`;
+
     return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${lng},${lat},14/640x320@2x?access_token=${token}`;
 });
 
 const mapTarget = computed(() => {
     const firstCircle = post.value?.circles?.[0];
+
     return firstCircle
         ? { name: 'spa.circles.map', params: { circle: firstCircle.id } }
         : { name: 'spa.map' };
 });
 
 const hasAnyDetails = computed(() => {
-    if (!post.value) return false;
+    if (!post.value) {
+return false;
+}
+
     return (
         (post.value.circles ?? []).length > 0 ||
         (post.value.persons ?? []).length > 0 ||
@@ -129,11 +148,16 @@ function ageAt(
     birthdate: string | null | undefined,
     atDateString: string,
 ): string | null {
-    if (!birthdate) return null;
+    if (!birthdate) {
+return null;
+}
+
     const birth = new Date(birthdate);
     const at = new Date(atDateString);
-    if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth)
-        return null;
+
+    if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth) {
+return null;
+}
 
     const totalDays = Math.floor((at.getTime() - birth.getTime()) / 86_400_000);
 
@@ -145,9 +169,11 @@ function ageAt(
 
     let years = at.getFullYear() - birth.getFullYear();
     let months = at.getMonth() - birth.getMonth();
+
     if (at.getDate() < birth.getDate()) {
         months -= 1;
     }
+
     if (months < 0) {
         years -= 1;
         months += 12;
@@ -155,6 +181,7 @@ function ageAt(
 
     if (years === 0 && months === 0) {
         const weeks = Math.floor(totalDays / 7);
+
         return t(weeks === 1 ? ':count week' : ':count weeks', {
             count: weeks,
         });
@@ -173,6 +200,7 @@ function ageAt(
         const monthPart = t(months === 1 ? ':count month' : ':count months', {
             count: months,
         });
+
         return `${yearPart} ${monthPart}`;
     }
 

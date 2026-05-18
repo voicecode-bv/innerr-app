@@ -2,8 +2,8 @@
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import PhotoMap from '@/components/PhotoMap.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 
 const { t } = useTranslations();

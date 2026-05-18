@@ -16,8 +16,8 @@ import PersonPicker from '@/components/PersonPicker.vue';
 const TagSelector = defineAsyncComponent(
     () => import('@/spa/components/TagSelector.vue'),
 );
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 
 interface Circle {
@@ -98,7 +98,11 @@ const availableTags = computed<Tag[]>(() => props.availableTags ?? []);
 const allPersons = computed<Person[]>(() => props.availablePersons ?? []);
 const availablePersons = computed<Person[]>(() => {
     const selected = form.data.circle_ids;
-    if (selected.length === 0) return [];
+
+    if (selected.length === 0) {
+return [];
+}
+
     // Persons currently tagged on the post must remain visible (and selected)
     // even if they no longer overlap with the chosen circles, so the user can
     // explicitly deselect them.
@@ -111,13 +115,17 @@ const availablePersons = computed<Person[]>(() => {
             form.data.person_ids.includes(person.id) &&
             !visibleIds.has(person.id),
     );
+
     return [...visible, ...stillSelected];
 });
 
 watch(
     () => form.data.circle_ids,
     () => {
-        if (form.data.person_ids.length === 0) return;
+        if (form.data.person_ids.length === 0) {
+return;
+}
+
         const visibleIds = new Set(
             allPersons.value
                 .filter((person) =>
@@ -136,17 +144,33 @@ watch(
 );
 
 function sameIds(a: string[], b: string[]): boolean {
-    if (a.length !== b.length) return false;
+    if (a.length !== b.length) {
+return false;
+}
+
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();
+
     return sortedA.every((id, i) => id === sortedB[i]);
 }
 
 const hasChanges = computed(() => {
-    if ((form.data.caption ?? '') !== initialCaption.value) return true;
-    if (!sameIds(form.data.circle_ids, initialCircleIds.value)) return true;
-    if (!sameIds(form.data.tag_ids, initialTagIds.value)) return true;
-    if (!sameIds(form.data.person_ids, initialPersonIds.value)) return true;
+    if ((form.data.caption ?? '') !== initialCaption.value) {
+return true;
+}
+
+    if (!sameIds(form.data.circle_ids, initialCircleIds.value)) {
+return true;
+}
+
+    if (!sameIds(form.data.tag_ids, initialTagIds.value)) {
+return true;
+}
+
+    if (!sameIds(form.data.person_ids, initialPersonIds.value)) {
+return true;
+}
+
     return false;
 });
 
@@ -158,7 +182,9 @@ const canSave = computed(
 watch(
     () => props.open,
     (isOpen) => {
-        if (!isOpen) return;
+        if (!isOpen) {
+return;
+}
 
         // Refresh baseline-snapshots zodat hasChanges altijd vergelijkt met
         // de actuele post-state (anders blijven oude tag/person ids hangen
@@ -191,7 +217,10 @@ function onSheetUpdate(value: boolean): void {
 const isDeleting = ref(false);
 
 async function requestDelete(): Promise<void> {
-    if (isDeleting.value || form.processing) return;
+    if (isDeleting.value || form.processing) {
+return;
+}
+
     await Dialog.alert()
         .confirm(
             t('Delete post'),
@@ -204,10 +233,16 @@ async function handleButtonPressed(payload: {
     index: number;
     id?: string | null;
 }): Promise<void> {
-    if (payload.id !== DELETE_CONFIRM_ID || payload.index !== 1) return;
-    if (isDeleting.value) return;
+    if (payload.id !== DELETE_CONFIRM_ID || payload.index !== 1) {
+return;
+}
+
+    if (isDeleting.value) {
+return;
+}
 
     isDeleting.value = true;
+
     try {
         await externalApi.delete(`/posts/${props.postId}`);
         emit('deleted', props.postId);
@@ -243,6 +278,7 @@ async function submit(): Promise<void> {
             errors?: Record<string, string[]>;
             message?: string;
         };
+
         if (apiError.status === 422) {
             form.errors = Object.fromEntries(
                 Object.entries(apiError.errors ?? {}).map(([k, v]) => [

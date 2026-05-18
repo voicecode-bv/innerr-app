@@ -31,6 +31,7 @@ const wrapperClasses = computed(() => {
         green: 'bg-brand-green text-brand-sand',
         yellow: 'bg-brand-yellow text-brand-green',
     };
+
     return [sizeMap[props.size], toneMap[props.tone]];
 });
 
@@ -40,6 +41,7 @@ const iconSizeClass = computed(() => {
         md: 'size-7',
         lg: 'size-8',
     };
+
     return map[props.size];
 });
 

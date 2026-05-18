@@ -8,7 +8,10 @@ export const TOKEN_KEY = 'api_token';
 const FALLBACK_PREFIX = 'spa.secure.';
 
 function isNativePhp(): boolean {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') {
+return false;
+}
+
     return Boolean(
         (window as unknown as { __nativephp?: unknown }).__nativephp,
     );
@@ -23,6 +26,7 @@ export const secureStorage = {
         if (isNativePhp()) {
             try {
                 const result = await SecureStorage.get(key);
+
                 if (result?.value !== undefined && result?.value !== null) {
                     return result.value;
                 }
@@ -30,7 +34,11 @@ export const secureStorage = {
                 // Native bridge niet beschikbaar — val terug op localStorage.
             }
         }
-        if (typeof window === 'undefined') return null;
+
+        if (typeof window === 'undefined') {
+return null;
+}
+
         return window.localStorage?.getItem(fallbackKey(key)) ?? null;
     },
 
@@ -38,12 +46,17 @@ export const secureStorage = {
         if (isNativePhp()) {
             try {
                 await SecureStorage.set(key, value);
+
                 return;
             } catch {
                 // Bridge niet beschikbaar — fallback hieronder.
             }
         }
-        if (typeof window === 'undefined') return;
+
+        if (typeof window === 'undefined') {
+return;
+}
+
         window.localStorage?.setItem(fallbackKey(key), value);
     },
 
@@ -55,7 +68,11 @@ export const secureStorage = {
                 // Negeren — best-effort delete.
             }
         }
-        if (typeof window === 'undefined') return;
+
+        if (typeof window === 'undefined') {
+return;
+}
+
         window.localStorage?.removeItem(fallbackKey(key));
     },
 };

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
-import { externalApi } from '@/spa/http/externalApi';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
+import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
 import userAddIcon from '../../../../svg/doodle-icons/user-add.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
@@ -59,19 +59,23 @@ function friendlyApiError(
     }
 
     const normalized = apiMessage.toLowerCase();
+
     if (normalized.includes('selected') && normalized.includes('invalid')) {
         return field === 'email'
             ? t('No account found for this email address.')
             : t('No account found for this username.');
     }
+
     if (normalized.includes('already')) {
         return t('This person is already in the circle.');
     }
+
     return t('Failed to invite member');
 }
 
 async function submit(): Promise<void> {
     const id = form.data.identifier.trim();
+
     if (!id) {
         return;
     }
@@ -84,9 +88,11 @@ async function submit(): Promise<void> {
 
     try {
         await externalApi.post(`/circles/${circleId}/members`, { [field]: id });
+
         if (!invited.value.includes(id)) {
             invited.value = [id, ...invited.value];
         }
+
         form.data.identifier = '';
     } catch (error) {
         if (error instanceof ApiError && error.status === 429) {

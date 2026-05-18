@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { externalApi } from '@/spa/http/externalApi';
 import { ApiError } from '@/spa/http/apiClient';
+import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
 import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
 

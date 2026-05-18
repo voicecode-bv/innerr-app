@@ -15,15 +15,15 @@ import CirclePicker from '@/components/CirclePicker.vue';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import ListItem from '@/spa/components/ListItem.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useCirclesStore } from '@/spa/stores/circles';
-import { usePersonsStore } from '@/spa/stores/persons';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { usePersonsStore } from '@/spa/stores/persons';
 import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
@@ -76,6 +76,7 @@ async function loadData(force = false): Promise<void> {
             personsStore.invalidate();
             circlesStore.invalidate();
         }
+
         await Promise.all([
             personsStore.ensureLoaded(),
             circlesStore.ensureLoaded(),
@@ -113,6 +114,7 @@ const editingPerson = computed<Person | null>(() => {
     if (editingPersonId.value === null) {
         return null;
     }
+
     return persons.value.find((p) => p.id === editingPersonId.value) ?? null;
 });
 
@@ -175,6 +177,7 @@ async function syncCircleIds(
     for (const circleId of toAttach) {
         await externalApi.post(`/persons/${personId}/circles/${circleId}`);
     }
+
     for (const circleId of toDetach) {
         await externalApi.delete(`/persons/${personId}/circles/${circleId}`);
     }
@@ -185,10 +188,12 @@ async function submit(): Promise<void> {
 
     if (editingPerson.value === null) {
         await createPerson();
+
         return;
     }
 
     editForm.data.name = editForm.data.name.trim();
+
     if (editForm.data.birthdate === '') {
         editForm.data.birthdate = null;
     }
@@ -213,6 +218,7 @@ async function submit(): Promise<void> {
             editForm.errors = Object.fromEntries(
                 Object.entries(error.errors).map(([k, v]) => [k, v[0] ?? '']),
             );
+
             if (
                 !editForm.errors.name &&
                 !editForm.errors.birthdate &&
@@ -237,6 +243,7 @@ async function createPerson(): Promise<void> {
             ...editForm.errors,
             circle_ids: t('Select at least one circle.'),
         };
+
         return;
     }
 
@@ -252,6 +259,7 @@ async function createPerson(): Promise<void> {
 
         if (pendingPhotoPath.value) {
             photoUploading.value = true;
+
             try {
                 await api.post(
                     `/api/spa/settings/persons/${data.data.id}/photo`,
@@ -262,6 +270,7 @@ async function createPerson(): Promise<void> {
             } finally {
                 photoUploading.value = false;
             }
+
             pendingPhotoPath.value = null;
             pendingPhotoPreview.value = null;
         }
@@ -274,6 +283,7 @@ async function createPerson(): Promise<void> {
             editForm.errors = Object.fromEntries(
                 Object.entries(error.errors).map(([k, v]) => [k, v[0] ?? '']),
             );
+
             if (
                 !editForm.errors.name &&
                 !editForm.errors.birthdate &&
@@ -333,9 +343,11 @@ async function handleButtonPressed(payload: {
 
     try {
         await externalApi.delete(`/persons/${personId}`);
+
         if (editingPersonId.value === personId) {
             sheetOpen.value = false;
         }
+
         await loadData(true);
     } catch {
         // ignore — gebruiker blijft op de huidige lijst
@@ -367,10 +379,13 @@ async function loadPreview(path: string): Promise<string | null> {
         const response = await fetch(
             `/native-media?path=${encodeURIComponent(path)}`,
         );
+
         if (!response.ok) {
             return null;
         }
+
         const { data_url } = await response.json();
+
         return data_url;
     } catch {
         return null;
@@ -391,6 +406,7 @@ async function handleMediaSelected(payload: {
     if (editingPerson.value === null) {
         pendingPhotoPath.value = path;
         pendingPhotoPreview.value = await loadPreview(path);
+
         return;
     }
 
@@ -401,6 +417,7 @@ async function handleMediaSelected(payload: {
 
     const personId = editingPerson.value.id;
     const previous = personsStore.items?.find((p) => p.id === personId);
+
     if (preview) {
         personsStore.update(personId, {
             avatar: preview,
@@ -416,7 +433,9 @@ async function handleMediaSelected(payload: {
         pendingPhotoPath.value = null;
         pendingPhotoPreview.value = null;
     } catch {
-        if (previous) personsStore.update(personId, previous);
+        if (previous) {
+personsStore.update(personId, previous);
+}
     } finally {
         photoUploading.value = false;
     }

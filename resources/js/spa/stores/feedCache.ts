@@ -14,9 +14,13 @@ const STORAGE_KEY = 'spa.feed.cache.v2';
 const FRESH_TTL_MS = 30 * 1000;
 
 function readStorage(): Record<string, FeedCacheEntry<FeedItem>> {
-    if (typeof window === 'undefined') return {};
+    if (typeof window === 'undefined') {
+return {};
+}
+
     try {
         const raw = window.localStorage?.getItem(STORAGE_KEY);
+
         return raw
             ? (JSON.parse(raw) as Record<string, FeedCacheEntry<FeedItem>>)
             : {};
@@ -26,7 +30,10 @@ function readStorage(): Record<string, FeedCacheEntry<FeedItem>> {
 }
 
 function writeStorage(value: Record<string, FeedCacheEntry<FeedItem>>): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+return;
+}
+
     try {
         window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(value));
     } catch {
@@ -47,6 +54,7 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
         },
         isFresh(key: string, ttlMs: number = FRESH_TTL_MS): boolean {
             const entry = this.entries[key];
+
             return !!entry && Date.now() - entry.cachedAt < ttlMs;
         },
         set<T extends FeedItem>(
@@ -75,7 +83,11 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
         },
         removeItem(key: string, id: string): void {
             const existing = this.entries[key];
-            if (!existing) return;
+
+            if (!existing) {
+return;
+}
+
             this.entries[key] = {
                 ...existing,
                 items: existing.items.filter((item) => item.id !== id),

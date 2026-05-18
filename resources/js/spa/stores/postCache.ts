@@ -17,8 +17,15 @@ export const usePostCacheStore = defineStore('spa-post-cache', {
     actions: {
         get<T>(postId: string, ttlMs: number = FRESH_TTL_MS): T | null {
             const entry = this.entries[postId];
-            if (!entry) return null;
-            if (Date.now() - entry.cachedAt > ttlMs) return null;
+
+            if (!entry) {
+return null;
+}
+
+            if (Date.now() - entry.cachedAt > ttlMs) {
+return null;
+}
+
             return entry.post as T;
         },
         getStale<T>(postId: string): T | null {

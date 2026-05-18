@@ -23,8 +23,15 @@ export const useCommentsCacheStore = defineStore('spa-comments-cache', {
             ttlMs: number = FRESH_TTL_MS,
         ): PageEntry<T> | null {
             const entry = this.entries[postId];
-            if (!entry) return null;
-            if (Date.now() - entry.cachedAt > ttlMs) return null;
+
+            if (!entry) {
+return null;
+}
+
+            if (Date.now() - entry.cachedAt > ttlMs) {
+return null;
+}
+
             return entry as PageEntry<T>;
         },
         getStale<T extends CommentLike>(postId: string): PageEntry<T> | null {

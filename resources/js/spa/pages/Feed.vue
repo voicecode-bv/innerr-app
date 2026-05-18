@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { RouterLink } from 'vue-router';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
-import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
+import PostCard from '@/spa/components/PostCard.vue';
+import type {PostData} from '@/spa/components/PostCard.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
-import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import {
-    useInfiniteScroll,
-    type PaginatedResponse,
+    useInfiniteScroll
+    
 } from '@/spa/composables/useInfiniteScroll';
+import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
@@ -65,9 +67,11 @@ async function fetchFeed(page: number): Promise<PaginatedResponse<PostData>> {
     const response = await externalApi.get<PaginatedResponse<PostData>>(
         `/feed?page=${page}`,
     );
+
     if (page === 1) {
         feedCache.set(FEED_KEY, response.data, response.meta.last_page);
     }
+
     return response;
 }
 
@@ -141,7 +145,9 @@ async function onPostDeleted(postId: string): Promise<void> {
 }
 
 function activeLikesCount(): number {
-    if (likesPostId.value === null) return 0;
+    if (likesPostId.value === null) {
+return 0;
+}
 
     const target = feed.items.find((p) => p.id === likesPostId.value);
 
@@ -149,7 +155,9 @@ function activeLikesCount(): number {
 }
 
 function activeCommentsCount(): number {
-    if (commentsPostId.value === null) return 0;
+    if (commentsPostId.value === null) {
+return 0;
+}
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 
@@ -157,7 +165,9 @@ function activeCommentsCount(): number {
 }
 
 function bumpActivePostCommentsCount(delta: number): void {
-    if (commentsPostId.value === null) return;
+    if (commentsPostId.value === null) {
+return;
+}
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 

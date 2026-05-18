@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { computed, ref } from 'vue';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import userIcon from '../../svg/doodle-icons/user.svg';
 
 interface Circle {
@@ -73,8 +73,13 @@ const sortedCircles = computed(() =>
 );
 
 const summaryText = computed(() => {
-    if (props.selectedIds.length === 0) return t('No circles selected');
-    if (allSelected.value) return t('All circles');
+    if (props.selectedIds.length === 0) {
+return t('No circles selected');
+}
+
+    if (allSelected.value) {
+return t('All circles');
+}
 
     return t(':count selected', { count: String(props.selectedIds.length) });
 });

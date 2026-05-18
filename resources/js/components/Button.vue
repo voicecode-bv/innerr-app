@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { RouterLink, type RouteLocationRaw } from 'vue-router';
+import { RouterLink  } from 'vue-router';
+import type {RouteLocationRaw} from 'vue-router';
 
 type Variant = 'primary' | 'inverse' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';

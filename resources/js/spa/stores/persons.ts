@@ -27,10 +27,14 @@ export const usePersonsStore = defineStore('spa-persons', {
             if (this.items && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.items;
             }
+
             return this.refresh();
         },
         async refresh(): Promise<Person[]> {
-            if (this.loading) return this.loading;
+            if (this.loading) {
+return this.loading;
+}
+
             this.loading = (async () => {
                 try {
                     const resp = await externalApi.get<{ data: Person[] }>(
@@ -38,11 +42,13 @@ export const usePersonsStore = defineStore('spa-persons', {
                     );
                     this.items = resp.data;
                     this.loadedAt = Date.now();
+
                     return this.items;
                 } finally {
                     this.loading = null;
                 }
             })();
+
             return this.loading;
         },
         invalidate(): void {
@@ -52,13 +58,19 @@ export const usePersonsStore = defineStore('spa-persons', {
             this.items = [person, ...(this.items ?? [])];
         },
         update(id: string, patch: Partial<Person>): void {
-            if (!this.items) return;
+            if (!this.items) {
+return;
+}
+
             this.items = this.items.map((p) =>
                 p.id === id ? { ...p, ...patch } : p,
             );
         },
         remove(id: string): void {
-            if (!this.items) return;
+            if (!this.items) {
+return;
+}
+
             this.items = this.items.filter((p) => p.id !== id);
         },
         clear(): void {

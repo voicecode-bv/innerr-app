@@ -20,7 +20,10 @@ function selectLocale(code: LocaleKey): void {
 }
 
 function handleOutside(event: MouseEvent): void {
-    if (!open.value) return;
+    if (!open.value) {
+return;
+}
+
     if (root.value && !root.value.contains(event.target as Node)) {
         open.value = false;
     }

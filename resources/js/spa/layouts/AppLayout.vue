@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { computed, nextTick, onMounted, ref, useSlots } from 'vue';
+import { useTranslations } from '@/spa/composables/useTranslations';
 
 const props = withDefaults(
     defineProps<{
@@ -27,10 +27,17 @@ function resetScroll(): void {
     if (mainRef.value) {
         mainRef.value.scrollTop = 0;
     }
+
     if (typeof window !== 'undefined') {
         window.scrollTo(0, 0);
-        if (document.documentElement) document.documentElement.scrollTop = 0;
-        if (document.body) document.body.scrollTop = 0;
+
+        if (document.documentElement) {
+document.documentElement.scrollTop = 0;
+}
+
+        if (document.body) {
+document.body.scrollTop = 0;
+}
     }
 }
 
@@ -41,6 +48,7 @@ onMounted(async () => {
     resetScroll();
     await nextTick();
     resetScroll();
+
     if (typeof requestAnimationFrame !== 'undefined') {
         requestAnimationFrame(() => {
             resetScroll();

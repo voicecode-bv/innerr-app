@@ -70,17 +70,24 @@ function onCaptureTouchStart(event: TouchEvent): void {
 
 function findScrollableAncestor(start: HTMLElement | null): HTMLElement | null {
     let node: HTMLElement | null = start;
+
     while (node && sheetRef.value && sheetRef.value.contains(node)) {
         const style = window.getComputedStyle(node);
         const canScrollY =
             (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
             node.scrollHeight > node.clientHeight;
+
         if (canScrollY) {
             return node;
         }
-        if (node === sheetRef.value) break;
+
+        if (node === sheetRef.value) {
+break;
+}
+
         node = node.parentElement;
     }
+
     return null;
 }
 
@@ -89,6 +96,7 @@ function blockBackgroundTouchMove(event: TouchEvent): void {
 
     if (!target || !sheetRef.value || !sheetRef.value.contains(target)) {
         event.preventDefault();
+
         return;
     }
 
@@ -98,6 +106,7 @@ function blockBackgroundTouchMove(event: TouchEvent): void {
         // Target zit binnen de sheet maar in een niet-scrollbaar gedeelte
         // (bv. footer met input) — niets bewegen.
         event.preventDefault();
+
         return;
     }
 
@@ -128,6 +137,7 @@ function isTextInputFocused(): boolean {
 
     if (active.tagName === 'INPUT') {
         const type = (active as HTMLInputElement).type;
+
         return ![
             'button',
             'submit',
@@ -210,6 +220,7 @@ function onHandlePointerDown(event: PointerEvent) {
     }
 
     const target = event.target as HTMLElement | null;
+
     if (
         target?.closest('button, a, input, textarea, select, [role="button"]')
     ) {

@@ -2,8 +2,8 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useAuthStore } from '@/spa/stores/auth';
-import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
+import heartIcon from '../../../svg/doodle-icons/heart.svg';
 
 interface CommentUser {
     id: string;
@@ -54,13 +54,16 @@ function chatTime(dateString: string): string {
         hour: '2-digit',
         minute: '2-digit',
     });
+
     if (date.toDateString() === now.toDateString()) {
         return time;
     }
+
     const day = date.toLocaleDateString([], {
         day: 'numeric',
         month: 'short',
     });
+
     return `${day} ${time}`;
 }
 </script>

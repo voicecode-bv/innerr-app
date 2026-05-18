@@ -4,9 +4,9 @@ import { useRouter } from 'vue-router';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useTranslations } from '@/spa/composables/useTranslations';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
@@ -40,6 +40,7 @@ async function loadDefaults(force = false): Promise<void> {
             circlesStore.invalidate();
             defaultCirclesStore.invalidate();
         }
+
         await Promise.all([
             circlesStore.ensureLoaded(),
             defaultCirclesStore.ensureLoaded(),

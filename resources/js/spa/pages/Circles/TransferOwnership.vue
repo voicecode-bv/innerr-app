@@ -5,9 +5,9 @@ import { useRoute, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import arrowCircleRightIcon from '../../../../svg/doodle-icons/arrow-circle-right.svg';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
@@ -97,7 +97,9 @@ function goBack(): void {
 }
 
 async function confirmTransfer(): Promise<void> {
-    if (!selectedMember.value) return;
+    if (!selectedMember.value) {
+return;
+}
 
     await Dialog.alert()
         .confirm(
@@ -130,6 +132,7 @@ async function handleButtonPressed(payload: {
     ) {
         formProcessing.value = true;
         formError.value = null;
+
         try {
             await externalApi.post(
                 `/circles/${circleId.value}/ownership-transfer`,
@@ -146,6 +149,7 @@ async function handleButtonPressed(payload: {
             formProcessing.value = false;
         }
     }
+
     if (
         payload.id === 'cancel-transfer-confirm' &&
         payload.index === 1 &&

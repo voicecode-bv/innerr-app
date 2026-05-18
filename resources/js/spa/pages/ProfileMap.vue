@@ -2,10 +2,10 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PhotoMap from '@/components/PhotoMap.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 
 interface Profile {
     id: number;

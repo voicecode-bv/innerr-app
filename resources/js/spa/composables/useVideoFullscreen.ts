@@ -1,4 +1,5 @@
-import { onMounted, onUnmounted, ref, watch, type Ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch  } from 'vue';
+import type {Ref} from 'vue';
 
 type FullscreenVideoElement = HTMLVideoElement & {
     webkitEnterFullscreen?: () => void;
@@ -13,6 +14,7 @@ export function useVideoFullscreen(
 
     function toggleMute(): void {
         isMuted.value = !isMuted.value;
+
         if (videoRef.value) {
             videoRef.value.muted = isMuted.value;
         }
@@ -31,6 +33,7 @@ export function useVideoFullscreen(
                     /* fallback to in-DOM fullscreen */
                 });
             }
+
             if (video) {
                 video.muted = false;
                 isMuted.value = false;
@@ -85,6 +88,7 @@ export function useVideoFullscreen(
                     onWebkitEndFullscreen,
                 );
             }
+
             if (video) {
                 video.addEventListener(
                     'webkitbeginfullscreen',
@@ -100,11 +104,16 @@ export function useVideoFullscreen(
     );
 
     watch(isFullscreen, (val) => {
-        if (typeof document === 'undefined') return;
+        if (typeof document === 'undefined') {
+return;
+}
+
         const main = document.querySelector('main') as HTMLElement | null;
+
         if (main) {
             main.style.overflow = val ? 'hidden' : '';
         }
+
         document.body.style.overflow = val ? 'hidden' : '';
     });
 
@@ -122,6 +131,7 @@ export function useVideoFullscreen(
             'fullscreenchange',
             syncFullscreenFromBrowser,
         );
+
         if (videoRef.value) {
             videoRef.value.removeEventListener(
                 'webkitbeginfullscreen',
@@ -132,9 +142,14 @@ export function useVideoFullscreen(
                 onWebkitEndFullscreen,
             );
         }
+
         if (typeof document !== 'undefined') {
             const main = document.querySelector('main') as HTMLElement | null;
-            if (main) main.style.overflow = '';
+
+            if (main) {
+main.style.overflow = '';
+}
+
             document.body.style.overflow = '';
         }
     });

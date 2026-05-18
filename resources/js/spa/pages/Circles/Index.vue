@@ -6,12 +6,12 @@ import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import CircleListItem from '@/spa/components/CircleListItem.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useCirclesStore } from '@/spa/stores/circles';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useCirclesStore } from '@/spa/stores/circles';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
@@ -33,7 +33,10 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
 async function loadCircles(force = false): Promise<void> {
     try {
-        if (force) circlesStore.invalidate();
+        if (force) {
+circlesStore.invalidate();
+}
+
         await circlesStore.ensureLoaded();
     } catch {
         // negeren

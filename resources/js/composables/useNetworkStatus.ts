@@ -16,6 +16,7 @@ export function useNetworkStatus() {
     async function fetchConnected(): Promise<boolean> {
         try {
             const status = await Network.status();
+
             return !!status?.connected;
         } catch {
             return typeof navigator !== 'undefined' ? navigator.onLine : true;
@@ -27,6 +28,7 @@ export function useNetworkStatus() {
 
         if (!connected && isOnline.value) {
             isOnline.value = false;
+
             return;
         }
 
@@ -61,6 +63,7 @@ export function useNetworkStatus() {
         if (intervalId !== undefined) {
             window.clearInterval(intervalId);
         }
+
         window.removeEventListener('online', handleBrowserOnline);
         window.removeEventListener('offline', handleBrowserOffline);
         document.removeEventListener(

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import {
-    useInfiniteScroll,
-    type PaginatedResponse,
+    useInfiniteScroll
+    
 } from '@/spa/composables/useInfiniteScroll';
+import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import searchIcon from '../../../svg/doodle-icons/search.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
@@ -31,6 +32,7 @@ async function fetchUsers(
     page: number,
 ): Promise<PaginatedResponse<SearchUser>> {
     const params = new URLSearchParams({ page: String(page) });
+
     if (activeTerm.value !== '') {
         params.set('q', activeTerm.value);
     }

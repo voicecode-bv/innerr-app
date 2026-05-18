@@ -208,6 +208,7 @@ async function loadProducts(): Promise<void> {
             console.log(`${logPrefix.value} products result`, result);
             debugRaw.value = JSON.stringify(result, null, 2);
         }
+
         productList.value = result.products ?? [];
     } catch (err) {
         const e = err as { code?: string; message?: string; data?: unknown };
@@ -220,6 +221,7 @@ async function loadProducts(): Promise<void> {
                 2,
             );
         }
+
         const code = SHOW_DEBUG && e.code ? ` (${e.code})` : '';
         errorMessage.value =
             (e.message ?? t('Could not load purchases.')) + code;
@@ -405,6 +407,7 @@ async function restore(): Promise<void> {
                 payload: JSON.stringify({ startedAt, result }, null, 2),
             };
         }
+
         message.value =
             (result.message as string | undefined) ?? t('Purchases restored.');
 

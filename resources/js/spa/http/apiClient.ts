@@ -15,14 +15,18 @@ export class ApiError extends Error {
 // Parse Retry-After header. Spec: ofwel een aantal seconden, ofwel een
 // HTTP-date. Geeft null bij ontbrekende of niet-parseerbare waarde.
 export function parseRetryAfter(header: string | null): number | null {
-    if (!header) return null;
+    if (!header) {
+return null;
+}
 
     const seconds = Number(header);
+
     if (Number.isFinite(seconds) && seconds >= 0) {
         return Math.ceil(seconds);
     }
 
     const dateMs = Date.parse(header);
+
     if (Number.isFinite(dateMs)) {
         return Math.max(0, Math.ceil((dateMs - Date.now()) / 1000));
     }
@@ -37,12 +41,16 @@ export class NetworkError extends Error {
 }
 
 function isTransient(error: unknown): boolean {
-    if (error instanceof NetworkError) return true;
+    if (error instanceof NetworkError) {
+return true;
+}
+
     if (error instanceof ApiError) {
         return (
             error.status === 503 || error.status === 504 || error.status === 0
         );
     }
+
     return false;
 }
 
@@ -87,11 +95,13 @@ async function performCall<T>(
     }
 
     const xsrf = readCookie('XSRF-TOKEN');
+
     if (xsrf) {
         headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrf);
     }
 
     let response: globalThis.Response;
+
     try {
         response = await fetch(url, {
             method,
@@ -107,11 +117,13 @@ async function performCall<T>(
     if (response.status === 401) {
         auth?.clear();
         unauthorizedHandler?.();
+
         throw new ApiError(401, {}, 'Unauthorized');
     }
 
     if (response.status === 422) {
         const data = await response.json().catch(() => ({}));
+
         throw new ApiError(
             422,
             data.errors ?? {},
@@ -121,6 +133,7 @@ async function performCall<T>(
 
     if (response.status === 429) {
         const data = await response.json().catch(() => ({}));
+
         throw new ApiError(
             429,
             {},
@@ -132,6 +145,7 @@ async function performCall<T>(
 
     if (!response.ok) {
         const data = await response.json().catch(() => ({}));
+
         throw new ApiError(
             response.status,
             {},
@@ -151,6 +165,7 @@ function call<T>(method: string, url: string, body?: unknown): Promise<T> {
     if (method === 'GET') {
         return withRetry(() => performCall<T>(method, url, body), isTransient);
     }
+
     return performCall<T>(method, url, body);
 }
 
@@ -158,6 +173,7 @@ function readCookie(name: string): string | null {
     const match = document.cookie.match(
         new RegExp('(^|;\\s*)' + name + '=([^;]*)'),
     );
+
     return match ? match[2] : null;
 }
 

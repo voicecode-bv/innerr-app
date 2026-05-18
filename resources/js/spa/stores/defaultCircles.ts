@@ -16,10 +16,14 @@ export const useDefaultCirclesStore = defineStore('spa-default-circles', {
             if (this.ids && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.ids;
             }
+
             return this.refresh();
         },
         async refresh(): Promise<string[]> {
-            if (this.loading) return this.loading;
+            if (this.loading) {
+return this.loading;
+}
+
             this.loading = (async () => {
                 try {
                     const resp = await externalApi.get<{
@@ -36,23 +40,27 @@ export const useDefaultCirclesStore = defineStore('spa-default-circles', {
                                 typeof id === 'string' && id !== '',
                         );
                     this.loadedAt = Date.now();
+
                     return this.ids;
                 } finally {
                     this.loading = null;
                 }
             })();
+
             return this.loading;
         },
         async setIds(ids: string[]): Promise<void> {
             const previous = this.ids;
             this.ids = ids;
             this.loadedAt = Date.now();
+
             try {
                 await externalApi.put('/default-circles', {
                     circle_ids: ids,
                 });
             } catch (error) {
                 this.ids = previous;
+
                 throw error;
             }
         },

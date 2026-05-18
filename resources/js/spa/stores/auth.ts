@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import { api } from '@/spa/http/apiClient';
 import { secureStorage, TOKEN_KEY } from '@/spa/composables/useSecureStorage';
+import { api } from '@/spa/http/apiClient';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
@@ -44,6 +44,7 @@ export const useAuthStore = defineStore('spa-auth', {
         // zodat externalApi al een Bearer kan sturen tijdens cold-start.
         async restoreToken(): Promise<void> {
             const stored = await secureStorage.get(TOKEN_KEY);
+
             if (stored) {
                 this.token = stored;
             }
@@ -65,6 +66,7 @@ export const useAuthStore = defineStore('spa-auth', {
                 // Geen token in BFF en geen lokaal — niets te bewaren.
                 await secureStorage.delete(TOKEN_KEY);
             }
+
             return data;
         },
         async login(
@@ -79,6 +81,7 @@ export const useAuthStore = defineStore('spa-auth', {
             this.user = data.user;
             this.token = data.token;
             await secureStorage.set(TOKEN_KEY, data.token);
+
             return { redirect_to: data.redirect_to };
         },
         async register(payload: {
@@ -96,6 +99,7 @@ export const useAuthStore = defineStore('spa-auth', {
             this.user = data.user;
             this.token = data.token;
             await secureStorage.set(TOKEN_KEY, data.token);
+
             return { redirect_to: data.redirect_to };
         },
         async logout(): Promise<void> {

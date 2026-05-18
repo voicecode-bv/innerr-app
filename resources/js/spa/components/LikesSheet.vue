@@ -63,11 +63,13 @@ const seenIds = new Set<string>();
 
 async function loadPage(page: number): Promise<void> {
     const isFirst = page === 1;
+
     if (isFirst) {
         isLoading.value = true;
     } else {
         isLoadingMore.value = true;
     }
+
     loadError.value = null;
 
     try {
@@ -76,8 +78,12 @@ async function loadPage(page: number): Promise<void> {
         );
 
         const incoming = result.data.filter((u) => {
-            if (seenIds.has(u.id)) return false;
+            if (seenIds.has(u.id)) {
+return false;
+}
+
             seenIds.add(u.id);
+
             return true;
         });
 
@@ -99,8 +105,10 @@ function loadMore(): void {
         isLoadingMore.value ||
         isLoading.value ||
         currentPage.value >= lastPage.value
-    )
-        return;
+    ) {
+return;
+}
+
     void loadPage(currentPage.value + 1);
 }
 
@@ -138,7 +146,10 @@ function resetState(): void {
 watch(
     [() => props.open, () => props.postId],
     ([isOpen]) => {
-        if (!isOpen) return;
+        if (!isOpen) {
+return;
+}
+
         resetState();
         void loadPage(1);
     },

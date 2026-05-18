@@ -41,7 +41,10 @@ const tags = computed<Tag[]>(() => {
     const merged: Tag[] = [];
 
     for (const tag of [...(props.availableTags ?? []), ...localTags.value]) {
-        if (seen.has(tag.id)) continue;
+        if (seen.has(tag.id)) {
+continue;
+}
+
         seen.add(tag.id);
         merged.push(tag);
     }
@@ -55,9 +58,11 @@ const tags = computed<Tag[]>(() => {
 
 const tagsById = computed(() => {
     const map = new Map<string, Tag>();
+
     for (const tag of tags.value) {
         map.set(tag.id, tag);
     }
+
     return map;
 });
 
@@ -73,8 +78,14 @@ const filteredTags = computed<Tag[]>(() => {
     const q = trimmedQuery.value;
 
     return tags.value.filter((tag) => {
-        if (props.selectedIds.includes(tag.id)) return false;
-        if (q === '') return true;
+        if (props.selectedIds.includes(tag.id)) {
+return false;
+}
+
+        if (q === '') {
+return true;
+}
+
         return tag.name.toLowerCase().includes(q);
     });
 });
@@ -101,7 +112,10 @@ function closeDropdown(): void {
 }
 
 function selectTag(tagId: string): void {
-    if (props.selectedIds.includes(tagId)) return;
+    if (props.selectedIds.includes(tagId)) {
+return;
+}
+
     emit('update:selectedIds', [...props.selectedIds, tagId]);
     query.value = '';
     activeIndex.value = 0;
@@ -128,7 +142,10 @@ function onBackspace(): void {
 }
 
 function moveActive(delta: number): void {
-    if (optionsCount.value === 0) return;
+    if (optionsCount.value === 0) {
+return;
+}
+
     isOpen.value = true;
     activeIndex.value =
         (activeIndex.value + delta + optionsCount.value) % optionsCount.value;
@@ -137,11 +154,13 @@ function moveActive(delta: number): void {
 function commitActive(): void {
     if (!isOpen.value) {
         isOpen.value = true;
+
         return;
     }
 
     if (activeIndex.value < filteredTags.value.length) {
         selectTag(filteredTags.value[activeIndex.value].id);
+
         return;
     }
 
@@ -151,7 +170,9 @@ function commitActive(): void {
 }
 
 async function createTag(): Promise<void> {
-    if (!canCreate.value) return;
+    if (!canCreate.value) {
+return;
+}
 
     isCreating.value = true;
     createError.value = null;

@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
-import PostCard, { type PostData } from '@/spa/components/PostCard.vue';
-import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
+import PostCard from '@/spa/components/PostCard.vue';
+import type {PostData} from '@/spa/components/PostCard.vue';
 import {
-    useInfiniteScroll,
-    type PaginatedResponse,
+    useInfiniteScroll
+    
 } from '@/spa/composables/useInfiniteScroll';
+import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useFeedCacheStore } from '@/spa/stores/feedCache';
 
 interface Circle {
     id: string;
@@ -54,9 +56,11 @@ async function fetchCircleFeed(
     const response = await externalApi.get<PaginatedResponse<PostData>>(
         `/circles/${circleId.value}/feed?page=${page}`,
     );
+
     if (page === 1) {
         feedCache.set(feedKey.value, response.data, response.meta.last_page);
     }
+
     return response;
 }
 
@@ -76,6 +80,7 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
 onMounted(() => {
     void loadCircle();
+
     if (cached && !feedCache.isFresh(feedKey.value)) {
         void feed.softRefresh();
     }
@@ -113,20 +118,32 @@ async function onPostDeleted(postId: string): Promise<void> {
 }
 
 function activeLikesCount(): number {
-    if (likesPostId.value === null) return 0;
+    if (likesPostId.value === null) {
+return 0;
+}
+
     const target = feed.items.find((p) => p.id === likesPostId.value);
+
     return target?.likes_count ?? 0;
 }
 
 function activeCommentsCount(): number {
-    if (commentsPostId.value === null) return 0;
+    if (commentsPostId.value === null) {
+return 0;
+}
+
     const target = feed.items.find((p) => p.id === commentsPostId.value);
+
     return target?.comments_count ?? 0;
 }
 
 function bumpActivePostCommentsCount(delta: number): void {
-    if (commentsPostId.value === null) return;
+    if (commentsPostId.value === null) {
+return;
+}
+
     const target = feed.items.find((p) => p.id === commentsPostId.value);
+
     if (target) {
         target.comments_count = Math.max(0, target.comments_count + delta);
     }

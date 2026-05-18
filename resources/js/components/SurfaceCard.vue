@@ -20,6 +20,7 @@ const toneClasses = computed(() => {
         muted: 'bg-white/50',
         subtle: 'bg-white/20',
     };
+
     return map[props.tone];
 });
 </script>

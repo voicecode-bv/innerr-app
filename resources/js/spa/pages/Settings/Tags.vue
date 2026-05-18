@@ -5,13 +5,14 @@ import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import ListItem from '@/spa/components/ListItem.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useTagsStore, type Tag } from '@/spa/stores/tags';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useTagsStore  } from '@/spa/stores/tags';
+import type {Tag} from '@/spa/stores/tags';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -28,7 +29,10 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
 async function loadTags(force = false): Promise<void> {
     try {
-        if (force) tagsStore.invalidate();
+        if (force) {
+tagsStore.invalidate();
+}
+
         await tagsStore.ensureLoaded();
     } catch {
         // negeren
@@ -57,7 +61,10 @@ const createForm = useApiForm({ name: '' }, externalApi);
 
 async function createTag(): Promise<void> {
     const name = createForm.data.name.trim();
-    if (!name || createForm.processing) return;
+
+    if (!name || createForm.processing) {
+return;
+}
 
     const optimistic: Tag = {
         id: `optimistic-${crypto.randomUUID()}`,
@@ -94,7 +101,10 @@ function cancelEdit(): void {
 
 async function saveEdit(tag: Tag): Promise<void> {
     const newName = editForm.data.name.trim();
-    if (!newName || editForm.processing) return;
+
+    if (!newName || editForm.processing) {
+return;
+}
 
     const previousName = tag.name;
     tagsStore.update(tag.id, { name: newName });
@@ -146,6 +156,7 @@ async function handleButtonPressed(payload: {
 
     const previous = tagsStore.items?.find((tag) => tag.id === tagId);
     tagsStore.remove(tagId);
+
     if (editingTagId.value === tagId) {
         editingTagId.value = null;
         editForm.reset();
@@ -154,7 +165,9 @@ async function handleButtonPressed(payload: {
     try {
         await externalApi.delete(`/tags/${tagId}`);
     } catch {
-        if (previous) tagsStore.prepend(previous);
+        if (previous) {
+tagsStore.prepend(previous);
+}
     }
 }
 

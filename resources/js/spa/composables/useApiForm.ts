@@ -37,8 +37,10 @@ export function useApiForm<T extends Record<string, unknown>>(
                     state.data,
                     JSON.parse(JSON.stringify(initialClone)),
                 );
+
                 return;
             }
+
             for (const key of keys) {
                 (state.data as Record<string, unknown>)[key as string] =
                     initialClone[key];

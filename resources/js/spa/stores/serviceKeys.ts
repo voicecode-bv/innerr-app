@@ -15,12 +15,23 @@ const STORAGE_KEY = 'spa.service_keys';
 const TTL_MS = 60 * 60 * 1000; // 1 uur — Mapbox-token verandert zelden
 
 function readCache(): CacheEntry | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+return null;
+}
+
     try {
         const raw = window.localStorage?.getItem(STORAGE_KEY);
-        if (!raw) return null;
+
+        if (!raw) {
+return null;
+}
+
         const parsed = JSON.parse(raw) as CacheEntry;
-        if (Date.now() - parsed.fetched_at > TTL_MS) return null;
+
+        if (Date.now() - parsed.fetched_at > TTL_MS) {
+return null;
+}
+
         return parsed;
     } catch {
         return null;
@@ -28,7 +39,10 @@ function readCache(): CacheEntry | null {
 }
 
 function writeCache(entry: CacheEntry): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+return;
+}
+
     try {
         window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(entry));
     } catch {
@@ -53,8 +67,10 @@ export const useServiceKeysStore = defineStore('spa-service-keys', {
             }
 
             const cached = readCache();
+
             if (cached) {
                 this.keys = cached.keys;
+
                 return this.keys;
             }
 
@@ -65,12 +81,15 @@ export const useServiceKeysStore = defineStore('spa-service-keys', {
             if (this.loading && this.keys) {
                 return this.keys;
             }
+
             this.loading = true;
+
             try {
                 const data =
                     await externalApi.get<ServiceKeys>('/service-keys');
                 this.keys = data;
                 writeCache({ keys: data, fetched_at: Date.now() });
+
                 return data;
             } finally {
                 this.loading = false;

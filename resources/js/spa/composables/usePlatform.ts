@@ -49,6 +49,7 @@ export function usePlatform() {
     if (!detectionPromise) {
         detectionPromise = detect();
     }
+
     return {
         isIos,
         isAndroid,

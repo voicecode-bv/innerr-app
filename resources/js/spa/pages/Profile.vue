@@ -10,19 +10,20 @@ import {
     useTemplateRef,
 } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
-import { type PostData } from '@/spa/components/PostCard.vue';
 import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
+import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
+import type {PostData} from '@/spa/components/PostCard.vue';
 import {
-    useInfiniteScroll,
-    type PaginatedResponse,
+    useInfiniteScroll
+    
 } from '@/spa/composables/useInfiniteScroll';
+import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
 
@@ -101,7 +102,10 @@ const showCropModal = ref(false);
 const cropSource = ref<string | null>(null);
 
 async function pickAvatar(): Promise<void> {
-    if (avatarUploading.value) return;
+    if (avatarUploading.value) {
+return;
+}
+
     await Camera.pickImages().all();
 }
 
@@ -186,9 +190,11 @@ async function handleCropped(blob: Blob, dataUrl: string): Promise<void> {
                 avatar_data: base64,
             },
         );
+
         if (profile.value) {
             profile.value.avatar = response.avatar;
         }
+
         if (auth.user) {
             auth.user.avatar = response.avatar;
         }
@@ -220,7 +226,10 @@ function mediaKey(post: PostData): string {
 }
 
 async function shareProfile(): Promise<void> {
-    if (!profile.value) return;
+    if (!profile.value) {
+return;
+}
+
     const url = `https://innerr.app/profiles/${profile.value.username}`;
     await Share.url('', '', url);
 }

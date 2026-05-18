@@ -14,10 +14,14 @@ export const useNotificationsStore = defineStore('spa-notifications', {
             if (this.loadedAt > 0 && Date.now() - this.loadedAt < maxAgeMs) {
                 return this.unreadCount;
             }
+
             return this.refresh();
         },
         async refresh(): Promise<number> {
-            if (this.loading) return this.loading;
+            if (this.loading) {
+return this.loading;
+}
+
             this.loading = (async () => {
                 try {
                     const resp = await externalApi.get<{ count: number }>(
@@ -25,11 +29,13 @@ export const useNotificationsStore = defineStore('spa-notifications', {
                     );
                     this.unreadCount = resp.count;
                     this.loadedAt = Date.now();
+
                     return this.unreadCount;
                 } finally {
                     this.loading = null;
                 }
             })();
+
             return this.loading;
         },
         markAllRead(): void {

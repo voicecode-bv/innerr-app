@@ -4,11 +4,11 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { useApiForm } from '@/spa/composables/useApiForm';
-import { useAuthStore } from '@/spa/stores/auth';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useAuthStore } from '@/spa/stores/auth';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -28,12 +28,14 @@ function goBack(): void {
 async function requestExport(): Promise<void> {
     exportError.value = null;
     exportSuccess.value = false;
+
     try {
         await exportForm.post('/account/export', {
             onSuccess: () => {
                 exportSuccess.value = true;
             },
         });
+
         // 422-validatie wordt door useApiForm in `errors` gezet zonder te
         // throwen — in dat geval is `onSuccess` niet gevuurd.
         if (!exportSuccess.value) {
@@ -73,6 +75,7 @@ async function handleButtonPressed(payload: {
 
     try {
         await externalApi.delete('/account');
+
         try {
             await auth.logout();
         } catch {

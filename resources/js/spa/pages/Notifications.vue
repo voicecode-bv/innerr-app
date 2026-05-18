@@ -4,11 +4,11 @@ import { useRouter } from 'vue-router';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTranslations } from '@/spa/composables/useTranslations';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
-import { useNotificationsStore } from '@/spa/stores/notifications';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useNotificationsStore } from '@/spa/stores/notifications';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
 import crownIcon from '../../../svg/doodle-icons/crown.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
@@ -123,6 +123,7 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 
 async function loadInitial(): Promise<void> {
     isLoading.value = true;
+
     try {
         const [notifs, invitations, transfers] = await Promise.all([
             externalApi.get<{ data: Notification[]; meta: Meta }>(
@@ -140,6 +141,7 @@ async function loadInitial(): Promise<void> {
         lastPage.value = notifs.meta.last_page;
         circleInvitations.value = invitations.data;
         ownershipTransfers.value = transfers.data;
+
         if (hasUnread.value) {
             markAllAsRead();
         }
@@ -158,7 +160,9 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 onMounted(loadInitial);
 
 async function loadMore(): Promise<void> {
-    if (isLoadingMore.value || !hasMore.value) return;
+    if (isLoadingMore.value || !hasMore.value) {
+return;
+}
 
     isLoadingMore.value = true;
     loadMoreError.value = null;
@@ -241,8 +245,12 @@ function isTransferBusy(id: number): boolean {
 }
 
 async function acceptInvitation(invitationId: number): Promise<void> {
-    if (processingInvitations.value.has(invitationId)) return;
+    if (processingInvitations.value.has(invitationId)) {
+return;
+}
+
     processingInvitations.value.add(invitationId);
+
     try {
         await externalApi.post(`/circle-invitations/${invitationId}/accept`);
         circleInvitations.value = circleInvitations.value.filter(
@@ -256,8 +264,12 @@ async function acceptInvitation(invitationId: number): Promise<void> {
 }
 
 async function declineInvitation(invitationId: number): Promise<void> {
-    if (processingInvitations.value.has(invitationId)) return;
+    if (processingInvitations.value.has(invitationId)) {
+return;
+}
+
     processingInvitations.value.add(invitationId);
+
     try {
         await externalApi.post(`/circle-invitations/${invitationId}/decline`);
         circleInvitations.value = circleInvitations.value.filter(
@@ -271,8 +283,12 @@ async function declineInvitation(invitationId: number): Promise<void> {
 }
 
 async function acceptTransfer(transferId: number): Promise<void> {
-    if (processingTransfers.value.has(transferId)) return;
+    if (processingTransfers.value.has(transferId)) {
+return;
+}
+
     processingTransfers.value.add(transferId);
+
     try {
         await externalApi.post(
             `/circle-ownership-transfers/${transferId}/accept`,
@@ -288,8 +304,12 @@ async function acceptTransfer(transferId: number): Promise<void> {
 }
 
 async function declineTransfer(transferId: number): Promise<void> {
-    if (processingTransfers.value.has(transferId)) return;
+    if (processingTransfers.value.has(transferId)) {
+return;
+}
+
     processingTransfers.value.add(transferId);
+
     try {
         await externalApi.post(
             `/circle-ownership-transfers/${transferId}/decline`,
@@ -312,6 +332,7 @@ function notificationMessage(notification: Notification): string {
         notification.data.recipient_name ??
         notification.data.decliner_name ??
         '';
+
     switch (notification.type) {
         case 'post-liked':
             return t(':name liked your post', { name });
@@ -334,18 +355,22 @@ function notificationMessage(notification: Notification): string {
         case 'circle-invitation-accepted': {
             const circle =
                 (notification.data.circle_name as string | undefined) ?? '';
+
             if (name && circle) {
                 return t(':name accepted your invitation to :circle', {
                     name,
                     circle,
                 });
             }
+
             if (name) {
                 return t(':name accepted your invitation', { name });
             }
+
             if (circle) {
                 return t('Your invitation to :circle was accepted', { circle });
             }
+
             return t('Your invitation was accepted');
         }
         case 'circle-ownership-transfer-requested':
@@ -420,10 +445,22 @@ function timeAgo(dateString: string): string {
     const diffDays = Math.floor(diffHours / 24);
     const diffWeeks = Math.floor(diffDays / 7);
 
-    if (diffMinutes < 1) return t('just now');
-    if (diffMinutes < 60) return t(':count min ago', { count: diffMinutes });
-    if (diffHours < 24) return t(':count hours ago', { count: diffHours });
-    if (diffDays < 7) return t(':count days ago', { count: diffDays });
+    if (diffMinutes < 1) {
+return t('just now');
+}
+
+    if (diffMinutes < 60) {
+return t(':count min ago', { count: diffMinutes });
+}
+
+    if (diffHours < 24) {
+return t(':count hours ago', { count: diffHours });
+}
+
+    if (diffDays < 7) {
+return t(':count days ago', { count: diffDays });
+}
+
     return t(':count weeks ago', { count: diffWeeks });
 }
 
@@ -434,7 +471,9 @@ interface NotificationGroup {
 }
 
 const groupedNotifications = computed<NotificationGroup[]>(() => {
-    if (!items.value.length) return [];
+    if (!items.value.length) {
+return [];
+}
 
     const now = Date.now();
     const dayMs = 24 * 60 * 60 * 1000;
@@ -445,7 +484,10 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
     };
 
     for (const notification of items.value) {
-        if (hiddenNotificationTypes.has(notification.type)) continue;
+        if (hiddenNotificationTypes.has(notification.type)) {
+continue;
+}
+
         const age = now - new Date(notification.created_at).getTime();
 
         if (age < dayMs) {
@@ -481,6 +523,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
     const regex = new RegExp(`(${INVITER_TOKEN}|${CIRCLE_TOKEN})`, 'g');
     let lastIndex = 0;
     let match: RegExpExecArray | null;
+
     while ((match = regex.exec(tpl)) !== null) {
         if (match.index > lastIndex) {
             segments.push({
@@ -488,16 +531,20 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                 type: 'plain',
             });
         }
+
         if (match[0] === INVITER_TOKEN) {
             segments.push({ text: invitation.inviter.name, type: 'inviter' });
         } else {
             segments.push({ text: invitation.circle.name, type: 'circle' });
         }
+
         lastIndex = regex.lastIndex;
     }
+
     if (lastIndex < tpl.length) {
         segments.push({ text: tpl.slice(lastIndex), type: 'plain' });
     }
+
     return segments;
 }
 </script>
