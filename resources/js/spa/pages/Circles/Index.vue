@@ -140,7 +140,7 @@ async function createCircle(): Promise<void> {
                                 v-model="form.data.name"
                                 type="text"
                                 :placeholder="t('Circle name...')"
-                                class="field"
+                                class="mt-2 field"
                                 autofocus
                             />
                             <p v-if="form.errors.name" class="text-accent">

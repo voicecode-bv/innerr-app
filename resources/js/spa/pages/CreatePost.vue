@@ -992,7 +992,7 @@ const activeItemIsImage = computed(() => {
                         @click="openSourcePicker"
                     >
                         <div
-                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft text-ink"
+                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft dark:bg-surface text-ink"
                         >
                             <span
                                 aria-hidden="true"
@@ -1141,7 +1141,7 @@ const activeItemIsImage = computed(() => {
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-action"
+                                    class="inline-block size-5 bg-action dark:bg-ink"
                                     :style="iconMaskStyle(cameraIcon)"
                                 ></span>
                                 {{ t('Take a photo') }}
@@ -1154,7 +1154,7 @@ const activeItemIsImage = computed(() => {
                                 >
                                     <span
                                         aria-hidden="true"
-                                        class="inline-block size-5 bg-action"
+                                        class="inline-block size-5 bg-action dark:bg-ink"
                                         :style="iconMaskStyle(videoCameraIcon)"
                                     ></span>
                                     {{ t('Record a video') }}
@@ -1167,7 +1167,7 @@ const activeItemIsImage = computed(() => {
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-action"
+                                    class="inline-block size-5 bg-action dark:bg-ink"
                                     :style="iconMaskStyle(photoIcon)"
                                 ></span>
                                 {{
@@ -1184,7 +1184,7 @@ const activeItemIsImage = computed(() => {
                                 >
                                     <span
                                         aria-hidden="true"
-                                        class="inline-block size-5 bg-action"
+                                        class="inline-block size-5 bg-action dark:bg-ink"
                                         :style="iconMaskStyle(videoCameraIcon)"
                                     ></span>
                                     {{ t('Choose video from gallery') }}

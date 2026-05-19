@@ -184,7 +184,7 @@ function toggleAll() {
                         />
                         <div
                             v-else
-                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 transition-opacity"
+                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 dark:bg-brand-blue transition-opacity"
                             :class="
                                 selectedIds.includes(circle.id)
                                     ? ''
@@ -193,7 +193,7 @@ function toggleAll() {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-7 bg-action"
+                                class="inline-block size-7 bg-action dark:bg-ink"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </div>

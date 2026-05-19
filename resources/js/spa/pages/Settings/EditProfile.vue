@@ -33,6 +33,7 @@ const auth = useAuthStore();
 const isLoading = ref(true);
 const avatarUploading = ref(false);
 const avatar = ref<string | null>(null);
+const username = ref('');
 const bio = ref('');
 const birthdate = ref('');
 const searchable = ref(true);
@@ -52,6 +53,7 @@ async function loadProfile(): Promise<void> {
             '/profile',
         );
         avatar.value = response.data.avatar;
+        username.value = response.data.username ?? '';
         bio.value = response.data.bio ?? '';
         birthdate.value = response.data.birthdate ?? '';
         searchable.value = response.data.searchable ?? true;
@@ -164,8 +166,10 @@ async function save(): Promise<void> {
     processing.value = true;
     errors.value = {};
 
+    const trimmedUsername = username.value.trim();
     const trimmedBio = bio.value.trim();
     const payload = {
+        username: trimmedUsername,
         bio: trimmedBio === '' ? null : trimmedBio,
         birthdate: birthdate.value === '' ? null : birthdate.value,
         searchable: searchable.value,
@@ -173,9 +177,11 @@ async function save(): Promise<void> {
 
     try {
         await externalApi.patch('/profile', payload);
+        username.value = payload.username;
         bio.value = payload.bio ?? '';
 
         if (auth.user) {
+            auth.user.username = payload.username;
             auth.user.bio = payload.bio;
         }
 
@@ -286,6 +292,30 @@ async function save(): Promise<void> {
 
                 <SurfaceCard class="reveal-item">
                     <form class="space-y-5" @submit.prevent="save">
+                        <div>
+                            <label
+                                for="username"
+                                class="font-semibold text-ink"
+                            >
+                                {{ t('Username') }}
+                            </label>
+                            <input
+                                id="username"
+                                v-model="username"
+                                type="text"
+                                autocapitalize="none"
+                                autocorrect="off"
+                                spellcheck="false"
+                                class="mt-2 box-border block field w-full max-w-full min-w-0 appearance-none"
+                            />
+                            <p
+                                v-if="errors.username"
+                                class="mt-1 text-destructive-ink"
+                            >
+                                {{ errors.username }}
+                            </p>
+                        </div>
+
                         <div>
                             <label for="bio" class="font-semibold text-ink">
                                 {{ t('Bio') }}

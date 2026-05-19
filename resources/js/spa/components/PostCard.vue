@@ -625,7 +625,7 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface'"
+                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface dark:bg-ink'"
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
@@ -641,7 +641,7 @@ function timeAgo(dateString: string): string {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-6 bg-surface drop-shadow"
+                            class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
@@ -778,7 +778,7 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface'"
+                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface dark:bg-ink'"
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
@@ -794,7 +794,7 @@ function timeAgo(dateString: string): string {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-6 bg-surface drop-shadow"
+                            class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
@@ -1077,7 +1077,7 @@ function timeAgo(dateString: string): string {
                                 aria-hidden="true"
                                 class="inline-block size-6 drop-shadow"
                                 :class="
-                                    isLiked ? 'bg-brand-orange' : 'bg-surface'
+                                    isLiked ? 'bg-brand-orange' : 'bg-surface dark:bg-ink'
                                 "
                                 :style="
                                     iconMaskStyle(
@@ -1094,7 +1094,7 @@ function timeAgo(dateString: string): string {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-6 bg-surface drop-shadow"
+                                class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
                                 :style="iconMaskStyle(heartIcon)"
                             ></span>
                         </button>

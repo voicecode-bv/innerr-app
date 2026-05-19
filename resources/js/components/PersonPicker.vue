@@ -148,7 +148,7 @@ function toggle(personId: string) {
                         />
                         <div
                             v-else
-                            class="flex size-14 items-center justify-center rounded-full bg-success-soft transition-opacity"
+                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 dark:bg-brand-blue transition-opacity"
                             :class="
                                 selectedIds.includes(person.id)
                                     ? ''
@@ -157,7 +157,7 @@ function toggle(personId: string) {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-7 bg-action"
+                                class="inline-block size-7 bg-action dark:bg-ink"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </div>
@@ -181,18 +181,6 @@ function toggle(personId: string) {
                                 d="m4.5 12.75 6 6 9-13.5"
                             />
                         </svg>
-                    </div>
-
-                    <div
-                        v-else-if="person.user_id"
-                        class="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white"
-                        :title="t('Member of this circle')"
-                    >
-                        <span
-                            aria-hidden="true"
-                            class="inline-block size-3 bg-action"
-                            :style="iconMaskStyle(userIcon)"
-                        ></span>
                     </div>
                 </div>
                 <span

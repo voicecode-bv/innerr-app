@@ -334,7 +334,7 @@ async function submit(): Promise<void> {
                     :placeholder="t('Write a caption...')"
                     rows="4"
                     maxlength="2200"
-                    class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink placeholder-ink-muted/50 focus:ring-0 focus:outline-none"
+                    class="mt-2 field-area"
                 />
                 <p v-if="form.errors.caption" class="mt-1 text-destructive-ink">
                     {{ form.errors.caption }}

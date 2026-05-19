@@ -896,7 +896,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             />
                                             <div
                                                 v-else
-                                                class="flex size-11 items-center justify-center rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                                class="flex size-11 items-center justify-center rounded-full overflow-hidden bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
                                             >
                                                 <IconTile
                                                     :icon="userIcon"
@@ -905,7 +905,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                                 />
                                             </div>
                                             <span
-                                                class="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-md shadow-sm ring-2 ring-white dark:ring-sand-800"
+                                                class="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-md shadow-sm ring-1 ring-white dark:ring-sand-800"
                                                 :class="
                                                     filledToneClass[
                                                         iconForType(
@@ -929,7 +929,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p
-                                                class="leading-snug text-ink dark:text-sand-100"
+                                                class="leading-snug text-ink line-clamp-1"
                                                 :class="{
                                                     'font-semibold':
                                                         !isRead(notification),
@@ -942,7 +942,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                                 }}
                                             </p>
                                             <p
-                                                class="mt-1 text-ink-muted dark:text-sand-400"
+                                                class="mt-1 text-ink-muted"
                                             >
                                                 {{
                                                     timeAgo(
@@ -983,7 +983,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     class="flex flex-col items-center gap-2 px-4 py-4"
                 >
                     <button
-                        class="text-ink-muted disabled:opacity-50 dark:text-sand-400"
+                        class="text-ink-muted disabled:opacity-50"
                         :disabled="isLoadingMore"
                         @click="loadMore"
                     >

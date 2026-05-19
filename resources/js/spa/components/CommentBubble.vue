@@ -105,7 +105,7 @@ function chatTime(dateString: string): string {
                         name: 'spa.profiles.show',
                         params: { username: comment.user.username },
                     }"
-                    class="mb-0.5 block font-semibold text-brand-blue"
+                    class="mb-0.5 block font-semibold text-brand-blue dark:text-ink"
                     @click="$emit('navigate')"
                 >
                     {{ comment.user.name }}
@@ -130,7 +130,7 @@ function chatTime(dateString: string): string {
                             :class="
                                 comment.is_liked
                                     ? 'bg-brand-orange'
-                                    : 'bg-sand-400'
+                                    : 'bg-sand-400 dark:bg-ink'
                             "
                             :style="
                                 iconMaskStyle(

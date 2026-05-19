@@ -1102,7 +1102,7 @@ return;
                                     :class="
                                         post.is_liked
                                             ? 'bg-brand-orange'
-                                            : 'bg-surface'
+                                            : 'bg-surface dark:bg-ink'
                                     "
                                     :style="
                                         iconMaskStyle(
@@ -1121,7 +1121,7 @@ return;
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-6 bg-surface drop-shadow"
+                                    class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
                                     :style="iconMaskStyle(heartIcon)"
                                 ></span>
                             </button>
@@ -1195,7 +1195,7 @@ return;
                         v-if="(post.circles ?? []).length > 0"
                         class="space-y-3"
                     >
-                        <h3 class="font-semibold text-brand-blue">
+                        <h3 class="font-semibold text-brand-blue dark:text-ink">
                             {{ t('Circles') }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
@@ -1217,7 +1217,7 @@ return;
                         v-if="(post.persons ?? []).length > 0"
                         class="space-y-3"
                     >
-                        <h3 class="font-semibold text-brand-blue">
+                        <h3 class="font-semibold text-brand-blue dark:text-ink">
                             {{ t('Persons') }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
@@ -1355,7 +1355,7 @@ return;
                         v-if="(post.tags ?? []).length > 0"
                         class="space-y-3"
                     >
-                        <h3 class="font-semibold text-brand-blue">
+                        <h3 class="font-semibold text-brand-blue dark:text-ink">
                             {{ t('Tags') }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
@@ -1368,7 +1368,7 @@ return;
                     </section>
 
                     <section class="space-y-3">
-                        <h3 class="font-semibold text-brand-blue">
+                        <h3 class="font-semibold text-brand-blue dark:text-ink">
                             {{ t('Location') }}
                         </h3>
                         <RouterLink
@@ -1415,7 +1415,7 @@ return;
 
                         <div
                             v-else
-                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 text-ink-muted ring-1 ring-sand-100"
+                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 dark:bg-surface text-ink-muted ring-1 ring-sand-100"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

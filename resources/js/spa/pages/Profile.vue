@@ -507,7 +507,7 @@ function iconMaskStyle(url: string) {
                 >
                     <div
                         aria-hidden="true"
-                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft text-ink"
+                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft dark:bg-brand-blue text-ink"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
