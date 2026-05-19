@@ -48,11 +48,17 @@ const router = useRouter();
 const auth = useAuthStore();
 const localThumbnails = useLocalThumbnailsStore();
 
-// Fallback voor zojuist-ge-uploade video-posts: het backend kan nog geen
-// CDN-poster hebben terwijl de transcoding draait, dus dan tonen we de
-// lokaal-gegenereerde JPEG-thumbnail uit de plugin.
+// De ProfilePost-resource bevat geen aparte `thumbnail_url`: `media_url`
+// is volgens de externe API al de 300x300 grid-poster zodra transcoding
+// klaar is. Zolang die nog draait (`media_status !== 'ready'`) valt
+// `media_url` terug op de .mp4 die niet als <img> rendert; dan pakken we
+// de lokaal-gegenereerde JPEG-thumbnail uit de plugin.
 function resolvedThumbnail(post: PostData): string | null {
-    return post.thumbnail_url ?? localThumbnails.get(post.id);
+    if (post.media_status === 'ready') {
+        return post.thumbnail_url ?? post.media_url;
+    }
+
+    return localThumbnails.get(post.id) ?? post.thumbnail_url ?? post.media_url;
 }
 
 const username = computed(() => String(route.params.username));
@@ -458,10 +464,7 @@ function iconMaskStyle(url: string) {
                             @load="markLoaded(mediaKey(post))"
                         />
                         <img
-                            v-else-if="
-                                post.media_type === 'video' &&
-                                resolvedThumbnail(post)
-                            "
+                            v-else-if="post.media_type === 'video'"
                             :src="resolvedThumbnail(post) ?? ''"
                             :alt="post.caption ?? t('Moment')"
                             class="relative size-full object-cover transition-opacity duration-300"
