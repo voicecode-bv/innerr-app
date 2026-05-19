@@ -8,6 +8,7 @@ import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
 import crownIcon from '../../../svg/doodle-icons/crown.svg';
@@ -87,6 +88,31 @@ interface Meta {
 const { t } = useTranslations();
 const router = useRouter();
 const notificationsStore = useNotificationsStore();
+const localThumbnails = useLocalThumbnailsStore();
+
+// Notification.data.post_media_url bevat voor video-posts de .m3u8-URL die
+// niet als <img>-src laadt. Voor zojuist ge-uploade posts hebben we de lokaal
+// gegenereerde JPEG-thumbnail nog in een client-side store onder de echte
+// post-id. Pakken die wanneer post_media_url ontbreekt of geen image is.
+function thumbnailFor(notification: Notification): string | null {
+    const mediaUrl = notification.data.post_media_url;
+    const looksLikeImage =
+        typeof mediaUrl === 'string' &&
+        !/\.m3u8(\?|$)/i.test(mediaUrl) &&
+        !/\.(mp4|mov|m4v|webm|avi)(\?|$)/i.test(mediaUrl);
+
+    if (looksLikeImage) {
+        return mediaUrl;
+    }
+
+    const postId = notification.data.post_id;
+
+    if (postId !== undefined && postId !== null) {
+        return localThumbnails.get(String(postId));
+    }
+
+    return null;
+}
 
 const items = ref<Notification[]>([]);
 const circleInvitations = ref<CircleInvitation[]>([]);
@@ -929,13 +955,10 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             class="flex shrink-0 items-start gap-2 pt-1"
                                         >
                                             <img
-                                                v-if="
-                                                    notification.data
-                                                        .post_media_url
-                                                "
+                                                v-if="thumbnailFor(notification)"
                                                 :src="
-                                                    notification.data
-                                                        .post_media_url
+                                                    thumbnailFor(notification) ??
+                                                    ''
                                                 "
                                                 class="size-12 rounded-md bg-sand-200 object-cover shadow-sm dark:bg-sand-700"
                                                 alt=""

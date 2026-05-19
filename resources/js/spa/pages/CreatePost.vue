@@ -33,6 +33,7 @@ import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { useTagsStore } from '@/spa/stores/tags';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
@@ -83,6 +84,7 @@ const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
 const feedCache = useFeedCacheStore();
+const localThumbnails = useLocalThumbnailsStore();
 const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
 const tagsStore = useTagsStore();
@@ -752,6 +754,17 @@ async function submit(): Promise<void> {
                     optimistic.id,
                     swapped,
                 );
+            }
+
+            // Bewaar de native gegenereerde thumbnail onder de echte post-id
+            // zodat views die niet uit de feed-cache lezen (Profile, Notifications)
+            // 'm als fallback kunnen pakken zolang de CDN poster nog niet
+            // klaar is. Eerste item is bewust gekozen: Profile/Notifications
+            // tonen één representatieve thumbnail per post.
+            const firstThumbnail = items.value[0]?.thumbnail;
+
+            if (firstThumbnail) {
+                localThumbnails.set(realPostId, firstThumbnail);
             }
         } else {
             // Geen id terug? Val terug op het oude gedrag: cache leegmaken

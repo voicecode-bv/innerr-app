@@ -25,6 +25,7 @@ import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
 
 const ImageCropModal = defineAsyncComponent(
@@ -45,6 +46,14 @@ const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const localThumbnails = useLocalThumbnailsStore();
+
+// Fallback voor zojuist-ge-uploade video-posts: het backend kan nog geen
+// CDN-poster hebben terwijl de transcoding draait, dus dan tonen we de
+// lokaal-gegenereerde JPEG-thumbnail uit de plugin.
+function resolvedThumbnail(post: PostData): string | null {
+    return post.thumbnail_url ?? localThumbnails.get(post.id);
+}
 
 const username = computed(() => String(route.params.username));
 const isOwnProfile = computed(() => auth.user?.username === username.value);
@@ -221,7 +230,7 @@ function markLoaded(url: string): void {
 
 function mediaKey(post: PostData): string {
     return post.media_type === 'video'
-        ? (post.thumbnail_url ?? '')
+        ? (resolvedThumbnail(post) ?? '')
         : post.media_url;
 }
 
@@ -451,9 +460,9 @@ function iconMaskStyle(url: string) {
                         <img
                             v-else-if="
                                 post.media_type === 'video' &&
-                                post.thumbnail_url
+                                resolvedThumbnail(post)
                             "
-                            :src="post.thumbnail_url"
+                            :src="resolvedThumbnail(post) ?? ''"
                             :alt="post.caption ?? t('Moment')"
                             class="relative size-full object-cover transition-opacity duration-300"
                             :class="
