@@ -28,19 +28,19 @@ const props = withDefaults(
 );
 
 const base =
-    'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40';
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40';
 
 const variants: Record<Variant, string> = {
     primary:
-        'rounded-full bg-teal text-white font-medium hover:bg-teal-light shadow-lg shadow-teal/20',
+        'rounded-full bg-action text-white font-medium hover:bg-action-hover shadow-lg shadow-action/20',
     // Inverse — yellow on green text. Use on dark brand surfaces (Brand
     // Blue, Brand Green, Brand Orange) where the solid teal primary would
     // disappear.
     inverse:
         'rounded-full bg-brand-yellow text-brand-green font-semibold hover:bg-brand-yellow/90 shadow-lg shadow-night/30',
     secondary:
-        'rounded-full bg-white text-teal font-medium border border-sand-200 hover:bg-sand-50',
-    ghost: 'rounded-full bg-transparent text-teal-muted font-medium hover:bg-teal/5',
+        'rounded-full bg-surface text-ink font-medium border border-sand-200 hover:bg-sand-50',
+    ghost: 'rounded-full bg-transparent text-ink-muted font-medium hover:bg-action/5',
     // Destructive — only ever solid blush. Use for log out, delete account,
     // remove person, leave circle. Pair with a confirm dialog before the
     // action actually fires.

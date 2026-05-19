@@ -68,7 +68,7 @@ async function createCircle(): Promise<void> {
 <template>
     <AppLayout ref="layout" :title="t('Circles')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -87,7 +87,7 @@ async function createCircle(): Promise<void> {
         </template>
         <template #header-right>
             <button
-                class="flex size-9 items-center justify-center rounded-full bg-teal text-white shadow-sm transition hover:bg-teal-light"
+                class="flex size-9 items-center justify-center rounded-full bg-action text-white shadow-sm transition hover:bg-action-hover"
                 :aria-label="t('Create circle')"
                 data-tour="circles.create"
                 @click="showCreateForm = !showCreateForm"
@@ -133,7 +133,7 @@ async function createCircle(): Promise<void> {
                 >
                     <SurfaceCard v-if="showCreateForm">
                         <form class="space-y-3" @submit.prevent="createCircle">
-                            <label class="font-semibold text-teal">
+                            <label class="font-semibold text-ink">
                                 {{ t('New circle') }}
                             </label>
                             <input
@@ -175,7 +175,7 @@ async function createCircle(): Promise<void> {
 
                 <ul
                     v-if="circles === null"
-                    class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm"
+                    class="divide-y divide-sand-100 overflow-hidden rounded-lg bg-surface/70 backdrop-blur-sm"
                 >
                     <li
                         v-for="n in 3"
@@ -219,7 +219,7 @@ async function createCircle(): Promise<void> {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3 class="font-sans text-lg font-semibold text-teal">
+                        <h3 class="font-sans text-lg font-semibold text-ink">
                             {{ t('No circles yet') }}
                         </h3>
                         <p class="mt-1 text-sand-600">

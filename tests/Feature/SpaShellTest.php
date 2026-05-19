@@ -45,3 +45,13 @@ it('does not let the SPA catch-all swallow API or proxy paths', function () {
     $response = $this->get('/api/spa/bootstrap');
     expect($response->headers->get('content-type'))->toContain('application/json');
 });
+
+it('inlines the dark-mode bootstrap before Vite assets', function () {
+    // The inline script must run before paint to avoid a flash of light
+    // content when the user prefers dark. Anchored on the localStorage key
+    // shared with resources/js/spa/stores/appearance.ts.
+    $response = $this->get('/');
+
+    $response->assertSee("localStorage.getItem('spa.appearance')", false);
+    $response->assertSee('meta name="theme-color"', false);
+});

@@ -201,7 +201,7 @@ async function save(): Promise<void> {
 <template>
     <AppLayout :title="t('Edit profile')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -241,7 +241,7 @@ async function save(): Promise<void> {
                             />
                             <span
                                 v-else
-                                class="flex size-24 items-center justify-center rounded-full bg-sage-100 text-teal"
+                                class="flex size-24 items-center justify-center rounded-full bg-brand-blue/50 text-ink"
                                 :class="{ 'opacity-60': avatarUploading }"
                             >
                                 <span
@@ -260,11 +260,11 @@ async function save(): Promise<void> {
                                 ></span>
                             </span>
                             <span
-                                class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white"
+                                class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-action shadow-md ring-2 ring-white dark:ring-ink-muted"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-4 bg-white"
+                                    class="inline-block size-4 bg-surface dark:bg-ink-muted"
                                     :style="{
                                         maskImage: `url(${pencilIcon})`,
                                         WebkitMaskImage: `url(${pencilIcon})`,
@@ -278,7 +278,7 @@ async function save(): Promise<void> {
                                 ></span>
                             </span>
                         </button>
-                        <p class="text-teal-muted">
+                        <p class="text-ink-muted">
                             {{ t('Tap to change your photo') }}
                         </p>
                     </div>
@@ -287,7 +287,7 @@ async function save(): Promise<void> {
                 <SurfaceCard class="reveal-item">
                     <form class="space-y-5" @submit.prevent="save">
                         <div>
-                            <label for="bio" class="font-semibold text-teal">
+                            <label for="bio" class="font-semibold text-ink">
                                 {{ t('Bio') }}
                             </label>
                             <textarea
@@ -300,7 +300,7 @@ async function save(): Promise<void> {
                                     t('Write something about yourself...')
                                 "
                             />
-                            <p v-if="errors.bio" class="mt-1 text-blush-500">
+                            <p v-if="errors.bio" class="mt-1 text-destructive-ink">
                                 {{ errors.bio }}
                             </p>
                         </div>
@@ -308,11 +308,11 @@ async function save(): Promise<void> {
                         <div>
                             <label
                                 for="birthdate"
-                                class="font-semibold text-teal"
+                                class="font-semibold text-ink"
                             >
                                 {{ t('Birthdate') }}
                             </label>
-                            <p class="mt-1 text-teal-muted">
+                            <p class="mt-1 text-ink-muted">
                                 {{
                                     t(
                                         'Your birthdate is used to show your age on tagged photos.',
@@ -327,7 +327,7 @@ async function save(): Promise<void> {
                             />
                             <p
                                 v-if="errors.birthdate"
-                                class="mt-1 text-blush-500"
+                                class="mt-1 text-destructive-ink"
                             >
                                 {{ errors.birthdate }}
                             </p>
@@ -338,10 +338,10 @@ async function save(): Promise<void> {
                                 class="flex cursor-pointer items-start justify-between gap-3"
                             >
                                 <span class="flex-1">
-                                    <span class="block font-semibold text-teal">
+                                    <span class="block font-semibold text-ink">
                                         {{ t('Findable via search') }}
                                     </span>
-                                    <span class="mt-1 block text-teal-muted">
+                                    <span class="mt-1 block text-ink-muted">
                                         {{
                                             t(
                                                 'Turn this off to hide your profile from search results.',
@@ -359,7 +359,7 @@ async function save(): Promise<void> {
                                             ? 'bg-brand-green'
                                             : 'bg-sand-300'
                                     "
-                                    class="relative mt-1 inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    class="relative mt-1 inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                                     @click="searchable = !searchable"
                                 >
                                     <span
@@ -368,13 +368,13 @@ async function save(): Promise<void> {
                                                 ? 'translate-x-7'
                                                 : 'translate-x-1'
                                         "
-                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                                     />
                                 </button>
                             </label>
                             <p
                                 v-if="errors.searchable"
-                                class="mt-1 text-blush-500"
+                                class="mt-1 text-destructive-ink"
                             >
                                 {{ errors.searchable }}
                             </p>
@@ -390,7 +390,7 @@ async function save(): Promise<void> {
                         >
                             <p
                                 v-if="saved"
-                                class="rounded-lg bg-sage-100/70 px-4 py-2 text-sage-700"
+                                class="rounded-lg bg-success-soft/70 px-4 py-2 text-success-ink"
                             >
                                 {{ t('Profile saved.') }}
                             </p>

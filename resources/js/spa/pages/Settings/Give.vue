@@ -38,7 +38,7 @@ function goBack(): void {
 <template>
     <AppLayout :title="t('Inner Gives')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -64,7 +64,7 @@ function goBack(): void {
             >
                 <div
                     data-tour="give.hero"
-                    class="reveal-item rounded-lg bg-teal p-6 shadow-sm shadow-teal/20"
+                    class="reveal-item rounded-lg bg-action p-6 shadow-sm shadow-action/20"
                 >
                     <div class="flex flex-col items-center gap-4 text-center">
                         <IconTile

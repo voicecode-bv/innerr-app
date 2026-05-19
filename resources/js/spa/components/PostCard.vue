@@ -501,7 +501,7 @@ function timeAgo(dateString: string): string {
                 />
             </RouterLink>
             <div
-                class="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-white px-4 py-2.5 text-teal shadow-sm ring-1 ring-sand-100"
+                class="min-w-0 flex-1 rounded-2xl rounded-tl-sm bg-surface px-4 py-2.5 text-ink shadow-sm ring-1 ring-sand-100"
             >
                 <div class="flex items-baseline justify-between gap-2">
                     <RouterLink
@@ -509,13 +509,13 @@ function timeAgo(dateString: string): string {
                             name: 'spa.profiles.show',
                             params: { username: post.user.username },
                         }"
-                        class="truncate font-semibold text-teal"
+                        class="truncate font-semibold text-ink"
                     >
                         {{ post.user.name }}
                     </RouterLink>
                     <p
                         v-if="post.location"
-                        class="shrink-0 truncate text-sm text-teal-muted"
+                        class="shrink-0 truncate text-sm text-ink-muted"
                     >
                         {{ post.location }}
                     </p>
@@ -523,14 +523,14 @@ function timeAgo(dateString: string): string {
                 <template v-if="post.caption">
                     <p
                         ref="captionRef"
-                        class="mt-1 leading-relaxed whitespace-pre-line text-night"
+                        class="mt-1 leading-relaxed whitespace-pre-line text-ink"
                         :class="{ 'line-clamp-2': !showFullCaption }"
                     >
                         {{ post.caption }}
                     </p>
                     <button
                         v-if="isCaptionOverflowing"
-                        class="mt-1 text-sm text-teal-muted"
+                        class="mt-1 text-sm text-ink-muted"
                         @click="showFullCaption = !showFullCaption"
                     >
                         {{ showFullCaption ? t('less') : t('more') }}
@@ -585,7 +585,7 @@ function timeAgo(dateString: string): string {
                     />
                     <div
                         v-else
-                        class="flex size-5 items-center justify-center rounded-full bg-white/20"
+                        class="flex size-5 items-center justify-center rounded-full bg-surface/20"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -625,7 +625,7 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="isLiked ? 'bg-brand-orange' : 'bg-white'"
+                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface'"
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
@@ -641,7 +641,7 @@ function timeAgo(dateString: string): string {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-6 bg-white drop-shadow"
+                            class="inline-block size-6 bg-surface drop-shadow"
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
@@ -739,7 +739,7 @@ function timeAgo(dateString: string): string {
                     />
                     <div
                         v-else
-                        class="flex size-5 items-center justify-center rounded-full bg-white/20"
+                        class="flex size-5 items-center justify-center rounded-full bg-surface/20"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -778,7 +778,7 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="isLiked ? 'bg-brand-orange' : 'bg-white'"
+                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface'"
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
@@ -794,7 +794,7 @@ function timeAgo(dateString: string): string {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-6 bg-white drop-shadow"
+                            class="inline-block size-6 bg-surface drop-shadow"
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
@@ -1034,7 +1034,7 @@ function timeAgo(dateString: string): string {
                         />
                         <div
                             v-else
-                            class="flex size-5 items-center justify-center rounded-full bg-white/20"
+                            class="flex size-5 items-center justify-center rounded-full bg-surface/20"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -1077,7 +1077,7 @@ function timeAgo(dateString: string): string {
                                 aria-hidden="true"
                                 class="inline-block size-6 drop-shadow"
                                 :class="
-                                    isLiked ? 'bg-brand-orange' : 'bg-white'
+                                    isLiked ? 'bg-brand-orange' : 'bg-surface'
                                 "
                                 :style="
                                     iconMaskStyle(
@@ -1094,7 +1094,7 @@ function timeAgo(dateString: string): string {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-6 bg-white drop-shadow"
+                                class="inline-block size-6 bg-surface drop-shadow"
                                 :style="iconMaskStyle(heartIcon)"
                             ></span>
                         </button>
@@ -1169,7 +1169,7 @@ function timeAgo(dateString: string): string {
         <button
             v-if="likesSummary"
             type="button"
-            class="mt-2 flex w-full items-center gap-2 px-4 py-1 text-left text-teal active:bg-sand-100/40"
+            class="mt-2 flex w-full items-center gap-2 px-4 py-1 text-left text-ink active:bg-sand-100/40"
             @click="openLikes"
         >
             <img
@@ -1181,14 +1181,14 @@ function timeAgo(dateString: string): string {
             <span
                 v-else
                 aria-hidden="true"
-                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
+                class="flex size-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-ink"
             >
                 <span
                     class="inline-block size-3.5 bg-current"
                     :style="iconMaskStyle(userIcon)"
                 ></span>
             </span>
-            <span class="min-w-0 truncate text-teal-muted">
+            <span class="min-w-0 truncate text-ink-muted">
                 {{ likesSummary.text }}
             </span>
         </button>

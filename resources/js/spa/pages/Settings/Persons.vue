@@ -497,7 +497,7 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout ref="layout" :title="t('Persons')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -516,7 +516,7 @@ function iconMaskStyle(url: string) {
         </template>
         <template #header-right>
             <button
-                class="flex size-9 items-center justify-center rounded-full bg-teal text-white shadow-sm transition hover:bg-teal-light"
+                class="flex size-9 items-center justify-center rounded-full bg-action text-white shadow-sm transition hover:bg-action-hover"
                 :aria-label="t('Add person')"
                 @click="openCreate"
             >
@@ -547,7 +547,7 @@ function iconMaskStyle(url: string) {
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <div
-                    class="reveal-item rounded-2xl bg-teal p-4 shadow-sm shadow-teal/20"
+                    class="reveal-item rounded-2xl bg-action p-4 shadow-sm shadow-action/20"
                 >
                     <p class="leading-relaxed text-brand-sand/90">
                         {{
@@ -560,7 +560,7 @@ function iconMaskStyle(url: string) {
 
                 <ul
                     v-if="isLoading && persons.length === 0"
-                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm"
+                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-surface/70 backdrop-blur-sm"
                 >
                     <li
                         v-for="n in 5"
@@ -600,7 +600,7 @@ function iconMaskStyle(url: string) {
                                 />
                                 <span
                                     v-else
-                                    class="flex size-12 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
+                                    class="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand-blue/50 text-ink"
                                 >
                                     <span
                                         aria-hidden="true"
@@ -652,10 +652,10 @@ function iconMaskStyle(url: string) {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3 class="font-sans text-lg font-semibold text-teal">
+                        <h3 class="font-sans text-lg font-semibold text-ink">
                             {{ t('No persons yet') }}
                         </h3>
-                        <p class="mt-1 text-teal-muted">
+                        <p class="mt-1 text-ink-muted">
                             {{
                                 t(
                                     'Add the people closest to you to tag them in your posts.',
@@ -678,11 +678,11 @@ function iconMaskStyle(url: string) {
         >
             <template #header>
                 <div class="flex items-center justify-between">
-                    <h2 class="font-semibold text-teal">
+                    <h2 class="font-semibold text-ink">
                         {{ editingPerson ? t('Edit person') : t('Add person') }}
                     </h2>
                     <button
-                        class="text-teal-muted"
+                        class="text-ink-muted"
                         :aria-label="t('Close')"
                         @click="closeSheet"
                     >
@@ -725,7 +725,7 @@ function iconMaskStyle(url: string) {
                         />
                         <span
                             v-else
-                            class="flex size-24 items-center justify-center rounded-full bg-sage-100 text-teal"
+                            class="flex size-24 items-center justify-center rounded-full bg-brand-blue text-ink"
                             :class="photoUploading ? 'opacity-50' : ''"
                         >
                             <span
@@ -735,11 +735,11 @@ function iconMaskStyle(url: string) {
                             ></span>
                         </span>
                         <span
-                            class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white/70"
+                            class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-brand-blue text-ink shadow-md ring-2 ring-white/70"
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-4 bg-white"
+                                class="inline-block size-4 bg-ink"
                                 :style="iconMaskStyle(cameraIcon)"
                             ></span>
                         </span>
@@ -747,7 +747,7 @@ function iconMaskStyle(url: string) {
                     <button
                         v-if="pendingPhotoPreview || editingPerson?.avatar"
                         type="button"
-                        class="rounded-full bg-blush-50 px-3 py-1 text-xs font-medium text-blush-600 transition-colors hover:bg-blush-100"
+                        class="rounded-full bg-destructive-soft px-3 py-1 text-xs font-medium text-destructive-ink transition-colors hover:bg-destructive-soft"
                         @click="deletePhoto"
                     >
                         {{ t('Remove photo') }}
@@ -758,7 +758,7 @@ function iconMaskStyle(url: string) {
                     <div>
                         <label
                             for="person-name"
-                            class="font-semibold text-teal"
+                            class="font-semibold text-ink"
                         >
                             {{ t('Name') }}
                         </label>
@@ -772,7 +772,7 @@ function iconMaskStyle(url: string) {
                         />
                         <p
                             v-if="editForm.errors.name"
-                            class="mt-1 text-blush-500"
+                            class="mt-1 text-destructive-ink"
                         >
                             {{ editForm.errors.name }}
                         </p>
@@ -781,7 +781,7 @@ function iconMaskStyle(url: string) {
                     <div>
                         <label
                             for="person-birthdate"
-                            class="font-semibold text-teal"
+                            class="font-semibold text-ink"
                         >
                             {{ t('Birthdate') }}
                         </label>
@@ -795,7 +795,7 @@ function iconMaskStyle(url: string) {
                         />
                         <p
                             v-if="editForm.errors.birthdate"
-                            class="mt-1 text-blush-500"
+                            class="mt-1 text-destructive-ink"
                         >
                             {{ editForm.errors.birthdate }}
                         </p>
@@ -810,7 +810,7 @@ function iconMaskStyle(url: string) {
                         />
                     </div>
 
-                    <p v-if="formError" class="text-blush-500">
+                    <p v-if="formError" class="text-destructive-ink">
                         {{ formError }}
                     </p>
                 </form>

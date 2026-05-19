@@ -83,7 +83,7 @@ async function toggleCircle(circleId: string): Promise<void> {
 <template>
     <AppLayout ref="layout" :title="t('Default circles')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -140,10 +140,10 @@ async function toggleCircle(circleId: string): Promise<void> {
                     data-tour="default-circles.list"
                     class="reveal-item"
                 >
-                    <h3 class="font-semibold text-teal">
+                    <h3 class="font-semibold text-ink">
                         {{ t('Default circles for new posts') }}
                     </h3>
-                    <p class="mt-1 text-teal-muted">
+                    <p class="mt-1 text-ink-muted">
                         {{
                             t(
                                 'These circles will be pre-selected when you create a new post.',
@@ -158,7 +158,7 @@ async function toggleCircle(circleId: string): Promise<void> {
                             class="flex items-center justify-between gap-3 py-3"
                         >
                             <span
-                                class="min-w-0 flex-1 truncate text-base text-night"
+                                class="min-w-0 flex-1 truncate text-base text-ink"
                                 >{{ circle.name }}</span
                             >
                             <span
@@ -176,7 +176,7 @@ async function toggleCircle(circleId: string): Promise<void> {
                             <label
                                 class="flex cursor-pointer items-center justify-between gap-3 py-3"
                             >
-                                <span class="text-base text-night">{{
+                                <span class="text-base text-ink">{{
                                     circle.name
                                 }}</span>
                                 <button
@@ -190,7 +190,7 @@ async function toggleCircle(circleId: string): Promise<void> {
                                             ? 'bg-brand-green'
                                             : 'bg-sand-300'
                                     "
-                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                                     @click="toggleCircle(circle.id)"
                                 >
                                     <span
@@ -199,7 +199,7 @@ async function toggleCircle(circleId: string): Promise<void> {
                                                 ? 'translate-x-7'
                                                 : 'translate-x-1'
                                         "
-                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                                     />
                                 </button>
                             </label>
@@ -217,10 +217,10 @@ async function toggleCircle(circleId: string): Promise<void> {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3 class="font-sans text-lg font-semibold text-teal">
+                        <h3 class="font-sans text-lg font-semibold text-ink">
                             {{ t('No circles yet') }}
                         </h3>
-                        <p class="mt-1 text-teal-muted">
+                        <p class="mt-1 text-ink-muted">
                             {{
                                 t(
                                     'Create a circle to set it as a default for new posts.',

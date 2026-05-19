@@ -282,7 +282,7 @@ return null;
                             "
                             #meta
                         >
-                            <span class="font-normal text-teal-muted">
+                            <span class="font-normal text-ink-muted">
                                 ·
                                 {{
                                     ageAt(
@@ -354,7 +354,7 @@ return null;
             </section>
         </div>
 
-        <div v-else-if="post" class="px-4 py-10 text-center text-teal-muted">
+        <div v-else-if="post" class="px-4 py-10 text-center text-ink-muted">
             {{ t('No details for this moment.') }}
         </div>
     </BottomSheet>

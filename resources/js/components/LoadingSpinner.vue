@@ -10,7 +10,7 @@ withDefaults(
 <template>
     <svg
         :class="[
-            'animate-spin text-teal-muted/70',
+            'animate-spin text-ink-muted/70',
             size === 'sm' ? 'size-5' : 'size-6',
         ]"
         xmlns="http://www.w3.org/2000/svg"

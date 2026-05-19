@@ -112,7 +112,7 @@ function toggleAll() {
         <div class="mb-3 flex items-center justify-between gap-2">
             <button
                 type="button"
-                class="flex items-center gap-1.5 font-semibold text-teal"
+                class="flex items-center gap-1.5 font-semibold text-ink"
                 @click="isCollapsed = !isCollapsed"
             >
                 {{ t('Share with circles') }}
@@ -133,13 +133,13 @@ function toggleAll() {
                 </svg>
             </button>
 
-            <span v-if="isCollapsed" class="truncate text-teal-muted">{{
+            <span v-if="isCollapsed" class="truncate text-ink-muted">{{
                 summaryText
             }}</span>
             <button
                 v-else-if="visibleCircles.length > 0"
                 type="button"
-                class="text-teal hover:text-teal-light"
+                class="text-ink hover:text-ink-light"
                 @click="toggleAll"
             >
                 {{ allSelected ? t('Deselect all') : t('Select all') }}
@@ -170,7 +170,7 @@ function toggleAll() {
                             : 'bg-sand-200'
                     "
                 >
-                    <div class="rounded-full bg-white p-0.5">
+                    <div class="rounded-full bg-surface p-0.5">
                         <img
                             v-if="circle.photo"
                             :src="circle.photo"
@@ -193,7 +193,7 @@ function toggleAll() {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-7 bg-teal"
+                                class="inline-block size-7 bg-action"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </div>
@@ -201,7 +201,7 @@ function toggleAll() {
 
                     <div
                         v-if="selectedIds.includes(circle.id)"
-                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white"
+                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-action ring-2 ring-white"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -223,8 +223,8 @@ function toggleAll() {
                     class="max-w-16 truncate"
                     :class="
                         selectedIds.includes(circle.id)
-                            ? 'font-medium text-teal'
-                            : 'text-teal-muted'
+                            ? 'font-medium text-ink'
+                            : 'text-ink-muted'
                     "
                 >
                     {{ circle.name }}
@@ -232,7 +232,7 @@ function toggleAll() {
             </button>
         </div>
 
-        <p v-if="error" class="mt-2 text-blush-500">{{ error }}</p>
+        <p v-if="error" class="mt-2 text-destructive-ink">{{ error }}</p>
     </div>
 </template>
 

@@ -78,7 +78,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
 <template>
     <AppLayout ref="layout" :title="t('Push notifications')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -108,7 +108,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                 <PushPermissionCard ref="permissionCard" />
 
                 <SurfaceCard class="reveal-item">
-                    <h3 class="font-semibold text-teal">
+                    <h3 class="font-semibold text-ink">
                         {{ t('Push notifications') }}
                     </h3>
 
@@ -121,7 +121,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                             :key="key"
                             class="flex items-center justify-between gap-3 py-3"
                         >
-                            <span class="text-base text-night">{{
+                            <span class="text-base text-ink">{{
                                 label
                             }}</span>
                             <span
@@ -139,7 +139,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                             <label
                                 class="flex cursor-pointer items-center justify-between gap-3 py-3"
                             >
-                                <span class="text-base text-night">{{
+                                <span class="text-base text-ink">{{
                                     label
                                 }}</span>
                                 <button
@@ -151,7 +151,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                                             ? 'bg-brand-green'
                                             : 'bg-sand-300'
                                     "
-                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                                     @click="togglePreference(key)"
                                 >
                                     <span
@@ -160,7 +160,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                                                 ? 'translate-x-7'
                                                 : 'translate-x-1'
                                         "
-                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                                     />
                                 </button>
                             </label>

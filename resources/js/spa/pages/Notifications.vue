@@ -439,10 +439,10 @@ const typeIconMap: Record<string, BadgeConfig> = {
 };
 
 const filledToneClass: Record<IconToneName, string> = {
-    sage: 'bg-sage-200 text-teal dark:bg-sage-800 dark:text-sage-100',
-    sand: 'bg-sand-200 text-teal dark:bg-sand-700 dark:text-sand-200',
+    sage: 'bg-sage-200 text-ink dark:bg-sage-800 dark:text-sage-100',
+    sand: 'bg-sand-200 text-ink dark:bg-sand-700 dark:text-sand-200',
     accent: 'bg-accent text-white dark:bg-accent dark:text-white',
-    teal: 'bg-teal text-white',
+    teal: 'bg-action text-white',
 };
 
 function iconForType(type: string): BadgeConfig {
@@ -579,7 +579,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
     <AppLayout ref="layout" :title="t('Notifications')">
         <template #header-left>
             <button
-                class="flex items-center text-teal dark:text-sand-300"
+                class="flex items-center text-ink dark:text-sand-300"
                 @click="goBack"
             >
                 <svg
@@ -610,7 +610,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
             <div class="relative space-y-4 px-4 pt-4">
                 <div v-if="hasUnread" class="reveal-item flex justify-end px-1">
                     <button
-                        class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-teal shadow-sm backdrop-blur-sm transition hover:bg-white dark:bg-sand-800/60 dark:text-sage-100 dark:hover:bg-sand-800"
+                        class="inline-flex items-center gap-1.5 rounded-full bg-surface/70 px-3 py-1.5 text-ink shadow-sm backdrop-blur-sm transition hover:bg-surface dark:bg-sand-800/60 dark:text-sage-100 dark:hover:bg-sand-800"
                         @click="markAllAsRead"
                     >
                         <span
@@ -631,11 +631,11 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         <IconTile :icon="crownIcon" size="sm" tone="accent" />
                         <div class="min-w-0">
                             <h3
-                                class="font-semibold text-teal dark:text-sand-100"
+                                class="font-semibold text-ink dark:text-sand-100"
                             >
                                 {{ t('Ownership transfers') }}
                             </h3>
-                            <p class="text-teal-muted dark:text-sand-400">
+                            <p class="text-ink-muted dark:text-sand-400">
                                 {{
                                     t(':count pending', {
                                         count: ownershipTransfers.length,
@@ -673,7 +673,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-teal dark:text-sand-100">
+                                <p class="text-ink dark:text-sand-100">
                                     {{
                                         t(
                                             ':name wants to transfer ownership of :circle to you',
@@ -685,20 +685,20 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                     }}
                                 </p>
                                 <p
-                                    class="mt-0.5 text-teal-muted dark:text-sand-400"
+                                    class="mt-0.5 text-ink-muted dark:text-sand-400"
                                 >
                                     {{ timeAgo(transfer.created_at) }}
                                 </p>
                                 <div class="mt-3 flex gap-2">
                                     <button
-                                        class="rounded-full bg-teal px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-teal/90 disabled:opacity-50"
+                                        class="rounded-full bg-action px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-action/90 disabled:opacity-50"
                                         :disabled="isTransferBusy(transfer.id)"
                                         @click="acceptTransfer(transfer.id)"
                                     >
                                         {{ t('Accept') }}
                                     </button>
                                     <button
-                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-teal transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-ink transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
                                         :disabled="isTransferBusy(transfer.id)"
                                         @click="declineTransfer(transfer.id)"
                                     >
@@ -723,11 +723,11 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         />
                         <div class="min-w-0">
                             <h3
-                                class="font-semibold text-teal dark:text-sand-100"
+                                class="font-semibold text-ink dark:text-sand-100"
                             >
                                 {{ t('Circle invitations') }}
                             </h3>
-                            <p class="text-teal-muted dark:text-sand-400">
+                            <p class="text-ink-muted dark:text-sand-400">
                                 {{
                                     t(':count pending', {
                                         count: circleInvitations.length,
@@ -765,7 +765,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-teal dark:text-sand-100">
+                                <p class="text-ink dark:text-sand-100">
                                     <template
                                         v-for="(
                                             segment, idx
@@ -781,24 +781,24 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             v-else-if="
                                                 segment.type === 'circle'
                                             "
-                                            class="font-semibold text-teal dark:text-sage-100"
+                                            class="font-semibold text-ink dark:text-sage-100"
                                             >{{ segment.text }}</span
                                         >
                                         <span
                                             v-else
-                                            class="text-teal-muted dark:text-sand-400"
+                                            class="text-ink-muted dark:text-sand-400"
                                             >{{ segment.text }}</span
                                         >
                                     </template>
                                 </p>
                                 <p
-                                    class="mt-0.5 text-teal-muted dark:text-sand-400"
+                                    class="mt-0.5 text-ink-muted dark:text-sand-400"
                                 >
                                     {{ timeAgo(invitation.created_at) }}
                                 </p>
                                 <div class="mt-3 flex gap-2">
                                     <button
-                                        class="rounded-full bg-teal px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-teal/90 disabled:opacity-50"
+                                        class="rounded-full bg-action px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-action/90 disabled:opacity-50"
                                         :disabled="
                                             isInvitationBusy(invitation.id)
                                         "
@@ -807,7 +807,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         {{ t('Accept') }}
                                     </button>
                                     <button
-                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-teal transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-ink transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
                                         :disabled="
                                             isInvitationBusy(invitation.id)
                                         "
@@ -858,7 +858,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         :key="group.key"
                         class="reveal-item space-y-2"
                     >
-                        <h2 class="px-2 font-semibold text-teal">
+                        <h2 class="px-2 font-semibold text-ink">
                             {{ group.label }}
                         </h2>
                         <SurfaceCard :padded="false">
@@ -929,7 +929,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p
-                                                class="leading-snug text-night dark:text-sand-100"
+                                                class="leading-snug text-ink dark:text-sand-100"
                                                 :class="{
                                                     'font-semibold':
                                                         !isRead(notification),
@@ -942,7 +942,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                                 }}
                                             </p>
                                             <p
-                                                class="mt-1 text-teal-muted dark:text-sand-400"
+                                                class="mt-1 text-ink-muted dark:text-sand-400"
                                             >
                                                 {{
                                                     timeAgo(
@@ -967,7 +967,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             />
                                             <span
                                                 v-if="!isRead(notification)"
-                                                class="mt-1 inline-block size-2 rounded-full bg-teal"
+                                                class="mt-1 inline-block size-2 rounded-full bg-action"
                                                 aria-hidden="true"
                                             />
                                         </div>
@@ -983,7 +983,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     class="flex flex-col items-center gap-2 px-4 py-4"
                 >
                     <button
-                        class="text-teal-muted disabled:opacity-50 dark:text-sand-400"
+                        class="text-ink-muted disabled:opacity-50 dark:text-sand-400"
                         :disabled="isLoadingMore"
                         @click="loadMore"
                     >
@@ -993,7 +993,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 : t('Load more')
                         }}
                     </button>
-                    <p v-if="loadMoreError" class="text-blush-500">
+                    <p v-if="loadMoreError" class="text-destructive-ink">
                         {{ loadMoreError }}
                     </p>
                 </div>
@@ -1012,12 +1012,12 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     >
                         <IconTile :icon="bellIcon" size="lg" tone="sage" />
                         <h3
-                            class="mt-4 font-display text-lg font-semibold text-teal dark:text-sage-100"
+                            class="mt-4 font-display text-lg font-semibold text-ink dark:text-sage-100"
                         >
                             {{ t('No notifications yet') }}
                         </h3>
                         <p
-                            class="mt-1 max-w-xs text-teal-muted dark:text-sand-400"
+                            class="mt-1 max-w-xs text-ink-muted dark:text-sand-400"
                         >
                             {{
                                 t(

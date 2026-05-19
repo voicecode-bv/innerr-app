@@ -178,7 +178,7 @@ onUnmounted(() => {
 <template>
     <AppLayout :title="t('Transfer ownership')">
         <template #header-left>
-            <button class="text-teal" @click="goBack">
+            <button class="text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -207,7 +207,7 @@ onUnmounted(() => {
                         />
                         <div class="min-w-0">
                             <h2
-                                class="font-sans text-lg font-semibold text-teal"
+                                class="font-sans text-lg font-semibold text-ink"
                             >
                                 {{ t('Transfer ownership') }}
                             </h2>
@@ -223,7 +223,7 @@ onUnmounted(() => {
                 </SurfaceCard>
 
                 <SurfaceCard v-if="pendingTransfer">
-                    <h3 class="flex items-center gap-3 font-semibold text-teal">
+                    <h3 class="flex items-center gap-3 font-semibold text-ink">
                         <IconTile
                             :icon="arrowCircleRightIcon"
                             size="sm"
@@ -243,7 +243,7 @@ onUnmounted(() => {
                             class="size-11 shrink-0 rounded-full object-cover"
                         />
                         <div class="min-w-0 flex-1">
-                            <p class="truncate font-semibold text-teal">
+                            <p class="truncate font-semibold text-ink">
                                 {{ pendingTransfer.to_user.name }}
                             </p>
                             <p class="truncate text-sand-500">
@@ -257,7 +257,7 @@ onUnmounted(() => {
                 </SurfaceCard>
 
                 <SurfaceCard v-else-if="eligibleMembers.length > 0">
-                    <h3 class="flex items-center gap-3 font-semibold text-teal">
+                    <h3 class="flex items-center gap-3 font-semibold text-ink">
                         <IconTile :icon="crownIcon" size="sm" tone="sage" />
                         {{ t('Select a new owner') }}
                     </h3>
@@ -268,7 +268,7 @@ onUnmounted(() => {
                                 class="flex w-full items-center gap-3 rounded-xl p-3 text-left transition"
                                 :class="
                                     selectedMemberId === member.id
-                                        ? 'bg-sage-100/60'
+                                        ? 'bg-success-soft/60'
                                         : 'hover:bg-sand-50'
                                 "
                                 @click="selectedMemberId = member.id"
@@ -282,7 +282,7 @@ onUnmounted(() => {
                                     class="size-11 shrink-0 rounded-full object-cover"
                                 />
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate font-semibold text-teal">
+                                    <p class="truncate font-semibold text-ink">
                                         {{ member.name }}
                                     </p>
                                     <p class="truncate text-sand-500">
@@ -293,7 +293,7 @@ onUnmounted(() => {
                                     class="flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition"
                                     :class="
                                         selectedMemberId === member.id
-                                            ? 'border-teal bg-teal'
+                                            ? 'border-action bg-action'
                                             : 'border-sand-300'
                                     "
                                 >
@@ -340,7 +340,7 @@ onUnmounted(() => {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3 class="font-sans text-lg font-semibold text-teal">
+                        <h3 class="font-sans text-lg font-semibold text-ink">
                             {{ t('No members to transfer to') }}
                         </h3>
                         <p class="mt-1 text-sand-600">

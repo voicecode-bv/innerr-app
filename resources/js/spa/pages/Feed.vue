@@ -302,7 +302,7 @@ function iconMaskStyle(url: string) {
                         class="group flex shrink-0 flex-col items-center gap-1.5"
                     >
                         <div
-                            class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-teal/50 transition-transform duration-500 group-hover:rotate-90"
+                            class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-action/50 transition-transform duration-500 group-hover:rotate-90"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -319,7 +319,7 @@ function iconMaskStyle(url: string) {
                                 />
                             </svg>
                         </div>
-                        <span class="text-sm font-medium text-teal">{{
+                        <span class="text-sm font-medium text-ink">{{
                             t('Circles')
                         }}</span>
                     </RouterLink>
@@ -350,7 +350,7 @@ function iconMaskStyle(url: string) {
                         class="flex shrink-0 flex-col items-center gap-1.5"
                     >
                         <div class="circle-ring relative rounded-full p-0.5">
-                            <div class="rounded-full bg-white p-0.5">
+                            <div class="rounded-full bg-surface p-0.5">
                                 <img
                                     v-if="circle.photo"
                                     :src="circle.photo"
@@ -370,7 +370,7 @@ function iconMaskStyle(url: string) {
                             </div>
                         </div>
                         <span
-                            class="max-w-16 truncate text-sm font-medium text-teal"
+                            class="max-w-16 truncate text-sm font-medium text-ink"
                             >{{ circle.name }}</span
                         >
                     </RouterLink>
@@ -421,7 +421,7 @@ function iconMaskStyle(url: string) {
             >
                 <span class="flex items-center gap-1">
                     <span
-                        class="dot dot-1 size-1.5 rounded-full bg-teal"
+                        class="dot dot-1 size-1.5 rounded-full bg-action"
                     ></span>
                     <span
                         class="dot dot-2 size-1.5 rounded-full bg-accent"
@@ -452,11 +452,11 @@ function iconMaskStyle(url: string) {
                     ></div>
                 </div>
                 <div
-                    class="relative mb-5 flex size-24 rotate-[-6deg] items-center justify-center rounded-3xl bg-white shadow-lg shadow-sand-900/5"
+                    class="relative mb-5 flex size-24 rotate-[-6deg] items-center justify-center rounded-3xl bg-surface shadow-lg shadow-sand-900/5"
                 >
                     <span
                         aria-hidden="true"
-                        class="inline-block size-12 bg-teal"
+                        class="inline-block size-12 bg-action"
                         :style="iconMaskStyle(cameraIcon)"
                     ></span>
                     <span
@@ -464,13 +464,13 @@ function iconMaskStyle(url: string) {
                         class="absolute -top-2 -right-2 flex size-8 rotate-12 items-center justify-center rounded-full bg-accent shadow-md"
                     >
                         <span
-                            class="inline-block size-4 bg-white"
+                            class="inline-block size-4 bg-surface"
                             :style="iconMaskStyle(starIcon)"
                         ></span>
                     </span>
                 </div>
                 <h3
-                    class="relative font-display text-xl font-semibold text-teal"
+                    class="relative font-display text-xl font-semibold text-ink"
                 >
                     {{ t('Share your first moment') }}
                 </h3>

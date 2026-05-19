@@ -16,9 +16,9 @@ const props = withDefaults(
 
 const toneClasses = computed(() => {
     const map: Record<Tone, string> = {
-        default: 'bg-white/70',
-        muted: 'bg-white/50',
-        subtle: 'bg-white/20',
+        default: 'bg-surface/70',
+        muted: 'bg-surface/50',
+        subtle: 'bg-surface/20',
     };
 
     return map[props.tone];

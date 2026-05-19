@@ -120,7 +120,7 @@ onMounted(load);
 <template>
     <AppLayout ref="layout" :title="t('Storage')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -160,7 +160,7 @@ onMounted(load);
 
                 <div
                     v-else-if="usage"
-                    class="reveal-item rounded-lg bg-teal p-5 shadow-sm shadow-teal/20"
+                    class="reveal-item rounded-lg bg-action p-5 shadow-sm shadow-action/20"
                 >
                     <h3
                         class="font-display text-lg font-semibold text-brand-sand"
@@ -244,7 +244,7 @@ onMounted(load);
 
                 <p
                     v-if="errorMessage"
-                    class="rounded-lg bg-blush-50 p-3 text-blush-700"
+                    class="rounded-lg bg-destructive-soft p-3 text-destructive-ink"
                 >
                     {{ errorMessage }}
                 </p>

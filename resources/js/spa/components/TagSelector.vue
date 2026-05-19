@@ -202,24 +202,24 @@ return;
 
 <template>
     <div>
-        <p class="mb-3 font-semibold text-teal">
+        <p class="mb-3 font-semibold text-ink">
             {{ t('Tags') }}
         </p>
 
         <div
-            class="relative rounded-2xl bg-sand-100 px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-teal"
+            class="relative rounded-2xl bg-sand-100 px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-action"
             @click="inputRef?.focus()"
         >
             <div class="flex flex-wrap items-center gap-2">
                 <span
                     v-for="tag in selectedTags"
                     :key="tag.id"
-                    class="inline-flex items-center gap-1 rounded-full bg-teal px-3 py-1 text-white shadow-sm"
+                    class="inline-flex items-center gap-1 rounded-full bg-action px-3 py-1 text-white shadow-sm"
                 >
                     {{ tag.name }}
                     <button
                         type="button"
-                        class="-mr-1 flex h-4 w-4 items-center justify-center rounded-full text-white/80 hover:bg-white/20 hover:text-white"
+                        class="-mr-1 flex h-4 w-4 items-center justify-center rounded-full text-white/80 hover:bg-surface/20 hover:text-white"
                         :aria-label="t('Remove tag')"
                         @click.stop="removeTag(tag.id)"
                     >
@@ -245,7 +245,7 @@ return;
                             ? t('Search or add tags...')
                             : ''
                     "
-                    class="min-w-[8rem] flex-1 border-0 bg-transparent px-2 py-1 text-night placeholder-teal-muted/50 focus:ring-0 focus:outline-none"
+                    class="min-w-[8rem] flex-1 border-0 bg-transparent px-2 py-1 text-ink placeholder-ink-muted/50 focus:ring-0 focus:outline-none"
                     @input="onInput"
                     @focus="openDropdown"
                     @blur="closeDropdown"
@@ -259,13 +259,13 @@ return;
 
             <ul
                 v-if="isOpen && optionsCount > 0"
-                class="absolute top-full right-0 left-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-xl bg-white py-1 shadow-lg ring-1 ring-sand-200"
+                class="absolute top-full right-0 left-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-xl bg-surface py-1 shadow-lg ring-1 ring-sand-200"
                 @mousedown.prevent
             >
                 <li
                     v-for="(tag, index) in filteredTags"
                     :key="tag.id"
-                    class="cursor-pointer px-4 py-2 text-night"
+                    class="cursor-pointer px-4 py-2 text-ink"
                     :class="index === activeIndex ? 'bg-sand-100' : ''"
                     @mouseenter="activeIndex = index"
                     @click="selectTag(tag.id)"
@@ -275,7 +275,7 @@ return;
 
                 <li
                     v-if="canCreate"
-                    class="flex cursor-pointer items-center gap-2 px-4 py-2 text-teal"
+                    class="flex cursor-pointer items-center gap-2 px-4 py-2 text-ink"
                     :class="
                         filteredTags.length === activeIndex ? 'bg-sand-100' : ''
                     "
@@ -300,7 +300,7 @@ return;
             </ul>
         </div>
 
-        <p v-if="createError" class="mt-2 text-blush-500">{{ createError }}</p>
-        <p v-if="error" class="mt-2 text-blush-500">{{ error }}</p>
+        <p v-if="createError" class="mt-2 text-destructive-ink">{{ createError }}</p>
+        <p v-if="error" class="mt-2 text-destructive-ink">{{ error }}</p>
     </div>
 </template>

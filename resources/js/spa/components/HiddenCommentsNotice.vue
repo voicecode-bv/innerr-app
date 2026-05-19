@@ -31,7 +31,7 @@ function iconMaskStyle(url: string) {
 
 <template>
     <div
-        class="flex items-center justify-center gap-2 px-4 py-2 text-sm text-teal-muted/80"
+        class="flex items-center justify-center gap-2 px-4 py-2 text-sm text-ink-muted/80"
     >
         <span
             aria-hidden="true"

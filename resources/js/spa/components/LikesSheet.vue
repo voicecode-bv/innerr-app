@@ -201,8 +201,8 @@ function onSheetUpdate(value: boolean): void {
             v-else-if="loadError && users.length === 0"
             class="px-4 py-10 pb-24 text-center"
         >
-            <p class="text-blush-500">{{ loadError }}</p>
-            <button class="mt-2 text-teal-muted" @click="loadPage(1)">
+            <p class="text-destructive-ink">{{ loadError }}</p>
+            <button class="mt-2 text-ink-muted" @click="loadPage(1)">
                 {{ t('Try again') }}
             </button>
         </div>
@@ -211,7 +211,7 @@ function onSheetUpdate(value: boolean): void {
             v-else-if="hasLoaded && users.length === 0"
             class="px-4 py-10 pb-24 text-center"
         >
-            <p class="text-teal-muted">
+            <p class="text-ink-muted">
                 {{ t('No likes yet') }}
             </p>
         </div>
@@ -237,11 +237,11 @@ function onSheetUpdate(value: boolean): void {
                     />
                     <div class="min-w-0 flex-1">
                         <p
-                            class="truncate leading-none font-semibold text-teal"
+                            class="truncate leading-none font-semibold text-ink"
                         >
                             {{ user.name }}
                         </p>
-                        <p class="truncate text-teal-muted">
+                        <p class="truncate text-ink-muted">
                             @{{ user.username }}
                         </p>
                     </div>
@@ -253,14 +253,14 @@ function onSheetUpdate(value: boolean): void {
                 >
                     <span
                         aria-hidden="true"
-                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
+                        class="flex size-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-ink"
                     >
                         <span
                             class="inline-block size-5 bg-current"
                             :style="iconMaskStyle(userIcon)"
                         ></span>
                     </span>
-                    <p class="truncate text-teal-muted italic">
+                    <p class="truncate text-ink-muted italic">
                         {{ t('Hidden person') }}
                     </p>
                 </div>
@@ -268,12 +268,12 @@ function onSheetUpdate(value: boolean): void {
 
             <div
                 v-if="isLoadingMore"
-                class="flex items-center justify-center gap-2 px-4 py-4 text-teal-muted"
+                class="flex items-center justify-center gap-2 px-4 py-4 text-ink-muted"
             >
                 {{ t('Loading more...') }}
             </div>
 
-            <p v-if="loadError" class="px-4 py-2 text-center text-blush-500">
+            <p v-if="loadError" class="px-4 py-2 text-center text-destructive-ink">
                 {{ loadError }}
             </p>
 

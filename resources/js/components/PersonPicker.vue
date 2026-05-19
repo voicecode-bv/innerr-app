@@ -78,7 +78,7 @@ function toggle(personId: string) {
         <div class="mb-3 flex items-center justify-between gap-2">
             <button
                 type="button"
-                class="flex items-center gap-1.5 font-semibold text-teal"
+                class="flex items-center gap-1.5 font-semibold text-ink"
                 @click="isCollapsed = !isCollapsed"
             >
                 {{ t('Tag persons') }}
@@ -99,12 +99,12 @@ function toggle(personId: string) {
                 </svg>
             </button>
 
-            <span v-if="isCollapsed" class="truncate text-teal-muted">{{
+            <span v-if="isCollapsed" class="truncate text-ink-muted">{{
                 summaryText
             }}</span>
         </div>
 
-        <div v-if="!isCollapsed && persons.length === 0" class="text-teal-muted">
+        <div v-if="!isCollapsed && persons.length === 0" class="text-ink-muted">
             {{ t('No persons yet. Add them in Settings → Persons.') }}
         </div>
 
@@ -132,7 +132,7 @@ function toggle(personId: string) {
                             : 'bg-sand-200'
                     "
                 >
-                    <div class="rounded-full bg-white p-0.5">
+                    <div class="rounded-full bg-surface p-0.5">
                         <img
                             v-if="person.avatar_thumbnail || person.avatar"
                             :src="
@@ -148,7 +148,7 @@ function toggle(personId: string) {
                         />
                         <div
                             v-else
-                            class="flex size-14 items-center justify-center rounded-full bg-sage-100 transition-opacity"
+                            class="flex size-14 items-center justify-center rounded-full bg-success-soft transition-opacity"
                             :class="
                                 selectedIds.includes(person.id)
                                     ? ''
@@ -157,7 +157,7 @@ function toggle(personId: string) {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-7 bg-teal"
+                                class="inline-block size-7 bg-action"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </div>
@@ -165,7 +165,7 @@ function toggle(personId: string) {
 
                     <div
                         v-if="selectedIds.includes(person.id)"
-                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-teal ring-2 ring-white"
+                        class="absolute right-0 bottom-0 flex size-5 items-center justify-center rounded-full bg-action ring-2 ring-white"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -190,7 +190,7 @@ function toggle(personId: string) {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-3 bg-teal"
+                            class="inline-block size-3 bg-action"
                             :style="iconMaskStyle(userIcon)"
                         ></span>
                     </div>
@@ -199,8 +199,8 @@ function toggle(personId: string) {
                     class="max-w-16 truncate"
                     :class="
                         selectedIds.includes(person.id)
-                            ? 'font-medium text-teal'
-                            : 'text-teal-muted'
+                            ? 'font-medium text-ink'
+                            : 'text-ink-muted'
                     "
                 >
                     {{ person.name }}
@@ -208,7 +208,7 @@ function toggle(personId: string) {
             </button>
         </div>
 
-        <p v-if="error" class="mt-2 text-blush-500">{{ error }}</p>
+        <p v-if="error" class="mt-2 text-destructive-ink">{{ error }}</p>
     </div>
 </template>
 

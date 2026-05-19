@@ -110,7 +110,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleOutside));
         <ul
             v-if="open"
             role="listbox"
-            class="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-sand-200"
+            class="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-xl bg-surface shadow-lg ring-1 ring-sand-200"
         >
             <li
                 v-for="lang in languages"
@@ -123,8 +123,8 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleOutside));
                     class="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-sand-50"
                     :class="
                         i18n.locale === lang.code
-                            ? 'bg-sage-50 font-semibold text-teal'
-                            : 'font-medium text-teal-muted'
+                            ? 'bg-sage-50 font-semibold text-ink'
+                            : 'font-medium text-ink-muted'
                     "
                     @click="selectLocale(lang.code)"
                 >
@@ -190,7 +190,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleOutside));
                         stroke-width="3"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        class="size-4 text-teal"
+                        class="size-4 text-ink"
                     >
                         <path d="M5 12l5 5L20 7" />
                     </svg>

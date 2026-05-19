@@ -15,7 +15,7 @@ defineProps<{
             class="flex items-center gap-1.5"
             :class="{ 'is-refreshing': isRefreshing }"
         >
-            <span class="ptr-dot ptr-dot-1 size-2 rounded-full bg-teal"></span>
+            <span class="ptr-dot ptr-dot-1 size-2 rounded-full bg-action"></span>
             <span
                 class="ptr-dot ptr-dot-2 size-2 rounded-full bg-accent"
             ></span>

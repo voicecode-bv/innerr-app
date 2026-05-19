@@ -147,7 +147,7 @@ defineExpose({ refresh: refreshStatus });
         <button
             v-if="dismissible"
             type="button"
-            class="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full text-brand-blue/60 transition-colors hover:bg-brand-blue/10 hover:text-brand-blue"
+            class="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full text-brand-blue/60 dark:text-ink-muted transition-colors hover:bg-brand-blue/10 hover:text-brand-blue"
             :aria-label="t('Dismiss')"
             @click="dismiss"
         >
@@ -169,7 +169,7 @@ defineExpose({ refresh: refreshStatus });
 
         <div v-if="showDeniedBanner" class="flex items-start gap-3">
             <div
-                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue"
+                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue dark:text-ink-muted"
             >
                 <span
                     aria-hidden="true"
@@ -178,10 +178,10 @@ defineExpose({ refresh: refreshStatus });
                 ></span>
             </div>
             <div class="flex-1" :class="dismissible ? 'pr-6' : ''">
-                <h3 class="font-semibold text-brand-blue">
+                <h3 class="font-semibold text-brand-blue dark:text-white">
                     {{ t('Push notifications are off') }}
                 </h3>
-                <p class="mt-1 text-sm leading-relaxed text-teal-muted">
+                <p class="mt-1 text-sm leading-relaxed text-ink-muted">
                     {{
                         t(
                             'You disabled push notifications for this app on your device. Open your device settings to turn them back on.',
@@ -193,7 +193,7 @@ defineExpose({ refresh: refreshStatus });
 
         <div v-else-if="showEnablePrompt" class="flex items-start gap-3">
             <div
-                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue"
+                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue dark:text-ink-muted"
             >
                 <span
                     aria-hidden="true"
@@ -202,10 +202,10 @@ defineExpose({ refresh: refreshStatus });
                 ></span>
             </div>
             <div class="flex-1" :class="dismissible ? 'pr-6' : ''">
-                <h3 class="font-semibold text-brand-blue">
+                <h3 class="font-semibold text-brand-blue dark:text-white">
                     {{ t('Enable push notifications') }}
                 </h3>
-                <p class="mt-1 text-sm leading-relaxed text-teal-muted">
+                <p class="mt-1 text-sm leading-relaxed text-ink-muted">
                     {{
                         t(
                             'Turn on push notifications to receive alerts about activity in your circles.',
@@ -214,7 +214,7 @@ defineExpose({ refresh: refreshStatus });
                 </p>
                 <button
                     type="button"
-                    class="mt-3 inline-flex items-center rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-60"
+                    class="mt-3 inline-flex items-center rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:opacity-60"
                     :disabled="enrolling"
                     @click="enablePushNotifications"
                 >

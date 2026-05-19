@@ -104,7 +104,7 @@ function iconMaskStyle(url: string) {
     <AppLayout :title="t('Search people')">
         <template #header-left>
             <button
-                class="flex items-center text-teal"
+                class="flex items-center text-ink"
                 :aria-label="t('Back')"
                 @click="goBack"
             >
@@ -130,7 +130,7 @@ function iconMaskStyle(url: string) {
                 <span class="sr-only">{{ t('Search people') }}</span>
                 <span
                     aria-hidden="true"
-                    class="pointer-events-none absolute top-1/2 left-5 z-10 inline-block size-5 -translate-y-1/2 bg-teal-muted"
+                    class="pointer-events-none absolute top-1/2 left-5 z-10 inline-block size-5 -translate-y-1/2 bg-action-muted"
                     :style="iconMaskStyle(searchIcon)"
                 ></span>
                 <input
@@ -149,7 +149,7 @@ function iconMaskStyle(url: string) {
                 <button
                     v-if="query.length > 0"
                     type="button"
-                    class="absolute top-1/2 right-4 z-10 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-teal-muted transition-colors hover:bg-sand-100"
+                    class="absolute top-1/2 right-4 z-10 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-sand-100"
                     :aria-label="t('Clear search')"
                     @click="clearQuery"
                 >
@@ -193,19 +193,19 @@ function iconMaskStyle(url: string) {
                         />
                         <div
                             v-else
-                            class="flex size-11 items-center justify-center rounded-full bg-sage-100"
+                            class="flex size-11 items-center justify-center rounded-full bg-brand-blue/20"
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-6 bg-teal"
+                                class="inline-block size-6 bg-action"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </div>
                         <div class="min-w-0 flex-1">
-                            <p class="truncate font-semibold text-teal">
+                            <p class="truncate font-semibold text-ink">
                                 {{ user.name }}
                             </p>
-                            <p class="truncate text-teal-muted">
+                            <p class="truncate text-ink-muted">
                                 @{{ user.username }}
                             </p>
                         </div>
@@ -235,37 +235,37 @@ function iconMaskStyle(url: string) {
             </ul>
 
             <div v-else-if="feed.error" class="px-4 py-10 text-center">
-                <p class="text-blush-500">{{ t('Could not search') }}</p>
-                <button class="mt-2 text-teal-muted" @click="feed.reset()">
+                <p class="text-destructive-ink">{{ t('Could not search') }}</p>
+                <button class="mt-2 text-ink-muted" @click="feed.reset()">
                     {{ t('Try again') }}
                 </button>
             </div>
 
             <div v-else-if="activeTerm !== ''" class="px-4 py-10 text-center">
-                <p class="text-teal-muted">
+                <p class="text-ink-muted">
                     {{ t('No people found') }}
                 </p>
             </div>
 
             <div v-else class="px-4 py-10 text-center">
-                <p class="text-night">
+                <p class="text-ink">
                     {{ t('Nobody in your circles yet') }}
                 </p>
-                <p class="mt-2 text-teal-muted">
+                <p class="mt-2 text-ink-muted">
                     {{ t('Invite people to your circles to see them here.') }}
                 </p>
             </div>
 
             <div
                 v-if="feed.loading && feed.items.length > 0"
-                class="flex items-center justify-center gap-2 py-6 text-teal-muted"
+                class="flex items-center justify-center gap-2 py-6 text-ink-muted"
             >
                 {{ t('Loading more...') }}
             </div>
 
             <p
                 v-if="feed.error && feed.items.length > 0"
-                class="px-4 py-2 text-center text-blush-500"
+                class="px-4 py-2 text-center text-destructive-ink"
             >
                 {{ t('Could not search') }}
             </p>

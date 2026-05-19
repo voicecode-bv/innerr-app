@@ -95,8 +95,8 @@ function chatTime(dateString: string): string {
                 :class="[
                     'rounded-2xl px-3 py-2 shadow-sm',
                     isOwn
-                        ? 'rounded-br-md bg-teal text-white'
-                        : 'rounded-bl-md bg-white text-teal',
+                        ? 'rounded-br-md bg-action text-white'
+                        : 'rounded-bl-md bg-surface text-ink',
                 ]"
             >
                 <RouterLink
@@ -116,7 +116,7 @@ function chatTime(dateString: string): string {
                 <div
                     :class="[
                         'mt-1 flex items-center justify-end gap-2 text-xs',
-                        isOwn ? 'text-white/70' : 'text-teal-muted/70',
+                        isOwn ? 'text-white/70' : 'text-ink-muted/70',
                     ]"
                 >
                     <button
@@ -150,7 +150,7 @@ function chatTime(dateString: string): string {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-3.5 bg-white/60"
+                            class="inline-block size-3.5 bg-surface/60"
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                         {{ comment.likes_count }}

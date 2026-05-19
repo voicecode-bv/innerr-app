@@ -552,8 +552,8 @@ defineExpose({
             v-else-if="loadError && comments.length === 0"
             class="px-4 py-10 text-center"
         >
-            <p class="text-blush-500">{{ loadError }}</p>
-            <button class="mt-2 text-teal-muted" @click="loadPage(1)">
+            <p class="text-destructive-ink">{{ loadError }}</p>
+            <button class="mt-2 text-ink-muted" @click="loadPage(1)">
                 {{ t('Try again') }}
             </button>
         </div>
@@ -562,10 +562,10 @@ defineExpose({
             v-else-if="comments.length === 0"
             class="flex flex-col items-center justify-center px-8 py-2 text-center"
         >
-            <h3 class="font-display text-lg font-semibold text-teal">
+            <h3 class="font-display text-lg font-semibold text-ink">
                 {{ t('No comments yet') }}
             </h3>
-            <p class="mt-2 text-teal-muted">
+            <p class="mt-2 text-ink-muted">
                 {{ t('Share what you think!') }}
             </p>
         </div>
@@ -626,12 +626,12 @@ defineExpose({
 
             <div
                 v-if="isLoadingMore"
-                class="flex items-center justify-center gap-2 px-4 py-4 text-teal-muted"
+                class="flex items-center justify-center gap-2 px-4 py-4 text-ink-muted"
             >
                 {{ t('Loading more...') }}
             </div>
 
-            <p v-if="loadError" class="px-4 py-2 text-center text-blush-500">
+            <p v-if="loadError" class="px-4 py-2 text-center text-destructive-ink">
                 {{ loadError }}
             </p>
 
@@ -655,7 +655,7 @@ defineExpose({
                 />
                 <button
                     type="submit"
-                    class="flex size-14 shrink-0 items-center justify-center rounded-full bg-teal text-white shadow-sm transition-opacity disabled:opacity-30"
+                    class="flex size-14 shrink-0 items-center justify-center rounded-full bg-action text-white shadow-sm transition-opacity disabled:opacity-30"
                     :disabled="!body.trim() || isSubmitting"
                     :aria-label="t('Post')"
                 >

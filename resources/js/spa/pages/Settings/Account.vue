@@ -99,7 +99,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 <template>
     <AppLayout :title="t('Account')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -122,11 +122,11 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
         >
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <SurfaceCard class="reveal-item">
-                    <h3 class="font-semibold text-teal">
+                    <h3 class="font-semibold text-ink">
                         {{ t('Download your data') }}
                     </h3>
 
-                    <p class="mt-3 text-night">
+                    <p class="mt-3 text-ink">
                         {{
                             t(
                                 'Request an email with a download link to all your data. The link is valid for 24 hours.',
@@ -145,7 +145,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                     >
                         <div
                             v-if="exportSuccess"
-                            class="mt-4 rounded-lg bg-sage-100/70 px-4 py-3 text-sage-700"
+                            class="mt-4 rounded-lg bg-success-soft/70 px-4 py-3 text-success-ink"
                         >
                             {{
                                 t(
@@ -171,18 +171,18 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 
                     <p
                         v-if="exportError"
-                        class="mt-4 rounded-lg bg-blush-50 p-3 text-blush-700"
+                        class="mt-4 rounded-lg bg-destructive-soft p-3 text-destructive-ink"
                     >
                         {{ exportError }}
                     </p>
                 </SurfaceCard>
 
                 <SurfaceCard class="reveal-item">
-                    <h3 class="font-semibold text-teal">
+                    <h3 class="font-semibold text-ink">
                         {{ t('Delete account') }}
                     </h3>
 
-                    <p class="mt-3 text-night">
+                    <p class="mt-3 text-ink">
                         {{
                             t(
                                 'Deleting your account removes your personal data in line with GDPR. The following happens:',
@@ -190,7 +190,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         }}
                     </p>
 
-                    <ul class="mt-3 list-disc space-y-1 pl-5 text-night">
+                    <ul class="mt-3 list-disc space-y-1 pl-5 text-ink">
                         <li>
                             {{
                                 t(
@@ -235,7 +235,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 
                     <p
                         v-if="accountError"
-                        class="mt-4 rounded-lg bg-blush-50 p-3 text-blush-700"
+                        class="mt-4 rounded-lg bg-destructive-soft p-3 text-destructive-ink"
                     >
                         {{ accountError }}
                     </p>

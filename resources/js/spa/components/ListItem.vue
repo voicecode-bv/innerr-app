@@ -23,15 +23,15 @@ defineEmits<{
         :is="to ? RouterLink : 'button'"
         :to="to ?? undefined"
         :type="to ? undefined : 'button'"
-        class="flex w-full items-center gap-4 bg-white/70 px-4 py-4 text-left backdrop-blur-sm transition hover:bg-white active:scale-[0.99]"
+        class="flex w-full items-center gap-4 bg-surface/70 px-4 py-4 text-left backdrop-blur-sm transition hover:bg-surface active:scale-[0.99]"
         @click="$emit('click')"
     >
         <slot name="leading" />
         <div class="min-w-0 flex-1">
-            <p class="truncate font-sans text-base font-semibold text-teal">
+            <p class="truncate font-sans text-base font-semibold text-ink">
                 <slot />
             </p>
-            <p v-if="$slots.subtitle" class="truncate text-teal-muted">
+            <p v-if="$slots.subtitle" class="truncate text-ink-muted">
                 <slot name="subtitle" />
             </p>
         </div>
@@ -43,7 +43,7 @@ defineEmits<{
                 viewBox="0 0 24 24"
                 stroke-width="2"
                 stroke="currentColor"
-                class="size-5 text-teal-muted/60"
+                class="size-5 text-ink-muted/60"
             >
                 <path
                     stroke-linecap="round"

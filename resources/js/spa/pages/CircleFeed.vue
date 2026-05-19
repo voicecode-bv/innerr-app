@@ -201,7 +201,7 @@ function goBack(): void {
 <template>
     <AppLayout ref="layout" :title="circle?.name ?? t('Circle')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -284,7 +284,7 @@ function goBack(): void {
             >
                 <div
                     aria-hidden="true"
-                    class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal"
+                    class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft text-ink"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -306,7 +306,7 @@ function goBack(): void {
                         />
                     </svg>
                 </div>
-                <h3 class="font-display text-lg font-semibold text-teal">
+                <h3 class="font-display text-lg font-semibold text-ink">
                     {{ t('No moments yet') }}
                 </h3>
                 <p class="mt-2 text-sand-600">

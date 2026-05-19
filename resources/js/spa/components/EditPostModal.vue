@@ -297,11 +297,11 @@ async function submit(): Promise<void> {
     <BottomSheet :open="open" @update:open="onSheetUpdate">
         <template #header>
             <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-teal">
+                <h2 class="font-semibold text-ink">
                     {{ t('Edit post') }}
                 </h2>
                 <button
-                    class="text-teal-muted"
+                    class="text-ink-muted"
                     :aria-label="t('Close')"
                     @click="close"
                 >
@@ -325,7 +325,7 @@ async function submit(): Promise<void> {
 
         <div class="space-y-5 px-4 py-4">
             <section>
-                <label for="edit-post-caption" class="font-semibold text-teal">
+                <label for="edit-post-caption" class="font-semibold text-ink">
                     {{ t('Caption') }}
                 </label>
                 <textarea
@@ -334,9 +334,9 @@ async function submit(): Promise<void> {
                     :placeholder="t('Write a caption...')"
                     rows="4"
                     maxlength="2200"
-                    class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-night placeholder-teal-muted/50 focus:ring-0 focus:outline-none"
+                    class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink placeholder-ink-muted/50 focus:ring-0 focus:outline-none"
                 />
-                <p v-if="form.errors.caption" class="mt-1 text-blush-500">
+                <p v-if="form.errors.caption" class="mt-1 text-destructive-ink">
                     {{ form.errors.caption }}
                 </p>
             </section>

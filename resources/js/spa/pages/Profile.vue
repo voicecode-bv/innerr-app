@@ -266,7 +266,7 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout ref="layout" :title="t('Profile')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -287,7 +287,7 @@ function iconMaskStyle(url: string) {
         <template v-if="profile && isOwnProfile" #header-right>
             <RouterLink
                 :to="{ name: 'spa.settings' }"
-                class="flex items-center text-teal"
+                class="flex items-center text-ink"
                 :aria-label="t('Open settings')"
                 data-tour="profile.settings"
             >
@@ -332,7 +332,7 @@ function iconMaskStyle(url: string) {
                             />
                             <span
                                 v-if="isOwnProfile"
-                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white"
+                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-action shadow-md ring-4 ring-white"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -357,24 +357,24 @@ function iconMaskStyle(url: string) {
                         </button>
                         <div class="min-w-0 flex-1">
                             <h2
-                                class="truncate font-sans text-xl font-bold text-teal"
+                                class="truncate font-sans text-xl font-bold text-ink"
                             >
                                 {{ profile.name }}
                             </h2>
-                            <p class="text-teal-muted">
+                            <p class="text-ink-muted">
                                 @{{ profile.username }}
                             </p>
                             <div>
-                                <span class="font-medium text-teal">{{
+                                <span class="font-medium text-ink">{{
                                     profile.posts_count
                                 }}</span>
-                                <span class="ml-1 text-teal-muted">{{
+                                <span class="ml-1 text-ink-muted">{{
                                     profile.posts_count === 1
                                         ? t('moment')
                                         : t('moments')
                                 }}</span>
                             </div>
-                            <p v-if="profile.bio" class="text-night">
+                            <p v-if="profile.bio" class="text-ink">
                                 {{ profile.bio }}
                             </p>
                         </div>
@@ -494,7 +494,7 @@ function iconMaskStyle(url: string) {
 
                 <div
                     v-if="feed.loading && feed.items.length > 0"
-                    class="flex items-center justify-center gap-2 py-6 text-teal-muted"
+                    class="flex items-center justify-center gap-2 py-6 text-ink-muted"
                 >
                     {{ t('Loading more...') }}
                 </div>
@@ -507,7 +507,7 @@ function iconMaskStyle(url: string) {
                 >
                     <div
                         aria-hidden="true"
-                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-sage-100 text-teal"
+                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft text-ink"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -529,7 +529,7 @@ function iconMaskStyle(url: string) {
                             />
                         </svg>
                     </div>
-                    <h3 class="font-display text-lg font-semibold text-teal">
+                    <h3 class="font-display text-lg font-semibold text-ink">
                         {{ t('No moments yet') }}
                     </h3>
                 </div>

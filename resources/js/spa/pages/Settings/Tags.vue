@@ -182,7 +182,7 @@ function lowercase(event: Event, target: { name: string }): void {
 <template>
     <AppLayout ref="layout" :title="t('Tags')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -201,7 +201,7 @@ function lowercase(event: Event, target: { name: string }): void {
         </template>
         <template #header-right>
             <button
-                class="flex size-9 items-center justify-center rounded-full bg-teal text-white shadow-sm transition hover:bg-teal-light"
+                class="flex size-9 items-center justify-center rounded-full bg-action text-white shadow-sm transition hover:bg-action-hover"
                 :aria-label="t('Add tag')"
                 @click="showCreateForm = !showCreateForm"
             >
@@ -248,7 +248,7 @@ function lowercase(event: Event, target: { name: string }): void {
                 >
                     <SurfaceCard v-if="showCreateForm" class="reveal-item">
                         <form class="space-y-3" @submit.prevent="createTag">
-                            <label class="font-semibold text-teal">
+                            <label class="font-semibold text-ink">
                                 {{ t('New tag') }}
                             </label>
                             <input
@@ -262,7 +262,7 @@ function lowercase(event: Event, target: { name: string }): void {
                             />
                             <p
                                 v-if="createForm.errors.name"
-                                class="text-blush-500"
+                                class="text-destructive-ink"
                             >
                                 {{ createForm.errors.name }}
                             </p>
@@ -295,7 +295,7 @@ function lowercase(event: Event, target: { name: string }): void {
 
                 <ul
                     v-if="tags === null"
-                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-white/70 backdrop-blur-sm"
+                    class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-surface/70 backdrop-blur-sm"
                 >
                     <li
                         v-for="n in 4"
@@ -323,7 +323,7 @@ function lowercase(event: Event, target: { name: string }): void {
                     <li v-for="tag in tags" :key="tag.id" class="reveal-item">
                         <form
                             v-if="editingTagId === tag.id"
-                            class="space-y-3 bg-white/70 px-4 py-4 backdrop-blur-sm"
+                            class="space-y-3 bg-surface/70 px-4 py-4 backdrop-blur-sm"
                             @submit.prevent="saveEdit(tag)"
                         >
                             <input
@@ -336,7 +336,7 @@ function lowercase(event: Event, target: { name: string }): void {
                             />
                             <p
                                 v-if="editForm.errors.name"
-                                class="text-blush-500"
+                                class="text-destructive-ink"
                             >
                                 {{ editForm.errors.name }}
                             </p>
@@ -398,10 +398,10 @@ function lowercase(event: Event, target: { name: string }): void {
                     <div
                         class="flex flex-col items-center px-2 py-4 text-center"
                     >
-                        <h3 class="font-sans text-lg font-semibold text-teal">
+                        <h3 class="font-sans text-lg font-semibold text-ink">
                             {{ t('No tags yet') }}
                         </h3>
-                        <p class="mt-1 text-teal-muted">
+                        <p class="mt-1 text-ink-muted">
                             {{
                                 t(
                                     'Create tags to organize and filter your posts.',

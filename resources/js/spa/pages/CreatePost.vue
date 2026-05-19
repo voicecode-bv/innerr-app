@@ -835,7 +835,7 @@ const activeItemIsImage = computed(() => {
     <AppLayout :title="t('New post')">
         <template #header-left>
             <button
-                class="flex items-center text-teal"
+                class="flex items-center text-ink"
                 :aria-label="t('Back')"
                 @click="goBack"
             >
@@ -873,15 +873,15 @@ const activeItemIsImage = computed(() => {
                         class="h-1.5 rounded-full transition-all duration-200"
                         :class="
                             step - 1 === currentStep
-                                ? 'w-8 bg-teal'
+                                ? 'w-8 bg-action'
                                 : step - 1 < currentStep
-                                  ? 'w-4 bg-teal/60'
+                                  ? 'w-4 bg-action/60'
                                   : 'w-4 bg-sand-200'
                         "
                     />
                 </div>
                 <p
-                    class="mt-3 text-center tracking-widest text-teal-muted uppercase"
+                    class="mt-3 text-center tracking-widest text-ink-muted uppercase"
                 >
                     {{
                         t('Step :current of :total', {
@@ -891,11 +891,11 @@ const activeItemIsImage = computed(() => {
                     }}
                 </p>
                 <h2
-                    class="mt-1 text-center font-display text-2xl font-semibold text-teal"
+                    class="mt-1 text-center font-display text-2xl font-semibold text-ink"
                 >
                     {{ stepHeading }}
                 </h2>
-                <p class="mt-1 text-center text-teal-muted">
+                <p class="mt-1 text-center text-ink-muted">
                     {{ stepSubtitle }}
                 </p>
             </div>
@@ -903,7 +903,7 @@ const activeItemIsImage = computed(() => {
             <div class="relative mt-6 flex-1 space-y-5 px-4 pb-6">
                 <section
                     v-show="currentStep === 0"
-                    class="overflow-hidden rounded-lg bg-white/50 shadow-sm backdrop-blur-sm"
+                    class="overflow-hidden rounded-lg bg-surface/50 shadow-sm backdrop-blur-sm"
                 >
                     <div
                         v-if="hasMedia"
@@ -992,7 +992,7 @@ const activeItemIsImage = computed(() => {
                         @click="openSourcePicker"
                     >
                         <div
-                            class="flex size-20 items-center justify-center rounded-2xl bg-sage-100 text-teal"
+                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft text-ink"
                         >
                             <span
                                 aria-hidden="true"
@@ -1000,14 +1000,14 @@ const activeItemIsImage = computed(() => {
                                 :style="iconMaskStyle(cameraIcon)"
                             ></span>
                         </div>
-                        <span class="text-teal-muted">{{
+                        <span class="text-ink-muted">{{
                             t('Add a photo')
                         }}</span>
                     </button>
 
                     <p
                         v-if="form.errors.media_path || form.errors.media_paths"
-                        class="px-5 pb-4 text-blush-500"
+                        class="px-5 pb-4 text-destructive-ink"
                     >
                         {{ form.errors.media_path || form.errors.media_paths }}
                     </p>
@@ -1015,11 +1015,11 @@ const activeItemIsImage = computed(() => {
 
                 <section
                     v-show="currentStep === 1"
-                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <label
                         for="post-caption"
-                        class="tracking-wider text-teal-muted uppercase"
+                        class="tracking-wider text-ink-muted uppercase"
                     >
                         {{ t('Caption') }}
                     </label>
@@ -1029,16 +1029,16 @@ const activeItemIsImage = computed(() => {
                         :placeholder="t('Write a caption...')"
                         rows="6"
                         maxlength="2200"
-                        class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-night placeholder-teal-muted/60 focus:ring-0 focus:outline-none"
+                        class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink placeholder-ink-muted/60 focus:ring-0 focus:outline-none"
                     />
-                    <p v-if="form.errors.caption" class="mt-1 text-blush-500">
+                    <p v-if="form.errors.caption" class="mt-1 text-destructive-ink">
                         {{ form.errors.caption }}
                     </p>
                 </section>
 
                 <section
                     v-show="currentStep === 2"
-                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <CirclePicker
                         v-if="circles.length > 0"
@@ -1048,7 +1048,7 @@ const activeItemIsImage = computed(() => {
                         layout="grid"
                         @update:selected-ids="form.data.circle_ids = $event"
                     />
-                    <p v-else class="text-teal-muted">
+                    <p v-else class="text-ink-muted">
                         {{
                             t(
                                 'Create a circle to set it as a default for new posts.',
@@ -1059,7 +1059,7 @@ const activeItemIsImage = computed(() => {
 
                 <template v-if="currentStep === 3">
                     <section
-                        class="relative z-20 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                        class="relative z-20 rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                     >
                         <PersonPicker
                             :persons="availablePersons"
@@ -1070,7 +1070,7 @@ const activeItemIsImage = computed(() => {
                     </section>
 
                     <section
-                        class="relative z-10 rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                        class="relative z-10 rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                     >
                         <TagSelector
                             :available-tags="availableTags"
@@ -1083,7 +1083,7 @@ const activeItemIsImage = computed(() => {
             </div>
 
             <div
-                class="sticky bottom-0 z-30 border-t border-sand-200 bg-white/95 backdrop-blur-md"
+                class="sticky bottom-0 z-30 border-t border-sand-200 bg-surface/95 backdrop-blur-md"
                 :style="{
                     paddingBottom:
                         'max(var(--inset-bottom, 0px), env(safe-area-inset-bottom, 0px), 1.25rem)',
@@ -1092,14 +1092,14 @@ const activeItemIsImage = computed(() => {
                 <div class="flex items-center justify-between gap-3 px-4 pt-3">
                     <button
                         type="button"
-                        class="rounded-lg px-5 py-2.5 text-teal transition active:bg-sand-100"
+                        class="rounded-lg px-5 py-2.5 text-ink transition active:bg-sand-100"
                         @click="goBack"
                     >
                         {{ currentStep === 0 ? t('Cancel') : t('Back') }}
                     </button>
                     <button
                         type="button"
-                        class="rounded-lg bg-teal px-7 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:cursor-not-allowed disabled:opacity-40"
+                        class="rounded-lg bg-action px-7 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
                         :disabled="!canAdvance || form.processing"
                         @click="goNext"
                     >
@@ -1133,15 +1133,15 @@ const activeItemIsImage = computed(() => {
                     >
                         <div
                             v-if="showSourcePicker"
-                            class="w-full max-w-sm overflow-hidden rounded-lg bg-white"
+                            class="w-full max-w-sm overflow-hidden rounded-lg bg-surface"
                         >
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-ink active:bg-sand-50"
                                 @click="openCamera"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-teal"
+                                    class="inline-block size-5 bg-action"
                                     :style="iconMaskStyle(cameraIcon)"
                                 ></span>
                                 {{ t('Take a photo') }}
@@ -1149,12 +1149,12 @@ const activeItemIsImage = computed(() => {
                             <template v-if="items.length === 0">
                                 <div class="mx-5 border-t border-sand-100" />
                                 <button
-                                    class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
+                                    class="flex w-full items-center gap-3 px-5 py-4 text-left text-ink active:bg-sand-50"
                                     @click="recordVideo"
                                 >
                                     <span
                                         aria-hidden="true"
-                                        class="inline-block size-5 bg-teal"
+                                        class="inline-block size-5 bg-action"
                                         :style="iconMaskStyle(videoCameraIcon)"
                                     ></span>
                                     {{ t('Record a video') }}
@@ -1162,12 +1162,12 @@ const activeItemIsImage = computed(() => {
                             </template>
                             <div class="mx-5 border-t border-sand-100" />
                             <button
-                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
+                                class="flex w-full items-center gap-3 px-5 py-4 text-left text-ink active:bg-sand-50"
                                 @click="selectFromGallery"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-5 bg-teal"
+                                    class="inline-block size-5 bg-action"
                                     :style="iconMaskStyle(photoIcon)"
                                 ></span>
                                 {{
@@ -1179,12 +1179,12 @@ const activeItemIsImage = computed(() => {
                             <template v-if="items.length === 0">
                                 <div class="mx-5 border-t border-sand-100" />
                                 <button
-                                    class="flex w-full items-center gap-3 px-5 py-4 text-left text-teal active:bg-sand-50"
+                                    class="flex w-full items-center gap-3 px-5 py-4 text-left text-ink active:bg-sand-50"
                                     @click="selectVideoFromGallery"
                                 >
                                     <span
                                         aria-hidden="true"
-                                        class="inline-block size-5 bg-teal"
+                                        class="inline-block size-5 bg-action"
                                         :style="iconMaskStyle(videoCameraIcon)"
                                     ></span>
                                     {{ t('Choose video from gallery') }}
@@ -1192,7 +1192,7 @@ const activeItemIsImage = computed(() => {
                             </template>
                             <div class="border-t border-sand-100" />
                             <button
-                                class="w-full py-3.5 text-center font-semibold text-teal-muted active:bg-sand-50"
+                                class="w-full py-3.5 text-center font-semibold text-ink-muted active:bg-sand-50"
                                 @click="showSourcePicker = false"
                             >
                                 {{ t('Cancel') }}

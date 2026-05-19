@@ -194,7 +194,7 @@ function lowercase(value: string): string {
                 <div class="space-y-3">
                     <p
                         v-if="flashError"
-                        class="rounded-xl bg-blush-50 px-3 py-2 text-center text-blush-600"
+                        class="rounded-xl bg-destructive-soft px-3 py-2 text-center text-destructive-ink"
                     >
                         {{ flashError }}
                     </p>

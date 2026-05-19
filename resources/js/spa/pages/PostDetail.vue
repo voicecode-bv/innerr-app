@@ -689,7 +689,7 @@ return;
 <template>
     <AppLayout ref="layout" :title="t('Moment')">
         <template #header-left>
-            <button class="flex items-center text-teal" @click="goBack">
+            <button class="flex items-center text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -708,7 +708,7 @@ return;
         </template>
         <template v-if="isOwner" #header-right>
             <button
-                class="text-blush-500 disabled:opacity-50"
+                class="text-destructive-ink disabled:opacity-50"
                 :aria-label="t('Delete post')"
                 :disabled="isDeleting"
                 @click="deletePost"
@@ -760,7 +760,7 @@ return;
             />
 
             <div v-if="isLoading && !post" class="animate-pulse">
-                <div class="flex items-center gap-3 bg-white px-4 py-3">
+                <div class="flex items-center gap-3 bg-surface px-4 py-3">
                     <div class="size-10 rounded-full bg-sand-200" />
                     <div class="space-y-2">
                         <div class="h-3 w-32 rounded bg-sand-200" />
@@ -797,18 +797,18 @@ return;
                                 name: 'spa.profiles.show',
                                 params: { username: post.user.username },
                             }"
-                            class="font-semibold text-teal"
+                            class="font-semibold text-ink"
                         >
                             {{ post.user.name }}
                         </RouterLink>
-                        <p v-if="post.location" class="text-teal-muted">
+                        <p v-if="post.location" class="text-ink-muted">
                             {{ post.location }}
                         </p>
                     </div>
                 </div>
 
                 <div v-if="post.caption" class="bg-sand px-4 pb-3">
-                    <p class="leading-relaxed whitespace-pre-line text-night">
+                    <p class="leading-relaxed whitespace-pre-line text-ink">
                         {{ post.caption }}
                     </p>
                 </div>
@@ -957,7 +957,7 @@ return;
                             />
                             <div
                                 v-else
-                                class="flex size-5 items-center justify-center rounded-full bg-white/20"
+                                class="flex size-5 items-center justify-center rounded-full bg-surface/20"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -1102,7 +1102,7 @@ return;
                                     :class="
                                         post.is_liked
                                             ? 'bg-brand-orange'
-                                            : 'bg-white'
+                                            : 'bg-surface'
                                     "
                                     :style="
                                         iconMaskStyle(
@@ -1121,7 +1121,7 @@ return;
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-6 bg-white drop-shadow"
+                                    class="inline-block size-6 bg-surface drop-shadow"
                                     :style="iconMaskStyle(heartIcon)"
                                 ></span>
                             </button>
@@ -1166,7 +1166,7 @@ return;
                 <button
                     v-if="likesSummary"
                     type="button"
-                    class="mt-2 flex w-full items-center gap-2 bg-sand px-4 py-2 text-left text-teal active:bg-sand-100/40"
+                    class="mt-2 flex w-full items-center gap-2 bg-sand px-4 py-2 text-left text-ink active:bg-sand-100/40"
                     @click="openLikes"
                 >
                     <img
@@ -1178,14 +1178,14 @@ return;
                     <span
                         v-else
                         aria-hidden="true"
-                        class="flex size-6 shrink-0 items-center justify-center rounded-full bg-sage-100 text-teal"
+                        class="flex size-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-ink"
                     >
                         <span
                             class="inline-block size-3.5 bg-current"
                             :style="iconMaskStyle(userIcon)"
                         ></span>
                     </span>
-                    <span class="min-w-0 truncate text-teal-muted">
+                    <span class="min-w-0 truncate text-ink-muted">
                         {{ likesSummary.text }}
                     </span>
                 </button>
@@ -1245,7 +1245,7 @@ return;
                                             #meta
                                         >
                                             <span
-                                                class="font-normal text-teal-muted"
+                                                class="font-normal text-ink-muted"
                                             >
                                                 ·
                                                 {{
@@ -1260,7 +1260,7 @@ return;
                                     </Chip>
                                     <button
                                         type="button"
-                                        class="flex size-7 items-center justify-center rounded-full bg-white text-teal-muted shadow-sm ring-1 ring-sand-100 transition-colors hover:bg-blush-100 hover:text-blush-600 disabled:opacity-50"
+                                        class="flex size-7 items-center justify-center rounded-full bg-surface text-ink-muted shadow-sm ring-1 ring-sand-100 transition-colors hover:bg-destructive-soft hover:text-destructive-ink disabled:opacity-50"
                                         :aria-label="
                                             t('Remove yourself from this post')
                                         "
@@ -1334,7 +1334,7 @@ return;
                                         #meta
                                     >
                                         <span
-                                            class="font-normal text-teal-muted"
+                                            class="font-normal text-ink-muted"
                                         >
                                             ·
                                             {{
@@ -1415,7 +1415,7 @@ return;
 
                         <div
                             v-else
-                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 text-teal-muted ring-1 ring-sand-100"
+                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 text-ink-muted ring-1 ring-sand-100"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

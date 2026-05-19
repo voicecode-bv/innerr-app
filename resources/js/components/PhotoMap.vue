@@ -512,15 +512,15 @@ onBeforeUnmount(() => {
 
             <div
                 v-if="isLoading"
-                class="pointer-events-none absolute top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-sand-700 shadow-sm"
+                class="pointer-events-none absolute top-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-surface/90 px-3 py-1.5 text-sand-700 shadow-sm"
             >
-                <span class="size-2 animate-pulse rounded-full bg-teal" />
+                <span class="size-2 animate-pulse rounded-full bg-action" />
                 {{ t('Loading photos...') }}
             </div>
 
             <div
                 v-if="isTruncated && !isLoading"
-                class="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1.5 text-sand-700 shadow-sm"
+                class="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-surface/90 px-3 py-1.5 text-sand-700 shadow-sm"
             >
                 {{ t('Zoom in for more photos') }}
             </div>

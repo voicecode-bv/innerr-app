@@ -23,10 +23,10 @@ const wrapperClasses = computed(() => {
         lg: 'size-14',
     };
     const toneMap: Record<Tone, string> = {
-        sage: 'bg-sage-100 text-teal',
-        sand: 'bg-sand-100 text-teal',
+        sage: 'bg-brand-blue/50 text-ink',
+        sand: 'bg-sand-100 text-ink',
         accent: 'bg-accent-soft/30 text-accent',
-        teal: 'bg-teal text-brand-sand',
+        teal: 'bg-action text-brand-sand',
         orange: 'bg-brand-orange text-brand-sand',
         green: 'bg-brand-green text-brand-sand',
         yellow: 'bg-brand-yellow text-brand-green',

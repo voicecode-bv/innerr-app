@@ -79,21 +79,21 @@ async function continueOnboarding(): Promise<void> {
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-teal"
+        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
         <div class="relative flex flex-1 flex-col py-12">
             <div class="mb-8 text-center">
                 <span
-                    class="inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm"
+                    class="inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-success-soft px-3 py-1 text-xs font-medium text-success-ink shadow-sm"
                 >
                     {{ circle?.name ?? ' ' }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-black tracking-tight text-teal"
+                    class="mt-3 font-display text-4xl font-black tracking-tight text-ink"
                 >
                     {{ t('Set the rules') }}
                 </h1>
-                <p class="mt-3 text-teal-muted">
+                <p class="mt-3 text-ink-muted">
                     {{
                         t(
                             'Decide what members of this circle are allowed to do. You can change this later.',
@@ -104,14 +104,14 @@ async function continueOnboarding(): Promise<void> {
 
             <div class="w-full max-w-sm space-y-4 self-center">
                 <div
-                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <label
                         class="flex cursor-pointer items-start justify-between gap-3"
                     >
                         <span class="flex items-start gap-3">
                             <span
-                                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sage-100 text-teal"
+                                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-soft text-ink"
                             >
                                 <span
                                     aria-hidden="true"
@@ -120,10 +120,10 @@ async function continueOnboarding(): Promise<void> {
                                 ></span>
                             </span>
                             <span>
-                                <span class="block font-semibold text-teal">
+                                <span class="block font-semibold text-ink">
                                     {{ t('Members can invite others') }}
                                 </span>
-                                <span class="mt-0.5 block text-teal-muted">
+                                <span class="mt-0.5 block text-ink-muted">
                                     {{
                                         t(
                                             'Allow everyone in this circle to send invitations.',
@@ -141,7 +141,7 @@ async function continueOnboarding(): Promise<void> {
                                     ? 'bg-brand-green'
                                     : 'bg-sand-300'
                             "
-                            class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                            class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                             @click="membersCanInvite = !membersCanInvite"
                         >
                             <span
@@ -150,21 +150,21 @@ async function continueOnboarding(): Promise<void> {
                                         ? 'translate-x-7'
                                         : 'translate-x-1'
                                 "
-                                class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                             />
                         </button>
                     </label>
                 </div>
 
                 <div
-                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <label
                         class="flex cursor-pointer items-start justify-between gap-3"
                     >
                         <span class="flex items-start gap-3">
                             <span
-                                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sage-100 text-teal"
+                                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-soft text-ink"
                             >
                                 <span
                                     aria-hidden="true"
@@ -173,10 +173,10 @@ async function continueOnboarding(): Promise<void> {
                                 ></span>
                             </span>
                             <span>
-                                <span class="block font-semibold text-teal">
+                                <span class="block font-semibold text-ink">
                                     {{ t('Members can view other members') }}
                                 </span>
-                                <span class="mt-0.5 block text-teal-muted">
+                                <span class="mt-0.5 block text-ink-muted">
                                     {{
                                         t(
                                             'When off, members only see themselves and you.',
@@ -194,7 +194,7 @@ async function continueOnboarding(): Promise<void> {
                                     ? 'bg-brand-green'
                                     : 'bg-sand-300'
                             "
-                            class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                            class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                             @click="
                                 membersCanViewMembers = !membersCanViewMembers
                             "
@@ -205,21 +205,21 @@ async function continueOnboarding(): Promise<void> {
                                         ? 'translate-x-7'
                                         : 'translate-x-1'
                                 "
-                                class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                             />
                         </button>
                     </label>
                 </div>
 
                 <div
-                    class="rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <label
                         class="flex cursor-pointer items-start justify-between gap-3"
                     >
                         <span class="flex items-start gap-3">
                             <span
-                                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sage-100 text-teal"
+                                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-soft text-ink"
                             >
                                 <span
                                     aria-hidden="true"
@@ -228,10 +228,10 @@ async function continueOnboarding(): Promise<void> {
                                 ></span>
                             </span>
                             <span>
-                                <span class="block font-semibold text-teal">
+                                <span class="block font-semibold text-ink">
                                     {{ t('Members can download media') }}
                                 </span>
-                                <span class="mt-0.5 block text-teal-muted">
+                                <span class="mt-0.5 block text-ink-muted">
                                     {{
                                         t(
                                             'Allow members to save photos and videos shared in this circle.',
@@ -249,7 +249,7 @@ async function continueOnboarding(): Promise<void> {
                                     ? 'bg-brand-green'
                                     : 'bg-sand-300'
                             "
-                            class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                            class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                             @click="membersCanDownload = !membersCanDownload"
                         >
                             <span
@@ -258,7 +258,7 @@ async function continueOnboarding(): Promise<void> {
                                         ? 'translate-x-7'
                                         : 'translate-x-1'
                                 "
-                                class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                             />
                         </button>
                     </label>
@@ -268,7 +268,7 @@ async function continueOnboarding(): Promise<void> {
 
         <div class="relative pt-2 pb-8">
             <button
-                class="w-full rounded-lg bg-teal py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
+                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:opacity-40"
                 :disabled="processing || !circle"
                 @click="continueOnboarding"
             >

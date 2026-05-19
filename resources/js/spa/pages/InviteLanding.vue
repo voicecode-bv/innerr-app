@@ -203,7 +203,7 @@ onMounted(() => {
 
             <p
                 v-if="acceptError"
-                class="mt-6 rounded-xl bg-blush-50 px-3 py-2 text-blush-600"
+                class="mt-6 rounded-xl bg-destructive-soft px-3 py-2 text-destructive-ink"
             >
                 {{ acceptError }}
             </p>

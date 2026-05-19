@@ -15,16 +15,16 @@ const { t } = useTranslations();
 
 <template>
     <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-teal">
+        <h2 class="text-lg font-semibold text-ink">
             {{ title }}
             <span
                 v-if="typeof count === 'number' && count > 0"
-                class="font-normal text-teal-muted/70"
+                class="font-normal text-ink-muted/70"
                 >({{ count }})</span
             >
         </h2>
         <button
-            class="text-teal-muted"
+            class="text-ink-muted"
             :aria-label="t('Close')"
             @click="$emit('close')"
         >

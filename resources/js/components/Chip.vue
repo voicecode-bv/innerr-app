@@ -37,7 +37,7 @@ function iconMaskStyle(url: string) {
         :is="to ? RouterLink : 'span'"
         v-bind="to ? { to } : {}"
         :class="[
-            'inline-flex items-center gap-2 rounded-full bg-white font-semibold text-teal shadow-sm ring-1 ring-sand-100',
+            'inline-flex items-center gap-2 rounded-full bg-surface font-semibold text-ink shadow-sm ring-1 ring-sand-100',
             hasLeading ? 'py-1 pr-3.5 pl-1' : 'px-3.5 py-1.5',
             to ? 'transition-colors hover:bg-sand-50' : '',
         ]"
@@ -50,7 +50,7 @@ function iconMaskStyle(url: string) {
         />
         <span
             v-else-if="iconUrl || initial"
-            class="flex size-7 items-center justify-center rounded-full bg-sage-100 text-teal"
+            class="flex size-7 items-center justify-center rounded-full bg-success-soft text-ink"
         >
             <span
                 v-if="iconUrl"

@@ -63,12 +63,12 @@ function onInput(event: Event): void {
             <button
                 v-if="isPassword"
                 type="button"
-                class="absolute top-1/2 right-3 -translate-y-1/2 font-semibold text-teal transition-colors hover:text-teal-light"
+                class="absolute top-1/2 right-3 -translate-y-1/2 font-semibold text-ink transition-colors hover:text-ink-light"
                 @click="showPassword = !showPassword"
             >
                 {{ showPassword ? t('Hide') : t('Show') }}
             </button>
         </div>
-        <p v-if="error" class="mt-1 text-blush-500">{{ error }}</p>
+        <p v-if="error" class="mt-1 text-destructive-ink">{{ error }}</p>
     </div>
 </template>

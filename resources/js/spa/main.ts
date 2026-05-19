@@ -11,6 +11,7 @@ import {
 } from '@/spa/http/apiClient';
 import { configureExternalApi } from '@/spa/http/externalApi';
 import { router } from '@/spa/router';
+import { useAppearanceStore } from '@/spa/stores/appearance';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
@@ -42,6 +43,12 @@ async function bootstrap(): Promise<void> {
     const pinia = createPinia();
 
     app.use(pinia);
+
+    // Hydrate dark-mode state from localStorage + system preference.
+    // The inline script in spa.blade.php already toggled the `dark` class
+    // pre-paint; this call wires up the reactive store and media-query
+    // listener so toggles from Settings propagate everywhere.
+    useAppearanceStore().init();
 
     const auth = useAuthStore();
     const i18n = useI18nStore();

@@ -99,7 +99,7 @@ onMounted(() => {
             <LoadingSpinner />
         </div>
 
-        <p v-else-if="loadError" class="text-blush-500">
+        <p v-else-if="loadError" class="text-destructive-ink">
             {{ loadError }}
         </p>
 

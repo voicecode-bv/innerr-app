@@ -440,7 +440,7 @@ function maskStyle(icon: string) {
 <template>
     <AppLayout ref="layout" :title="circle?.name ?? t('Circle')">
         <template #header-left>
-            <button class="text-teal" @click="goBack">
+            <button class="text-ink" @click="goBack">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -464,7 +464,7 @@ function maskStyle(icon: string) {
                         name: 'spa.circles.map',
                         params: { circle: circle.id },
                     }"
-                    class="flex size-9 items-center justify-center rounded-full bg-white/80 text-teal shadow-sm transition hover:bg-white"
+                    class="flex size-9 items-center justify-center rounded-full bg-surface/80 text-ink shadow-sm transition hover:bg-surface"
                     :aria-label="t('Open map')"
                 >
                     <svg
@@ -484,7 +484,7 @@ function maskStyle(icon: string) {
                 </RouterLink>
                 <button
                     v-if="circle.is_owner"
-                    class="flex size-9 items-center justify-center rounded-full bg-white/80 text-teal shadow-sm transition hover:bg-white"
+                    class="flex size-9 items-center justify-center rounded-full bg-surface/80 text-ink shadow-sm transition hover:bg-surface"
                     :aria-label="t('Edit circle')"
                     data-tour="circle.permissions"
                     @click="startEdit"
@@ -548,7 +548,7 @@ function maskStyle(icon: string) {
                             />
                             <span
                                 v-if="circle.is_owner"
-                                class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-teal shadow-md ring-4 ring-white/70"
+                                class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-action shadow-md ring-4 ring-white/70"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -583,7 +583,7 @@ function maskStyle(icon: string) {
                     leave-to-class="-translate-y-2 opacity-0"
                 >
                     <SurfaceCard v-if="isEditing">
-                        <h3 class="font-semibold text-teal">
+                        <h3 class="font-semibold text-ink">
                             {{ t('Circle name') }}
                         </h3>
                         <form
@@ -597,7 +597,7 @@ function maskStyle(icon: string) {
                             />
                             <p
                                 v-if="editForm.errors.name"
-                                class="text-blush-500"
+                                class="text-destructive-ink"
                             >
                                 {{ editForm.errors.name }}
                             </p>
@@ -621,12 +621,12 @@ function maskStyle(icon: string) {
                             >
                                 <span>
                                     <span
-                                        class="block font-semibold text-teal"
+                                        class="block font-semibold text-ink"
                                         >{{
                                             t('Members can invite others')
                                         }}</span
                                     >
-                                    <span class="block text-teal-muted">{{
+                                    <span class="block text-ink-muted">{{
                                         t(
                                             'Allow everyone in this circle to send invitations.',
                                         )
@@ -641,7 +641,7 @@ function maskStyle(icon: string) {
                                             ? 'bg-brand-green'
                                             : 'bg-sand-300'
                                     "
-                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                                     @click="toggleMembersCanInvite"
                                 >
                                     <span
@@ -650,7 +650,7 @@ function maskStyle(icon: string) {
                                                 ? 'translate-x-7'
                                                 : 'translate-x-1'
                                         "
-                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                                     />
                                 </button>
                             </label>
@@ -662,12 +662,12 @@ function maskStyle(icon: string) {
                             >
                                 <span>
                                     <span
-                                        class="block font-semibold text-teal"
+                                        class="block font-semibold text-ink"
                                         >{{
                                             t('Members can view other members')
                                         }}</span
                                     >
-                                    <span class="block text-teal-muted">{{
+                                    <span class="block text-ink-muted">{{
                                         t(
                                             'When off, members only see themselves and you.',
                                         )
@@ -684,7 +684,7 @@ function maskStyle(icon: string) {
                                             ? 'bg-brand-green'
                                             : 'bg-sand-300'
                                     "
-                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                                     @click="toggleMembersCanViewMembers"
                                 >
                                     <span
@@ -693,7 +693,7 @@ function maskStyle(icon: string) {
                                                 ? 'translate-x-7'
                                                 : 'translate-x-1'
                                         "
-                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                                     />
                                 </button>
                             </label>
@@ -705,12 +705,12 @@ function maskStyle(icon: string) {
                             >
                                 <span>
                                     <span
-                                        class="block font-semibold text-teal"
+                                        class="block font-semibold text-ink"
                                         >{{
                                             t('Members can download media')
                                         }}</span
                                     >
-                                    <span class="block text-teal-muted">{{
+                                    <span class="block text-ink-muted">{{
                                         t(
                                             'Allow members to save photos and videos shared in this circle.',
                                         )
@@ -725,7 +725,7 @@ function maskStyle(icon: string) {
                                             ? 'bg-brand-green'
                                             : 'bg-sand-300'
                                     "
-                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal/40"
+                                    class="relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-action/40"
                                     @click="toggleMembersCanDownload"
                                 >
                                     <span
@@ -734,7 +734,7 @@ function maskStyle(icon: string) {
                                                 ? 'translate-x-7'
                                                 : 'translate-x-1'
                                         "
-                                        class="pointer-events-none mt-1 size-6 rounded-full bg-white shadow transition-transform"
+                                        class="pointer-events-none mt-1 size-6 rounded-full bg-surface shadow transition-transform"
                                     />
                                 </button>
                             </label>
@@ -743,10 +743,10 @@ function maskStyle(icon: string) {
                 </Transition>
 
                 <SurfaceCard v-if="canInvite" data-tour="circle.invite">
-                    <h3 class="font-semibold text-teal">
+                    <h3 class="font-semibold text-ink">
                         {{ t('Invite to this circle') }}
                     </h3>
-                    <p class="mt-1 text-teal-muted">
+                    <p class="mt-1 text-ink-muted">
                         {{ t('How would you like to invite people?') }}
                     </p>
 
@@ -761,8 +761,8 @@ function maskStyle(icon: string) {
                             :class="[
                                 'rounded-full px-3 py-2 text-sm font-medium transition',
                                 inviteMethod === 'identifier'
-                                    ? 'bg-white text-teal shadow-sm'
-                                    : 'text-teal-muted hover:text-teal',
+                                    ? 'bg-surface text-ink shadow-sm'
+                                    : 'text-ink-muted hover:text-ink',
                             ]"
                             @click="inviteMethod = 'identifier'"
                         >
@@ -775,8 +775,8 @@ function maskStyle(icon: string) {
                             :class="[
                                 'rounded-full px-3 py-2 text-sm font-medium transition',
                                 inviteMethod === 'link'
-                                    ? 'bg-white text-teal shadow-sm'
-                                    : 'text-teal-muted hover:text-teal',
+                                    ? 'bg-surface text-ink shadow-sm'
+                                    : 'text-ink-muted hover:text-ink',
                             ]"
                             @click="inviteMethod = 'link'"
                         >
@@ -796,7 +796,7 @@ function maskStyle(icon: string) {
                         <div
                             v-if="inviteMethod === 'identifier' && inviteSent"
                             key="sent"
-                            class="mt-4 flex items-center gap-2 rounded-lg bg-sage-100/70 px-4 py-3 text-sage-700"
+                            class="mt-4 flex items-center gap-2 rounded-lg bg-success-soft/70 px-4 py-3 text-success-ink"
                         >
                             <IconTile
                                 :icon="sendIcon"
@@ -825,7 +825,7 @@ function maskStyle(icon: string) {
                             />
                             <p
                                 v-if="memberForm.errors.identifier"
-                                class="text-blush-500"
+                                class="text-destructive-ink"
                             >
                                 {{ memberForm.errors.identifier }}
                             </p>
@@ -855,7 +855,7 @@ function maskStyle(icon: string) {
                     v-if="canSeeMembers && members.length > 0"
                     data-tour="circle.members"
                 >
-                    <h3 class="font-semibold text-teal">
+                    <h3 class="font-semibold text-ink">
                         {{ t('Members') }}
                     </h3>
                     <ul class="mt-3 divide-y divide-sand-100">
@@ -880,10 +880,10 @@ function maskStyle(icon: string) {
                                     class="avatar-ring size-11 shrink-0 rounded-full object-cover"
                                 />
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate font-semibold text-teal">
+                                    <p class="truncate font-semibold text-ink">
                                         {{ member.name }}
                                     </p>
-                                    <p class="truncate text-teal-muted">
+                                    <p class="truncate text-ink-muted">
                                         @{{ member.username }}
                                     </p>
                                 </div>
@@ -902,7 +902,7 @@ function maskStyle(icon: string) {
                             </span>
                             <button
                                 v-else-if="circle.is_owner"
-                                class="flex size-9 items-center justify-center rounded-lg text-teal-muted transition hover:bg-blush-50 hover:text-blush-500"
+                                class="flex size-9 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
                                 :aria-label="t('Remove member')"
                                 @click="removeMember(member.id)"
                             >
@@ -917,7 +917,7 @@ function maskStyle(icon: string) {
                 </SurfaceCard>
 
                 <SurfaceCard v-if="canSeeMembers && invitations.length > 0">
-                    <h3 class="flex items-center gap-3 font-semibold text-teal">
+                    <h3 class="flex items-center gap-3 font-semibold text-ink">
                         <IconTile :icon="mailIcon" size="sm" tone="sage" />
                         {{ t('Pending invitations') }}
                     </h3>
@@ -929,19 +929,19 @@ function maskStyle(icon: string) {
                         >
                             <IconTile :icon="mailIcon" size="sm" tone="sand" />
                             <div class="min-w-0 flex-1">
-                                <p class="truncate font-semibold text-teal">
+                                <p class="truncate font-semibold text-ink">
                                     {{
                                         invitation.username
                                             ? `@${invitation.username}`
                                             : invitation.email
                                     }}
                                 </p>
-                                <p class="text-teal-muted">
+                                <p class="text-ink-muted">
                                     {{ t('Pending') }}
                                 </p>
                             </div>
                             <button
-                                class="flex size-9 items-center justify-center rounded-lg text-teal-muted transition hover:bg-blush-50 hover:text-blush-500"
+                                class="flex size-9 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
                                 :aria-label="t('Cancel invitation')"
                                 @click="cancelInvitation(invitation.id)"
                             >
@@ -976,10 +976,10 @@ function maskStyle(icon: string) {
                             tone="sage"
                             class="mb-4"
                         />
-                        <h3 class="font-sans text-lg font-semibold text-teal">
+                        <h3 class="font-sans text-lg font-semibold text-ink">
                             {{ t('No members yet') }}
                         </h3>
-                        <p class="mt-1 text-teal-muted">
+                        <p class="mt-1 text-ink-muted">
                             {{
                                 t(
                                     'Add people by their username or invite them by email.',

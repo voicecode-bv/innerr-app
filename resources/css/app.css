@@ -19,7 +19,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme inline {
+/* Note: `@theme` (without `inline`) — utilities reference `var(--color-x)`
+   rather than inlining the hex at build time. This is required so the
+   `:where(.dark)` block below can re-point the variables and have every
+   compiled utility flip instantly. With `@theme inline` the values would
+   be hard-coded into each utility and dark mode would never engage. */
+@theme {
     --font-sans: 'DM Sans';
     --font-display: 'Fraunces';
 
@@ -27,6 +32,8 @@
        Brand palette (May 2026) — synced with innerr-website
        Sand, Green, Blue, Yellow, Orange — five-color system
        Sand = page background, Blue (teal) = primary
+       BRAND tokens stay identical across light/dark — they are signature
+       colors and must never flip.
        ────────────────────────────────────────────────────────── */
     --color-brand-sand: #fcfaf3;
     --color-brand-green: #4e9e3e;
@@ -89,6 +96,102 @@
     --color-blush-700: #8a2218;
     --color-blush-800: #631810;
     --color-blush-900: #3f0e08;
+
+    /* ──────────────────────────────────────────────────────────
+       Semantic role tokens — flip in dark mode (see :where(.dark)
+       block below). Components should prefer these over raw brand
+       or scale tokens so they adapt automatically.
+
+         bg-page / bg-surface / bg-surface-muted / bg-surface-sunken
+         text-ink / text-ink-muted / text-ink-subtle
+         border-line / border-line-strong / divide-line
+         bg-action / bg-action-hover  (focus rings use action too)
+         bg-success-soft + text-success-ink   (positive surfaces)
+         bg-destructive-soft + text-destructive-ink  (errors)
+       ────────────────────────────────────────────────────────── */
+    --color-page: #fcfaf3;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f8f1e1;
+    --color-surface-sunken: #fdfbf6;
+
+    --color-ink: #373d8a;
+    --color-ink-muted: #6e76c2;
+    --color-ink-subtle: #735628;
+
+    --color-line: #f8f1e1;
+    --color-line-strong: #efe2c7;
+
+    --color-action: #373d8a;
+    --color-action-hover: #4a52a8;
+    --color-action-ink: #ffffff;
+
+    --color-success-soft: #dcedd8;
+    --color-success-ink: #2f6126;
+
+    --color-destructive-soft: #fef3f0;
+    --color-destructive-ink: #d2402b;
+}
+
+/* Dark mode overrides.
+   Brand tokens (brand-*) stay frozen — signature colors must not flip.
+   Sage + blush tonal scales stay (status colors keep their hue).
+   The "legacy" surface/ink palette (sand, cream, night, muted, teal-muted,
+   teal-light, and the sand tonal scale) IS remapped so any utility we
+   miss in the component sweep still adapts gracefully. */
+:where(.dark) {
+    /* Semantic roles */
+    --color-page: #14172b;
+    --color-surface: #1f2547;
+    --color-surface-muted: #2a3060;
+    --color-surface-sunken: #0f1124;
+
+    --color-ink: #f5efdc;
+    --color-ink-muted: #b8bcd5;
+    --color-ink-subtle: #8a90b0;
+
+    --color-line: #2a3060;
+    --color-line-strong: #383e7a;
+
+    --color-action: #4a52a8;
+    --color-action-hover: #6e76c2;
+    --color-action-ink: #ffffff;
+
+    --color-success-soft: #234819;
+    --color-success-ink: #b8dbb0;
+
+    --color-destructive-soft: #3f0e08;
+    --color-destructive-ink: #f1957a;
+
+    /* Legacy palette fallback. `--color-teal` itself is intentionally
+       not remapped — it's ambiguously used as both text (ink) and bg
+       (action), so the sweep migrates each call site to the correct
+       semantic role rather than guessing here. */
+    --color-sand: #14172b;
+    --color-dark-sand: #383e7a;
+    --color-cream: #1f2547;
+    --color-night: #f5efdc;
+    --color-muted: #b8bcd5;
+
+    --color-teal-light: #6e76c2;
+    --color-teal-muted: #9aa0c8;
+
+    --color-accent: #4a52a8;
+    --color-accent-soft: #9aa0c8;
+
+    /* Sand tonal scale — inverted. sand-50 was lightest page, sand-900
+       was deepest brown. After flip, sand-50 is the deepest dark and
+       sand-900 is the lightest cream. Mid scale tones (300–600) become
+       mid greys with a slight cool tint. */
+    --color-sand-50: #0f1124;
+    --color-sand-100: #14172b;
+    --color-sand-200: #1f2547;
+    --color-sand-300: #2a3060;
+    --color-sand-400: #383e7a;
+    --color-sand-500: #5a607a;
+    --color-sand-600: #8a90b0;
+    --color-sand-700: #b8bcd5;
+    --color-sand-800: #d8dbe8;
+    --color-sand-900: #f5efdc;
 }
 
 #app {
@@ -98,11 +201,11 @@
 }
 
 @utility field {
-    @apply w-full rounded-full border-2 border-teal/20 bg-white px-6 py-4 text-base font-medium text-night placeholder-teal-muted/80 outline-none transition-all duration-200 hover:border-teal/40 focus:border-teal focus:ring-4 focus:ring-teal/15;
+    @apply w-full rounded-full border-2 border-action/20 bg-surface px-6 py-4 text-base font-medium text-ink placeholder-ink-muted/80 outline-none transition-all duration-200 hover:border-action/40 focus:border-action focus:ring-4 focus:ring-action/15;
 }
 
 @utility field-area {
-    @apply w-full resize-none rounded-3xl border-2 border-teal/20 bg-white px-6 py-4 text-base font-medium text-night placeholder-teal-muted/80 outline-none transition-all duration-200 hover:border-teal/40 focus:border-teal focus:ring-4 focus:ring-teal/15;
+    @apply w-full resize-none rounded-3xl border-2 border-action/20 bg-surface px-6 py-4 text-base font-medium text-ink placeholder-ink-muted/80 outline-none transition-all duration-200 hover:border-action/40 focus:border-action focus:ring-4 focus:ring-action/15;
 }
 
 @utility no-scrollbar {
@@ -161,7 +264,7 @@ input[type='search']::-webkit-search-results-decoration {
     border: 2px solid transparent;
     padding: 2px;
     background:
-        linear-gradient(#fff, #fff) padding-box,
+        linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
         conic-gradient(
                 from 0deg,
                 var(--color-brand-blue),
@@ -230,20 +333,9 @@ input[type='search']::-webkit-search-results-decoration {
 @utility shimmer {
     background: linear-gradient(
         110deg,
-        var(--color-sand) 30%,
-        var(--color-sand-100) 50%,
-        var(--color-sand) 70%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.8s linear infinite;
-}
-
-.dark .shimmer {
-    background: linear-gradient(
-        110deg,
-        var(--color-sand-900) 30%,
-        var(--color-sand-800) 50%,
-        var(--color-sand-900) 70%
+        var(--color-surface) 30%,
+        var(--color-surface-muted) 50%,
+        var(--color-surface) 70%
     );
     background-size: 200% 100%;
     animation: shimmer 1.8s linear infinite;

@@ -115,23 +115,23 @@ function skip(): void {
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-teal"
+        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
             <div class="mb-10 text-center">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-medium text-success-ink shadow-sm"
                 >
                     {{ t('Notifications') }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-black tracking-tight text-teal"
+                    class="mt-3 font-display text-4xl font-black tracking-tight text-ink"
                 >
                     {{ t('Stay in the loop') }}
                 </h1>
-                <p class="mx-auto mt-3 max-w-xs text-teal-muted">
+                <p class="mx-auto mt-3 max-w-xs text-ink-muted">
                     {{
                         t(
                             "Enable notifications so you never miss a moment. We'll let you know when:",
@@ -144,10 +144,10 @@ function skip(): void {
                 <li
                     v-for="(item, index) in items"
                     :key="index"
-                    class="relative flex items-start gap-4 rounded-lg bg-white/20 p-4 shadow-sm backdrop-blur-sm"
+                    class="relative flex items-start gap-4 rounded-lg bg-surface/20 p-4 shadow-sm backdrop-blur-sm"
                 >
                     <div
-                        class="flex size-14 shrink-0 items-center justify-center rounded-lg bg-sage-100 text-teal"
+                        class="flex size-14 shrink-0 items-center justify-center rounded-lg bg-success-soft text-ink"
                     >
                         <span
                             aria-hidden="true"
@@ -156,10 +156,10 @@ function skip(): void {
                         ></span>
                     </div>
                     <div class="flex-1 pt-1">
-                        <h2 class="font-sans text-base font-semibold text-teal">
+                        <h2 class="font-sans text-base font-semibold text-ink">
                             {{ item.title }}
                         </h2>
-                        <p class="mt-1 leading-relaxed text-teal-muted">
+                        <p class="mt-1 leading-relaxed text-ink-muted">
                             {{ item.description }}
                         </p>
                     </div>
@@ -169,12 +169,12 @@ function skip(): void {
 
         <div class="relative pt-2 pb-8">
             <button
-                class="w-full rounded-lg bg-teal py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-teal-light"
+                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover"
                 @click="enableNotifications"
             >
                 {{ t('Enable notifications') }}
             </button>
-            <button class="mt-3 w-full py-2 text-teal-muted" @click="skip">
+            <button class="mt-3 w-full py-2 text-ink-muted" @click="skip">
                 {{ t('Maybe later') }}
             </button>
         </div>

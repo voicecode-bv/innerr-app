@@ -55,7 +55,7 @@ onMounted(async () => {
     <div class="flex h-dvh items-center justify-center bg-sand px-6">
         <div class="flex flex-col items-center gap-3 text-sand-600">
             <span class="flex items-center gap-1" aria-hidden="true">
-                <span class="dot dot-1 size-2 rounded-full bg-teal"></span>
+                <span class="dot dot-1 size-2 rounded-full bg-action"></span>
                 <span class="dot dot-2 size-2 rounded-full bg-accent"></span>
                 <span class="dot dot-3 size-2 rounded-full bg-sage-500"></span>
             </span>

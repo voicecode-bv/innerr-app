@@ -56,23 +56,23 @@ function skip(): void {
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-teal"
+        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
             <div class="mb-10 text-center">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-medium text-success-ink shadow-sm"
                 >
                     {{ t('Your first circle') }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-black tracking-tight text-teal"
+                    class="mt-3 font-display text-4xl font-black tracking-tight text-ink"
                 >
                     {{ t('Who matters most?') }}
                 </h1>
-                <p class="mt-3 text-teal-muted">
+                <p class="mt-3 text-ink-muted">
                     {{
                         t(
                             'Give your first circle a name. You can always add more people and circles later.',
@@ -83,11 +83,11 @@ function skip(): void {
 
             <div class="w-full max-w-sm space-y-5">
                 <div
-                    class="relative rounded-lg bg-white/50 p-5 shadow-sm backdrop-blur-sm"
+                    class="relative rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
                 >
                     <div class="flex items-start gap-4">
                         <div
-                            class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-sage-100 text-teal"
+                            class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-success-soft text-ink"
                         >
                             <span
                                 aria-hidden="true"
@@ -98,7 +98,7 @@ function skip(): void {
                         <div class="flex-1">
                             <label
                                 for="circle-name"
-                                class="tracking-wider text-teal-muted uppercase"
+                                class="tracking-wider text-ink-muted uppercase"
                             >
                                 {{ t('Circle name') }}
                             </label>
@@ -109,17 +109,17 @@ function skip(): void {
                                 :placeholder="t('Circle name...')"
                                 maxlength="255"
                                 autofocus
-                                class="mt-1 w-full border-0 bg-transparent p-0 font-sans text-xl font-semibold text-teal placeholder-teal-muted/50 focus:ring-0 focus:outline-none"
+                                class="mt-1 w-full border-0 bg-transparent p-0 font-sans text-xl font-semibold text-ink placeholder-ink-muted/50 focus:ring-0 focus:outline-none"
                             />
                         </div>
                     </div>
-                    <p v-if="form.errors.name" class="mt-2 text-blush-500">
+                    <p v-if="form.errors.name" class="mt-2 text-destructive-ink">
                         {{ form.errors.name }}
                     </p>
                 </div>
 
                 <div>
-                    <p class="mb-2 tracking-wider text-teal-muted uppercase">
+                    <p class="mb-2 tracking-wider text-ink-muted uppercase">
                         {{ t('Inspiration') }}
                     </p>
                     <div class="flex flex-wrap gap-2">
@@ -127,10 +127,10 @@ function skip(): void {
                             v-for="suggestion in suggestions"
                             :key="suggestion"
                             type="button"
-                            class="rounded-full bg-white/70 px-4 py-2 text-teal shadow-sm transition hover:bg-white"
+                            class="rounded-full bg-surface/70 px-4 py-2 text-ink shadow-sm transition hover:bg-surface"
                             :class="
                                 form.data.name === suggestion
-                                    ? 'border-teal/40 bg-sage-100 text-teal'
+                                    ? 'border-action/40 bg-success-soft text-ink'
                                     : ''
                             "
                             @click="pickSuggestion(suggestion)"
@@ -144,13 +144,13 @@ function skip(): void {
 
         <div class="relative pt-2 pb-8">
             <button
-                class="w-full rounded-lg bg-teal py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-teal-light disabled:opacity-40"
+                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:opacity-40"
                 :disabled="!form.data.name.trim() || form.processing"
                 @click="submit"
             >
                 {{ form.processing ? t('Creating...') : t('Create circle') }}
             </button>
-            <button class="mt-3 w-full py-2 text-teal-muted" @click="skip">
+            <button class="mt-3 w-full py-2 text-ink-muted" @click="skip">
                 {{ t('Skip for now') }}
             </button>
         </div>

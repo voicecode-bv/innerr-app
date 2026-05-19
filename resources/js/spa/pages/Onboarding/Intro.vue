@@ -54,23 +54,23 @@ function continueOnboarding(): void {
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-teal"
+        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
             <div class="mb-10 text-center">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700 shadow-sm"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-medium text-success-ink shadow-sm"
                 >
                     {{ t('How it works') }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-semibold tracking-tight text-teal"
+                    class="mt-3 font-display text-4xl font-semibold tracking-tight text-ink"
                 >
                     {{ t('Welcome to innerr') }}
                 </h1>
-                <p class="mt-3 text-teal-muted">
+                <p class="mt-3 text-ink-muted">
                     {{ t('Three simple steps and you are ready to share.') }}
                 </p>
             </div>
@@ -79,11 +79,11 @@ function continueOnboarding(): void {
                 <li
                     v-for="(step, index) in steps"
                     :key="index"
-                    class="relative flex items-start gap-4 rounded-lg bg-white/50 p-4 shadow-sm backdrop-blur-sm"
+                    class="relative flex items-start gap-4 rounded-lg bg-surface/50 p-4 shadow-sm backdrop-blur-sm"
                 >
                     <div class="relative shrink-0">
                         <div
-                            class="flex size-14 items-center justify-center rounded-lg bg-sage-100 text-teal"
+                            class="flex size-14 items-center justify-center rounded-lg bg-success-soft text-ink"
                         >
                             <span
                                 aria-hidden="true"
@@ -98,10 +98,10 @@ function continueOnboarding(): void {
                         </span>
                     </div>
                     <div class="flex-1 pt-1">
-                        <h2 class="font-sans text-base font-semibold text-teal">
+                        <h2 class="font-sans text-base font-semibold text-ink">
                             {{ step.title }}
                         </h2>
-                        <p class="mt-1 leading-relaxed text-teal-muted">
+                        <p class="mt-1 leading-relaxed text-ink-muted">
                             {{ step.description }}
                         </p>
                     </div>
@@ -111,7 +111,7 @@ function continueOnboarding(): void {
 
         <div class="relative pt-2 pb-8">
             <button
-                class="w-full rounded-lg bg-teal py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-teal-light"
+                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover"
                 @click="continueOnboarding"
             >
                 {{ t('Continue') }}
