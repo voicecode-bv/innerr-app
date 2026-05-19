@@ -33,6 +33,7 @@ interface Notification {
         user_avatar?: string | null;
         post_id?: number;
         post_media_url?: string | null;
+        post_thumbnail_small_url?: string | null;
         comment_id?: number;
         comment_body?: string;
         circle_id?: number;
@@ -90,28 +91,36 @@ const router = useRouter();
 const notificationsStore = useNotificationsStore();
 const localThumbnails = useLocalThumbnailsStore();
 
-// Notification.data.post_media_url bevat voor video-posts de .m3u8-URL die
-// niet als <img>-src laadt. Voor zojuist ge-uploade posts hebben we de lokaal
-// gegenereerde JPEG-thumbnail nog in een client-side store onder de echte
-// post-id. Pakken die wanneer post_media_url ontbreekt of geen image is.
+// Voor video-posts bevat `post_media_url` de .m3u8-stream die niet als
+// <img>-src laadt. De backend stuurt daarom `post_thumbnail_small_url` mee
+// met de 300x300 poster zodra transcoding klaar is; daar gaat onze voorkeur
+// naartoe. Valt die weg (oude notificaties of post nog in transcoding) dan
+// pakken we de lokaal gegenereerde JPEG-thumbnail uit de plugin-store, en
+// pas als laatste de `post_media_url` voor image-posts.
 function thumbnailFor(notification: Notification): string | null {
+    const thumbnail = notification.data.post_thumbnail_small_url;
+
+    if (typeof thumbnail === 'string' && thumbnail.length > 0) {
+        return thumbnail;
+    }
+
+    const postId = notification.data.post_id;
+    const localThumbnail =
+        postId !== undefined && postId !== null
+            ? localThumbnails.get(String(postId))
+            : null;
+
+    if (localThumbnail) {
+        return localThumbnail;
+    }
+
     const mediaUrl = notification.data.post_media_url;
     const looksLikeImage =
         typeof mediaUrl === 'string' &&
         !/\.m3u8(\?|$)/i.test(mediaUrl) &&
         !/\.(mp4|mov|m4v|webm|avi)(\?|$)/i.test(mediaUrl);
 
-    if (looksLikeImage) {
-        return mediaUrl;
-    }
-
-    const postId = notification.data.post_id;
-
-    if (postId !== undefined && postId !== null) {
-        return localThumbnails.get(String(postId));
-    }
-
-    return null;
+    return looksLikeImage ? mediaUrl : null;
 }
 
 const items = ref<Notification[]>([]);
