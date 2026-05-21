@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import {
+    computed,
+    defineAsyncComponent,
+    onMounted,
+    onUnmounted,
+    ref,
+    useTemplateRef,
+} from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
@@ -64,6 +71,14 @@ const circleId = computed(() => String(route.params.circle));
 
 const circle = ref<Circle | null>(null);
 const invitations = ref<Invitation[]>([]);
+
+const photoUploading = ref(false);
+const showCropModal = ref(false);
+const cropSource = ref<string | null>(null);
+
+const ImageCropModal = defineAsyncComponent(
+    () => import('@/components/ImageCropModal.vue'),
+);
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
@@ -273,7 +288,44 @@ async function addMember(): Promise<void> {
 }
 
 async function pickPhoto(): Promise<void> {
+    if (photoUploading.value) {
+        return;
+    }
+
     await Camera.pickImages().all();
+}
+
+async function loadPreview(path: string): Promise<string | null> {
+    try {
+        const response = await fetch(
+            `/native-media?path=${encodeURIComponent(path)}`,
+        );
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const { data_url } = await response.json();
+
+        return data_url;
+    } catch {
+        return null;
+    }
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(
+            null,
+            Array.from(bytes.subarray(i, i + chunkSize)),
+        );
+    }
+
+    return btoa(binary);
 }
 
 async function handleMediaSelected(payload: {
@@ -290,13 +342,43 @@ async function handleMediaSelected(payload: {
         return;
     }
 
+    const preview = await loadPreview(payload.files[0].path);
+
+    if (!preview) {
+        return;
+    }
+
+    cropSource.value = preview;
+    showCropModal.value = true;
+}
+
+async function handleCropped(blob: Blob, dataUrl: string): Promise<void> {
+    showCropModal.value = false;
+    cropSource.value = null;
+
+    if (!circle.value) {
+        return;
+    }
+
+    photoUploading.value = true;
+
+    const previousPhoto = circle.value.photo;
+    circle.value.photo = dataUrl;
+
     try {
+        const buffer = await blob.arrayBuffer();
+        const base64 = arrayBufferToBase64(buffer);
+
         await api.post(`/api/spa/circles/${circleId.value}/photo`, {
-            photo_path: payload.files[0].path,
+            photo_data: base64,
         });
         await loadData();
     } catch {
-        // upload mislukt — blijft op huidige photo staan
+        if (circle.value) {
+            circle.value.photo = previousPhoto;
+        }
+    } finally {
+        photoUploading.value = false;
     }
 }
 
@@ -612,7 +694,7 @@ function maskStyle(icon: string) {
                     <div class="text-center">
                         <button
                             class="relative mx-auto block"
-                            :disabled="!canManageCircle"
+                            :disabled="!canManageCircle || photoUploading"
                             :aria-label="
                                 canManageCircle
                                     ? t('Change circle photo')
@@ -625,6 +707,7 @@ function maskStyle(icon: string) {
                                 :src="circle.photo"
                                 :alt="circle.name"
                                 class="avatar-ring size-20 rounded-full object-cover shadow-sm"
+                                :class="{ 'opacity-60': photoUploading }"
                             />
                             <IconTile
                                 v-else
@@ -632,6 +715,7 @@ function maskStyle(icon: string) {
                                 size="lg"
                                 tone="sage"
                                 class="!size-20 !rounded-full"
+                                :class="{ 'opacity-60': photoUploading }"
                             />
                             <span
                                 v-if="canManageCircle"
@@ -1151,5 +1235,13 @@ function maskStyle(icon: string) {
                 </div>
             </div>
         </div>
+
+        <ImageCropModal
+            :open="showCropModal"
+            :src="cropSource"
+            locked-ratio="1:1"
+            @update:open="showCropModal = $event"
+            @cropped="handleCropped"
+        />
     </AppLayout>
 </template>
