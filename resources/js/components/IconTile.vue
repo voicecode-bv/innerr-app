@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-type Size = 'sm' | 'md' | 'lg';
+type Size = 'xs' | 'sm' | 'md' | 'lg';
 type Tone = 'sage' | 'sand' | 'accent' | 'teal' | 'orange' | 'green' | 'yellow';
 
 const props = withDefaults(
@@ -18,6 +18,7 @@ const props = withDefaults(
 
 const wrapperClasses = computed(() => {
     const sizeMap: Record<Size, string> = {
+        xs: 'size-8',
         sm: 'size-10',
         md: 'size-12',
         lg: 'size-14',
@@ -29,7 +30,7 @@ const wrapperClasses = computed(() => {
         teal: 'bg-action text-brand-sand',
         orange: 'bg-brand-orange text-brand-sand',
         green: 'bg-brand-green text-brand-sand',
-        yellow: 'bg-brand-yellow text-brand-green',
+        yellow: 'bg-brand-yellow text-brand-blue',
     };
 
     return [sizeMap[props.size], toneMap[props.tone]];
@@ -37,6 +38,7 @@ const wrapperClasses = computed(() => {
 
 const iconSizeClass = computed(() => {
     const map: Record<Size, string> = {
+        xs: 'size-4',
         sm: 'size-5',
         md: 'size-7',
         lg: 'size-8',

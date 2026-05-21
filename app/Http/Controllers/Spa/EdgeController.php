@@ -58,7 +58,11 @@ class EdgeController extends Controller
             $path === '/map' => 'map',
             preg_match('#^/circles/\d+/map$#', $path) === 1 => 'map',
             preg_match('#^/profiles/[^/]+/map$#', $path) === 1 => 'map',
-            str_starts_with($path, '/circles') => 'circles',
+            // Only the circles index marks the tab active. Pages nested under a
+            // specific circle leave the tab inactive so tapping it navigates
+            // back to the index instead of being a no-op on an already-active
+            // tab.
+            $path === '/circles' => 'circles',
             $path === '/posts/create' => 'add',
             str_starts_with($path, '/profiles/') => 'profile',
             // Pages without a matching tab (notifications, settings, post detail,

@@ -14,6 +14,7 @@ import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
@@ -262,6 +263,8 @@ function goBack(): void {
             <PostCard
                 v-for="post in feed.items"
                 :key="post.id"
+                v-reveal-on-scroll
+                class="reveal-on-scroll"
                 :post="post"
                 @open-comments="openCommentsForPost"
                 @open-likes="openLikesForPost"

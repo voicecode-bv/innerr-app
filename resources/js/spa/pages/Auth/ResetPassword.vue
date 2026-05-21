@@ -54,19 +54,16 @@ async function submit(): Promise<void> {
     flashSuccess.value = null;
 
     try {
-        await form.post<{ message: string }>(
-            '/api/spa/auth/reset-password',
-            {
-                onSuccess: (data) => {
-                    flashSuccess.value =
-                        data.message ?? t('Your password has been reset');
-                    setTimeout(() => {
-                        router.push({ name: 'spa.login' });
-                    }, 1500);
-                },
-                onFinish: () => form.reset('password'),
+        await form.post<{ message: string }>('/api/spa/auth/reset-password', {
+            onSuccess: (data) => {
+                flashSuccess.value =
+                    data.message ?? t('Your password has been reset');
+                setTimeout(() => {
+                    router.push({ name: 'spa.login' });
+                }, 1500);
             },
-        );
+            onFinish: () => form.reset('password'),
+        });
     } catch (error) {
         if (error instanceof ApiError) {
             flashError.value = error.message || t('Could not reset password');
@@ -151,7 +148,7 @@ async function submit(): Promise<void> {
         >
             <div class="mb-8 text-center">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-green shadow-sm"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-blue shadow-sm"
                 >
                     {{ t('new password') }}
                     <span
@@ -219,11 +216,7 @@ async function submit(): Promise<void> {
                                 !form.data.token
                             "
                         >
-                            {{
-                                form.processing
-                                    ? '...'
-                                    : t('Reset password')
-                            }}
+                            {{ form.processing ? '...' : t('Reset password') }}
                         </Button>
 
                         <p

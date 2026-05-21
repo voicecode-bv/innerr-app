@@ -287,7 +287,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         >
                             <IconTile
                                 :icon="item.icon"
-                                size="md"
+                                size="xs"
                                 :tone="item.tone"
                                 class="shrink-0"
                             />
@@ -306,7 +306,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                         >
                             <IconTile
                                 :icon="questionIcon"
-                                size="md"
+                                size="xs"
                                 tone="teal"
                                 class="shrink-0"
                             />

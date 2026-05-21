@@ -330,6 +330,35 @@ input[type='search']::-webkit-search-results-decoration {
     }
 }
 
+/* Scroll-triggered reveal: gebruik `v-reveal-on-scroll` directive + de
+   `reveal-on-scroll` class. De directive zet `reveal-on-scroll-in` zodra
+   het element in viewport komt. Eindstaat is `transform: none` (i.p.v.
+   een identity-transform) zodat er na de animatie geen containing block
+   achterblijft die `position: fixed` descendants (zoals fullscreen video)
+   zou verbreken. */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.97);
+    transform-origin: center top;
+    transition:
+        opacity 480ms ease-out,
+        transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-on-scroll.reveal-on-scroll-in {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal-on-scroll,
+    .reveal-on-scroll.reveal-on-scroll-in {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+
 @utility shimmer {
     background: linear-gradient(
         110deg,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { RouterLink  } from 'vue-router';
-import type {RouteLocationRaw} from 'vue-router';
+import { RouterLink } from 'vue-router';
+import type { RouteLocationRaw } from 'vue-router';
 
 type Variant = 'primary' | 'inverse' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -33,11 +33,11 @@ const base =
 const variants: Record<Variant, string> = {
     primary:
         'rounded-full bg-action text-white font-medium hover:bg-action-hover shadow-lg shadow-action/20',
-    // Inverse — yellow on green text. Use on dark brand surfaces (Brand
-    // Blue, Brand Green, Brand Orange) where the solid teal primary would
-    // disappear.
+    // Inverse — yellow background with blue text for legibility. Use on dark
+    // brand surfaces (Brand Blue, Brand Green, Brand Orange) where the solid
+    // teal primary would disappear.
     inverse:
-        'rounded-full bg-brand-yellow text-brand-green font-semibold hover:bg-brand-yellow/90 shadow-lg shadow-night/30',
+        'rounded-full bg-brand-yellow text-brand-blue font-semibold hover:bg-brand-yellow/90 shadow-lg shadow-night/30',
     secondary:
         'rounded-full bg-surface text-ink font-medium border border-sand-200 hover:bg-sand-50',
     ghost: 'rounded-full bg-transparent text-ink-muted font-medium hover:bg-action/5',

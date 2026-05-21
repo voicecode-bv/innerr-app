@@ -44,6 +44,7 @@ interface Circle {
     name: string;
     photo?: string | null;
     is_owner?: boolean;
+    is_administrator?: boolean;
     members_can_invite?: boolean;
 }
 
@@ -58,7 +59,9 @@ const persons = computed<Person[]>(() =>
 const circles = computed<Circle[]>(() =>
     (circlesStore.items ?? []).filter(
         (circle) =>
-            circle.is_owner === true || circle.members_can_invite === true,
+            circle.is_owner === true ||
+            circle.is_administrator === true ||
+            circle.members_can_invite === true,
     ),
 );
 const isLoading = ref(true);
@@ -105,7 +108,10 @@ const selectedCircleIds = ref<string[]>([]);
 
 function defaultCreateCircleIds(): string[] {
     return circles.value
-        .filter((circle) => circle.is_owner === true)
+        .filter(
+            (circle) =>
+                circle.is_owner === true || circle.is_administrator === true,
+        )
         .map((circle) => circle.id);
 }
 

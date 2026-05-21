@@ -24,6 +24,7 @@ import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
+import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -774,7 +775,7 @@ return;
                 </div>
             </div>
 
-            <div v-if="post">
+            <div v-if="post" v-reveal-on-scroll class="reveal-on-scroll">
                 <div class="flex items-center gap-3 bg-sand px-4 py-3">
                     <RouterLink
                         :to="{

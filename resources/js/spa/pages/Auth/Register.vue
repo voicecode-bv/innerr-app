@@ -169,7 +169,7 @@ function lowercase(value: string): string {
         >
             <div class="mb-8 text-center">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-green shadow-sm"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-blue shadow-sm"
                 >
                     {{ t("let's begin") }}
                     <span

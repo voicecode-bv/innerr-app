@@ -14,6 +14,18 @@ import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useInviteIntentStore } from '@/spa/stores/inviteIntent';
 import linkIcon from '../../../svg/doodle-icons/link.svg';
+import userIcon from '../../../svg/doodle-icons/user.svg';
+
+const userIconMaskStyle = {
+    maskImage: `url(${userIcon})`,
+    WebkitMaskImage: `url(${userIcon})`,
+    maskSize: 'contain',
+    WebkitMaskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    WebkitMaskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+};
 
 const { t } = useTranslations();
 const route = useRoute();
@@ -156,13 +168,16 @@ onMounted(() => {
                 :alt="preview.circle.name"
                 class="avatar-ring size-24 rounded-full object-cover"
             />
-            <img
+            <div
                 v-else
-                :src="linkIcon"
-                alt=""
-                class="size-16 opacity-80"
+                class="avatar-ring flex size-24 items-center justify-center rounded-full bg-brand-sand/15"
                 aria-hidden="true"
-            />
+            >
+                <span
+                    class="inline-block size-12 bg-brand-sand/80"
+                    :style="userIconMaskStyle"
+                ></span>
+            </div>
 
             <p class="mt-6 text-brand-sand/80">
                 {{
@@ -183,7 +198,10 @@ onMounted(() => {
                     <img
                         v-for="member in preview.member_preview"
                         :key="member.name"
-                        :src="member.avatar ?? ''"
+                        :src="
+                            member.avatar ??
+                            `https://ui-avatars.com/api/?name=${member.name}&background=f0dcc6&color=5c3f24&size=64`
+                        "
                         :alt="member.name"
                         class="size-10 rounded-full border-2 border-brand-blue bg-brand-sand object-cover"
                     />

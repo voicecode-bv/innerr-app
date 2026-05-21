@@ -17,9 +17,12 @@ import { useCirclesStore } from '@/spa/stores/circles';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import mailIcon from '../../../../svg/doodle-icons/mail.svg';
 import sendIcon from '../../../../svg/doodle-icons/send.svg';
+import shieldIcon from '../../../../svg/doodle-icons/shield.svg';
 import userAddIcon from '../../../../svg/doodle-icons/user-add.svg';
 import userRemoveIcon from '../../../../svg/doodle-icons/user-remove.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
+
+type MemberRole = 'owner' | 'administrator' | 'member';
 
 interface Member {
     id: string;
@@ -27,6 +30,7 @@ interface Member {
     username: string;
     avatar: string | null;
     is_owner: boolean;
+    role?: MemberRole;
 }
 
 interface Invitation {
@@ -46,6 +50,7 @@ interface Circle {
     members_can_view_members: boolean;
     members_can_download: boolean;
     is_owner: boolean;
+    is_administrator?: boolean;
     created_at: string;
     pending_invitations?: Invitation[];
 }
@@ -88,12 +93,17 @@ const isDeleting = ref(false);
 const isLeaving = ref(false);
 const inviteMethod = ref<'identifier' | 'link'>('identifier');
 
+const canManageCircle = computed(
+    () =>
+        circle.value?.is_owner === true ||
+        circle.value?.is_administrator === true,
+);
 const canInvite = computed(
-    () => circle.value?.is_owner || circle.value?.members_can_invite,
+    () => canManageCircle.value || circle.value?.members_can_invite === true,
 );
 const canSeeMembers = computed(
     () =>
-        circle.value?.is_owner === true ||
+        canManageCircle.value ||
         circle.value?.members_can_view_members !== false,
 );
 const members = computed(() => circle.value?.members ?? []);
@@ -314,6 +324,70 @@ async function removeMember(userId: string): Promise<void> {
         .id('remove-member-confirm');
 }
 
+let pendingRoleChange: { memberId: string; nextRole: MemberRole } | null = null;
+
+async function toggleAdministrator(member: Member): Promise<void> {
+    if (!circle.value) {
+        return;
+    }
+
+    const currentRole: MemberRole = (member.role ?? 'member') as MemberRole;
+    const nextRole: MemberRole =
+        currentRole === 'administrator' ? 'member' : 'administrator';
+
+    pendingRoleChange = { memberId: member.id, nextRole };
+
+    const displayName = member.name || `@${member.username}`;
+    const title =
+        nextRole === 'administrator'
+            ? t('Make administrator')
+            : t('Remove administrator role');
+    const message =
+        nextRole === 'administrator'
+            ? t(
+                  'Make :name an administrator? They will be able to do everything you can, except transfer ownership.',
+                  { name: displayName },
+              )
+            : t(
+                  'Remove administrator rights from :name? They will keep their membership but lose management permissions.',
+                  { name: displayName },
+              );
+
+    await Dialog.alert().confirm(title, message).id('toggle-admin-confirm');
+}
+
+async function applyRoleChange(
+    memberId: string,
+    nextRole: MemberRole,
+): Promise<void> {
+    if (!circle.value) {
+        return;
+    }
+
+    const member = (circle.value.members ?? []).find((m) => m.id === memberId);
+
+    if (!member) {
+        return;
+    }
+
+    const previousRole: MemberRole = (member.role ?? 'member') as MemberRole;
+
+    if (previousRole === nextRole) {
+        return;
+    }
+
+    member.role = nextRole;
+
+    try {
+        await externalApi.put(
+            `/circles/${circleId.value}/members/${memberId}/role`,
+            { role: nextRole },
+        );
+    } catch {
+        member.role = previousRole;
+    }
+}
+
 async function handleButtonPressed(payload: {
     index: number;
     label: string;
@@ -369,6 +443,19 @@ async function handleButtonPressed(payload: {
                 circle.value.members_count = previousCount;
             }
         }
+    }
+
+    if (
+        payload.id === 'toggle-admin-confirm' &&
+        payload.index === 1 &&
+        pendingRoleChange
+    ) {
+        const { memberId, nextRole } = pendingRoleChange;
+        pendingRoleChange = null;
+
+        await applyRoleChange(memberId, nextRole);
+    } else if (payload.id === 'toggle-admin-confirm') {
+        pendingRoleChange = null;
     }
 
     if (payload.id === 'leave-circle-confirm' && payload.index === 1) {
@@ -483,7 +570,7 @@ function maskStyle(icon: string) {
                     </svg>
                 </RouterLink>
                 <button
-                    v-if="circle.is_owner"
+                    v-if="canManageCircle"
                     class="flex size-9 items-center justify-center rounded-full bg-surface/80 text-ink shadow-sm transition hover:bg-surface"
                     :aria-label="t('Edit circle')"
                     data-tour="circle.permissions"
@@ -525,13 +612,13 @@ function maskStyle(icon: string) {
                     <div class="text-center">
                         <button
                             class="relative mx-auto block"
-                            :disabled="!circle.is_owner"
+                            :disabled="!canManageCircle"
                             :aria-label="
-                                circle.is_owner
+                                canManageCircle
                                     ? t('Change circle photo')
                                     : undefined
                             "
-                            @click="circle.is_owner && pickPhoto()"
+                            @click="canManageCircle && pickPhoto()"
                         >
                             <img
                                 v-if="circle.photo"
@@ -547,7 +634,7 @@ function maskStyle(icon: string) {
                                 class="!size-20 !rounded-full"
                             />
                             <span
-                                v-if="circle.is_owner"
+                                v-if="canManageCircle"
                                 class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-action shadow-md ring-4 ring-white/70"
                             >
                                 <svg
@@ -886,23 +973,62 @@ function maskStyle(icon: string) {
                                     <p class="truncate text-ink-muted">
                                         @{{ member.username }}
                                     </p>
+                                    <p
+                                        v-if="member.is_owner"
+                                        :title="t('Owner')"
+                                        class="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-accent dark:text-ink"
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            class="inline-block size-3 bg-current"
+                                            :style="maskStyle(crownIcon)"
+                                        ></span>
+                                        <span class="truncate">{{
+                                            t('Owner')
+                                        }}</span>
+                                    </p>
+                                    <p
+                                        v-else-if="
+                                            member.role === 'administrator'
+                                        "
+                                        :title="t('Administrator')"
+                                        class="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-brand-blue dark:text-brand-yellow"
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            class="inline-block size-3 bg-current"
+                                            :style="maskStyle(shieldIcon)"
+                                        ></span>
+                                        <span class="truncate">{{
+                                            t('Administrator')
+                                        }}</span>
+                                    </p>
                                 </div>
                             </RouterLink>
-                            <span
-                                v-if="member.is_owner"
-                                :title="t('Owner')"
-                                class="inline-flex items-center gap-1 rounded-full bg-accent-soft/30 px-2.5 py-1 text-accent"
+                            <button
+                                v-if="!member.is_owner && canManageCircle"
+                                class="flex size-9 shrink-0 items-center justify-center rounded-lg transition"
+                                :class="
+                                    member.role === 'administrator'
+                                        ? 'bg-brand-yellow text-brand-blue hover:bg-brand-yellow/80 dark:bg-brand-yellow/20 dark:text-brand-yellow dark:hover:bg-brand-yellow/30'
+                                        : 'text-ink-muted hover:bg-action-soft hover:text-action'
+                                "
+                                :aria-label="
+                                    member.role === 'administrator'
+                                        ? t('Remove administrator role')
+                                        : t('Make administrator')
+                                "
+                                @click="toggleAdministrator(member)"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-3.5 bg-current"
-                                    :style="maskStyle(crownIcon)"
+                                    class="inline-block size-5 bg-current"
+                                    :style="maskStyle(shieldIcon)"
                                 ></span>
-                                {{ t('Owner') }}
-                            </span>
+                            </button>
                             <button
-                                v-else-if="circle.is_owner"
-                                class="flex size-9 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
+                                v-if="!member.is_owner && canManageCircle"
+                                class="flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
                                 :aria-label="t('Remove member')"
                                 @click="removeMember(member.id)"
                             >
@@ -1013,7 +1139,7 @@ function maskStyle(icon: string) {
                         {{ isLeaving ? t('Leaving...') : t('Leave circle') }}
                     </Button>
                     <Button
-                        v-else
+                        v-if="circle.is_owner"
                         variant="danger"
                         size="lg"
                         block

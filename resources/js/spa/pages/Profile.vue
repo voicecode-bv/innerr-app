@@ -338,7 +338,7 @@ function iconMaskStyle(url: string) {
                             />
                             <span
                                 v-if="isOwnProfile"
-                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-action shadow-md ring-4 ring-white"
+                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-action shadow-md ring-2 ring-white"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

@@ -37,7 +37,10 @@ const rowState = ref<Record<string, RowState>>({});
 
 const invitableCircles = computed<Circle[]>(() =>
     circles.value.filter(
-        (c) => c.is_owner === true || c.members_can_invite === true,
+        (c) =>
+            c.is_owner === true ||
+            c.is_administrator === true ||
+            c.members_can_invite === true,
     ),
 );
 

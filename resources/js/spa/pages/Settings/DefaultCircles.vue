@@ -17,11 +17,14 @@ const circlesStore = useCirclesStore();
 const defaultCirclesStore = useDefaultCirclesStore();
 
 // Filter kringen waar de gebruiker niet in mag posten: bij
-// `auto_add_new_users` kan alleen de eigenaar posten, dus die kringen horen
-// niet in de defaults-lijst.
+// `auto_add_new_users` kunnen alleen de eigenaar en beheerders posten, dus
+// die kringen horen voor reguliere leden niet in de defaults-lijst.
 const circles = computed(() =>
     (circlesStore.items ?? []).filter(
-        (c) => c.is_owner === true || c.auto_add_new_users !== true,
+        (c) =>
+            c.is_owner === true ||
+            c.is_administrator === true ||
+            c.auto_add_new_users !== true,
     ),
 );
 const selectedIds = computed(() => defaultCirclesStore.ids ?? []);

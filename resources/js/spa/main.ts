@@ -141,6 +141,22 @@ async function bootstrap(): Promise<void> {
     await router.isReady();
 
     if (typeof window !== 'undefined') {
+        // In NativePhp gebruikt de router createMemoryHistory(), die altijd op
+        // '/' start en de WebView-URL negeert. Bij een cold-start deeplink
+        // (bv. /join/<token>) moeten we de router expliciet naar de echte
+        // path duwen, anders ziet de gebruiker de Feed/Login i.p.v. het
+        // invite-landing-scherm.
+        const initialPath = window.location.pathname + window.location.search;
+
+        if (
+            initialPath !== '/' &&
+            router.currentRoute.value.fullPath !== initialPath
+        ) {
+            await router.replace(initialPath).catch(() => {
+                /* guarded/dubbele navigatie negeren */
+            });
+        }
+
         const url = new URL(window.location.href);
 
         if (url.searchParams.get('oauth') === 'success') {

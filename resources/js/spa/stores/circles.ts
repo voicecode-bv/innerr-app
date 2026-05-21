@@ -20,6 +20,7 @@ export interface Circle {
     members_can_download?: boolean;
     auto_add_new_users?: boolean;
     is_owner?: boolean;
+    is_administrator?: boolean;
     created_at?: string;
     pending_invitations?: CirclePendingInvitation[];
 }

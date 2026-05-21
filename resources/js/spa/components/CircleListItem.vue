@@ -14,11 +14,13 @@ interface CircleSummary {
     members_count?: number;
     members_can_view_members?: boolean;
     is_owner?: boolean;
+    is_administrator?: boolean;
 }
 
 const canSeeMemberCount = computed(
     () =>
         props.circle.is_owner === true ||
+        props.circle.is_administrator === true ||
         props.circle.members_can_view_members !== false,
 );
 

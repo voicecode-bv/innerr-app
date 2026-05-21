@@ -37,17 +37,14 @@ async function submit(): Promise<void> {
     flashSuccess.value = null;
 
     try {
-        await form.post<{ message: string }>(
-            '/api/spa/auth/forgot-password',
-            {
-                onSuccess: (data) => {
-                    flashSuccess.value =
-                        data.message ??
-                        t('We have emailed your password reset link');
-                    form.reset('email');
-                },
+        await form.post<{ message: string }>('/api/spa/auth/forgot-password', {
+            onSuccess: (data) => {
+                flashSuccess.value =
+                    data.message ??
+                    t('We have emailed your password reset link');
+                form.reset('email');
             },
-        );
+        });
     } catch (error) {
         if (error instanceof ApiError) {
             flashError.value =
@@ -133,7 +130,7 @@ async function submit(): Promise<void> {
         >
             <div class="mb-8 text-center">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-green shadow-sm"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-brand-yellow px-3 py-1 text-sm font-medium text-brand-blue shadow-sm"
                 >
                     {{ t('forgot it?') }}
                     <span
@@ -150,11 +147,7 @@ async function submit(): Promise<void> {
                     />
                 </h1>
                 <p class="mt-3 text-base font-medium text-brand-sand/85">
-                    {{
-                        t(
-                            "Enter your email and we'll send you a reset link",
-                        )
-                    }}
+                    {{ t("Enter your email and we'll send you a reset link") }}
                 </p>
             </div>
 
@@ -191,11 +184,7 @@ async function submit(): Promise<void> {
                             block
                             :disabled="form.processing || !form.data.email"
                         >
-                            {{
-                                form.processing
-                                    ? '...'
-                                    : t('Send reset link')
-                            }}
+                            {{ form.processing ? '...' : t('Send reset link') }}
                         </Button>
                     </form>
                 </div>

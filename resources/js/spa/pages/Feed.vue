@@ -17,6 +17,7 @@ import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
@@ -408,6 +409,8 @@ function iconMaskStyle(url: string) {
             <PostCard
                 v-for="post in feed.items"
                 :key="post.id"
+                v-reveal-on-scroll
+                class="reveal-on-scroll"
                 :post="post"
                 @open-comments="openCommentsForPost"
                 @open-likes="openLikesForPost"

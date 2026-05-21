@@ -79,7 +79,7 @@ function skip(): void {
                 >
                     {{ t('When were you born?') }}
                 </h1>
-                <p class="mt-3 mx-auto max-w-xs text-ink-muted">
+                <p class="mx-auto mt-3 max-w-xs text-ink-muted">
                     {{
                         t(
                             'We use this to show your age in each photo and video, so you can revisit the moment exactly as it happened.',
@@ -94,7 +94,7 @@ function skip(): void {
                 >
                     <div class="flex items-start gap-4">
                         <div
-                            class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-brand-yellow text-brand-green"
+                            class="flex size-12 shrink-0 items-center justify-center rounded-lg bg-brand-yellow text-brand-blue"
                         >
                             <span
                                 aria-hidden="true"
