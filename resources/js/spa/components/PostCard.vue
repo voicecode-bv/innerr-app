@@ -7,6 +7,7 @@ import MediaCarousel from '@/spa/components/MediaCarousel.vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
+import { vPinchZoom } from '@/spa/directives/pinchZoom';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
@@ -689,6 +690,7 @@ function timeAgo(dateString: string): string {
                 <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
                 <img
                     v-if="post.media_url"
+                    v-pinch-zoom
                     :src="post.media_url"
                     :alt="post.caption ?? t('Photo')"
                     class="size-full object-cover transition-opacity duration-500"

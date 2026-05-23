@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
+import { vPinchZoom } from '@/spa/directives/pinchZoom';
 
 export interface CarouselItem {
     id: string;
@@ -250,6 +251,7 @@ onBeforeUnmount(() => {
                 />
                 <img
                     v-else
+                    v-pinch-zoom
                     :src="item.url"
                     class="size-full object-cover"
                     :alt="item.alt ?? ''"
