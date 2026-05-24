@@ -517,12 +517,6 @@ function timeAgo(dateString: string): string {
                     >
                         {{ post.user.name }}
                     </RouterLink>
-                    <p
-                        v-if="post.location"
-                        class="shrink-0 truncate text-sm text-ink-muted"
-                    >
-                        {{ post.location }}
-                    </p>
                 </div>
                 <template v-if="post.caption">
                     <p

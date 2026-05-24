@@ -822,9 +822,6 @@ watch(
                         >
                             {{ post.user.name }}
                         </RouterLink>
-                        <p v-if="post.location" class="text-ink-muted">
-                            {{ post.location }}
-                        </p>
                     </div>
                 </div>
 
