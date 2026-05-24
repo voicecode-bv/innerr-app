@@ -422,7 +422,10 @@ const likesSummary = computed<{
 });
 
 const isLikesSheetOpen = ref(false);
-const isCommentsSheetOpen = ref(false);
+// Binnenkomst via een comment-push: de deep link draagt `?comment=<id>` mee
+// (zie API PostCommented/CommentLiked). Open dan meteen het comments-sheet zodat
+// de gebruiker direct bij de reacties uitkomt; de sheet laadt zelf de comments.
+const isCommentsSheetOpen = ref(Boolean(route.query.comment));
 const isEditModalOpen = ref(false);
 const editAvailableCircles = ref<AvailableCircle[]>([]);
 const editAvailableTags = ref<AvailableTag[]>([]);
