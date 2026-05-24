@@ -214,6 +214,91 @@ it('merges sidecar EXIF and falls back to top-level fields on single upload', fu
         ->and($sentData['longitude'])->toBe(-0.12);
 });
 
+it('forwards map-picker coordinates and they win over EXIF on single upload', function () {
+    $user = User::factory()->create();
+
+    // EXIF in the sidecar would otherwise set the position...
+    file_put_contents($this->tempPath.'.exif.json', json_encode([
+        'taken_at' => '2025-03-01T12:00:00Z',
+        'latitude' => 51.5,
+        'longitude' => -0.12,
+    ]));
+
+    $sentData = null;
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('attach')->andReturnSelf();
+    $pending->shouldReceive('post')->once()->with('/posts', Mockery::on(function ($data) use (&$sentData) {
+        $sentData = $data;
+
+        return true;
+    }))->andReturn(new Response(Http::response(['data' => ['id' => POST_ID]], 201)->wait()));
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $client->shouldReceive('proxyMediaUrls')->andReturn(['id' => POST_ID]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_path' => $this->tempPath,
+            'location' => 'Madrid',
+            'latitude' => 40.4168,
+            'longitude' => -3.7038,
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(201);
+
+    // ...but the explicit picker coordinates win as the post position.
+    expect($sentData['location'])->toBe('Madrid')
+        ->and($sentData['latitude'])->toBe(40.4168)
+        ->and($sentData['longitude'])->toBe(-3.7038);
+});
+
+it('forwards map-picker coordinates alongside per-item metadata on multi upload', function () {
+    $user = User::factory()->create();
+
+    $sentData = null;
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('attach')->andReturnSelf();
+    $pending->shouldReceive('post')->once()->with('/posts', Mockery::on(function ($data) use (&$sentData) {
+        $sentData = $data;
+
+        return true;
+    }))->andReturn(new Response(Http::response(['data' => ['id' => POST_ID]], 201)->wait()));
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $client->shouldReceive('proxyMediaUrls')->andReturn(['id' => POST_ID]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_paths' => [$this->tempPath, $this->tempPathB],
+            'latitude' => 40.4168,
+            'longitude' => -3.7038,
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(201);
+
+    expect($sentData['latitude'])->toBe(40.4168)
+        ->and($sentData['longitude'])->toBe(-3.7038)
+        ->and($sentData)->toHaveKey('media_metadata');
+});
+
+it('rejects map-picker coordinates that are out of range', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_path' => $this->tempPath,
+            'latitude' => 200,
+            'longitude' => 4.89,
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('latitude');
+});
+
 it('flattens external media.{i} errors to media_paths.{i}', function () {
     $user = User::factory()->create();
 

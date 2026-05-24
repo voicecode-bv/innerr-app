@@ -26,6 +26,9 @@ const ImageCropModal = defineAsyncComponent(
 const TagSelector = defineAsyncComponent(
     () => import('@/spa/components/TagSelector.vue'),
 );
+const LocationPickerSheet = defineAsyncComponent(
+    () => import('@/spa/components/LocationPickerSheet.vue'),
+);
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -133,10 +136,37 @@ const form = useApiForm({
     media_paths: [] as string[],
     media_metadata: [] as ExifData[],
     caption: '',
+    location: '' as string,
+    latitude: null as number | null,
+    longitude: null as number | null,
     circle_ids: [] as string[],
     tag_ids: [] as string[],
     person_ids: [] as string[],
 });
+
+const isLocationPickerOpen = ref(false);
+
+// The picker opens centred on the first photo's EXIF position (if any) so the
+// user starts near where the shot was taken, but their explicit pick wins.
+const pickerLatitude = computed<number | null>(
+    () => form.data.latitude ?? items.value[0]?.exif.latitude ?? null,
+);
+const pickerLongitude = computed<number | null>(
+    () => form.data.longitude ?? items.value[0]?.exif.longitude ?? null,
+);
+const hasChosenLocation = computed(
+    () => form.data.latitude !== null && form.data.longitude !== null,
+);
+
+function handleLocationConfirm(value: {
+    latitude: number | null;
+    longitude: number | null;
+    location: string | null;
+}): void {
+    form.data.latitude = value.latitude;
+    form.data.longitude = value.longitude;
+    form.data.location = value.location ?? '';
+}
 
 const showSourcePicker = ref(false);
 const showCropModal = ref(false);
@@ -652,9 +682,7 @@ function buildOptimisticPost(): PostData {
     // Voor video gebruiken we de native gegenereerde JPEG-thumbnail als
     // poster terwijl de server de upload nog verwerkt — de video-URL zelf
     // kan op dat moment nog niet als afbeelding renderen.
-    const firstPoster = isVideo
-        ? (first?.thumbnail ?? previewUrl)
-        : previewUrl;
+    const firstPoster = isVideo ? (first?.thumbnail ?? previewUrl) : previewUrl;
     const selectedCircles = circles.value
         .filter((c) => form.data.circle_ids.includes(c.id))
         .map((c) => ({ id: c.id, name: c.name, photo: c.photo ?? null }));
@@ -682,7 +710,7 @@ function buildOptimisticPost(): PostData {
             };
         }),
         caption: form.data.caption ?? null,
-        location: null,
+        location: form.data.location || null,
         created_at: new Date().toISOString(),
         user: {
             id: auth.user?.id ?? '',
@@ -992,7 +1020,7 @@ const activeItemIsImage = computed(() => {
                         @click="openSourcePicker"
                     >
                         <div
-                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft dark:bg-surface text-ink"
+                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft text-ink dark:bg-surface"
                         >
                             <span
                                 aria-hidden="true"
@@ -1031,9 +1059,61 @@ const activeItemIsImage = computed(() => {
                         maxlength="2200"
                         class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink placeholder-ink-muted/60 focus:ring-0 focus:outline-none"
                     />
-                    <p v-if="form.errors.caption" class="mt-1 text-destructive-ink">
+                    <p
+                        v-if="form.errors.caption"
+                        class="mt-1 text-destructive-ink"
+                    >
                         {{ form.errors.caption }}
                     </p>
+                </section>
+
+                <section
+                    v-show="currentStep === 1"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
+                >
+                    <span class="tracking-wider text-ink-muted uppercase">
+                        {{ t('Location') }}
+                    </span>
+                    <button
+                        type="button"
+                        class="mt-2 flex w-full items-center gap-3 text-left"
+                        @click="isLocationPickerOpen = true"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            class="size-5 shrink-0 text-ink-muted"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                            />
+                        </svg>
+                        <span class="min-w-0 flex-1">
+                            <span
+                                v-if="hasChosenLocation"
+                                class="block truncate text-ink"
+                            >
+                                {{ form.data.location || t('Pinned location') }}
+                            </span>
+                            <span v-else class="block text-ink-muted">
+                                {{ t('Add a location') }}
+                            </span>
+                        </span>
+                        <span class="shrink-0 font-medium text-action">
+                            {{ hasChosenLocation ? t('Change') : t('Add') }}
+                        </span>
+                    </button>
                 </section>
 
                 <section
@@ -1208,6 +1288,15 @@ const activeItemIsImage = computed(() => {
             :src="items[cropTargetIndex]?.preview ?? null"
             @update:open="showCropModal = $event"
             @cropped="handleCropped"
+        />
+
+        <LocationPickerSheet
+            :open="isLocationPickerOpen"
+            :latitude="pickerLatitude"
+            :longitude="pickerLongitude"
+            :location="form.data.location || null"
+            @update:open="isLocationPickerOpen = $event"
+            @confirm="handleLocationConfirm"
         />
     </AppLayout>
 </template>

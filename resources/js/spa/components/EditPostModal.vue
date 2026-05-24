@@ -16,6 +16,9 @@ import PersonPicker from '@/components/PersonPicker.vue';
 const TagSelector = defineAsyncComponent(
     () => import('@/spa/components/TagSelector.vue'),
 );
+const LocationPickerSheet = defineAsyncComponent(
+    () => import('@/spa/components/LocationPickerSheet.vue'),
+);
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
@@ -51,6 +54,9 @@ const props = withDefaults(
         postId: string;
         caption: string | null;
         circles: Circle[];
+        location?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
         availableCircles?: Circle[] | null;
         tags?: Tag[] | null;
         persons?: Person[] | null;
@@ -58,6 +64,9 @@ const props = withDefaults(
         availablePersons?: Person[] | null;
     }>(),
     {
+        location: null,
+        latitude: null,
+        longitude: null,
         availableCircles: () => [],
         tags: () => [],
         persons: () => [],
@@ -83,6 +92,38 @@ const initialPersonIds = ref<string[]>(
 const initialCircleIds = ref<string[]>(props.circles.map((c) => c.id));
 const initialCaption = ref<string>(props.caption ?? '');
 
+// Location lives outside the api-form so the picker can set the name and the
+// lat/lng together; we still diff it for `hasChanges` and only send it when it
+// actually changed.
+const locationName = ref<string | null>(props.location ?? null);
+const latitude = ref<number | null>(props.latitude ?? null);
+const longitude = ref<number | null>(props.longitude ?? null);
+const initialLocationName = ref<string | null>(props.location ?? null);
+const initialLatitude = ref<number | null>(props.latitude ?? null);
+const initialLongitude = ref<number | null>(props.longitude ?? null);
+const isLocationPickerOpen = ref(false);
+
+const hasLocation = computed(
+    () => latitude.value !== null && longitude.value !== null,
+);
+
+const locationChanged = computed(
+    () =>
+        locationName.value !== initialLocationName.value ||
+        latitude.value !== initialLatitude.value ||
+        longitude.value !== initialLongitude.value,
+);
+
+function handleLocationConfirm(value: {
+    latitude: number | null;
+    longitude: number | null;
+    location: string | null;
+}): void {
+    latitude.value = value.latitude;
+    longitude.value = value.longitude;
+    locationName.value = value.location;
+}
+
 const form = useApiForm(
     {
         caption: props.caption ?? '',
@@ -100,8 +141,8 @@ const availablePersons = computed<Person[]>(() => {
     const selected = form.data.circle_ids;
 
     if (selected.length === 0) {
-return [];
-}
+        return [];
+    }
 
     // Persons currently tagged on the post must remain visible (and selected)
     // even if they no longer overlap with the chosen circles, so the user can
@@ -123,8 +164,8 @@ watch(
     () => form.data.circle_ids,
     () => {
         if (form.data.person_ids.length === 0) {
-return;
-}
+            return;
+        }
 
         const visibleIds = new Set(
             allPersons.value
@@ -145,8 +186,8 @@ return;
 
 function sameIds(a: string[], b: string[]): boolean {
     if (a.length !== b.length) {
-return false;
-}
+        return false;
+    }
 
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();
@@ -156,20 +197,24 @@ return false;
 
 const hasChanges = computed(() => {
     if ((form.data.caption ?? '') !== initialCaption.value) {
-return true;
-}
+        return true;
+    }
 
     if (!sameIds(form.data.circle_ids, initialCircleIds.value)) {
-return true;
-}
+        return true;
+    }
 
     if (!sameIds(form.data.tag_ids, initialTagIds.value)) {
-return true;
-}
+        return true;
+    }
 
     if (!sameIds(form.data.person_ids, initialPersonIds.value)) {
-return true;
-}
+        return true;
+    }
+
+    if (locationChanged.value) {
+        return true;
+    }
 
     return false;
 });
@@ -183,8 +228,8 @@ watch(
     () => props.open,
     (isOpen) => {
         if (!isOpen) {
-return;
-}
+            return;
+        }
 
         // Refresh baseline-snapshots zodat hasChanges altijd vergelijkt met
         // de actuele post-state (anders blijven oude tag/person ids hangen
@@ -193,12 +238,18 @@ return;
         initialCircleIds.value = props.circles.map((c) => c.id);
         initialTagIds.value = (props.tags ?? []).map((tag) => tag.id);
         initialPersonIds.value = (props.persons ?? []).map((p) => p.id);
+        initialLocationName.value = props.location ?? null;
+        initialLatitude.value = props.latitude ?? null;
+        initialLongitude.value = props.longitude ?? null;
 
         form.errors = {};
         form.data.caption = initialCaption.value;
         form.data.circle_ids = [...initialCircleIds.value];
         form.data.tag_ids = [...initialTagIds.value];
         form.data.person_ids = [...initialPersonIds.value];
+        locationName.value = initialLocationName.value;
+        latitude.value = initialLatitude.value;
+        longitude.value = initialLongitude.value;
     },
 );
 
@@ -218,8 +269,8 @@ const isDeleting = ref(false);
 
 async function requestDelete(): Promise<void> {
     if (isDeleting.value || form.processing) {
-return;
-}
+        return;
+    }
 
     await Dialog.alert()
         .confirm(
@@ -234,12 +285,12 @@ async function handleButtonPressed(payload: {
     id?: string | null;
 }): Promise<void> {
     if (payload.id !== DELETE_CONFIRM_ID || payload.index !== 1) {
-return;
-}
+        return;
+    }
 
     if (isDeleting.value) {
-return;
-}
+        return;
+    }
 
     isDeleting.value = true;
 
@@ -258,12 +309,20 @@ onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
 onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 
 async function submit(): Promise<void> {
-    const payload = {
+    const payload: Record<string, unknown> = {
         caption: form.data.caption,
         circle_ids: form.data.circle_ids,
         tag_ids: form.data.tag_ids,
         person_ids: form.data.person_ids,
     };
+
+    // Only send location when it changed; latitude/longitude must travel
+    // together (the API rejects one without the other).
+    if (locationChanged.value) {
+        payload.location = locationName.value;
+        payload.latitude = latitude.value;
+        payload.longitude = longitude.value;
+    }
 
     form.processing = true;
     form.errors = {};
@@ -339,6 +398,52 @@ async function submit(): Promise<void> {
                 <p v-if="form.errors.caption" class="mt-1 text-destructive-ink">
                     {{ form.errors.caption }}
                 </p>
+            </section>
+
+            <section>
+                <label class="font-semibold text-ink">
+                    {{ t('Location') }}
+                </label>
+                <button
+                    type="button"
+                    class="mt-2 flex w-full items-center gap-3 rounded-xl border border-sand-200 px-4 py-3 text-left active:bg-sand-50"
+                    @click="isLocationPickerOpen = true"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        class="size-5 shrink-0 text-ink-muted"
+                        aria-hidden="true"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                        />
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                        />
+                    </svg>
+                    <span class="min-w-0 flex-1">
+                        <span
+                            v-if="hasLocation"
+                            class="block truncate text-ink"
+                        >
+                            {{ locationName || t('Pinned location') }}
+                        </span>
+                        <span v-else class="block text-ink-muted">
+                            {{ t('Add a location') }}
+                        </span>
+                    </span>
+                    <span class="shrink-0 font-medium text-action">
+                        {{ hasLocation ? t('Change') : t('Add') }}
+                    </span>
+                </button>
             </section>
 
             <section v-if="availableCircles.length > 0">
@@ -454,4 +559,13 @@ async function submit(): Promise<void> {
             </div>
         </template>
     </BottomSheet>
+
+    <LocationPickerSheet
+        :open="isLocationPickerOpen"
+        :latitude="latitude"
+        :longitude="longitude"
+        :location="locationName"
+        @update:open="isLocationPickerOpen = $event"
+        @confirm="handleLocationConfirm"
+    />
 </template>

@@ -188,8 +188,8 @@ const isUntaggingSelf = ref(false);
 
 async function untagSelf(): Promise<void> {
     if (!post.value || isUntaggingSelf.value) {
-return;
-}
+        return;
+    }
 
     await Dialog.alert()
         .confirm(t('Remove tag'), t('Remove yourself from this post?'))
@@ -198,8 +198,8 @@ return;
 
 async function performUntagSelf(): Promise<void> {
     if (!post.value) {
-return;
-}
+        return;
+    }
 
     isUntaggingSelf.value = true;
     const postId = post.value.id;
@@ -233,8 +233,8 @@ const staticMapUrl = computed<string | null>(() => {
     const token = serviceKeys.mapboxToken;
 
     if (!token || !hasLocation.value || !post.value) {
-return null;
-}
+        return null;
+    }
 
     const lng = post.value.longitude;
     const lat = post.value.latitude;
@@ -472,8 +472,8 @@ const tagsStore = useTagsStore();
 
 async function openEditModal(): Promise<void> {
     if (!post.value) {
-return;
-}
+        return;
+    }
 
     try {
         const [circles, tags, persons] = await Promise.all([
@@ -493,14 +493,14 @@ return;
 
 function onCommentAdded(): void {
     if (post.value) {
-post.value.comments_count += 1;
-}
+        post.value.comments_count += 1;
+    }
 }
 
 function onCommentDeleted(): void {
     if (post.value) {
-post.value.comments_count = Math.max(0, post.value.comments_count - 1);
-}
+        post.value.comments_count = Math.max(0, post.value.comments_count - 1);
+    }
 }
 
 async function deletePost(): Promise<void> {
@@ -575,15 +575,15 @@ function ageAt(
     atDateString: string,
 ): string | null {
     if (!birthdate) {
-return null;
-}
+        return null;
+    }
 
     const birth = new Date(birthdate);
     const at = new Date(atDateString);
 
     if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth) {
-return null;
-}
+        return null;
+    }
 
     const totalDays = Math.floor((at.getTime() - birth.getTime()) / 86_400_000);
 
@@ -639,16 +639,16 @@ function timeAgo(dateString: string): string {
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (seconds < 60) {
-return t('just now');
-}
+        return t('just now');
+    }
 
     if (seconds < 3600) {
-return t(':count min ago', { count: Math.floor(seconds / 60) });
-}
+        return t(':count min ago', { count: Math.floor(seconds / 60) });
+    }
 
     if (seconds < 86400) {
-return t(':count hours ago', { count: Math.floor(seconds / 3600) });
-}
+        return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    }
 
     if (seconds < 604800) {
         const days = Math.floor(seconds / 86400);
@@ -685,8 +685,8 @@ watch(
     () => route.params.post,
     () => {
         if (route.name !== 'spa.posts.show') {
-return;
-}
+            return;
+        }
 
         post.value = null;
         isLikesSheetOpen.value = false;
@@ -1142,7 +1142,7 @@ return;
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
+                                    class="inline-block size-6 bg-surface drop-shadow dark:bg-ink"
                                     :style="iconMaskStyle(heartIcon)"
                                 ></span>
                             </button>
@@ -1436,7 +1436,7 @@ return;
 
                         <div
                             v-else
-                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 dark:bg-surface text-ink-muted ring-1 ring-sand-100"
+                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 text-ink-muted ring-1 ring-sand-100 dark:bg-surface"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -1488,6 +1488,9 @@ return;
             :open="isEditModalOpen"
             :post-id="post.id"
             :caption="post.caption"
+            :location="post.location"
+            :latitude="post.latitude"
+            :longitude="post.longitude"
             :circles="post.circles ?? []"
             :available-circles="editAvailableCircles"
             :tags="post.tags ?? []"

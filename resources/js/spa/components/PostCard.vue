@@ -94,6 +94,9 @@ interface FullPostPerson {
 interface FullPost {
     id: string;
     caption: string | null;
+    location?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     circles?: FullPostCircle[];
     tags?: FullPostTag[];
     persons?: FullPostPerson[];
@@ -626,7 +629,11 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface dark:bg-ink'"
+                            :class="
+                                isLiked
+                                    ? 'bg-brand-orange'
+                                    : 'bg-surface dark:bg-ink'
+                            "
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
@@ -642,7 +649,7 @@ function timeAgo(dateString: string): string {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
+                            class="inline-block size-6 bg-surface drop-shadow dark:bg-ink"
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
@@ -780,7 +787,11 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="isLiked ? 'bg-brand-orange' : 'bg-surface dark:bg-ink'"
+                            :class="
+                                isLiked
+                                    ? 'bg-brand-orange'
+                                    : 'bg-surface dark:bg-ink'
+                            "
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
@@ -796,7 +807,7 @@ function timeAgo(dateString: string): string {
                     >
                         <span
                             aria-hidden="true"
-                            class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
+                            class="inline-block size-6 bg-surface drop-shadow dark:bg-ink"
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
@@ -1079,7 +1090,9 @@ function timeAgo(dateString: string): string {
                                 aria-hidden="true"
                                 class="inline-block size-6 drop-shadow"
                                 :class="
-                                    isLiked ? 'bg-brand-orange' : 'bg-surface dark:bg-ink'
+                                    isLiked
+                                        ? 'bg-brand-orange'
+                                        : 'bg-surface dark:bg-ink'
                                 "
                                 :style="
                                     iconMaskStyle(
@@ -1096,7 +1109,7 @@ function timeAgo(dateString: string): string {
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
+                                class="inline-block size-6 bg-surface drop-shadow dark:bg-ink"
                                 :style="iconMaskStyle(heartIcon)"
                             ></span>
                         </button>
@@ -1200,6 +1213,9 @@ function timeAgo(dateString: string): string {
             :open="isEditModalOpen"
             :post-id="editPost.id"
             :caption="editPost.caption"
+            :location="editPost.location ?? null"
+            :latitude="editPost.latitude ?? null"
+            :longitude="editPost.longitude ?? null"
             :circles="editPost.circles ?? []"
             :available-circles="editAvailableCircles"
             :tags="editPost.tags ?? []"
