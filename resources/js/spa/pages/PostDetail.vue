@@ -15,15 +15,15 @@ import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
-import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import type {
     PostFirstVisibleLiker,
     PostMediaItem,
 } from '@/spa/components/PostCard.vue';
+import VideoPlayer from '@/spa/components/VideoPlayer.vue';
+import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
-import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -274,11 +274,28 @@ const carouselItems = computed(() =>
 const hasMultipleMedia = computed(() => carouselItems.value.length > 1);
 const activeMediaIndex = ref(0);
 
+// Diepe link vanuit de profiel-grid: `?media=<index>` opent de post op de
+// betreffende carousel-slide. Geclampt op het aantal geladen media-items;
+// valt terug op 0 (cover) bij ontbrekende, ongeldige of out-of-range waarde.
+function deepLinkedMediaIndex(): number {
+    const raw = route.query.media;
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    const parsed = value != null ? Number.parseInt(String(value), 10) : NaN;
+
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+        return 0;
+    }
+
+    const count = post.value?.media?.length ?? 0;
+
+    return count > 0 ? Math.min(parsed, count - 1) : 0;
+}
+
 watch(
     () => post.value?.media_url,
     () => {
         mediaLoaded.value = false;
-        activeMediaIndex.value = 0;
+        activeMediaIndex.value = deepLinkedMediaIndex();
     },
 );
 

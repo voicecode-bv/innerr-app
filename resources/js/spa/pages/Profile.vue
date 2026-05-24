@@ -13,7 +13,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
-import type {PostData} from '@/spa/components/PostCard.vue';
+import type {PostData, PostMediaItem} from '@/spa/components/PostCard.vue';
 import {
     useInfiniteScroll
     
@@ -234,10 +234,77 @@ function markLoaded(url: string): void {
     loadedMedia[url] = true;
 }
 
-function mediaKey(post: PostData): string {
-    return post.media_type === 'video'
-        ? (resolvedThumbnail(post) ?? '')
-        : post.media_url;
+interface GridTile {
+    postId: string;
+    key: string;
+    src: string;
+    mediaType: string;
+    mediaStatus: 'processing' | 'ready' | 'failed';
+    caption: string | null;
+    // Index van dit item binnen `post.media`; gebruikt om de post-detail op
+    // de juiste carousel-slide te openen. 0 voor enkele-media cover-tegels.
+    mediaIndex: number;
+}
+
+// Grid-thumbnail per media-item: zelfde voorkeursvolgorde als de post-cover
+// (300x300 grid-poster -> grote thumbnail -> originele media).
+function itemThumbnail(item: PostMediaItem): string {
+    return item.thumbnail_small_url ?? item.thumbnail_url ?? item.url;
+}
+
+// Eén tegel per foto: multi-photo posts klappen we uit naar losse tegels die
+// allemaal naar dezelfde post-detail linken. Posts met 0 of 1 media-items
+// (of een oude API zonder `media`) vallen terug op de bestaande cover-tegel,
+// inclusief de lokale-thumbnail-fallback voor net ge-uploade video's.
+const tiles = computed<GridTile[]>(() => {
+    const result: GridTile[] = [];
+
+    for (const post of feed.items) {
+        const items = post.media ?? [];
+
+        if (items.length > 1) {
+            items.forEach((item, index) => {
+                result.push({
+                    postId: post.id,
+                    key: item.id,
+                    src: itemThumbnail(item),
+                    mediaType: item.type,
+                    mediaStatus: item.status ?? 'ready',
+                    caption: post.caption,
+                    mediaIndex: index,
+                });
+            });
+
+            continue;
+        }
+
+        result.push({
+            postId: post.id,
+            key: post.id,
+            src:
+                post.media_type === 'video'
+                    ? (resolvedThumbnail(post) ?? '')
+                    : post.media_url,
+            mediaType: post.media_type,
+            mediaStatus: post.media_status,
+            caption: post.caption,
+            mediaIndex: 0,
+        });
+    }
+
+    return result;
+});
+
+// Alleen secundaire slides (index > 0) krijgen een `media`-query mee; de
+// cover opent de post zonder query zodat bestaande links onveranderd blijven.
+function tileTo(tile: GridTile) {
+    return {
+        name: 'spa.posts.show',
+        params: { post: tile.postId },
+        ...(tile.mediaIndex > 0
+            ? { query: { media: String(tile.mediaIndex) } }
+            : {}),
+    };
 }
 
 async function shareProfile(): Promise<void> {
@@ -434,51 +501,42 @@ function iconMaskStyle(url: string) {
                     class="grid grid-cols-3 gap-1 bg-sand px-1"
                 >
                     <RouterLink
-                        v-for="post in feed.items"
-                        :key="post.id"
-                        :to="{
-                            name: 'spa.posts.show',
-                            params: { post: post.id },
-                        }"
+                        v-for="tile in tiles"
+                        :key="tile.key"
+                        :to="tileTo(tile)"
                         class="relative block aspect-square overflow-hidden rounded-lg bg-sand"
                     >
                         <div
                             v-if="
-                                !loadedMedia[mediaKey(post)] &&
-                                post.media_type !== 'unknown'
+                                !loadedMedia[tile.src] &&
+                                tile.mediaType !== 'unknown'
                             "
                             class="absolute inset-0 animate-pulse bg-sand"
                         />
                         <img
-                            v-if="post.media_type === 'image'"
-                            :src="post.media_url"
-                            :alt="post.caption ?? t('Photo')"
+                            v-if="
+                                tile.mediaType === 'image' ||
+                                tile.mediaType === 'video'
+                            "
+                            :src="tile.src"
+                            :alt="
+                                tile.caption ??
+                                (tile.mediaType === 'video'
+                                    ? t('Moment')
+                                    : t('Photo'))
+                            "
                             class="relative size-full object-cover transition-opacity duration-300"
                             :class="
-                                loadedMedia[mediaKey(post)]
+                                loadedMedia[tile.src]
                                     ? 'opacity-100'
                                     : 'opacity-0'
                             "
                             loading="lazy"
                             decoding="async"
-                            @load="markLoaded(mediaKey(post))"
-                        />
-                        <img
-                            v-else-if="post.media_type === 'video'"
-                            :src="resolvedThumbnail(post) ?? ''"
-                            :alt="post.caption ?? t('Moment')"
-                            class="relative size-full object-cover transition-opacity duration-300"
-                            :class="
-                                loadedMedia[mediaKey(post)]
-                                    ? 'opacity-100'
-                                    : 'opacity-0'
-                            "
-                            loading="lazy"
-                            decoding="async"
-                            @load="markLoaded(mediaKey(post))"
+                            @load="markLoaded(tile.src)"
                         />
                         <div
-                            v-if="post.media_type === 'video'"
+                            v-if="tile.mediaType === 'video'"
                             class="absolute top-1.5 right-1.5 z-10"
                         >
                             <svg
