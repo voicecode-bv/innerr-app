@@ -19,6 +19,7 @@ import type { CarouselItem } from '@/spa/components/MediaCarousel.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { uploadInChunks } from '@/spa/composables/useChunkedUpload';
+import { useMapboxGeocoding } from '@/spa/composables/useMapboxGeocoding';
 
 const ImageCropModal = defineAsyncComponent(
     () => import('@/components/ImageCropModal.vue'),
@@ -104,6 +105,7 @@ const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
 const tagsStore = useTagsStore();
 const defaultCirclesStore = useDefaultCirclesStore();
+const geocoding = useMapboxGeocoding();
 
 const circles = computed<Circle[]>(() => circlesStore.items ?? []);
 const defaultCircleIds = computed<string[]>(
@@ -158,16 +160,89 @@ const form = useApiForm({
 
 const isLocationPickerOpen = ref(false);
 
+// Where the post location came from, so we never fight the user:
+// 'auto' = derived from the first photo's EXIF, 'user' = explicitly picked,
+// 'cleared' = explicitly removed (stays empty, never re-filled).
+const locationMode = ref<'auto' | 'user' | 'cleared'>('auto');
+
+// GPS of the representative (first) photo, when present.
+const firstPhotoCoords = computed<{
+    latitude: number;
+    longitude: number;
+} | null>(() => {
+    const exif = items.value[0]?.exif;
+
+    if (!exif || exif.latitude === null || exif.longitude === null) {
+        return null;
+    }
+
+    return { latitude: exif.latitude, longitude: exif.longitude };
+});
+
+const hasChosenLocation = computed(
+    () => form.data.latitude !== null && form.data.longitude !== null,
+);
+
+// True while the shown location was auto-derived from the photo, so the UI can
+// label it "From photo". Flips to false once the user picks their own.
+const locationFromPhoto = computed(
+    () => locationMode.value === 'auto' && hasChosenLocation.value,
+);
+
 // The picker opens centred on the first photo's EXIF position (if any) so the
 // user starts near where the shot was taken, but their explicit pick wins.
 const pickerLatitude = computed<number | null>(
-    () => form.data.latitude ?? items.value[0]?.exif.latitude ?? null,
+    () => form.data.latitude ?? firstPhotoCoords.value?.latitude ?? null,
 );
 const pickerLongitude = computed<number | null>(
-    () => form.data.longitude ?? items.value[0]?.exif.longitude ?? null,
+    () => form.data.longitude ?? firstPhotoCoords.value?.longitude ?? null,
 );
-const hasChosenLocation = computed(
-    () => form.data.latitude !== null && form.data.longitude !== null,
+
+// Prefill the post location from the first geotagged photo and reverse-geocode
+// a readable name. Only runs while the user hasn't taken over ('auto'); the
+// stringified key means we only react when the coordinates actually change,
+// not on every unrelated media mutation.
+watch(
+    () =>
+        firstPhotoCoords.value
+            ? `${firstPhotoCoords.value.latitude},${firstPhotoCoords.value.longitude}`
+            : null,
+    async () => {
+        if (locationMode.value !== 'auto') {
+            return;
+        }
+
+        const coords = firstPhotoCoords.value;
+
+        if (!coords) {
+            form.data.latitude = null;
+            form.data.longitude = null;
+            form.data.location = '';
+
+            return;
+        }
+
+        form.data.latitude = coords.latitude;
+        form.data.longitude = coords.longitude;
+
+        const result = await geocoding.reverse(
+            coords.longitude,
+            coords.latitude,
+        );
+
+        // Drop a stale response if the photo changed or the user took over
+        // while the reverse-geocode was in flight.
+        if (
+            locationMode.value !== 'auto' ||
+            form.data.latitude !== coords.latitude ||
+            form.data.longitude !== coords.longitude
+        ) {
+            return;
+        }
+
+        form.data.location = result?.fullName ?? '';
+    },
+    { immediate: true },
 );
 
 function handleLocationConfirm(value: {
@@ -178,6 +253,98 @@ function handleLocationConfirm(value: {
     form.data.latitude = value.latitude;
     form.data.longitude = value.longitude;
     form.data.location = value.location ?? '';
+    locationMode.value = value.latitude === null ? 'cleared' : 'user';
+}
+
+// The post's date comes from the representative (first) photo's taken_at — the
+// API copies item 0's value onto the post. Editing it writes straight back onto
+// that item's EXIF, which the `items` watch syncs into media_metadata.
+const photoTakenAt = computed<string | null>(
+    () => items.value[0]?.exif.taken_at ?? null,
+);
+
+// 'auto' = still showing the photo's own date, 'user' = explicitly edited. Used
+// only to label the field "From photo". Resets when the first photo changes.
+const dateMode = ref<'auto' | 'user'>('auto');
+
+watch(
+    () => items.value[0]?.id ?? null,
+    () => {
+        dateMode.value = 'auto';
+    },
+);
+
+const dateFromPhoto = computed(
+    () => dateMode.value === 'auto' && photoTakenAt.value !== null,
+);
+
+function pad(value: number): string {
+    return String(value).padStart(2, '0');
+}
+
+// `datetime-local` inputs speak local "YYYY-MM-DDTHH:mm"; taken_at is stored as
+// a UTC ISO string. Convert both ways so the native picker shows local time.
+function toLocalInputValue(iso: string | null): string {
+    if (!iso) {
+        return '';
+    }
+
+    const date = new Date(iso);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+const takenAtInputValue = computed(() => toLocalInputValue(photoTakenAt.value));
+
+// The API rejects future dates and anything before 1990; clamp the picker to
+// match so we never submit a value it will reject.
+const maxTakenAtInput = toLocalInputValue(new Date().toISOString());
+const MIN_TAKEN_AT_INPUT = '1990-01-01T00:00';
+
+function formatTakenAt(iso: string | null): string {
+    if (!iso) {
+        return '';
+    }
+
+    const date = new Date(iso);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function onTakenAtInput(event: Event): void {
+    const item = items.value[0];
+
+    if (!item) {
+        return;
+    }
+
+    const value = (event.target as HTMLInputElement).value;
+
+    if (value === '') {
+        item.exif.taken_at = null;
+    } else {
+        // `new Date('YYYY-MM-DDTHH:mm')` parses as local time; back to UTC ISO.
+        const parsed = new Date(value);
+        item.exif.taken_at = Number.isNaN(parsed.getTime())
+            ? null
+            : parsed.toISOString();
+    }
+
+    dateMode.value = 'user';
 }
 
 const showSourcePicker = ref(false);
@@ -1168,11 +1335,76 @@ const activeItemIsImage = computed(() => {
                             <span v-else class="block text-ink-muted">
                                 {{ t('Add a location') }}
                             </span>
+                            <span
+                                v-if="locationFromPhoto"
+                                class="block text-xs text-ink-muted"
+                            >
+                                {{ t('From photo') }}
+                            </span>
                         </span>
                         <span class="shrink-0 font-medium text-action">
                             {{ hasChosenLocation ? t('Change') : t('Add') }}
                         </span>
                     </button>
+                </section>
+
+                <section
+                    v-show="currentStep === 1"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
+                >
+                    <span class="tracking-wider text-ink-muted uppercase">
+                        {{ t('Date') }}
+                    </span>
+                    <div
+                        class="relative mt-2 flex w-full items-center gap-3 text-left"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            class="size-5 shrink-0 text-ink-muted"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0V11.25A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                            />
+                        </svg>
+                        <span class="min-w-0 flex-1">
+                            <span
+                                v-if="photoTakenAt"
+                                class="block truncate text-ink"
+                            >
+                                {{ formatTakenAt(photoTakenAt) }}
+                            </span>
+                            <span v-else class="block text-ink-muted">
+                                {{ t('Add a date') }}
+                            </span>
+                            <span
+                                v-if="dateFromPhoto"
+                                class="block text-xs text-ink-muted"
+                            >
+                                {{ t('From photo') }}
+                            </span>
+                        </span>
+                        <span class="shrink-0 font-medium text-action">
+                            {{ photoTakenAt ? t('Change') : t('Add') }}
+                        </span>
+                        <!-- Transparent native picker overlays the whole row so
+                             a tap anywhere opens it, keeping the row styling. -->
+                        <input
+                            type="datetime-local"
+                            :value="takenAtInputValue"
+                            :max="maxTakenAtInput"
+                            :min="MIN_TAKEN_AT_INPUT"
+                            :aria-label="t('Date')"
+                            class="absolute inset-0 size-full opacity-0"
+                            @change="onTakenAtInput"
+                        />
+                    </div>
                 </section>
 
                 <section

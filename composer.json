@@ -29,6 +29,7 @@
         "voicecode-bv/mobile-photos": "^1.0"
     },
     "require-dev": {
+        "cweagans/composer-patches": "^1.7",
         "fakerphp/faker": "^1.24",
         "laravel/boost": "^2.0",
         "laravel/pail": "^1.2.5",
@@ -105,6 +106,13 @@
     "extra": {
         "laravel": {
             "dont-discover": []
+        },
+        "composer-exit-on-patch-failure": true,
+        "patches": {
+            "nativephp/mobile": {
+                "PR #131: Android theme colors (dark mode picker buttons)": "patches/nativephp-mobile-pr131-android-theme.patch",
+                "PR #134: Localize iOS permission strings via InfoPlist.strings": "patches/nativephp-mobile-pr134-ios-permission-l10n.patch"
+            }
         }
     },
     "config": {
@@ -112,6 +120,7 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
+            "cweagans/composer-patches": true,
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
         }
