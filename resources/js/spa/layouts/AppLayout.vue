@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useSlots } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, useSlots } from 'vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 
 const props = withDefaults(
@@ -32,13 +32,19 @@ function resetScroll(): void {
         window.scrollTo(0, 0);
 
         if (document.documentElement) {
-document.documentElement.scrollTop = 0;
-}
+            document.documentElement.scrollTop = 0;
+        }
 
         if (document.body) {
-document.body.scrollTop = 0;
-}
+            document.body.scrollTop = 0;
+        }
     }
+}
+
+// Tik op de bottom-nav-tab waar je al bent (zie de visit-shim in main.ts):
+// scroll de huidige pagina vloeiend naar boven.
+function scrollToTop(): void {
+    mainRef.value?.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 onMounted(async () => {
@@ -55,6 +61,14 @@ onMounted(async () => {
             requestAnimationFrame(resetScroll);
         });
     }
+});
+
+onMounted(() => {
+    window.addEventListener('spa:tab-reselect', scrollToTop);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('spa:tab-reselect', scrollToTop);
 });
 
 defineExpose({ mainRef });

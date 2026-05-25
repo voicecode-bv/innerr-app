@@ -1,3 +1,4 @@
+import { Edge } from '@nativephp/mobile';
 import {
     createRouter,
     createWebHistory,
@@ -16,6 +17,7 @@ declare module 'vue-router' {
         iosOnly?: boolean;
         mobileOnly?: boolean;
         public?: boolean;
+        hideEdgeBar?: boolean;
     }
 }
 
@@ -85,8 +87,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/onboarding/circles/:circle/permissions',
         name: 'spa.onboarding.circle-permissions',
-        component: () =>
-            import('@/spa/pages/Onboarding/CirclePermissions.vue'),
+        component: () => import('@/spa/pages/Onboarding/CirclePermissions.vue'),
         meta: { auth: true },
     },
     {
@@ -126,6 +127,32 @@ const routes: RouteRecordRaw[] = [
         name: 'spa.posts.show',
         component: () => import('@/spa/pages/PostDetail.vue'),
         meta: { auth: true, onboarded: true },
+    },
+
+    // Feed filter (guided flow) — verbergt de native bottom-nav.
+    {
+        path: '/feed/filter/persons',
+        name: 'spa.feed-filter.persons',
+        component: () => import('@/spa/pages/FeedFilter/Persons.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
+    },
+    {
+        path: '/feed/filter/circles',
+        name: 'spa.feed-filter.circles',
+        component: () => import('@/spa/pages/FeedFilter/Circles.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
+    },
+    {
+        path: '/feed/filter/dates',
+        name: 'spa.feed-filter.dates',
+        component: () => import('@/spa/pages/FeedFilter/DateRange.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
+    },
+    {
+        path: '/feed/filter/results',
+        name: 'spa.feed-filter.results',
+        component: () => import('@/spa/pages/FeedFilter/Results.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
     },
 
     // Notifications
@@ -310,6 +337,20 @@ router.afterEach((to) => {
     const auth = useAuthStore();
 
     if (!auth.user) {
+        return;
+    }
+
+    if (to.meta.hideEdgeBar) {
+        // Routes die de native bottom-nav verbergen (bv. de feed-filter flow):
+        // sla de active-tab POST over die hem juist zou herstellen, en wis hem
+        // synchroon zodat hij niet kort oplicht tijdens het navigeren tussen
+        // stappen. clearSync is een no-op op non-native clients.
+        try {
+            Edge.clearSync();
+        } catch {
+            // Niet-native context (browser preview): geen edge-bar om te wissen.
+        }
+
         return;
     }
 

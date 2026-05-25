@@ -1,27 +1,26 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from 'vue';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard from '@/spa/components/PostCard.vue';
-import type {PostData} from '@/spa/components/PostCard.vue';
+import type { PostData } from '@/spa/components/PostCard.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
-import {
-    useInfiniteScroll
-
-} from '@/spa/composables/useInfiniteScroll';
-import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
+import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { useFeedFilterStore } from '@/spa/stores/feedFilter';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
+import filterIcon from '../../../svg/doodle-icons/filter.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import searchIcon from '../../../svg/doodle-icons/search.svg';
@@ -29,10 +28,17 @@ import starIcon from '../../../svg/doodle-icons/star.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
+const router = useRouter();
 const circlesStore = useCirclesStore();
 const feedCache = useFeedCacheStore();
+const feedFilter = useFeedFilterStore();
 const notificationsStore = useNotificationsStore();
 const FEED_KEY = 'home';
+
+function openFilterFlow(): void {
+    feedFilter.reset();
+    router.push({ name: 'spa.feed-filter.persons' });
+}
 
 const unreadNotifications = computed(() => notificationsStore.unreadCount);
 const unreadBadge = computed(() =>
@@ -195,8 +201,8 @@ async function onPostDeleted(postId: string): Promise<void> {
 
 function activeLikesCount(): number {
     if (likesPostId.value === null) {
-return 0;
-}
+        return 0;
+    }
 
     const target = feed.items.find((p) => p.id === likesPostId.value);
 
@@ -205,8 +211,8 @@ return 0;
 
 function activeCommentsCount(): number {
     if (commentsPostId.value === null) {
-return 0;
-}
+        return 0;
+    }
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 
@@ -215,8 +221,8 @@ return 0;
 
 function bumpActivePostCommentsCount(delta: number): void {
     if (commentsPostId.value === null) {
-return;
-}
+        return;
+    }
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 
@@ -245,19 +251,34 @@ function iconMaskStyle(url: string) {
             <div
                 class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-dark-sand bg-sand pt-[var(--inset-top)]"
             >
-                <div class="flex items-center justify-between px-4 pt-2">
-                    <RouterLink
-                        :to="{ name: 'spa.search' }"
-                        :aria-label="t('Search people')"
-                        data-tour="feed.search"
-                        class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
-                    >
-                        <span
-                            aria-hidden="true"
-                            class="inline-block size-6 bg-accent"
-                            :style="iconMaskStyle(searchIcon)"
-                        ></span>
-                    </RouterLink>
+                <div class="flex items-center justify-between px-4 pt-2 pb-2">
+                    <div class="flex items-center gap-1">
+                        <RouterLink
+                            :to="{ name: 'spa.search' }"
+                            :aria-label="t('Search people')"
+                            data-tour="feed.search"
+                            class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-6 bg-accent"
+                                :style="iconMaskStyle(searchIcon)"
+                            ></span>
+                        </RouterLink>
+                        <button
+                            type="button"
+                            :aria-label="t('Filter feed')"
+                            data-tour="feed.filter"
+                            class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                            @click="openFilterFlow"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-6 bg-accent"
+                                :style="iconMaskStyle(filterIcon)"
+                            ></span>
+                        </button>
+                    </div>
                     <RouterLink
                         :to="{ name: 'spa.notifications' }"
                         :aria-label="
@@ -296,7 +317,7 @@ function iconMaskStyle(url: string) {
                 </div>
                 <div
                     data-tour="feed.circles-strip"
-                    class="no-scrollbar flex gap-3 overflow-x-auto px-4 pt-1 pb-3"
+                    class="no-scrollbar flex gap-3 overflow-x-auto border-t border-dark-sand px-4 pt-3 pb-3"
                 >
                     <RouterLink
                         :to="{ name: 'spa.circles.index' }"

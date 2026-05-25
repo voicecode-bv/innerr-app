@@ -20,11 +20,15 @@ const props = withDefaults(
         error?: string | null;
         defaultCollapsed?: boolean;
         layout?: 'scroll' | 'grid';
+        title?: string | null;
+        collapsible?: boolean;
     }>(),
     {
         error: null,
         defaultCollapsed: false,
         layout: 'scroll',
+        title: null,
+        collapsible: true,
     },
 );
 
@@ -34,7 +38,9 @@ const emit = defineEmits<{
 
 const { t } = useTranslations();
 
-const isCollapsed = ref(props.defaultCollapsed);
+const isCollapsed = ref(props.collapsible && props.defaultCollapsed);
+
+const heading = computed(() => props.title ?? t('Share with circles'));
 
 function iconMaskStyle(url: string) {
     return {
@@ -74,12 +80,12 @@ const sortedCircles = computed(() =>
 
 const summaryText = computed(() => {
     if (props.selectedIds.length === 0) {
-return t('No circles selected');
-}
+        return t('No circles selected');
+    }
 
     if (allSelected.value) {
-return t('All circles');
-}
+        return t('All circles');
+    }
 
     return t(':count selected', { count: String(props.selectedIds.length) });
 });
@@ -111,11 +117,12 @@ function toggleAll() {
     <div>
         <div class="mb-3 flex items-center justify-between gap-2">
             <button
+                v-if="collapsible"
                 type="button"
                 class="flex items-center gap-1.5 font-semibold text-ink"
                 @click="isCollapsed = !isCollapsed"
             >
-                {{ t('Share with circles') }}
+                {{ heading }}
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -132,14 +139,17 @@ function toggleAll() {
                     />
                 </svg>
             </button>
+            <span v-else class="font-semibold text-ink">{{ heading }}</span>
 
-            <span v-if="isCollapsed" class="truncate text-ink-muted">{{
-                summaryText
-            }}</span>
+            <span
+                v-if="collapsible && isCollapsed"
+                class="truncate text-ink-muted"
+                >{{ summaryText }}</span
+            >
             <button
                 v-else-if="visibleCircles.length > 0"
                 type="button"
-                class="text-ink hover:text-ink-light"
+                class="hover:text-ink-light text-ink"
                 @click="toggleAll"
             >
                 {{ allSelected ? t('Deselect all') : t('Select all') }}
@@ -184,7 +194,7 @@ function toggleAll() {
                         />
                         <div
                             v-else
-                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 dark:bg-brand-blue transition-opacity"
+                            class="flex size-14 items-center justify-center rounded-full bg-sand-100 transition-opacity dark:bg-brand-blue"
                             :class="
                                 selectedIds.includes(circle.id)
                                     ? ''
