@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e9aed4fe9f3f8f04a92a17df0d8cb0ac",
+    "content-hash": "212eef6a0bad4609c4e89934e56cb596",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2750,16 +2750,16 @@
         },
         {
             "name": "nativephp/mobile-camera",
-            "version": "1.0.2",
+            "version": "1.0.999",
             "source": {
                 "type": "git",
-                "url": "https://github.com/NativePHP/mobile-camera.git",
-                "reference": "cdc630767da2dca7bbcc91584fbe8267ea5a55e7"
+                "url": "https://github.com/voicecode-bv/mobile-camera.git",
+                "reference": "32403853d1b001a706d4239406727480a7c0a6f8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NativePHP/mobile-camera/zipball/cdc630767da2dca7bbcc91584fbe8267ea5a55e7",
-                "reference": "cdc630767da2dca7bbcc91584fbe8267ea5a55e7",
+                "url": "https://api.github.com/repos/voicecode-bv/mobile-camera/zipball/32403853d1b001a706d4239406727480a7c0a6f8",
+                "reference": "32403853d1b001a706d4239406727480a7c0a6f8",
                 "shasum": ""
             },
             "require": {
@@ -2782,7 +2782,6 @@
                     "Native\\Mobile\\Providers\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -2792,12 +2791,12 @@
                     "email": "info@nativephp.com"
                 }
             ],
-            "description": "Camera plugin for NativePHP Mobile (Photo capture, Video recording, Gallery picker)",
+            "description": "Camera plugin for NativePHP Mobile (Photo capture, Video recording, Gallery picker) - Innerr fork: preserves capture date & GPS metadata",
             "support": {
-                "issues": "https://github.com/NativePHP/mobile-camera/issues",
-                "source": "https://github.com/NativePHP/mobile-camera/tree/1.0.2"
+                "source": "https://github.com/voicecode-bv/mobile-camera/tree/1.0.999",
+                "issues": "https://github.com/voicecode-bv/mobile-camera/issues"
             },
-            "time": "2026-04-01T20:29:25+00:00"
+            "time": "2026-05-25T18:28:43+00:00"
         },
         {
             "name": "nativephp/mobile-device",

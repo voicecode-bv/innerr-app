@@ -127,6 +127,10 @@
         },
         {
             "type": "vcs",
+            "url": "https://github.com/voicecode-bv/mobile-camera"
+        },
+        {
+            "type": "vcs",
             "url": "https://github.com/developernauts/nativephp-inapp-purchases"
         },
         {

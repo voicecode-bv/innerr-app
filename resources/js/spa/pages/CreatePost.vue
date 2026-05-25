@@ -81,6 +81,18 @@ interface MediaItem {
     stagedToken?: string;
 }
 
+/**
+ * EXIF metadata the native camera/gallery layer attaches to its events. The
+ * native side reads PHAsset/MediaStore/EXIF before any re-encode, so these are
+ * the authoritative source for taken_at and GPS. Keys are omitted when the
+ * device couldn't supply them.
+ */
+interface NativeMediaMetadata {
+    takenAt?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+}
+
 const MAX_PHOTOS = 10;
 
 const { t } = useTranslations();
@@ -432,6 +444,28 @@ async function fetchBlob(url: string): Promise<Blob | null> {
     }
 }
 
+/**
+ * Map the optional native event metadata (`takenAt`/`latitude`/`longitude`)
+ * onto our `ExifData` shape. Returns null when native supplied nothing, so the
+ * caller can fall back to reading EXIF from the file itself (browser context or
+ * older native builds without metadata support).
+ */
+function nativeExif(meta: NativeMediaMetadata): ExifData | null {
+    const taken_at =
+        typeof meta.takenAt === 'string' && meta.takenAt !== ''
+            ? meta.takenAt
+            : null;
+    const latitude = typeof meta.latitude === 'number' ? meta.latitude : null;
+    const longitude =
+        typeof meta.longitude === 'number' ? meta.longitude : null;
+
+    if (taken_at === null && latitude === null && longitude === null) {
+        return null;
+    }
+
+    return { taken_at, latitude, longitude };
+}
+
 function makeItem(
     path: string,
     mimeType: string,
@@ -452,7 +486,11 @@ function makeItem(
     };
 }
 
-async function appendItem(path: string, mimeType: string): Promise<void> {
+async function appendItem(
+    path: string,
+    mimeType: string,
+    nativeMeta?: NativeMediaMetadata,
+): Promise<void> {
     const isVideo = mimeType.startsWith('video/');
     console.log('[CreatePost media] appendItem', {
         path,
@@ -480,12 +518,21 @@ async function appendItem(path: string, mimeType: string): Promise<void> {
     if (isVideo) {
         thumbnail = await generateThumbnail(path);
     } else {
-        // EXIF lezen we via een fetch op de staged URL — de WebView's asset
-        // fast-path streamt het bestand zonder PHP-roundtrip.
-        const blob = await fetchBlob(staged.url);
+        // De native camera-/galerijlaag levert taken_at en GPS rechtstreeks mee
+        // en is autoritatief: die leest PHAsset/MediaStore/EXIF vóór her-encoden.
+        // Alleen als native niets aanleverde (browsercontext) lezen we de EXIF
+        // zelf via een fetch op de staged URL — de WebView's asset fast-path
+        // streamt het bestand zonder PHP-roundtrip.
+        const provided = nativeMeta ? nativeExif(nativeMeta) : null;
 
-        if (blob) {
-            exif = await readExif(blob);
+        if (provided) {
+            exif = provided;
+        } else {
+            const blob = await fetchBlob(staged.url);
+
+            if (blob) {
+                exif = await readExif(blob);
+            }
         }
     }
 
@@ -499,15 +546,17 @@ async function appendItem(path: string, mimeType: string): Promise<void> {
     });
 }
 
-async function handlePhotoTaken(payload: {
-    path: string;
-    mimeType: string;
-}): Promise<void> {
+async function handlePhotoTaken(
+    payload: {
+        path: string;
+        mimeType: string;
+    } & NativeMediaMetadata,
+): Promise<void> {
     if (hasVideo.value || items.value.length >= MAX_PHOTOS) {
         return;
     }
 
-    await appendItem(payload.path, payload.mimeType);
+    await appendItem(payload.path, payload.mimeType, payload);
 }
 
 async function handleVideoRecorded(payload: {
@@ -545,7 +594,7 @@ async function handleVideoRecorded(payload: {
 
 async function handleMediaSelected(payload: {
     success: boolean;
-    files: { path: string; mimeType: string }[];
+    files: ({ path: string; mimeType: string } & NativeMediaMetadata)[];
     cancelled: boolean;
 }): Promise<void> {
     if (!payload.success || payload.cancelled || !payload.files.length) {
@@ -573,7 +622,7 @@ async function handleMediaSelected(payload: {
             break;
         }
 
-        await appendItem(file.path, file.mimeType ?? '');
+        await appendItem(file.path, file.mimeType ?? '', file);
     }
 }
 
@@ -617,8 +666,18 @@ async function handleCropped(
 
     uploading.value = true;
 
+    // De native metadata op het item is autoritatief; canvas.toBlob in de
+    // crop-modal her-encodeert en strip't EXIF, dus de modal kan taken_at/GPS
+    // verloren zijn. Houd de reeds bekende waarden aan en vul alleen ontbrekende
+    // velden aan met wat de modal nog uit de bron wist te lezen.
+    const mergedExif: ExifData = {
+        taken_at: target.exif.taken_at ?? exif.taken_at,
+        latitude: target.exif.latitude ?? exif.latitude,
+        longitude: target.exif.longitude ?? exif.longitude,
+    };
+
     try {
-        const path = await uploadInChunks(blob, exif);
+        const path = await uploadInChunks(blob, mergedExif);
 
         // De originele staged kopie hoort niet meer bij het zichtbare beeld;
         // gooi 'm weg. De gecropte data-URL is klein genoeg om als preview te
@@ -630,7 +689,7 @@ async function handleCropped(
 
         target.path = path;
         target.preview = dataUrl;
-        target.exif = exif;
+        target.exif = mergedExif;
         showCropModal.value = false;
     } catch {
         void Dialog.alert(
