@@ -1,0 +1,27 @@
+{
+    "namespace": "Badge",
+    "bridge_functions": [
+        {
+            "name": "Badge.Set",
+            "android": "app.innerr.nativebadge.NativeBadgeFunctions.Set",
+            "ios": "NativeBadgeFunctions.Set",
+            "description": "Set the app icon badge counter to a specific number (0 clears it). iOS sets an exact count; Android can only reliably clear (count 0)."
+        }
+    ],
+    "android": {
+        "min_version": 26,
+        "permissions": [],
+        "dependencies": {
+            "implementation": []
+        }
+    },
+    "ios": {
+        "min_version": "18.2",
+        "info_plist": {},
+        "dependencies": {
+            "swift_packages": [],
+            "pods": []
+        }
+    },
+    "events": []
+}

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { externalApi } from '@/spa/http/externalApi';
+import { setBadge } from '@innerr/native-badge';
 
 const DEFAULT_TTL_MS = 60 * 1000;
 
@@ -29,6 +30,7 @@ return this.loading;
                     );
                     this.unreadCount = resp.count;
                     this.loadedAt = Date.now();
+                    this.syncIconBadge();
 
                     return this.unreadCount;
                 } finally {
@@ -41,9 +43,11 @@ return this.loading;
         markAllRead(): void {
             this.unreadCount = 0;
             this.loadedAt = Date.now();
+            this.syncIconBadge();
         },
         decrement(by: number = 1): void {
             this.unreadCount = Math.max(0, this.unreadCount - by);
+            this.syncIconBadge();
         },
         invalidate(): void {
             this.loadedAt = 0;
@@ -51,6 +55,18 @@ return this.loading;
         clear(): void {
             this.unreadCount = 0;
             this.loadedAt = 0;
+            this.syncIconBadge();
+        },
+        /**
+         * Mirror the unread count onto the native app icon badge so it stays in
+         * sync with in-app reads (iOS does not decrement the badge on its own).
+         * No-op on web/desktop where the native bridge is unavailable; the
+         * underlying bridge call rejects there and we swallow it.
+         */
+        syncIconBadge(): void {
+            void setBadge(this.unreadCount).catch(() => {
+                // Bridge unavailable (web/desktop) or native error; not critical.
+            });
         },
     },
 });

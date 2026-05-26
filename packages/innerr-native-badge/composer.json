@@ -1,0 +1,34 @@
+{
+    "name": "innerr/native-badge",
+    "description": "Set the app icon badge counter from JS/PHP for NativePHP Mobile",
+    "type": "nativephp-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Innerr"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "nativephp/mobile": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Innerr\\NativeBadge\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Innerr\\NativeBadge\\NativeBadgeServiceProvider"
+            ],
+            "aliases": {
+                "NativeBadge": "Innerr\\NativeBadge\\Facades\\NativeBadge"
+            }
+        },
+        "nativephp": {
+            "manifest": "nativephp.json"
+        }
+    }
+}

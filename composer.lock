@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f575a63779ee9dba5984e77d4c0ad67b",
+    "content-hash": "27cabaf9c6e2756e055c50bb8accf5fb",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1493,6 +1493,51 @@
                 }
             ],
             "time": "2026-05-23T22:00:21+00:00"
+        },
+        {
+            "name": "innerr/native-badge",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/innerr-native-badge",
+                "reference": "2c47db3674ad01dc3953a18e5fa2bfb5044d4b35"
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Innerr\\NativeBadge\\NativeBadgeServiceProvider"
+                    ],
+                    "aliases": {
+                        "NativeBadge": "Innerr\\NativeBadge\\Facades\\NativeBadge"
+                    }
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Innerr\\NativeBadge\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Innerr"
+                }
+            ],
+            "description": "Set the app icon badge counter from JS/PHP for NativePHP Mobile",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "innerr/native-media",
