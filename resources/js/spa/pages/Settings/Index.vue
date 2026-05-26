@@ -7,40 +7,25 @@ import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { api } from '@/spa/http/apiClient';
-import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useAppearanceStore, type AppearanceMode } from '@/spa/stores/appearance';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useFeatureTourStore } from '@/spa/stores/featureTour';
-import { useI18nStore } from '@/spa/stores/i18n';
 import bellIcon from '../../../../svg/doodle-icons/bell.svg';
 import circleIcon from '../../../../svg/doodle-icons/circle.svg';
 import cloudIcon from '../../../../svg/doodle-icons/cloud.svg';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
-import globeIcon from '../../../../svg/doodle-icons/globe.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
-import nightIcon from '../../../../svg/doodle-icons/night.svg';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
 import questionIcon from '../../../../svg/doodle-icons/question.svg';
 import tagIcon from '../../../../svg/doodle-icons/tag.svg';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
-const i18n = useI18nStore();
 const auth = useAuthStore();
 const featureTour = useFeatureTourStore();
-const appearance = useAppearanceStore();
 const router = useRouter();
 const { isIos, isAndroid } = usePlatform();
-
-const currentLocale = computed(() => i18n.locale);
-const currentAppearance = computed(() => appearance.mode);
-
-function setAppearance(mode: AppearanceMode): void {
-    appearance.set(mode);
-}
 
 const menuItems = computed(() => [
     {
@@ -103,50 +88,6 @@ const menuItems = computed(() => [
     },
 ]);
 
-const languageIconStyle = computed(() => ({
-    maskImage: `url(${globeIcon})`,
-    WebkitMaskImage: `url(${globeIcon})`,
-    maskSize: 'contain',
-    WebkitMaskSize: 'contain',
-    maskRepeat: 'no-repeat',
-    WebkitMaskRepeat: 'no-repeat',
-    maskPosition: 'center',
-    WebkitMaskPosition: 'center',
-}));
-
-const appearanceIconStyle = computed(() => ({
-    maskImage: `url(${nightIcon})`,
-    WebkitMaskImage: `url(${nightIcon})`,
-    maskSize: 'contain',
-    WebkitMaskSize: 'contain',
-    maskRepeat: 'no-repeat',
-    WebkitMaskRepeat: 'no-repeat',
-    maskPosition: 'center',
-    WebkitMaskPosition: 'center',
-}));
-
-async function setLocale(locale: string): Promise<void> {
-    i18n.set(locale);
-
-    if (auth.user) {
-        auth.user.locale = locale;
-    }
-
-    try {
-        await externalApi.put('/profile', { locale });
-    } catch {
-        // i18n is al lokaal toegepast; volgende bootstrap synct met server.
-    }
-
-    // Forceer een Edge bottom-nav re-render in de nieuwe taal. Anders ververst
-    // de native bar pas bij de volgende route-navigatie (router.afterEach).
-    api.post('/api/spa/edge/active-tab', {
-        path: router.currentRoute.value.path,
-    }).catch(() => {
-        // Fire-and-forget: bij netwerkfout ververst de bar bij de volgende navigatie.
-    });
-}
-
 function restartTour(): void {
     featureTour.restart();
     router.push({ name: 'spa.home' });
@@ -179,102 +120,6 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
             class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
         >
             <div class="relative space-y-4 px-4 pt-4 pb-24">
-                <div class="flex items-center justify-between gap-3 px-2">
-                    <span class="flex items-center gap-2 text-ink-muted">
-                        <span
-                            aria-hidden="true"
-                            class="inline-block size-3.5 bg-current"
-                            :style="languageIconStyle"
-                        ></span>
-                        {{ t('Language') }}
-                    </span>
-                    <div
-                        class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5"
-                    >
-                        <button
-                            class="rounded-full px-3 py-1 transition"
-                            :class="
-                                currentLocale === 'nl'
-                                    ? 'bg-surface text-ink shadow-sm'
-                                    : 'text-ink-muted'
-                            "
-                            @click="setLocale('nl')"
-                        >
-                            NL
-                        </button>
-                        <button
-                            class="rounded-full px-3 py-1 transition"
-                            :class="
-                                currentLocale === 'en'
-                                    ? 'bg-surface text-ink shadow-sm'
-                                    : 'text-ink-muted'
-                            "
-                            @click="setLocale('en')"
-                        >
-                            EN
-                        </button>
-                        <button
-                            class="rounded-full px-3 py-1 transition"
-                            :class="
-                                currentLocale === 'fr'
-                                    ? 'bg-surface text-ink shadow-sm'
-                                    : 'text-ink-muted'
-                            "
-                            @click="setLocale('fr')"
-                        >
-                            FR
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between gap-3 px-2">
-                    <span class="flex items-center gap-2 text-ink-muted">
-                        <span
-                            aria-hidden="true"
-                            class="inline-block size-3.5 bg-current"
-                            :style="appearanceIconStyle"
-                        ></span>
-                        {{ t('Appearance') }}
-                    </span>
-                    <div
-                        class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5"
-                    >
-                        <button
-                            class="rounded-full px-3 py-1 transition"
-                            :class="
-                                currentAppearance === 'system'
-                                    ? 'bg-surface text-ink shadow-sm'
-                                    : 'text-ink-muted'
-                            "
-                            @click="setAppearance('system')"
-                        >
-                            {{ t('Auto') }}
-                        </button>
-                        <button
-                            class="rounded-full px-3 py-1 transition"
-                            :class="
-                                currentAppearance === 'light'
-                                    ? 'bg-surface text-ink shadow-sm'
-                                    : 'text-ink-muted'
-                            "
-                            @click="setAppearance('light')"
-                        >
-                            {{ t('Light') }}
-                        </button>
-                        <button
-                            class="rounded-full px-3 py-1 transition"
-                            :class="
-                                currentAppearance === 'dark'
-                                    ? 'bg-surface text-ink shadow-sm'
-                                    : 'text-ink-muted'
-                            "
-                            @click="setAppearance('dark')"
-                        >
-                            {{ t('Dark') }}
-                        </button>
-                    </div>
-                </div>
-
                 <ul class="divide-y divide-sand-100 bg-surface">
                     <li
                         v-for="item in menuItems"

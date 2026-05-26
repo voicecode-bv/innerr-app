@@ -15,7 +15,9 @@ use Native\Mobile\Providers\PushNotificationsServiceProvider;
 use Native\Mobile\Providers\SecureStorageServiceProvider;
 use Native\Mobile\Providers\ShareServiceProvider;
 use Native\Mobile\Providers\SystemServiceProvider;
+use NativePHP\BackgroundTasks\BackgroundTasksServiceProvider;
 use Voicecode\Mobile\Photos\PhotosServiceProvider;
+use VoicecodeBv\NativephpBadge\NativeBadgeServiceProvider;
 
 class NativeServiceProvider extends ServiceProvider
 {
@@ -51,7 +53,7 @@ class NativeServiceProvider extends ServiceProvider
             CameraServiceProvider::class,
             DialogServiceProvider::class,
             PushNotificationsServiceProvider::class,
-            // \NativePHP\BackgroundTasks\BackgroundTasksServiceProvider::class,
+            BackgroundTasksServiceProvider::class,
             PackageInfoServiceProvider::class,
             BrowserServiceProvider::class,
             NetworkServiceProvider::class,
@@ -61,8 +63,8 @@ class NativeServiceProvider extends ServiceProvider
             ShareServiceProvider::class,
             PhotosServiceProvider::class,
             NativeMediaServiceProvider::class,
-            \VoicecodeBv\NativephpBadge\NativeBadgeServiceProvider::class,
-        
+            NativeBadgeServiceProvider::class,
+
         ];
     }
 }

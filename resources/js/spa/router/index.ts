@@ -284,13 +284,13 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true, mobileOnly: true },
     },
 
-    // Dev tools — only registered outside production (e.g. badge test page).
+    // Dev tools — only registered outside production (e.g. the debug page).
     ...(isLocalEnv
         ? [
               {
-                  path: '/dev/badge',
-                  name: 'spa.dev.badge',
-                  component: () => import('@/spa/pages/Dev/BadgeTest.vue'),
+                  path: '/dev/debug',
+                  name: 'spa.dev.debug',
+                  component: () => import('@/spa/pages/Dev/Debug.vue'),
                   meta: { auth: true, onboarded: true },
               } as RouteRecordRaw,
           ]

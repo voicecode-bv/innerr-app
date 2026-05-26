@@ -34,6 +34,7 @@ import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { useTagsStore } from '@/spa/stores/tags';
+import calendarIcon from '../../../svg/doodle-icons/calendar.svg';
 import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -113,7 +114,7 @@ interface Post {
     persons?: Person[];
 }
 
-const { t } = useTranslations();
+const { t, locale } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -249,6 +250,29 @@ const mapTarget = computed(() => {
     return firstCircle
         ? { name: 'spa.circles.map', params: { circle: firstCircle.id } }
         : { name: 'spa.map' };
+});
+
+// Capture date shown in the details block. Falls back to the post creation
+// date when EXIF taken_at is absent, matching how ageAt resolves the moment.
+const formattedTakenAt = computed<string | null>(() => {
+    const source = post.value?.taken_at ?? post.value?.created_at;
+
+    if (!source) {
+        return null;
+    }
+
+    const date = new Date(source);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    return date.toLocaleDateString(locale.value, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
 });
 
 const videoPlayerRef = ref<{ videoRef: HTMLVideoElement | null } | null>(null);
@@ -1382,6 +1406,22 @@ watch(
                                 :key="tag.id"
                                 :label="tag.name"
                             />
+                        </div>
+                    </section>
+
+                    <section v-if="formattedTakenAt" class="space-y-3">
+                        <h3 class="font-semibold text-brand-blue dark:text-ink">
+                            {{ t('Date') }}
+                        </h3>
+                        <div class="flex items-center gap-2 text-ink">
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-5 bg-ink-muted"
+                                :style="iconMaskStyle(calendarIcon)"
+                            ></span>
+                            <span class="first-letter:uppercase">{{
+                                formattedTakenAt
+                            }}</span>
                         </div>
                     </section>
 

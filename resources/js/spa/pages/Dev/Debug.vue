@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BridgeCall } from '@nativephp/mobile';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
@@ -7,9 +8,10 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import { setBadge } from '@voicecode-bv/nativephp-badge';
 
-// Local-only debug page to verify the app icon badge logic. Strings are kept
-// in English on purpose: this page is never shipped to production builds, so it
-// does not belong in the translation files.
+// Local-only debug page for exercising native bridge behaviour (app icon
+// badge, background tasks, etc.). Strings are kept in English on purpose: this
+// page is never shipped to production builds, so it does not belong in the
+// translation files.
 
 const router = useRouter();
 const notifications = useNotificationsStore();
@@ -48,13 +50,32 @@ function clearViaStore(): void {
     record('notifications.clear() called (sets badge to 0 via store).');
 }
 
+const runningBackgroundTasks = ref(false);
+
+// JS equivalent of the PHP facade `BackgroundTasks::runNow()`, which itself
+// just calls `nativephp_call('BackgroundTasks.RunNow', '{}')`. Requires the
+// BackgroundTasks plugin to be enabled in NativeServiceProvider and a native
+// rebuild; otherwise the bridge rejects with "method not found".
+async function runBackgroundTasksNow(): Promise<void> {
+    runningBackgroundTasks.value = true;
+
+    try {
+        const result = await BridgeCall('BackgroundTasks.RunNow', {});
+        record(`BackgroundTasks.RunNow resolved: ${JSON.stringify(result)}`);
+    } catch (error) {
+        record(`BackgroundTasks.RunNow rejected: ${(error as Error).message}`);
+    } finally {
+        runningBackgroundTasks.value = false;
+    }
+}
+
 function goBack(): void {
     router.push({ name: 'spa.home' });
 }
 </script>
 
 <template>
-    <AppLayout title="Badge test">
+    <AppLayout title="Debug">
         <template #header-left>
             <button class="flex items-center text-ink" @click="goBack">
                 <svg
@@ -76,8 +97,8 @@ function goBack(): void {
 
         <div class="mt-10 space-y-4 px-4 pt-4 pb-24">
             <p class="text-sm text-sand-600">
-                Local-only page to verify the app icon badge. iOS sets an exact
-                number; Android only reliably clears (count 0).
+                Local-only page for exercising native bridge calls. Results are
+                appended to the call log below.
             </p>
 
             <div class="rounded-lg border border-dark-sand bg-surface p-4">
@@ -98,6 +119,7 @@ function goBack(): void {
             </div>
 
             <div class="space-y-2">
+                <h2 class="text-sm font-semibold text-ink">App icon badge</h2>
                 <Button block @click="applyBadge(5)">Set badge to 5</Button>
                 <Button block @click="applyBadge(1)">Set badge to 1</Button>
                 <Button block variant="danger" @click="applyBadge(0)">
@@ -105,6 +127,21 @@ function goBack(): void {
                 </Button>
                 <Button block variant="secondary" @click="clearViaStore">
                     Reset via notifications store
+                </Button>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-sm font-semibold text-ink">Background tasks</h2>
+                <Button
+                    block
+                    :disabled="runningBackgroundTasks"
+                    @click="runBackgroundTasksNow"
+                >
+                    {{
+                        runningBackgroundTasks
+                            ? 'Running…'
+                            : 'Run background tasks now'
+                    }}
                 </Button>
             </div>
 

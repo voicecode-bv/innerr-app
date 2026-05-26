@@ -13,11 +13,11 @@
         "blade-ui-kit/blade-icons": "^1.9",
         "codingwithrk/package-info": "^1.0",
         "developernauts/nativephp-inapp-purchases": "*",
-        "voicecode-bv/nativephp-badge": "^1.0",
         "innerr/native-media": "^1.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "nativephp/mobile": "^3.0",
+        "nativephp/mobile-background-tasks": "^0.0.3",
         "nativephp/mobile-browser": "^1.0",
         "nativephp/mobile-camera": "^1.0",
         "nativephp/mobile-dialog": "^1.0",
@@ -27,7 +27,8 @@
         "nativephp/mobile-share": "^1.0",
         "nativephp/mobile-system": "*",
         "spatie/laravel-ray": "^1.43",
-        "voicecode-bv/mobile-photos": "^1.0"
+        "voicecode-bv/mobile-photos": "^1.0",
+        "voicecode-bv/nativephp-badge": "^1.0"
     },
     "require-dev": {
         "cweagans/composer-patches": "^1.7",

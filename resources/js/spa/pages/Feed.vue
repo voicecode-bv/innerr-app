@@ -36,7 +36,7 @@ const feedFilter = useFeedFilterStore();
 const notificationsStore = useNotificationsStore();
 const FEED_KEY = 'home';
 
-// Badge test page is only registered outside production (see router).
+// Debug page is only registered outside production (see router).
 const isLocalEnv =
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
@@ -285,8 +285,8 @@ function iconMaskStyle(url: string) {
                         </button>
                         <RouterLink
                             v-if="isLocalEnv"
-                            :to="{ name: 'spa.dev.badge' }"
-                            aria-label="Badge test (local only)"
+                            :to="{ name: 'spa.dev.debug' }"
+                            aria-label="Debug tools (local only)"
                             class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                         >
                             <span
