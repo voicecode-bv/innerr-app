@@ -61,6 +61,8 @@ class NativeServiceProvider extends ServiceProvider
             ShareServiceProvider::class,
             PhotosServiceProvider::class,
             NativeMediaServiceProvider::class,
+            \VoicecodeBv\NativephpBadge\NativeBadgeServiceProvider::class,
+        
         ];
     }
 }

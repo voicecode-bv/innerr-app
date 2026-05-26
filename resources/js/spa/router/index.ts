@@ -22,6 +22,8 @@ declare module 'vue-router' {
 }
 
 const isNative = typeof window !== 'undefined' && '__nativephp' in window;
+const isLocalEnv =
+    (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
 const routes: RouteRecordRaw[] = [
     // Auth (guest-only)
@@ -281,6 +283,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/spa/pages/Settings/Subscriptions.vue'),
         meta: { auth: true, onboarded: true, mobileOnly: true },
     },
+
+    // Dev tools — only registered outside production (e.g. badge test page).
+    ...(isLocalEnv
+        ? [
+              {
+                  path: '/dev/badge',
+                  name: 'spa.dev.badge',
+                  component: () => import('@/spa/pages/Dev/BadgeTest.vue'),
+                  meta: { auth: true, onboarded: true },
+              } as RouteRecordRaw,
+          ]
+        : []),
 
     // Catch-all → login
     {

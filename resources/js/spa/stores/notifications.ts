@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { externalApi } from '@/spa/http/externalApi';
-import { setBadge } from '@innerr/native-badge';
+import { setBadge } from '@voicecode-bv/nativephp-badge';
 
 const DEFAULT_TTL_MS = 60 * 1000;
 

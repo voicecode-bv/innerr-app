@@ -177,8 +177,18 @@ async function loadInitial(): Promise<void> {
         circleInvitations.value = invitations.data;
         ownershipTransfers.value = transfers.data;
 
-        if (hasUnread.value) {
+        // Opening the notifications page acknowledges everything. Mark all read
+        // (which resets the in-app bell and the native app icon badge) whenever
+        // anything is unread, including hidden-type notifications or a count set
+        // by a push. If nothing is unread locally the OS may still show an icon
+        // badge from a push payload, so clear it explicitly.
+        if (
+            notificationsStore.unreadCount > 0 ||
+            items.value.some((notification) => !notification.read_at)
+        ) {
             markAllAsRead();
+        } else {
+            notificationsStore.syncIconBadge();
         }
     } catch {
         // ignore

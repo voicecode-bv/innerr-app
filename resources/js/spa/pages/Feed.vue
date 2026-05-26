@@ -19,6 +19,7 @@ import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useFeedFilterStore } from '@/spa/stores/feedFilter';
 import { useNotificationsStore } from '@/spa/stores/notifications';
+import bugIcon from '../../../svg/doodle-icons/bug.svg';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import filterIcon from '../../../svg/doodle-icons/filter.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
@@ -34,6 +35,10 @@ const feedCache = useFeedCacheStore();
 const feedFilter = useFeedFilterStore();
 const notificationsStore = useNotificationsStore();
 const FEED_KEY = 'home';
+
+// Badge test page is only registered outside production (see router).
+const isLocalEnv =
+    (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
 function openFilterFlow(): void {
     feedFilter.reset();
@@ -278,6 +283,18 @@ function iconMaskStyle(url: string) {
                                 :style="iconMaskStyle(filterIcon)"
                             ></span>
                         </button>
+                        <RouterLink
+                            v-if="isLocalEnv"
+                            :to="{ name: 'spa.dev.badge' }"
+                            aria-label="Badge test (local only)"
+                            class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-6 bg-accent"
+                                :style="iconMaskStyle(bugIcon)"
+                            ></span>
+                        </RouterLink>
                     </div>
                     <RouterLink
                         :to="{ name: 'spa.notifications' }"
