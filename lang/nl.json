@@ -307,6 +307,7 @@
     "Restoring...": "Herstellen...",
     "Purchases restored.": "Aankopen hersteld.",
     "Purchase failed.": "Aankoop mislukt.",
+    "This purchase is linked to a different Innerr account. Sign in with that account to use it.": "Deze aankoop is gekoppeld aan een ander Innerr-account. Log in met dat account om hem te gebruiken.",
     "Restore failed.": "Herstellen mislukt.",
     "Could not load purchases.": "Kon aankopen niet laden.",
     "Debug info": "Debug-info",

@@ -292,6 +292,7 @@
     "Restoring...": "Restoring...",
     "Purchases restored.": "Purchases restored.",
     "Purchase failed.": "Purchase failed.",
+    "This purchase is linked to a different Innerr account. Sign in with that account to use it.": "This purchase is linked to a different Innerr account. Sign in with that account to use it.",
     "Restore failed.": "Restore failed.",
     "Could not load purchases.": "Could not load purchases.",
     "Debug info": "Debug info",

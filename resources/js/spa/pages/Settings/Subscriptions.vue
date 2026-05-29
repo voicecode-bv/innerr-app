@@ -10,7 +10,7 @@ import SurfaceCard from '@/components/SurfaceCard.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { externalApi } from '@/spa/http/externalApi';
+import { ApiError, externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
@@ -250,10 +250,22 @@ async function verifyGooglePurchase(
         });
 
         return true;
-    } catch {
-        // Webhooks via Google Play RTDN vangen het uiteindelijk alsnog op,
-        // dus we falen niet hard — refreshEntitlement laat de juiste
-        // (mogelijk nog niet-paid) state zien.
+    } catch (err) {
+        // Een 403 betekent dat de aankoop bij een ander Innerr-account hoort
+        // (Google's obfuscatedAccountId ≠ de huidige gebruiker). Webhooks
+        // reconciliëren dit NIET, dus tonen we een duidelijke melding i.p.v.
+        // stil te falen.
+        if (err instanceof ApiError && err.status === 403) {
+            errorMessage.value = t(
+                'This purchase is linked to a different Innerr account. Sign in with that account to use it.',
+            );
+
+            return false;
+        }
+
+        // Andere fouten (netwerk e.d.): Google Play RTDN-webhooks vangen het
+        // uiteindelijk alsnog op, dus we falen niet hard — refreshEntitlement
+        // laat de juiste (mogelijk nog niet-paid) state zien.
         return false;
     }
 }
@@ -281,8 +293,21 @@ async function verifyApplePurchase(
         });
 
         return true;
-    } catch {
-        // Apple App Store Server Notifications vangen het alsnog op.
+    } catch (err) {
+        // Een 403 betekent dat de aankoop bij een ander Innerr-account hoort
+        // (Apple's appAccountToken ≠ de huidige gebruiker). Apple App Store
+        // Server Notifications reconciliëren dit NIET, dus tonen we een
+        // duidelijke melding i.p.v. stil te falen.
+        if (err instanceof ApiError && err.status === 403) {
+            errorMessage.value = t(
+                'This purchase is linked to a different Innerr account. Sign in with that account to use it.',
+            );
+
+            return false;
+        }
+
+        // Andere fouten (netwerk e.d.): Apple App Store Server Notifications
+        // vangen het alsnog op.
         return false;
     }
 }
@@ -789,9 +814,7 @@ onMounted(async () => {
                         :key="tier.key"
                         class="reveal-item"
                     >
-                        <h3
-                            class="font-display text-lg font-semibold text-ink"
-                        >
+                        <h3 class="font-display text-lg font-semibold text-ink">
                             {{ tier.title }}
                         </h3>
                         <p class="mt-1 text-ink">

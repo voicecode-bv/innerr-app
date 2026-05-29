@@ -244,6 +244,7 @@
     "Restoring...": "Restauration en cours...",
     "Purchases restored.": "Achats restaurés.",
     "Purchase failed.": "L'achat a échoué.",
+    "This purchase is linked to a different Innerr account. Sign in with that account to use it.": "Cet achat est lié à un autre compte Innerr. Connectez-vous avec ce compte pour l'utiliser.",
     "Restore failed.": "La restauration a échoué.",
     "Could not load purchases.": "Impossible de charger les achats.",
     "Debug info": "Infos de débogage",
