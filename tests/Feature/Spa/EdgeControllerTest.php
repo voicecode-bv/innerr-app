@@ -14,22 +14,31 @@ it('returns active tab for the home path', function () {
     $response->assertOk()->assertJsonPath('active', 'home');
 });
 
-it('returns active tab for circles path', function () {
+it('marks the circles tab active on the circles index', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/circles']);
+
+    $response->assertOk()->assertJsonPath('active', 'circles');
+});
+
+it('leaves the circles tab inactive on a nested circle page', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
         ->postJson('/api/spa/edge/active-tab', ['path' => '/circles/12']);
 
-    $response->assertOk()->assertJsonPath('active', 'circles');
+    $response->assertOk()->assertJsonPath('active', '');
 });
 
-it('falls back to home for settings path now that the tab is gone', function () {
+it('leaves every tab inactive for settings paths', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
         ->postJson('/api/spa/edge/active-tab', ['path' => '/settings/persons']);
 
-    $response->assertOk()->assertJsonPath('active', 'home');
+    $response->assertOk()->assertJsonPath('active', '');
 });
 
 it('returns active tab for a profile path', function () {
@@ -68,13 +77,13 @@ it('returns active tab for a circle map path', function () {
     $response->assertOk()->assertJsonPath('active', 'map');
 });
 
-it('falls back to home when visiting notifications', function () {
+it('leaves every tab inactive when visiting notifications', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
         ->postJson('/api/spa/edge/active-tab', ['path' => '/notifications']);
 
-    $response->assertOk()->assertJsonPath('active', 'home');
+    $response->assertOk()->assertJsonPath('active', '');
 });
 
 it('clears the bottom nav for onboarding paths', function () {
