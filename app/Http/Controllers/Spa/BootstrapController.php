@@ -34,8 +34,11 @@ class BootstrapController extends Controller
                 if (($result['valid'] ?? false) && isset($result['user'])) {
                     $this->syncLocalUser($result['user']);
                     $user = Auth::user();
-                } else {
-                    // Ongeldig token — wis 'm zodat we 'm niet opnieuw proberen.
+                } elseif (($result['status'] ?? 'invalid') === 'invalid') {
+                    // Alleen bij een definitieve afwijzing wissen. Bij een
+                    // transient API-fout (unreachable) laten we het token staan
+                    // zodat een volgende bootstrap kan herstellen i.p.v. de
+                    // gebruiker onnodig uit te loggen.
                     $this->tokenStore->delete();
                 }
             }

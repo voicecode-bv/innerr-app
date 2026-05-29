@@ -36,6 +36,13 @@ class AuthenticateApiToken
         $result = $this->apiClient->validateToken();
 
         if (! ($result['valid'] ?? false) || ! isset($result['user'])) {
+            // A transient upstream failure must not surface as 401: the client
+            // wipes its token on 401, which would log out a still-valid user.
+            // Return 503 so the request can be retried without losing the token.
+            if (($result['status'] ?? 'invalid') === 'unreachable') {
+                return $this->serviceUnavailable();
+            }
+
             return $this->unauthorized();
         }
 
@@ -66,5 +73,10 @@ class AuthenticateApiToken
     protected function unauthorized(): JsonResponse
     {
         return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+
+    protected function serviceUnavailable(): JsonResponse
+    {
+        return response()->json(['message' => 'Service temporarily unavailable.'], 503);
     }
 }

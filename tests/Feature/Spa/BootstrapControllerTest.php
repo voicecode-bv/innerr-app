@@ -2,9 +2,44 @@
 
 use App\Models\User;
 use App\Services\ApiClient;
+use App\Services\TokenStore\TokenStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
+
+it('deletes the stored token on a definitive rejection during rehydrate', function () {
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('hasToken')->andReturn(true);
+    $client->shouldReceive('validateToken')->andReturn(['valid' => false, 'status' => 'invalid']);
+    $client->shouldReceive('getToken')->andReturn(null);
+    $this->app->instance(ApiClient::class, $client);
+
+    $tokenStore = Mockery::mock(TokenStore::class);
+    $tokenStore->shouldReceive('set')->andReturnTrue();
+    $tokenStore->shouldReceive('delete')->once();
+    $this->app->instance(TokenStore::class, $tokenStore);
+
+    $response = $this->withToken('rejected')->getJson('/api/spa/bootstrap');
+
+    $response->assertOk()->assertJson(['user' => null]);
+});
+
+it('keeps the stored token on a transient failure during rehydrate', function () {
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('hasToken')->andReturn(true);
+    $client->shouldReceive('validateToken')->andReturn(['valid' => false, 'status' => 'unreachable']);
+    $client->shouldReceive('getToken')->andReturn(null);
+    $this->app->instance(ApiClient::class, $client);
+
+    $tokenStore = Mockery::mock(TokenStore::class);
+    $tokenStore->shouldReceive('set')->andReturnTrue();
+    $tokenStore->shouldNotReceive('delete');
+    $this->app->instance(TokenStore::class, $tokenStore);
+
+    $response = $this->withToken('still-valid')->getJson('/api/spa/bootstrap');
+
+    $response->assertOk();
+});
 
 it('returns guest payload when not authenticated', function () {
     $response = $this->getJson('/api/spa/bootstrap');
