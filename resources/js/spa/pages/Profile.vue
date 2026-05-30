@@ -13,7 +13,7 @@ import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
 import type {PostData} from '@/spa/components/PostCard.vue';
-import PostGrid from '@/spa/components/PostGrid.vue';
+import PostMasonry from '@/spa/components/PostMasonry.vue';
 import {
     useInfiniteScroll
     
@@ -48,17 +48,17 @@ const router = useRouter();
 const auth = useAuthStore();
 const localThumbnails = useLocalThumbnailsStore();
 
-// De ProfilePost-resource bevat geen aparte `thumbnail_url`: `media_url`
-// is volgens de externe API al de 300x300 grid-poster zodra transcoding
-// klaar is. Zolang die nog draait (`media_status !== 'ready'`) valt
-// `media_url` terug op de .mp4 die niet als <img> rendert; dan pakken we
-// de lokaal-gegenereerde JPEG-thumbnail uit de plugin.
-function resolvedThumbnail(post: PostData): string | null {
-    if (post.media_status === 'ready') {
-        return post.thumbnail_url ?? post.media_url;
+// PostTile renders images from the aspect-preserving `media_url` and videos
+// from their poster. The only gap is a freshly uploaded video that is still
+// transcoding: its `media_url` is the .mp4 (won't render as <img>) and it has
+// no CDN poster yet, so we surface the locally-generated JPEG thumbnail from
+// the plugin. Every other case returns null and lets PostTile use the API URL.
+function resolvedPoster(post: PostData): string | null {
+    if (post.media_type === 'video' && post.media_status !== 'ready') {
+        return localThumbnails.get(post.id) ?? post.thumbnail_url ?? null;
     }
 
-    return localThumbnails.get(post.id) ?? post.thumbnail_url ?? post.media_url;
+    return null;
 }
 
 const username = computed(() => String(route.params.username));
@@ -404,10 +404,11 @@ function iconMaskStyle(url: string) {
 
                 <div class="h-2 bg-sand" />
 
-                <PostGrid
+                <PostMasonry
+                    class="pt-2"
                     :posts="feed.items"
                     :loading="feed.loading"
-                    :resolve-video-thumbnail="resolvedThumbnail"
+                    :resolve-poster="resolvedPoster"
                 />
 
                 <div

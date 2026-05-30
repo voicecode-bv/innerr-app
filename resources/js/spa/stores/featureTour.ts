@@ -78,6 +78,11 @@ export const useFeatureTourStore = defineStore('spa-feature-tour', {
             // Sentinel zodat FeatureTourMount.vue eenmalig synct als de gebruiker
             // verandert (bv. logout/login).
             hydrated: false,
+            // Wordt `true` zodra hydrate() de boot-beslissing heeft genomen
+            // (tour gestart, voltooid, of definitief niet meer aan de beurt).
+            // Consumers wachten hierop om "tour loopt nog niet" niet te verwarren
+            // met "tour is al afgehandeld" — die zijn bij mount allebei `idle`.
+            bootResolved: false,
         };
     },
     getters: {
@@ -106,35 +111,42 @@ export const useFeatureTourStore = defineStore('spa-feature-tour', {
 
             this.hydrated = true;
 
-            const remote = await fetchFeatureTourStatus();
+            try {
+                const remote = await fetchFeatureTourStatus();
 
-            if (!remote) {
-                return;
-            }
+                if (!remote) {
+                    return;
+                }
 
-            // Server is authoritatief zodra het endpoint bestaat: overschrijf
-            // localStorage maar laat een lopende client-side tour (status =
-            // running) ongemoeid. De gebruiker is dan midden in de tour.
-            this.completedSegments = remote.segments;
+                // Server is authoritatief zodra het endpoint bestaat: overschrijf
+                // localStorage maar laat een lopende client-side tour (status =
+                // running) ongemoeid. De gebruiker is dan midden in de tour.
+                this.completedSegments = remote.segments;
 
-            if (remote.completed_at) {
-                this.status = 'completed';
-                this.activeIndex = getSegments().length;
+                if (remote.completed_at) {
+                    this.status = 'completed';
+                    this.activeIndex = getSegments().length;
+                    this.persist();
+
+                    return;
+                }
+
+                // Bestaande gebruikers die de tour nog nooit gezien hebben (geen
+                // server-side started_at, geen completed_at) en die nu niet midden
+                // in een tour zitten: één keer automatisch aanbieden.
+                if (remote.started_at === null && this.status === 'idle') {
+                    this.start();
+
+                    return;
+                }
+
                 this.persist();
-
-                return;
+            } finally {
+                // Boot-beslissing genomen: status is nu definitief 'running'
+                // (tour gestart) of een eindstaat. Pas hierna mogen consumers
+                // een idle-status als "tour afgehandeld" lezen.
+                this.bootResolved = true;
             }
-
-            // Bestaande gebruikers die de tour nog nooit gezien hebben (geen
-            // server-side started_at, geen completed_at) en die nu niet midden
-            // in een tour zitten: één keer automatisch aanbieden.
-            if (remote.started_at === null && this.status === 'idle') {
-                this.start();
-
-                return;
-            }
-
-            this.persist();
         },
         start(): void {
             if (this.status === 'running') {

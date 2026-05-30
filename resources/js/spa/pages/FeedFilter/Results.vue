@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PostData } from '@/spa/components/PostCard.vue';
-import PostGrid from '@/spa/components/PostGrid.vue';
+import PostMasonry from '@/spa/components/PostMasonry.vue';
 import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
 import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -119,9 +119,9 @@ function editFilters(): void {
                 </span>
             </button>
 
-            <PostGrid
+            <PostMasonry
                 v-if="feed.items.length > 0 || feed.loading"
-                class="mt-1"
+                class="mt-2"
                 :posts="feed.items"
                 :loading="feed.loading"
             />

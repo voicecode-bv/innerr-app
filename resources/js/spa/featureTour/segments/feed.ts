@@ -39,6 +39,28 @@ export function feedSegment(): TourSegment {
                 },
             },
             {
+                element: '[data-tour="feed.filter"]',
+                popover: {
+                    title: t('Filter your feed'),
+                    description: t(
+                        'Narrow your feed down to specific people, circles or a date range.',
+                    ),
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
+                element: '[data-tour="feed.layout-toggle"]',
+                popover: {
+                    title: t('Switch the view'),
+                    description: t(
+                        'Switch between the classic list and a grid of your moments.',
+                    ),
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
                 element: '[data-tour="feed.notifications"]',
                 popover: {
                     title: t('Notifications'),

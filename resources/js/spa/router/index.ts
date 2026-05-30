@@ -8,6 +8,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { api } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useFeatureTourStore } from '@/spa/stores/featureTour';
 
 declare module 'vue-router' {
     interface RouteMeta {
@@ -110,6 +111,12 @@ const routes: RouteRecordRaw[] = [
         path: '/',
         name: 'spa.home',
         component: () => import('@/spa/pages/Feed.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/feed/grid',
+        name: 'spa.home.grid',
+        component: () => import('@/spa/pages/FeedGrid.vue'),
         meta: { auth: true, onboarded: true },
     },
     {
@@ -326,6 +333,23 @@ router.beforeEach(async (to) => {
 
     if (to.meta.onboarded && auth.user && !auth.user.onboarded) {
         return { name: 'spa.onboarding.intro' };
+    }
+
+    // Home honours the user's preferred feed layout. Masonry (including the
+    // not-yet-chosen default) renders the grid feed; the bottom-nav Home button
+    // targets '/' either way and lands on the right view via this redirect.
+    //
+    // Suppressed while the onboarding feature tour is running: its feed segment
+    // targets 'spa.home' (the list feed), and redirecting that to the grid would
+    // make FeatureTourMount push 'spa.home' again on every route change — an
+    // endless redirect loop.
+    if (
+        to.name === 'spa.home' &&
+        auth.user &&
+        useFeatureTourStore().status !== 'running' &&
+        (auth.user.feed_layout ?? 'masonry') === 'masonry'
+    ) {
+        return { name: 'spa.home.grid' };
     }
 
     if (to.meta.iosOnly) {

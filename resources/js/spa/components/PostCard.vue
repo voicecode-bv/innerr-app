@@ -29,6 +29,8 @@ export interface PostMediaItem {
     status?: 'processing' | 'ready' | 'failed';
     thumbnail_url?: string | null;
     thumbnail_small_url?: string | null;
+    width?: number | null;
+    height?: number | null;
     sort_order?: number;
 }
 
@@ -46,6 +48,8 @@ export interface PostData {
     thumbnail_url: string | null;
     thumbnail_small_url: string | null;
     media_status: 'processing' | 'ready' | 'failed';
+    width?: number | null;
+    height?: number | null;
     media?: PostMediaItem[];
     caption: string | null;
     location: string | null;

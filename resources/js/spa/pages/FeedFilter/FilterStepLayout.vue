@@ -29,6 +29,27 @@ const { t } = useTranslations();
         class="nativephp-safe-area relative flex min-h-dvh flex-col bg-sand text-ink"
     >
         <div class="px-6 pt-6">
+            <button
+                type="button"
+                class="mb-4 -ml-2 flex size-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-100"
+                :aria-label="t('Back')"
+                @click="emit('back')"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="size-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
+                </svg>
+            </button>
             <div class="flex items-center gap-2">
                 <div
                     v-for="n in totalSteps"

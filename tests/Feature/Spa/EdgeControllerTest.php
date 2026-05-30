@@ -14,6 +14,15 @@ it('returns active tab for the home path', function () {
     $response->assertOk()->assertJsonPath('active', 'home');
 });
 
+it('keeps the home tab active on the masonry grid feed', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->postJson('/api/spa/edge/active-tab', ['path' => '/feed/grid']);
+
+    $response->assertOk()->assertJsonPath('active', 'home');
+});
+
 it('marks the circles tab active on the circles index', function () {
     $user = User::factory()->create();
 

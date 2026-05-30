@@ -53,6 +53,7 @@ class BootstrapController extends Controller
                     'avatar' => $result['user']['avatar'] ?? $user->avatar,
                     'bio' => $result['user']['bio'] ?? $user->bio,
                     'locale' => $result['user']['locale'] ?? $user->locale,
+                    'feed_layout' => $result['user']['feed_layout'] ?? $user->feed_layout,
                     'onboarded_at' => $result['user']['onboarded_at'] ?? $user->onboarded_at,
                 ])->save();
                 $user->refresh();
@@ -68,6 +69,7 @@ class BootstrapController extends Controller
                 'avatar' => $user->avatar,
                 'bio' => $user->bio,
                 'locale' => $user->locale,
+                'feed_layout' => $user->feed_layout,
                 'onboarded' => $user->onboarded_at !== null,
             ] : null,
             'token' => $user ? $this->apiClient->getToken() : null,

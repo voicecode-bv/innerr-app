@@ -36,7 +36,10 @@ trait HandlesAuthenticatedSession
             ],
         );
 
-        $user->forceFill(['onboarded_at' => $userData['onboarded_at'] ?? null])->save();
+        $user->forceFill([
+            'onboarded_at' => $userData['onboarded_at'] ?? null,
+            'feed_layout' => $userData['feed_layout'] ?? null,
+        ])->save();
 
         Auth::login($user);
 

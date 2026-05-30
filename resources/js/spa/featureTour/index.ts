@@ -14,7 +14,6 @@ import { circleDetailSegment } from './segments/circleDetail';
 import { circlesSegment } from './segments/circles';
 import { defaultCirclesSegment } from './segments/defaultCircles';
 import { feedSegment } from './segments/feed';
-import { giveSegment } from './segments/give';
 import { mapSegment } from './segments/map';
 import { personsSegment } from './segments/persons';
 import { profileSegment } from './segments/profile';
@@ -28,7 +27,6 @@ export function getSegments(): TourSegment[] {
         circleDetailSegment(),
         personsSegment(),
         defaultCirclesSegment(),
-        giveSegment(),
         mapSegment(),
         profileSegment(),
     ];
