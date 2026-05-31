@@ -39,7 +39,7 @@ const unreadBadge = computed(() =>
 
 function openFilterFlow(): void {
     feedFilter.reset();
-    router.push({ name: 'spa.feed-filter.persons' });
+    router.push({ name: 'spa.feed-filter' });
 }
 
 // Toggle between the list feed and the masonry grid. This persists the choice
@@ -74,7 +74,86 @@ function iconMaskStyle(url: string) {
     <div
         class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-dark-sand bg-sand pt-[var(--inset-top)]"
     >
-        <div class="flex items-center justify-between px-4 pt-2 pb-2">
+        <div
+            data-tour="feed.circles-strip"
+            class="no-scrollbar flex gap-3 overflow-x-auto px-4 pt-3 pb-3"
+        >
+            <RouterLink
+                :to="{ name: 'spa.circles.index' }"
+                class="group flex shrink-0 flex-col items-center gap-1.5"
+            >
+                <div
+                    class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-ink/50 transition-transform duration-500 group-hover:rotate-90"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-6 text-ink"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-ink">{{
+                    t('Circles')
+                }}</span>
+            </RouterLink>
+
+            <template v-if="!circles">
+                <div
+                    v-for="n in 4"
+                    :key="n"
+                    class="flex shrink-0 flex-col items-center gap-1.5"
+                >
+                    <div class="size-15 animate-pulse rounded-full bg-sand" />
+                    <div class="h-3 w-12 animate-pulse rounded bg-sand" />
+                </div>
+            </template>
+
+            <RouterLink
+                v-else
+                v-for="circle in circles"
+                :key="circle.id"
+                :to="{
+                    name: 'spa.circles.feed',
+                    params: { circle: circle.id },
+                }"
+                class="flex shrink-0 flex-col items-center gap-1.5"
+            >
+                <div class="circle-ring relative rounded-full p-0.5">
+                    <div class="rounded-full bg-surface p-0.5">
+                        <img
+                            v-if="circle.photo"
+                            :src="circle.photo"
+                            :alt="circle.name"
+                            class="size-14 rounded-full object-cover"
+                        />
+                        <div
+                            v-else
+                            class="flex size-14 items-center justify-center rounded-full bg-sand-100"
+                        >
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-7 bg-sand-600"
+                                :style="iconMaskStyle(userIcon)"
+                            ></span>
+                        </div>
+                    </div>
+                </div>
+                <span class="max-w-16 truncate text-sm font-medium text-ink">{{
+                    circle.name
+                }}</span>
+            </RouterLink>
+        </div>
+        <div
+            class="flex items-center justify-between border-t border-dark-sand px-4 pt-2 pb-2"
+        >
             <RouterLink
                 :to="{ name: 'spa.search' }"
                 :aria-label="t('Search people')"
@@ -165,83 +244,6 @@ function iconMaskStyle(url: string) {
                 >
                     {{ unreadBadge }}
                 </span>
-            </RouterLink>
-        </div>
-        <div
-            data-tour="feed.circles-strip"
-            class="no-scrollbar flex gap-3 overflow-x-auto border-t border-dark-sand px-4 pt-3 pb-3"
-        >
-            <RouterLink
-                :to="{ name: 'spa.circles.index' }"
-                class="group flex shrink-0 flex-col items-center gap-1.5"
-            >
-                <div
-                    class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-ink/50 transition-transform duration-500 group-hover:rotate-90"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke="currentColor"
-                        class="size-6 text-ink"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 4.5v15m7.5-7.5h-15"
-                        />
-                    </svg>
-                </div>
-                <span class="text-sm font-medium text-ink">{{
-                    t('Circles')
-                }}</span>
-            </RouterLink>
-
-            <template v-if="!circles">
-                <div
-                    v-for="n in 4"
-                    :key="n"
-                    class="flex shrink-0 flex-col items-center gap-1.5"
-                >
-                    <div class="size-15 animate-pulse rounded-full bg-sand" />
-                    <div class="h-3 w-12 animate-pulse rounded bg-sand" />
-                </div>
-            </template>
-
-            <RouterLink
-                v-else
-                v-for="circle in circles"
-                :key="circle.id"
-                :to="{
-                    name: 'spa.circles.feed',
-                    params: { circle: circle.id },
-                }"
-                class="flex shrink-0 flex-col items-center gap-1.5"
-            >
-                <div class="circle-ring relative rounded-full p-0.5">
-                    <div class="rounded-full bg-surface p-0.5">
-                        <img
-                            v-if="circle.photo"
-                            :src="circle.photo"
-                            :alt="circle.name"
-                            class="size-14 rounded-full object-cover"
-                        />
-                        <div
-                            v-else
-                            class="flex size-14 items-center justify-center rounded-full bg-sand-100"
-                        >
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-7 bg-sand-600"
-                                :style="iconMaskStyle(userIcon)"
-                            ></span>
-                        </div>
-                    </div>
-                </div>
-                <span class="max-w-16 truncate text-sm font-medium text-ink">{{
-                    circle.name
-                }}</span>
             </RouterLink>
         </div>
     </div>

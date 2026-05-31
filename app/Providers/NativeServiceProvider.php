@@ -17,6 +17,7 @@ use Native\Mobile\Providers\ShareServiceProvider;
 use Native\Mobile\Providers\SystemServiceProvider;
 use NativePHP\BackgroundTasks\BackgroundTasksServiceProvider;
 use Voicecode\Mobile\Photos\PhotosServiceProvider;
+use VoicecodeBv\NativephpAnimatedSplash\AnimatedSplashServiceProvider;
 use VoicecodeBv\NativephpBadge\NativeBadgeServiceProvider;
 
 class NativeServiceProvider extends ServiceProvider
@@ -64,6 +65,7 @@ class NativeServiceProvider extends ServiceProvider
             PhotosServiceProvider::class,
             NativeMediaServiceProvider::class,
             NativeBadgeServiceProvider::class,
+            AnimatedSplashServiceProvider::class,
 
         ];
     }

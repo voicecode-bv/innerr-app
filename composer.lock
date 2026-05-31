@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2089c99c6117c28faff48f063c50da92",
+    "content-hash": "83abccd2ebd1d3d925e1d1cb359c7d3d",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -8025,6 +8025,62 @@
             "time": "2026-05-14T10:28:28+00:00"
         },
         {
+            "name": "voicecode-bv/nativephp-animated-splash",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "../nativephp-animated-splash",
+                "reference": "21428a8e9189e863789bd6b132310bc96c255df5"
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "pestphp/pest": "^3.0"
+            },
+            "default-branch": true,
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "VoicecodeBv\\NativephpAnimatedSplash\\AnimatedSplashServiceProvider"
+                    ],
+                    "aliases": {
+                        "AnimatedSplash": "VoicecodeBv\\NativephpAnimatedSplash\\Facades\\AnimatedSplash"
+                    }
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "VoicecodeBv\\NativephpAnimatedSplash\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "VoicecodeBv\\NativephpAnimatedSplash\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "pest"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Voicecode BV"
+                }
+            ],
+            "description": "Animated splash screens (Lottie, GIF, video) for NativePHP Mobile apps.",
+            "time": "2026-05-31T07:40:04+00:00"
+        },
+        {
             "name": "voicecode-bv/nativephp-badge",
             "version": "v1.0.3",
             "source": {
@@ -12170,7 +12226,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "voicecode-bv/nativephp-animated-splash": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

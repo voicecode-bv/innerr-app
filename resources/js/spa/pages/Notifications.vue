@@ -1032,7 +1032,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     >
                         <IconTile :icon="bellIcon" size="lg" tone="sage" />
                         <h3
-                            class="mt-4 font-display text-lg font-semibold text-ink dark:text-sage-100"
+                            class="mt-4 font-display text-lg font-semibold text-ink"
                         >
                             {{ t('No notifications yet') }}
                         </h3>

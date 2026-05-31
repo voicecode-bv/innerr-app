@@ -140,21 +140,9 @@ const routes: RouteRecordRaw[] = [
 
     // Feed filter (guided flow) — verbergt de native bottom-nav.
     {
-        path: '/feed/filter/persons',
-        name: 'spa.feed-filter.persons',
-        component: () => import('@/spa/pages/FeedFilter/Persons.vue'),
-        meta: { auth: true, onboarded: true, hideEdgeBar: true },
-    },
-    {
-        path: '/feed/filter/circles',
-        name: 'spa.feed-filter.circles',
-        component: () => import('@/spa/pages/FeedFilter/Circles.vue'),
-        meta: { auth: true, onboarded: true, hideEdgeBar: true },
-    },
-    {
-        path: '/feed/filter/dates',
-        name: 'spa.feed-filter.dates',
-        component: () => import('@/spa/pages/FeedFilter/DateRange.vue'),
+        path: '/feed/filter',
+        name: 'spa.feed-filter',
+        component: () => import('@/spa/pages/FeedFilter/Wizard.vue'),
         meta: { auth: true, onboarded: true, hideEdgeBar: true },
     },
     {

@@ -70,7 +70,7 @@ const summaryChips = computed<string[]>(() => {
 });
 
 function editFilters(): void {
-    router.push({ name: 'spa.feed-filter.persons' });
+    router.push({ name: 'spa.feed-filter' });
 }
 </script>
 

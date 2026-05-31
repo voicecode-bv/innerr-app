@@ -1,5 +1,10 @@
 import { flare } from '@flareapp/js';
 import { flareVue } from '@flareapp/vue';
+import {
+    AnimatedSplash,
+    resolveSplashConfig,
+    type ResolvedSplashConfig,
+} from '@voicecode-bv/nativephp-animated-splash';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 import App from '@/spa/App.vue';
@@ -38,7 +43,62 @@ function inferInitialLocale(): string {
     return browser === 'nl' ? 'nl' : 'en';
 }
 
+// Resolve the animated-splash config once, for the theme that was applied
+// pre-paint by the inline script in spa.blade.php. Returns null on plain web
+// builds (no @animatedSplashConfig directive) so the splash helpers no-op.
+const splashConfig: ResolvedSplashConfig | null =
+    typeof window !== 'undefined'
+        ? resolveSplashConfig(
+              document.documentElement.classList.contains('dark'),
+          )
+        : null;
+
+let splashShownAt = 0;
+
+/**
+ * Show the native splash overlay and hold the logo on its first frame while the
+ * app boots. No-ops on web/desktop where the native bridge is absent.
+ */
+async function showStartupSplash(): Promise<void> {
+    if (!splashConfig) {
+        return;
+    }
+
+    splashShownAt = Date.now();
+
+    await AnimatedSplash.show({
+        source: splashConfig.source,
+        backgroundColor: splashConfig.backgroundColor,
+        contentMode: splashConfig.contentMode,
+        autoplay: splashConfig.autoplay,
+    }).catch(() => false);
+}
+
+/**
+ * Play the branded out-animation and remove the overlay once the app is ready,
+ * honouring the configured minimum visible time to avoid a flash on fast boots.
+ */
+async function hideStartupSplash(): Promise<void> {
+    if (!splashConfig) {
+        return;
+    }
+
+    const elapsed = Date.now() - splashShownAt;
+    const remaining = splashConfig.minVisibleMs - elapsed;
+
+    if (remaining > 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, remaining));
+    }
+
+    await AnimatedSplash.hide({
+        fadeOutDuration: splashConfig.fadeOutMs,
+        playToEnd: splashConfig.playToEnd,
+    }).catch(() => false);
+}
+
 async function bootstrap(): Promise<void> {
+    void showStartupSplash();
+
     const app = createApp(App);
     const pinia = createPinia();
 
@@ -181,6 +241,11 @@ async function bootstrap(): Promise<void> {
     }
 
     app.mount('#spa-app');
+
+    void hideStartupSplash();
 }
 
-bootstrap();
+bootstrap().catch(() => {
+    // Bootstrap threw before mounting; make sure the splash never gets stuck.
+    void hideStartupSplash();
+});

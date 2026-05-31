@@ -8,6 +8,7 @@
  {{-- Sync dark class + theme-color before first paint to avoid FOUC.
       Mirrors stores/appearance.ts (STORAGE_KEY = 'spa.appearance'). --}}
  <script>(function(){try{var m=localStorage.getItem('spa.appearance');var s=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var d=m==='dark'||((!m||m==='system')&&s);if(d){document.documentElement.classList.add('dark');var t=document.querySelector('meta[name="theme-color"]');if(t){t.setAttribute('content','#14172b');}}}catch(e){}})();</script>
+ @animatedSplashConfig
  @vite(['resources/css/app.css','resources/js/spa/main.ts'])
  </head>
  <body class="relative bg-sand text-night font-sans text-base antialiased">

@@ -28,6 +28,7 @@
         "nativephp/mobile-system": "*",
         "spatie/laravel-ray": "^1.43",
         "voicecode-bv/mobile-photos": "^1.0",
+        "voicecode-bv/nativephp-animated-splash": "dev-main",
         "voicecode-bv/nativephp-badge": "^1.0"
     },
     "require-dev": {
@@ -135,6 +136,10 @@
             "options": {
                 "symlink": true
             }
+        },
+        {
+            "type": "vcs",
+            "url": "../nativephp-animated-splash"
         },
         {
             "type": "vcs",
