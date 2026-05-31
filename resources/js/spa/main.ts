@@ -131,6 +131,17 @@ async function bootstrap(): Promise<void> {
             window as unknown as { router: { visit: (path: string) => void } }
         ).router = {
             visit(path: string) {
+                // Tik op de tab waar je al bent: geen (afgewezen) push, maar de
+                // huidige pagina naar boven scrollen — standaard mobiel gedrag.
+                // AppLayout luistert op dit event en scrolt zijn container.
+                if (
+                    router.resolve(path).path === router.currentRoute.value.path
+                ) {
+                    window.dispatchEvent(new CustomEvent('spa:tab-reselect'));
+
+                    return;
+                }
+
                 router.push(path).catch(() => {
                     /* navigatie geguard of dubbel */
                 });

@@ -40,8 +40,8 @@ export function circleDetailSegment(): TourSegment {
                     description: t(
                         'Decide who in this circle can invite others, view the member list, or download photos.',
                     ),
-                    side: 'top',
-                    align: 'center',
+                    side: 'bottom',
+                    align: 'end',
                 },
             },
             {

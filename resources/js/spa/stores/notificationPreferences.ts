@@ -4,6 +4,7 @@ import { externalApi } from '@/spa/http/externalApi';
 export interface NotificationPreferences {
     post_liked: boolean;
     post_commented: boolean;
+    comment_replied: boolean;
     comment_liked: boolean;
     new_circle_post: boolean;
     post_tagged: boolean;

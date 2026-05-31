@@ -15,15 +15,15 @@ import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
-import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import type {
     PostFirstVisibleLiker,
     PostMediaItem,
 } from '@/spa/components/PostCard.vue';
+import VideoPlayer from '@/spa/components/VideoPlayer.vue';
+import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
-import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -34,6 +34,7 @@ import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { useTagsStore } from '@/spa/stores/tags';
+import calendarIcon from '../../../svg/doodle-icons/calendar.svg';
 import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -113,7 +114,7 @@ interface Post {
     persons?: Person[];
 }
 
-const { t } = useTranslations();
+const { t, locale } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -188,8 +189,8 @@ const isUntaggingSelf = ref(false);
 
 async function untagSelf(): Promise<void> {
     if (!post.value || isUntaggingSelf.value) {
-return;
-}
+        return;
+    }
 
     await Dialog.alert()
         .confirm(t('Remove tag'), t('Remove yourself from this post?'))
@@ -198,8 +199,8 @@ return;
 
 async function performUntagSelf(): Promise<void> {
     if (!post.value) {
-return;
-}
+        return;
+    }
 
     isUntaggingSelf.value = true;
     const postId = post.value.id;
@@ -233,8 +234,8 @@ const staticMapUrl = computed<string | null>(() => {
     const token = serviceKeys.mapboxToken;
 
     if (!token || !hasLocation.value || !post.value) {
-return null;
-}
+        return null;
+    }
 
     const lng = post.value.longitude;
     const lat = post.value.latitude;
@@ -249,6 +250,29 @@ const mapTarget = computed(() => {
     return firstCircle
         ? { name: 'spa.circles.map', params: { circle: firstCircle.id } }
         : { name: 'spa.map' };
+});
+
+// Capture date shown in the details block. Falls back to the post creation
+// date when EXIF taken_at is absent, matching how ageAt resolves the moment.
+const formattedTakenAt = computed<string | null>(() => {
+    const source = post.value?.taken_at ?? post.value?.created_at;
+
+    if (!source) {
+        return null;
+    }
+
+    const date = new Date(source);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    return date.toLocaleDateString(locale.value, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
 });
 
 const videoPlayerRef = ref<{ videoRef: HTMLVideoElement | null } | null>(null);
@@ -274,11 +298,28 @@ const carouselItems = computed(() =>
 const hasMultipleMedia = computed(() => carouselItems.value.length > 1);
 const activeMediaIndex = ref(0);
 
+// Diepe link vanuit de profiel-grid: `?media=<index>` opent de post op de
+// betreffende carousel-slide. Geclampt op het aantal geladen media-items;
+// valt terug op 0 (cover) bij ontbrekende, ongeldige of out-of-range waarde.
+function deepLinkedMediaIndex(): number {
+    const raw = route.query.media;
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    const parsed = value != null ? Number.parseInt(String(value), 10) : NaN;
+
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+        return 0;
+    }
+
+    const count = post.value?.media?.length ?? 0;
+
+    return count > 0 ? Math.min(parsed, count - 1) : 0;
+}
+
 watch(
     () => post.value?.media_url,
     () => {
         mediaLoaded.value = false;
-        activeMediaIndex.value = 0;
+        activeMediaIndex.value = deepLinkedMediaIndex();
     },
 );
 
@@ -405,7 +446,10 @@ const likesSummary = computed<{
 });
 
 const isLikesSheetOpen = ref(false);
-const isCommentsSheetOpen = ref(false);
+// Binnenkomst via een comment-push: de deep link draagt `?comment=<id>` mee
+// (zie API PostCommented/CommentLiked). Open dan meteen het comments-sheet zodat
+// de gebruiker direct bij de reacties uitkomt; de sheet laadt zelf de comments.
+const isCommentsSheetOpen = ref(Boolean(route.query.comment));
 const isEditModalOpen = ref(false);
 const editAvailableCircles = ref<AvailableCircle[]>([]);
 const editAvailableTags = ref<AvailableTag[]>([]);
@@ -452,8 +496,8 @@ const tagsStore = useTagsStore();
 
 async function openEditModal(): Promise<void> {
     if (!post.value) {
-return;
-}
+        return;
+    }
 
     try {
         const [circles, tags, persons] = await Promise.all([
@@ -473,14 +517,14 @@ return;
 
 function onCommentAdded(): void {
     if (post.value) {
-post.value.comments_count += 1;
-}
+        post.value.comments_count += 1;
+    }
 }
 
 function onCommentDeleted(): void {
     if (post.value) {
-post.value.comments_count = Math.max(0, post.value.comments_count - 1);
-}
+        post.value.comments_count = Math.max(0, post.value.comments_count - 1);
+    }
 }
 
 async function deletePost(): Promise<void> {
@@ -555,15 +599,15 @@ function ageAt(
     atDateString: string,
 ): string | null {
     if (!birthdate) {
-return null;
-}
+        return null;
+    }
 
     const birth = new Date(birthdate);
     const at = new Date(atDateString);
 
     if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth) {
-return null;
-}
+        return null;
+    }
 
     const totalDays = Math.floor((at.getTime() - birth.getTime()) / 86_400_000);
 
@@ -619,16 +663,16 @@ function timeAgo(dateString: string): string {
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (seconds < 60) {
-return t('just now');
-}
+        return t('just now');
+    }
 
     if (seconds < 3600) {
-return t(':count min ago', { count: Math.floor(seconds / 60) });
-}
+        return t(':count min ago', { count: Math.floor(seconds / 60) });
+    }
 
     if (seconds < 86400) {
-return t(':count hours ago', { count: Math.floor(seconds / 3600) });
-}
+        return t(':count hours ago', { count: Math.floor(seconds / 3600) });
+    }
 
     if (seconds < 604800) {
         const days = Math.floor(seconds / 86400);
@@ -665,8 +709,8 @@ watch(
     () => route.params.post,
     () => {
         if (route.name !== 'spa.posts.show') {
-return;
-}
+            return;
+        }
 
         post.value = null;
         isLikesSheetOpen.value = false;
@@ -802,9 +846,6 @@ return;
                         >
                             {{ post.user.name }}
                         </RouterLink>
-                        <p v-if="post.location" class="text-ink-muted">
-                            {{ post.location }}
-                        </p>
                     </div>
                 </div>
 
@@ -1122,7 +1163,7 @@ return;
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-6 bg-surface dark:bg-ink drop-shadow"
+                                    class="inline-block size-6 bg-surface drop-shadow dark:bg-ink"
                                     :style="iconMaskStyle(heartIcon)"
                                 ></span>
                             </button>
@@ -1368,6 +1409,22 @@ return;
                         </div>
                     </section>
 
+                    <section v-if="formattedTakenAt" class="space-y-3">
+                        <h3 class="font-semibold text-brand-blue dark:text-ink">
+                            {{ t('Date') }}
+                        </h3>
+                        <div class="flex items-center gap-2 text-ink">
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-5 bg-ink-muted"
+                                :style="iconMaskStyle(calendarIcon)"
+                            ></span>
+                            <span class="first-letter:uppercase">{{
+                                formattedTakenAt
+                            }}</span>
+                        </div>
+                    </section>
+
                     <section class="space-y-3">
                         <h3 class="font-semibold text-brand-blue dark:text-ink">
                             {{ t('Location') }}
@@ -1416,7 +1473,7 @@ return;
 
                         <div
                             v-else
-                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 dark:bg-surface text-ink-muted ring-1 ring-sand-100"
+                            class="flex aspect-[2/1] w-full flex-col items-center justify-center gap-2 rounded-2xl bg-sand-100 text-ink-muted ring-1 ring-sand-100 dark:bg-surface"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -1468,6 +1525,9 @@ return;
             :open="isEditModalOpen"
             :post-id="post.id"
             :caption="post.caption"
+            :location="post.location"
+            :latitude="post.latitude"
+            :longitude="post.longitude"
             :circles="post.circles ?? []"
             :available-circles="editAvailableCircles"
             :tags="post.tags ?? []"

@@ -177,8 +177,18 @@ async function loadInitial(): Promise<void> {
         circleInvitations.value = invitations.data;
         ownershipTransfers.value = transfers.data;
 
-        if (hasUnread.value) {
+        // Opening the notifications page acknowledges everything. Mark all read
+        // (which resets the in-app bell and the native app icon badge) whenever
+        // anything is unread, including hidden-type notifications or a count set
+        // by a push. If nothing is unread locally the OS may still show an icon
+        // badge from a push payload, so clear it explicitly.
+        if (
+            notificationsStore.unreadCount > 0 ||
+            items.value.some((notification) => !notification.read_at)
+        ) {
             markAllAsRead();
+        } else {
+            notificationsStore.syncIconBadge();
         }
     } catch {
         // ignore
@@ -196,8 +206,8 @@ onMounted(loadInitial);
 
 async function loadMore(): Promise<void> {
     if (isLoadingMore.value || !hasMore.value) {
-return;
-}
+        return;
+    }
 
     isLoadingMore.value = true;
     loadMoreError.value = null;
@@ -281,8 +291,8 @@ function isTransferBusy(id: number): boolean {
 
 async function acceptInvitation(invitationId: number): Promise<void> {
     if (processingInvitations.value.has(invitationId)) {
-return;
-}
+        return;
+    }
 
     processingInvitations.value.add(invitationId);
 
@@ -300,8 +310,8 @@ return;
 
 async function declineInvitation(invitationId: number): Promise<void> {
     if (processingInvitations.value.has(invitationId)) {
-return;
-}
+        return;
+    }
 
     processingInvitations.value.add(invitationId);
 
@@ -319,8 +329,8 @@ return;
 
 async function acceptTransfer(transferId: number): Promise<void> {
     if (processingTransfers.value.has(transferId)) {
-return;
-}
+        return;
+    }
 
     processingTransfers.value.add(transferId);
 
@@ -340,8 +350,8 @@ return;
 
 async function declineTransfer(transferId: number): Promise<void> {
     if (processingTransfers.value.has(transferId)) {
-return;
-}
+        return;
+    }
 
     processingTransfers.value.add(transferId);
 
@@ -481,20 +491,20 @@ function timeAgo(dateString: string): string {
     const diffWeeks = Math.floor(diffDays / 7);
 
     if (diffMinutes < 1) {
-return t('just now');
-}
+        return t('just now');
+    }
 
     if (diffMinutes < 60) {
-return t(':count min ago', { count: diffMinutes });
-}
+        return t(':count min ago', { count: diffMinutes });
+    }
 
     if (diffHours < 24) {
-return t(':count hours ago', { count: diffHours });
-}
+        return t(':count hours ago', { count: diffHours });
+    }
 
     if (diffDays < 7) {
-return t(':count days ago', { count: diffDays });
-}
+        return t(':count days ago', { count: diffDays });
+    }
 
     return t(':count weeks ago', { count: diffWeeks });
 }
@@ -507,8 +517,8 @@ interface NotificationGroup {
 
 const groupedNotifications = computed<NotificationGroup[]>(() => {
     if (!items.value.length) {
-return [];
-}
+        return [];
+    }
 
     const now = Date.now();
     const dayMs = 24 * 60 * 60 * 1000;
@@ -520,8 +530,8 @@ return [];
 
     for (const notification of items.value) {
         if (hiddenNotificationTypes.has(notification.type)) {
-continue;
-}
+            continue;
+        }
 
         const age = now - new Date(notification.created_at).getTime();
 
@@ -905,7 +915,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             />
                                             <div
                                                 v-else
-                                                class="flex size-11 items-center justify-center rounded-full overflow-hidden bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
+                                                class="flex size-11 items-center justify-center overflow-hidden rounded-full bg-sand-100 ring-2 ring-white dark:bg-sand-700 dark:ring-sand-800"
                                             >
                                                 <IconTile
                                                     :icon="userIcon"
@@ -938,7 +948,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         </div>
                                         <div class="min-w-0 flex-1">
                                             <p
-                                                class="leading-snug text-ink line-clamp-1"
+                                                class="line-clamp-1 leading-snug text-ink"
                                                 :class="{
                                                     'font-semibold':
                                                         !isRead(notification),
@@ -950,9 +960,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                                     )
                                                 }}
                                             </p>
-                                            <p
-                                                class="mt-1 text-ink-muted"
-                                            >
+                                            <p class="mt-1 text-ink-muted">
                                                 {{
                                                     timeAgo(
                                                         notification.created_at,
@@ -964,10 +972,13 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             class="flex shrink-0 items-start gap-2 pt-1"
                                         >
                                             <img
-                                                v-if="thumbnailFor(notification)"
+                                                v-if="
+                                                    thumbnailFor(notification)
+                                                "
                                                 :src="
-                                                    thumbnailFor(notification) ??
-                                                    ''
+                                                    thumbnailFor(
+                                                        notification,
+                                                    ) ?? ''
                                                 "
                                                 class="size-12 rounded-md bg-sand-200 object-cover shadow-sm dark:bg-sand-700"
                                                 alt=""
@@ -1025,9 +1036,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         >
                             {{ t('No notifications yet') }}
                         </h3>
-                        <p
-                            class="mt-1 max-w-xs text-ink-muted dark:text-sand-400"
-                        >
+                        <p class="mt-1 max-w-xs text-sand-600">
                             {{
                                 t(
                                     "When someone interacts with your posts, you'll see it here.",

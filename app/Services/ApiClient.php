@@ -168,27 +168,41 @@ class ApiClient
     }
 
     /**
-     * @return array{valid: bool, user?: array<string, mixed>}
+     * Validate the stored token against the external API.
+     *
+     * The `status` distinguishes a genuinely rejected token (`invalid`) from a
+     * transient upstream failure (`unreachable`). Only `invalid` clears the
+     * token; a 5xx/429/timeout must never wipe a token that is still valid,
+     * otherwise an API hiccup forces every user to log in again.
+     *
+     * @return array{valid: bool, status: 'valid'|'invalid'|'unreachable', user?: array<string, mixed>}
      */
     public function validateToken(): array
     {
         if (! $this->hasToken()) {
-            return ['valid' => false];
+            return ['valid' => false, 'status' => 'invalid'];
         }
 
         try {
             $response = $this->authenticated()->get('/auth/me');
         } catch (ConnectionException) {
-            return ['valid' => false];
+            // Network-level failure: the token may still be valid, keep it.
+            return ['valid' => false, 'status' => 'unreachable'];
         }
 
         if ($response->successful()) {
-            return ['valid' => true, 'user' => $response->json('user')];
+            return ['valid' => true, 'status' => 'valid', 'user' => $response->json('user')];
         }
 
-        $this->clearToken();
+        // Only a definitive auth rejection means the token is no longer usable.
+        if ($response->status() === 401 || $response->status() === 403) {
+            $this->clearToken();
 
-        return ['valid' => false];
+            return ['valid' => false, 'status' => 'invalid'];
+        }
+
+        // 5xx/429/etc.: transient upstream problem, preserve the token.
+        return ['valid' => false, 'status' => 'unreachable'];
     }
 
     public function logout(): void

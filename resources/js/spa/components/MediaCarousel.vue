@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
+import { vPinchZoom } from '@/spa/directives/pinchZoom';
 
 export interface CarouselItem {
     id: string;
@@ -202,6 +203,24 @@ onMounted(() => {
         return;
     }
 
+    // Niet-nul start (bv. diepe link naar een specifieke slide): spring er
+    // direct heen zonder animatie. De `watch` op `activeIndex` doet dit alleen
+    // bij latere wijzigingen, dus de initiele positie zetten we hier zelf.
+    if (internalIndex.value > 0) {
+        const slide = el.children[internalIndex.value] as
+            | HTMLElement
+            | undefined;
+
+        if (slide) {
+            el.scrollLeft = slide.offsetLeft;
+        }
+
+        // Sla de swipe-hint over: die gaat uit van slide 0 en zou terugscrollen.
+        hintFired = true;
+
+        return;
+    }
+
     intersectionObserver = new IntersectionObserver(
         (entries) => {
             for (const entry of entries) {
@@ -250,6 +269,7 @@ onBeforeUnmount(() => {
                 />
                 <img
                     v-else
+                    v-pinch-zoom
                     :src="item.url"
                     class="size-full object-cover"
                     :alt="item.alt ?? ''"

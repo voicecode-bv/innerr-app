@@ -87,5 +87,62 @@ it('returns 422 when external API rejects circle photo', function () {
             'photo_path' => $this->tempPath,
         ])
         ->assertStatus(422)
-        ->assertJsonValidationErrors('photo');
+        ->assertJsonValidationErrors('photo_path');
+});
+
+it('uploads circle photo from base64 payload and invalidates cache', function () {
+    $user = User::factory()->create();
+    Cache::put(ApiClient::circlesCacheKey(), [['id' => '550e8400-e29b-41d4-a716-446655440001']], 300);
+
+    $apiResponse = new Response(Http::response([
+        'data' => ['photo' => 'https://api.example.com/circles/99.jpg'],
+    ], 200)->wait());
+
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('attach')
+        ->once()
+        ->withArgs(function ($field, $contents, $filename, $headers) {
+            return $field === 'photo'
+                && is_string($contents)
+                && $contents !== ''
+                && $filename === 'circle-photo.jpg'
+                && ($headers['Content-Type'] ?? null) === 'image/jpeg';
+        })
+        ->andReturnSelf();
+    $pending->shouldReceive('post')->once()->with('/circles/550e8400-e29b-41d4-a716-446655440009/photo')->andReturn($apiResponse);
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $this->app->instance(ApiClient::class, $client);
+
+    $base64 = base64_encode(file_get_contents($this->tempPath));
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/circles/550e8400-e29b-41d4-a716-446655440009/photo', [
+            'photo_data' => $base64,
+        ])
+        ->assertOk()
+        ->assertJsonPath('photo', 'https://api.example.com/circles/99.jpg');
+
+    expect(Cache::get(ApiClient::circlesCacheKey()))->toBeNull();
+});
+
+it('returns 422 when neither photo_path nor photo_data is provided', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/circles/550e8400-e29b-41d4-a716-446655440001/photo', [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['photo_path', 'photo_data']);
+});
+
+it('returns 422 when photo_data is not valid base64', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/circles/550e8400-e29b-41d4-a716-446655440001/photo', [
+            'photo_data' => '###not-base64###',
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('photo_data');
 });

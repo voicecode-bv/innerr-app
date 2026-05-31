@@ -11,6 +11,8 @@ import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
 
+export type FeedLayout = 'list' | 'masonry';
+
 export interface User {
     id: string;
     name: string;
@@ -19,6 +21,9 @@ export interface User {
     avatar: string | null;
     bio: string | null;
     locale: string;
+    // Null until the user picks a home feed layout; the client then defaults
+    // to masonry and shows a one-time chooser.
+    feed_layout: FeedLayout | null;
     onboarded: boolean;
 }
 

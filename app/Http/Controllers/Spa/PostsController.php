@@ -64,6 +64,8 @@ class PostsController extends Controller
             'media_metadata.*.longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'caption' => ['nullable', 'string', 'max:2200'],
             'location' => ['nullable', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'circle_ids' => ['required', 'array'],
             'circle_ids.*' => ['uuid'],
             'tag_ids' => ['nullable', 'array'],
@@ -108,6 +110,14 @@ class PostsController extends Controller
             }
         } else {
             $data['media_metadata'] = json_encode(array_values($perItemExif));
+        }
+
+        // Post-level coordinates chosen via the map picker win over EXIF as the
+        // post's position. Set last so they override the single-file EXIF block;
+        // both must be present (the external API requires lat/lng together).
+        if (isset($validated['latitude'], $validated['longitude'])) {
+            $data['latitude'] = $validated['latitude'];
+            $data['longitude'] = $validated['longitude'];
         }
 
         $mimeTypes = array_map(

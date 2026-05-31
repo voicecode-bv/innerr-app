@@ -54,7 +54,9 @@ class EdgeController extends Controller
     protected function resolveActiveTab(string $path): string
     {
         return match (true) {
-            $path === '/' => 'home',
+            // The masonry grid feed is a layout variant of Home, so it keeps
+            // the Home tab highlighted just like the list feed at '/'.
+            $path === '/' || $path === '/feed/grid' => 'home',
             $path === '/map' => 'map',
             preg_match('#^/circles/\d+/map$#', $path) === 1 => 'map',
             preg_match('#^/profiles/[^/]+/map$#', $path) === 1 => 'map',

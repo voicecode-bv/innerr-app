@@ -1,3 +1,4 @@
+import { Edge } from '@nativephp/mobile';
 import {
     createRouter,
     createWebHistory,
@@ -7,6 +8,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { api } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useFeatureTourStore } from '@/spa/stores/featureTour';
 
 declare module 'vue-router' {
     interface RouteMeta {
@@ -16,10 +18,13 @@ declare module 'vue-router' {
         iosOnly?: boolean;
         mobileOnly?: boolean;
         public?: boolean;
+        hideEdgeBar?: boolean;
     }
 }
 
 const isNative = typeof window !== 'undefined' && '__nativephp' in window;
+const isLocalEnv =
+    (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
 const routes: RouteRecordRaw[] = [
     // Auth (guest-only)
@@ -85,8 +90,7 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/onboarding/circles/:circle/permissions',
         name: 'spa.onboarding.circle-permissions',
-        component: () =>
-            import('@/spa/pages/Onboarding/CirclePermissions.vue'),
+        component: () => import('@/spa/pages/Onboarding/CirclePermissions.vue'),
         meta: { auth: true },
     },
     {
@@ -110,6 +114,12 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true },
     },
     {
+        path: '/feed/grid',
+        name: 'spa.home.grid',
+        component: () => import('@/spa/pages/FeedGrid.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
         path: '/circles/:circle/feed',
         name: 'spa.circles.feed',
         component: () => import('@/spa/pages/CircleFeed.vue'),
@@ -126,6 +136,32 @@ const routes: RouteRecordRaw[] = [
         name: 'spa.posts.show',
         component: () => import('@/spa/pages/PostDetail.vue'),
         meta: { auth: true, onboarded: true },
+    },
+
+    // Feed filter (guided flow) — verbergt de native bottom-nav.
+    {
+        path: '/feed/filter/persons',
+        name: 'spa.feed-filter.persons',
+        component: () => import('@/spa/pages/FeedFilter/Persons.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
+    },
+    {
+        path: '/feed/filter/circles',
+        name: 'spa.feed-filter.circles',
+        component: () => import('@/spa/pages/FeedFilter/Circles.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
+    },
+    {
+        path: '/feed/filter/dates',
+        name: 'spa.feed-filter.dates',
+        component: () => import('@/spa/pages/FeedFilter/DateRange.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
+    },
+    {
+        path: '/feed/filter/results',
+        name: 'spa.feed-filter.results',
+        component: () => import('@/spa/pages/FeedFilter/Results.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
     },
 
     // Notifications
@@ -255,6 +291,18 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true, mobileOnly: true },
     },
 
+    // Dev tools — only registered outside production (e.g. the debug page).
+    ...(isLocalEnv
+        ? [
+              {
+                  path: '/dev/debug',
+                  name: 'spa.dev.debug',
+                  component: () => import('@/spa/pages/Dev/Debug.vue'),
+                  meta: { auth: true, onboarded: true },
+              } as RouteRecordRaw,
+          ]
+        : []),
+
     // Catch-all → login
     {
         path: '/:pathMatch(.*)*',
@@ -287,6 +335,23 @@ router.beforeEach(async (to) => {
         return { name: 'spa.onboarding.intro' };
     }
 
+    // Home honours the user's preferred feed layout. Masonry (including the
+    // not-yet-chosen default) renders the grid feed; the bottom-nav Home button
+    // targets '/' either way and lands on the right view via this redirect.
+    //
+    // Suppressed while the onboarding feature tour is running: its feed segment
+    // targets 'spa.home' (the list feed), and redirecting that to the grid would
+    // make FeatureTourMount push 'spa.home' again on every route change — an
+    // endless redirect loop.
+    if (
+        to.name === 'spa.home' &&
+        auth.user &&
+        useFeatureTourStore().status !== 'running' &&
+        (auth.user.feed_layout ?? 'masonry') === 'masonry'
+    ) {
+        return { name: 'spa.home.grid' };
+    }
+
     if (to.meta.iosOnly) {
         const { isIos, ensureDetected } = usePlatform();
         await ensureDetected();
@@ -310,6 +375,20 @@ router.afterEach((to) => {
     const auth = useAuthStore();
 
     if (!auth.user) {
+        return;
+    }
+
+    if (to.meta.hideEdgeBar) {
+        // Routes die de native bottom-nav verbergen (bv. de feed-filter flow):
+        // sla de active-tab POST over die hem juist zou herstellen, en wis hem
+        // synchroon zodat hij niet kort oplicht tijdens het navigeren tussen
+        // stappen. clearSync is een no-op op non-native clients.
+        try {
+            Edge.clearSync();
+        } catch {
+            // Niet-native context (browser preview): geen edge-bar om te wissen.
+        }
+
         return;
     }
 

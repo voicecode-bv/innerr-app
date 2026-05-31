@@ -19,12 +19,16 @@ import type { CarouselItem } from '@/spa/components/MediaCarousel.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { uploadInChunks } from '@/spa/composables/useChunkedUpload';
+import { useMapboxGeocoding } from '@/spa/composables/useMapboxGeocoding';
 
 const ImageCropModal = defineAsyncComponent(
     () => import('@/components/ImageCropModal.vue'),
 );
 const TagSelector = defineAsyncComponent(
     () => import('@/spa/components/TagSelector.vue'),
+);
+const LocationPickerSheet = defineAsyncComponent(
+    () => import('@/spa/components/LocationPickerSheet.vue'),
 );
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
@@ -78,6 +82,18 @@ interface MediaItem {
     stagedToken?: string;
 }
 
+/**
+ * EXIF metadata the native camera/gallery layer attaches to its events. The
+ * native side reads PHAsset/MediaStore/EXIF before any re-encode, so these are
+ * the authoritative source for taken_at and GPS. Keys are omitted when the
+ * device couldn't supply them.
+ */
+interface NativeMediaMetadata {
+    takenAt?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+}
+
 const MAX_PHOTOS = 10;
 
 const { t } = useTranslations();
@@ -89,6 +105,7 @@ const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
 const tagsStore = useTagsStore();
 const defaultCirclesStore = useDefaultCirclesStore();
+const geocoding = useMapboxGeocoding();
 
 const circles = computed<Circle[]>(() => circlesStore.items ?? []);
 const defaultCircleIds = computed<string[]>(
@@ -133,10 +150,202 @@ const form = useApiForm({
     media_paths: [] as string[],
     media_metadata: [] as ExifData[],
     caption: '',
+    location: '' as string,
+    latitude: null as number | null,
+    longitude: null as number | null,
     circle_ids: [] as string[],
     tag_ids: [] as string[],
     person_ids: [] as string[],
 });
+
+const isLocationPickerOpen = ref(false);
+
+// Where the post location came from, so we never fight the user:
+// 'auto' = derived from the first photo's EXIF, 'user' = explicitly picked,
+// 'cleared' = explicitly removed (stays empty, never re-filled).
+const locationMode = ref<'auto' | 'user' | 'cleared'>('auto');
+
+// GPS of the representative (first) photo, when present.
+const firstPhotoCoords = computed<{
+    latitude: number;
+    longitude: number;
+} | null>(() => {
+    const exif = items.value[0]?.exif;
+
+    if (!exif || exif.latitude === null || exif.longitude === null) {
+        return null;
+    }
+
+    return { latitude: exif.latitude, longitude: exif.longitude };
+});
+
+const hasChosenLocation = computed(
+    () => form.data.latitude !== null && form.data.longitude !== null,
+);
+
+// True while the shown location was auto-derived from the photo, so the UI can
+// label it "From photo". Flips to false once the user picks their own.
+const locationFromPhoto = computed(
+    () => locationMode.value === 'auto' && hasChosenLocation.value,
+);
+
+// The picker opens centred on the first photo's EXIF position (if any) so the
+// user starts near where the shot was taken, but their explicit pick wins.
+const pickerLatitude = computed<number | null>(
+    () => form.data.latitude ?? firstPhotoCoords.value?.latitude ?? null,
+);
+const pickerLongitude = computed<number | null>(
+    () => form.data.longitude ?? firstPhotoCoords.value?.longitude ?? null,
+);
+
+// Prefill the post location from the first geotagged photo and reverse-geocode
+// a readable name. Only runs while the user hasn't taken over ('auto'); the
+// stringified key means we only react when the coordinates actually change,
+// not on every unrelated media mutation.
+watch(
+    () =>
+        firstPhotoCoords.value
+            ? `${firstPhotoCoords.value.latitude},${firstPhotoCoords.value.longitude}`
+            : null,
+    async () => {
+        if (locationMode.value !== 'auto') {
+            return;
+        }
+
+        const coords = firstPhotoCoords.value;
+
+        if (!coords) {
+            form.data.latitude = null;
+            form.data.longitude = null;
+            form.data.location = '';
+
+            return;
+        }
+
+        form.data.latitude = coords.latitude;
+        form.data.longitude = coords.longitude;
+
+        const result = await geocoding.reverse(
+            coords.longitude,
+            coords.latitude,
+        );
+
+        // Drop a stale response if the photo changed or the user took over
+        // while the reverse-geocode was in flight.
+        if (
+            locationMode.value !== 'auto' ||
+            form.data.latitude !== coords.latitude ||
+            form.data.longitude !== coords.longitude
+        ) {
+            return;
+        }
+
+        form.data.location = result?.fullName ?? '';
+    },
+    { immediate: true },
+);
+
+function handleLocationConfirm(value: {
+    latitude: number | null;
+    longitude: number | null;
+    location: string | null;
+}): void {
+    form.data.latitude = value.latitude;
+    form.data.longitude = value.longitude;
+    form.data.location = value.location ?? '';
+    locationMode.value = value.latitude === null ? 'cleared' : 'user';
+}
+
+// The post's date comes from the representative (first) photo's taken_at — the
+// API copies item 0's value onto the post. Editing it writes straight back onto
+// that item's EXIF, which the `items` watch syncs into media_metadata.
+const photoTakenAt = computed<string | null>(
+    () => items.value[0]?.exif.taken_at ?? null,
+);
+
+// 'auto' = still showing the photo's own date, 'user' = explicitly edited. Used
+// only to label the field "From photo". Resets when the first photo changes.
+const dateMode = ref<'auto' | 'user'>('auto');
+
+watch(
+    () => items.value[0]?.id ?? null,
+    () => {
+        dateMode.value = 'auto';
+    },
+);
+
+const dateFromPhoto = computed(
+    () => dateMode.value === 'auto' && photoTakenAt.value !== null,
+);
+
+function pad(value: number): string {
+    return String(value).padStart(2, '0');
+}
+
+// `datetime-local` inputs speak local "YYYY-MM-DDTHH:mm"; taken_at is stored as
+// a UTC ISO string. Convert both ways so the native picker shows local time.
+function toLocalInputValue(iso: string | null): string {
+    if (!iso) {
+        return '';
+    }
+
+    const date = new Date(iso);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+const takenAtInputValue = computed(() => toLocalInputValue(photoTakenAt.value));
+
+// The API rejects future dates and anything before 1990; clamp the picker to
+// match so we never submit a value it will reject.
+const maxTakenAtInput = toLocalInputValue(new Date().toISOString());
+const MIN_TAKEN_AT_INPUT = '1990-01-01T00:00';
+
+function formatTakenAt(iso: string | null): string {
+    if (!iso) {
+        return '';
+    }
+
+    const date = new Date(iso);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function onTakenAtInput(event: Event): void {
+    const item = items.value[0];
+
+    if (!item) {
+        return;
+    }
+
+    const value = (event.target as HTMLInputElement).value;
+
+    if (value === '') {
+        item.exif.taken_at = null;
+    } else {
+        // `new Date('YYYY-MM-DDTHH:mm')` parses as local time; back to UTC ISO.
+        const parsed = new Date(value);
+        item.exif.taken_at = Number.isNaN(parsed.getTime())
+            ? null
+            : parsed.toISOString();
+    }
+
+    dateMode.value = 'user';
+}
 
 const showSourcePicker = ref(false);
 const showCropModal = ref(false);
@@ -402,6 +611,28 @@ async function fetchBlob(url: string): Promise<Blob | null> {
     }
 }
 
+/**
+ * Map the optional native event metadata (`takenAt`/`latitude`/`longitude`)
+ * onto our `ExifData` shape. Returns null when native supplied nothing, so the
+ * caller can fall back to reading EXIF from the file itself (browser context or
+ * older native builds without metadata support).
+ */
+function nativeExif(meta: NativeMediaMetadata): ExifData | null {
+    const taken_at =
+        typeof meta.takenAt === 'string' && meta.takenAt !== ''
+            ? meta.takenAt
+            : null;
+    const latitude = typeof meta.latitude === 'number' ? meta.latitude : null;
+    const longitude =
+        typeof meta.longitude === 'number' ? meta.longitude : null;
+
+    if (taken_at === null && latitude === null && longitude === null) {
+        return null;
+    }
+
+    return { taken_at, latitude, longitude };
+}
+
 function makeItem(
     path: string,
     mimeType: string,
@@ -422,7 +653,11 @@ function makeItem(
     };
 }
 
-async function appendItem(path: string, mimeType: string): Promise<void> {
+async function appendItem(
+    path: string,
+    mimeType: string,
+    nativeMeta?: NativeMediaMetadata,
+): Promise<void> {
     const isVideo = mimeType.startsWith('video/');
     console.log('[CreatePost media] appendItem', {
         path,
@@ -450,12 +685,21 @@ async function appendItem(path: string, mimeType: string): Promise<void> {
     if (isVideo) {
         thumbnail = await generateThumbnail(path);
     } else {
-        // EXIF lezen we via een fetch op de staged URL — de WebView's asset
-        // fast-path streamt het bestand zonder PHP-roundtrip.
-        const blob = await fetchBlob(staged.url);
+        // De native camera-/galerijlaag levert taken_at en GPS rechtstreeks mee
+        // en is autoritatief: die leest PHAsset/MediaStore/EXIF vóór her-encoden.
+        // Alleen als native niets aanleverde (browsercontext) lezen we de EXIF
+        // zelf via een fetch op de staged URL — de WebView's asset fast-path
+        // streamt het bestand zonder PHP-roundtrip.
+        const provided = nativeMeta ? nativeExif(nativeMeta) : null;
 
-        if (blob) {
-            exif = await readExif(blob);
+        if (provided) {
+            exif = provided;
+        } else {
+            const blob = await fetchBlob(staged.url);
+
+            if (blob) {
+                exif = await readExif(blob);
+            }
         }
     }
 
@@ -469,15 +713,17 @@ async function appendItem(path: string, mimeType: string): Promise<void> {
     });
 }
 
-async function handlePhotoTaken(payload: {
-    path: string;
-    mimeType: string;
-}): Promise<void> {
+async function handlePhotoTaken(
+    payload: {
+        path: string;
+        mimeType: string;
+    } & NativeMediaMetadata,
+): Promise<void> {
     if (hasVideo.value || items.value.length >= MAX_PHOTOS) {
         return;
     }
 
-    await appendItem(payload.path, payload.mimeType);
+    await appendItem(payload.path, payload.mimeType, payload);
 }
 
 async function handleVideoRecorded(payload: {
@@ -515,7 +761,7 @@ async function handleVideoRecorded(payload: {
 
 async function handleMediaSelected(payload: {
     success: boolean;
-    files: { path: string; mimeType: string }[];
+    files: ({ path: string; mimeType: string } & NativeMediaMetadata)[];
     cancelled: boolean;
 }): Promise<void> {
     if (!payload.success || payload.cancelled || !payload.files.length) {
@@ -543,7 +789,7 @@ async function handleMediaSelected(payload: {
             break;
         }
 
-        await appendItem(file.path, file.mimeType ?? '');
+        await appendItem(file.path, file.mimeType ?? '', file);
     }
 }
 
@@ -587,8 +833,18 @@ async function handleCropped(
 
     uploading.value = true;
 
+    // De native metadata op het item is autoritatief; canvas.toBlob in de
+    // crop-modal her-encodeert en strip't EXIF, dus de modal kan taken_at/GPS
+    // verloren zijn. Houd de reeds bekende waarden aan en vul alleen ontbrekende
+    // velden aan met wat de modal nog uit de bron wist te lezen.
+    const mergedExif: ExifData = {
+        taken_at: target.exif.taken_at ?? exif.taken_at,
+        latitude: target.exif.latitude ?? exif.latitude,
+        longitude: target.exif.longitude ?? exif.longitude,
+    };
+
     try {
-        const path = await uploadInChunks(blob, exif);
+        const path = await uploadInChunks(blob, mergedExif);
 
         // De originele staged kopie hoort niet meer bij het zichtbare beeld;
         // gooi 'm weg. De gecropte data-URL is klein genoeg om als preview te
@@ -600,7 +856,7 @@ async function handleCropped(
 
         target.path = path;
         target.preview = dataUrl;
-        target.exif = exif;
+        target.exif = mergedExif;
         showCropModal.value = false;
     } catch {
         void Dialog.alert(
@@ -652,9 +908,7 @@ function buildOptimisticPost(): PostData {
     // Voor video gebruiken we de native gegenereerde JPEG-thumbnail als
     // poster terwijl de server de upload nog verwerkt — de video-URL zelf
     // kan op dat moment nog niet als afbeelding renderen.
-    const firstPoster = isVideo
-        ? (first?.thumbnail ?? previewUrl)
-        : previewUrl;
+    const firstPoster = isVideo ? (first?.thumbnail ?? previewUrl) : previewUrl;
     const selectedCircles = circles.value
         .filter((c) => form.data.circle_ids.includes(c.id))
         .map((c) => ({ id: c.id, name: c.name, photo: c.photo ?? null }));
@@ -682,7 +936,7 @@ function buildOptimisticPost(): PostData {
             };
         }),
         caption: form.data.caption ?? null,
-        location: null,
+        location: form.data.location || null,
         created_at: new Date().toISOString(),
         user: {
             id: auth.user?.id ?? '',
@@ -992,7 +1246,7 @@ const activeItemIsImage = computed(() => {
                         @click="openSourcePicker"
                     >
                         <div
-                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft dark:bg-surface text-ink"
+                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft text-ink dark:bg-surface"
                         >
                             <span
                                 aria-hidden="true"
@@ -1031,9 +1285,126 @@ const activeItemIsImage = computed(() => {
                         maxlength="2200"
                         class="mt-2 w-full resize-none border-0 bg-transparent p-0 text-base text-ink placeholder-ink-muted/60 focus:ring-0 focus:outline-none"
                     />
-                    <p v-if="form.errors.caption" class="mt-1 text-destructive-ink">
+                    <p
+                        v-if="form.errors.caption"
+                        class="mt-1 text-destructive-ink"
+                    >
                         {{ form.errors.caption }}
                     </p>
+                </section>
+
+                <section
+                    v-show="currentStep === 1"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
+                >
+                    <span class="tracking-wider text-ink-muted uppercase">
+                        {{ t('Location') }}
+                    </span>
+                    <button
+                        type="button"
+                        class="mt-2 flex w-full items-center gap-3 text-left"
+                        @click="isLocationPickerOpen = true"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            class="size-5 shrink-0 text-ink-muted"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                            />
+                        </svg>
+                        <span class="min-w-0 flex-1">
+                            <span
+                                v-if="hasChosenLocation"
+                                class="block truncate text-ink"
+                            >
+                                {{ form.data.location || t('Pinned location') }}
+                            </span>
+                            <span v-else class="block text-ink-muted">
+                                {{ t('Add a location') }}
+                            </span>
+                            <span
+                                v-if="locationFromPhoto"
+                                class="block text-xs text-ink-muted"
+                            >
+                                {{ t('From photo') }}
+                            </span>
+                        </span>
+                        <span class="shrink-0 font-medium text-action">
+                            {{ hasChosenLocation ? t('Change') : t('Add') }}
+                        </span>
+                    </button>
+                </section>
+
+                <section
+                    v-show="currentStep === 1"
+                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
+                >
+                    <span class="tracking-wider text-ink-muted uppercase">
+                        {{ t('Date') }}
+                    </span>
+                    <div
+                        class="relative mt-2 flex w-full items-center gap-3 text-left"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            class="size-5 shrink-0 text-ink-muted"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0V11.25A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                            />
+                        </svg>
+                        <span class="min-w-0 flex-1">
+                            <span
+                                v-if="photoTakenAt"
+                                class="block truncate text-ink"
+                            >
+                                {{ formatTakenAt(photoTakenAt) }}
+                            </span>
+                            <span v-else class="block text-ink-muted">
+                                {{ t('Add a date') }}
+                            </span>
+                            <span
+                                v-if="dateFromPhoto"
+                                class="block text-xs text-ink-muted"
+                            >
+                                {{ t('From photo') }}
+                            </span>
+                        </span>
+                        <span class="shrink-0 font-medium text-action">
+                            {{ photoTakenAt ? t('Change') : t('Add') }}
+                        </span>
+                        <!-- Transparent native picker overlays the whole row so
+                             a tap anywhere opens it, keeping the row styling. -->
+                        <input
+                            type="datetime-local"
+                            :value="takenAtInputValue"
+                            :max="maxTakenAtInput"
+                            :min="MIN_TAKEN_AT_INPUT"
+                            :aria-label="t('Date')"
+                            class="absolute inset-0 size-full opacity-0"
+                            @change="onTakenAtInput"
+                        />
+                    </div>
                 </section>
 
                 <section
@@ -1208,6 +1579,15 @@ const activeItemIsImage = computed(() => {
             :src="items[cropTargetIndex]?.preview ?? null"
             @update:open="showCropModal = $event"
             @cropped="handleCropped"
+        />
+
+        <LocationPickerSheet
+            :open="isLocationPickerOpen"
+            :latitude="pickerLatitude"
+            :longitude="pickerLongitude"
+            :location="form.data.location || null"
+            @update:open="isLocationPickerOpen = $event"
+            @confirm="handleLocationConfirm"
         />
     </AppLayout>
 </template>

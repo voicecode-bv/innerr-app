@@ -178,6 +178,7 @@ class AuthController extends Controller
             'avatar' => $user->avatar,
             'bio' => $user->bio,
             'locale' => $user->locale,
+            'feed_layout' => $user->feed_layout,
             'onboarded' => $user->onboarded_at !== null,
         ];
     }

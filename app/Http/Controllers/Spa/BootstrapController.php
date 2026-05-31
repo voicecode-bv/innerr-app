@@ -34,8 +34,11 @@ class BootstrapController extends Controller
                 if (($result['valid'] ?? false) && isset($result['user'])) {
                     $this->syncLocalUser($result['user']);
                     $user = Auth::user();
-                } else {
-                    // Ongeldig token — wis 'm zodat we 'm niet opnieuw proberen.
+                } elseif (($result['status'] ?? 'invalid') === 'invalid') {
+                    // Alleen bij een definitieve afwijzing wissen. Bij een
+                    // transient API-fout (unreachable) laten we het token staan
+                    // zodat een volgende bootstrap kan herstellen i.p.v. de
+                    // gebruiker onnodig uit te loggen.
                     $this->tokenStore->delete();
                 }
             }
@@ -50,6 +53,7 @@ class BootstrapController extends Controller
                     'avatar' => $result['user']['avatar'] ?? $user->avatar,
                     'bio' => $result['user']['bio'] ?? $user->bio,
                     'locale' => $result['user']['locale'] ?? $user->locale,
+                    'feed_layout' => $result['user']['feed_layout'] ?? $user->feed_layout,
                     'onboarded_at' => $result['user']['onboarded_at'] ?? $user->onboarded_at,
                 ])->save();
                 $user->refresh();
@@ -65,6 +69,7 @@ class BootstrapController extends Controller
                 'avatar' => $user->avatar,
                 'bio' => $user->bio,
                 'locale' => $user->locale,
+                'feed_layout' => $user->feed_layout,
                 'onboarded' => $user->onboarded_at !== null,
             ] : null,
             'token' => $user ? $this->apiClient->getToken() : null,

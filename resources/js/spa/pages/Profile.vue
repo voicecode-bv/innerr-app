@@ -5,7 +5,6 @@ import {
     defineAsyncComponent,
     onMounted,
     onUnmounted,
-    reactive,
     ref,
     useTemplateRef,
 } from 'vue';
@@ -14,6 +13,7 @@ import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
 import type {PostData} from '@/spa/components/PostCard.vue';
+import PostMasonry from '@/spa/components/PostMasonry.vue';
 import {
     useInfiniteScroll
     
@@ -48,17 +48,17 @@ const router = useRouter();
 const auth = useAuthStore();
 const localThumbnails = useLocalThumbnailsStore();
 
-// De ProfilePost-resource bevat geen aparte `thumbnail_url`: `media_url`
-// is volgens de externe API al de 300x300 grid-poster zodra transcoding
-// klaar is. Zolang die nog draait (`media_status !== 'ready'`) valt
-// `media_url` terug op de .mp4 die niet als <img> rendert; dan pakken we
-// de lokaal-gegenereerde JPEG-thumbnail uit de plugin.
-function resolvedThumbnail(post: PostData): string | null {
-    if (post.media_status === 'ready') {
-        return post.thumbnail_url ?? post.media_url;
+// PostTile renders images from the aspect-preserving `media_url` and videos
+// from their poster. The only gap is a freshly uploaded video that is still
+// transcoding: its `media_url` is the .mp4 (won't render as <img>) and it has
+// no CDN poster yet, so we surface the locally-generated JPEG thumbnail from
+// the plugin. Every other case returns null and lets PostTile use the API URL.
+function resolvedPoster(post: PostData): string | null {
+    if (post.media_type === 'video' && post.media_status !== 'ready') {
+        return localThumbnails.get(post.id) ?? post.thumbnail_url ?? null;
     }
 
-    return localThumbnails.get(post.id) ?? post.thumbnail_url ?? post.media_url;
+    return null;
 }
 
 const username = computed(() => String(route.params.username));
@@ -88,10 +88,6 @@ const feed = useInfiniteScroll<PostData>(
         ),
     sentinelRef,
 );
-
-// Loaded-state per media-URL i.p.v. per post.id zodat een wijziging in
-// media_url (refresh, edit) automatisch opnieuw een skeleton triggert.
-const loadedMedia = reactive<Record<string, boolean>>({});
 
 async function refresh(): Promise<void> {
     await Promise.all([loadProfile(), feed.reset()]);
@@ -229,16 +225,6 @@ onMounted(() => {
 onUnmounted(() => {
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
 });
-
-function markLoaded(url: string): void {
-    loadedMedia[url] = true;
-}
-
-function mediaKey(post: PostData): string {
-    return post.media_type === 'video'
-        ? (resolvedThumbnail(post) ?? '')
-        : post.media_url;
-}
 
 async function shareProfile(): Promise<void> {
     if (!profile.value) {
@@ -418,82 +404,12 @@ function iconMaskStyle(url: string) {
 
                 <div class="h-2 bg-sand" />
 
-                <div
-                    v-if="feed.items.length === 0 && feed.loading"
-                    class="grid grid-cols-3 gap-1 bg-sand px-1"
-                >
-                    <div
-                        v-for="n in 30"
-                        :key="n"
-                        class="aspect-square animate-pulse rounded-lg bg-sand-100"
-                    />
-                </div>
-
-                <div
-                    id="profile-posts-grid"
-                    class="grid grid-cols-3 gap-1 bg-sand px-1"
-                >
-                    <RouterLink
-                        v-for="post in feed.items"
-                        :key="post.id"
-                        :to="{
-                            name: 'spa.posts.show',
-                            params: { post: post.id },
-                        }"
-                        class="relative block aspect-square overflow-hidden rounded-lg bg-sand"
-                    >
-                        <div
-                            v-if="
-                                !loadedMedia[mediaKey(post)] &&
-                                post.media_type !== 'unknown'
-                            "
-                            class="absolute inset-0 animate-pulse bg-sand"
-                        />
-                        <img
-                            v-if="post.media_type === 'image'"
-                            :src="post.media_url"
-                            :alt="post.caption ?? t('Photo')"
-                            class="relative size-full object-cover transition-opacity duration-300"
-                            :class="
-                                loadedMedia[mediaKey(post)]
-                                    ? 'opacity-100'
-                                    : 'opacity-0'
-                            "
-                            loading="lazy"
-                            decoding="async"
-                            @load="markLoaded(mediaKey(post))"
-                        />
-                        <img
-                            v-else-if="post.media_type === 'video'"
-                            :src="resolvedThumbnail(post) ?? ''"
-                            :alt="post.caption ?? t('Moment')"
-                            class="relative size-full object-cover transition-opacity duration-300"
-                            :class="
-                                loadedMedia[mediaKey(post)]
-                                    ? 'opacity-100'
-                                    : 'opacity-0'
-                            "
-                            loading="lazy"
-                            decoding="async"
-                            @load="markLoaded(mediaKey(post))"
-                        />
-                        <div
-                            v-if="post.media_type === 'video'"
-                            class="absolute top-1.5 right-1.5 z-10"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                class="size-4 text-white drop-shadow"
-                            >
-                                <path
-                                    d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
-                                />
-                            </svg>
-                        </div>
-                    </RouterLink>
-                </div>
+                <PostMasonry
+                    class="pt-2"
+                    :posts="feed.items"
+                    :loading="feed.loading"
+                    :resolve-poster="resolvedPoster"
+                />
 
                 <div
                     v-if="feed.loading && feed.items.length > 0"

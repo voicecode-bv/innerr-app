@@ -3,30 +3,25 @@ import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { RouterLink } from 'vue-router';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
+import FeedHeader from '@/spa/components/FeedHeader.vue';
+import FeedLayoutChooser from '@/spa/components/FeedLayoutChooser.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard from '@/spa/components/PostCard.vue';
-import type {PostData} from '@/spa/components/PostCard.vue';
+import type { PostData } from '@/spa/components/PostCard.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
-import {
-    useInfiniteScroll
-
-} from '@/spa/composables/useInfiniteScroll';
-import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
+import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
-import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
-import heartIcon from '../../../svg/doodle-icons/heart.svg';
-import searchIcon from '../../../svg/doodle-icons/search.svg';
 import starIcon from '../../../svg/doodle-icons/star.svg';
-import userIcon from '../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
 const circlesStore = useCirclesStore();
@@ -34,18 +29,11 @@ const feedCache = useFeedCacheStore();
 const notificationsStore = useNotificationsStore();
 const FEED_KEY = 'home';
 
-const unreadNotifications = computed(() => notificationsStore.unreadCount);
-const unreadBadge = computed(() =>
-    unreadNotifications.value > 99 ? '99+' : String(unreadNotifications.value),
-);
-
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 const sentinelRef = ref<HTMLElement | null>(null);
 const permissionCardRef =
     useTemplateRef<InstanceType<typeof PushPermissionCard>>('permissionCard');
-
-const circles = computed(() => circlesStore.items);
 
 async function loadCircles(): Promise<void> {
     try {
@@ -195,8 +183,8 @@ async function onPostDeleted(postId: string): Promise<void> {
 
 function activeLikesCount(): number {
     if (likesPostId.value === null) {
-return 0;
-}
+        return 0;
+    }
 
     const target = feed.items.find((p) => p.id === likesPostId.value);
 
@@ -205,8 +193,8 @@ return 0;
 
 function activeCommentsCount(): number {
     if (commentsPostId.value === null) {
-return 0;
-}
+        return 0;
+    }
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 
@@ -215,8 +203,8 @@ return 0;
 
 function bumpActivePostCommentsCount(delta: number): void {
     if (commentsPostId.value === null) {
-return;
-}
+        return;
+    }
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 
@@ -242,141 +230,7 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout ref="layout" :show-header="false">
         <template #above>
-            <div
-                class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-dark-sand bg-sand pt-[var(--inset-top)]"
-            >
-                <div class="flex items-center justify-between px-4 pt-2">
-                    <RouterLink
-                        :to="{ name: 'spa.search' }"
-                        :aria-label="t('Search people')"
-                        data-tour="feed.search"
-                        class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
-                    >
-                        <span
-                            aria-hidden="true"
-                            class="inline-block size-6 bg-accent"
-                            :style="iconMaskStyle(searchIcon)"
-                        ></span>
-                    </RouterLink>
-                    <RouterLink
-                        :to="{ name: 'spa.notifications' }"
-                        :aria-label="
-                            unreadNotifications > 0
-                                ? t(':count unread notifications', {
-                                      count: unreadNotifications,
-                                  })
-                                : t('Open notifications')
-                        "
-                        data-tour="feed.notifications"
-                        class="relative flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
-                    >
-                        <span
-                            aria-hidden="true"
-                            class="inline-block size-6"
-                            :class="
-                                unreadNotifications > 0
-                                    ? 'bg-brand-orange'
-                                    : 'bg-accent'
-                            "
-                            :style="
-                                iconMaskStyle(
-                                    unreadNotifications > 0
-                                        ? heartFilledIcon
-                                        : heartIcon,
-                                )
-                            "
-                        ></span>
-                        <span
-                            v-if="unreadNotifications > 0"
-                            class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white"
-                        >
-                            {{ unreadBadge }}
-                        </span>
-                    </RouterLink>
-                </div>
-                <div
-                    data-tour="feed.circles-strip"
-                    class="no-scrollbar flex gap-3 overflow-x-auto px-4 pt-1 pb-3"
-                >
-                    <RouterLink
-                        :to="{ name: 'spa.circles.index' }"
-                        class="group flex shrink-0 flex-col items-center gap-1.5"
-                    >
-                        <div
-                            class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-action/50 transition-transform duration-500 group-hover:rotate-90"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="2"
-                                stroke="currentColor"
-                                class="size-6 text-accent"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M12 4.5v15m7.5-7.5h-15"
-                                />
-                            </svg>
-                        </div>
-                        <span class="text-sm font-medium text-ink">{{
-                            t('Circles')
-                        }}</span>
-                    </RouterLink>
-
-                    <template v-if="!circles">
-                        <div
-                            v-for="n in 4"
-                            :key="n"
-                            class="flex shrink-0 flex-col items-center gap-1.5"
-                        >
-                            <div
-                                class="size-15 animate-pulse rounded-full bg-sand"
-                            />
-                            <div
-                                class="h-3 w-12 animate-pulse rounded bg-sand"
-                            />
-                        </div>
-                    </template>
-
-                    <RouterLink
-                        v-else
-                        v-for="circle in circles"
-                        :key="circle.id"
-                        :to="{
-                            name: 'spa.circles.feed',
-                            params: { circle: circle.id },
-                        }"
-                        class="flex shrink-0 flex-col items-center gap-1.5"
-                    >
-                        <div class="circle-ring relative rounded-full p-0.5">
-                            <div class="rounded-full bg-surface p-0.5">
-                                <img
-                                    v-if="circle.photo"
-                                    :src="circle.photo"
-                                    :alt="circle.name"
-                                    class="size-14 rounded-full object-cover"
-                                />
-                                <div
-                                    v-else
-                                    class="flex size-14 items-center justify-center rounded-full bg-sand-100"
-                                >
-                                    <span
-                                        aria-hidden="true"
-                                        class="inline-block size-7 bg-sand-600"
-                                        :style="iconMaskStyle(userIcon)"
-                                    ></span>
-                                </div>
-                            </div>
-                        </div>
-                        <span
-                            class="max-w-16 truncate text-sm font-medium text-ink"
-                            >{{ circle.name }}</span
-                        >
-                    </RouterLink>
-                </div>
-            </div>
+            <FeedHeader layout="list" />
         </template>
 
         <div class="mt-38 pb-24">
@@ -504,22 +358,12 @@ function iconMaskStyle(url: string) {
             :initial-count="activeLikesCount()"
             @update:open="isLikesOpen = $event"
         />
+
+        <FeedLayoutChooser />
     </AppLayout>
 </template>
 
 <style scoped>
-/* circle-ring is aliased to the global .avatar-ring utility (in app.css) */
-.circle-ring {
-    background: conic-gradient(
-        from 0deg,
-        var(--color-brand-blue),
-        var(--color-brand-green),
-        var(--color-brand-yellow),
-        var(--color-brand-orange),
-        var(--color-brand-blue)
-    );
-}
-
 .dot-1 {
     animation-delay: 0s;
 }

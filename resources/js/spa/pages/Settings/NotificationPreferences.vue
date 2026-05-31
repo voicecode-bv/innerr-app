@@ -54,6 +54,7 @@ onMounted(() => {
 const labels = computed<Record<keyof Preferences, string>>(() => ({
     post_liked: t('Post liked'),
     post_commented: t('Post commented'),
+    comment_replied: t('Comment replied'),
     comment_liked: t('Comment liked'),
     new_circle_post: t('New circle post'),
     post_tagged: t('Tagged in a post'),
