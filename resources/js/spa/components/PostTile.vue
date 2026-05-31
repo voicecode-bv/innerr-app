@@ -3,6 +3,8 @@ import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { externalApi } from '@/spa/http/externalApi';
+import { useAuthStore } from '@/spa/stores/auth';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
@@ -18,8 +20,16 @@ const props = defineProps<{
     resolvePoster?: (post: PostData) => string | null;
 }>();
 
+const emit = defineEmits<{
+    (e: 'open-comments', postId: string): void;
+    (e: 'open-likes', postId: string): void;
+}>();
+
 const { t } = useTranslations();
 const router = useRouter();
+const auth = useAuthStore();
+
+const isOwner = computed(() => props.post.user?.id === auth.user?.id);
 
 const isVideo = computed(() => props.post.media_type === 'video');
 const isProcessing = computed(() => props.post.media_status === 'processing');
@@ -66,6 +76,43 @@ function onMediaLoad(event: Event): void {
     }
 }
 
+// Local like state, seeded from the post and updated optimistically — mirrors
+// PostCard so liking from the grid behaves the same as from the list feed.
+const isLiked = ref(props.post.is_liked);
+const likesCount = ref(props.post.likes_count);
+
+function onHeartClick(): void {
+    // Owners can't like their own post; the heart opens the likers list instead.
+    if (isOwner.value) {
+        emit('open-likes', props.post.id);
+
+        return;
+    }
+
+    void toggleLike();
+}
+
+async function toggleLike(): Promise<void> {
+    const wasLiked = isLiked.value;
+    isLiked.value = !wasLiked;
+    likesCount.value += wasLiked ? -1 : 1;
+
+    try {
+        if (wasLiked) {
+            await externalApi.delete(`/posts/${props.post.id}/like`);
+        } else {
+            await externalApi.post(`/posts/${props.post.id}/like`);
+        }
+    } catch {
+        isLiked.value = wasLiked;
+        likesCount.value += wasLiked ? 1 : -1;
+    }
+}
+
+function openComments(): void {
+    emit('open-comments', props.post.id);
+}
+
 function openDetails(): void {
     router.push({
         name: 'spa.posts.show',
@@ -88,27 +135,32 @@ function iconMaskStyle(url: string) {
 </script>
 
 <template>
-    <button
-        type="button"
-        class="relative block w-full overflow-hidden rounded-2xl bg-sand text-left shadow-sm ring-1 ring-sand-100 active:opacity-90"
+    <div
+        class="relative w-full overflow-hidden rounded-2xl bg-sand shadow-sm ring-1 ring-sand-100"
         :style="{ aspectRatio }"
-        @click="openDetails"
     >
-        <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
-        <img
-            v-if="posterSrc"
-            :src="posterSrc"
-            :alt="t('Photo')"
-            class="size-full object-cover transition-opacity duration-500"
-            :class="mediaLoaded ? 'opacity-100' : 'opacity-0'"
-            loading="lazy"
-            @load="onMediaLoad"
-        />
+        <button
+            type="button"
+            class="block size-full active:opacity-90"
+            :aria-label="t('Open post')"
+            @click="openDetails"
+        >
+            <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
+            <img
+                v-if="posterSrc"
+                :src="posterSrc"
+                :alt="t('Photo')"
+                class="size-full object-cover transition-opacity duration-500"
+                :class="mediaLoaded ? 'opacity-100' : 'opacity-0'"
+                loading="lazy"
+                @load="onMediaLoad"
+            />
+        </button>
 
         <span
             v-if="isVideo && !isProcessing"
             aria-hidden="true"
-            class="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+            class="pointer-events-none absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
         >
             <span
                 class="inline-block size-4 bg-white"
@@ -118,7 +170,7 @@ function iconMaskStyle(url: string) {
 
         <div
             v-if="isProcessing"
-            class="absolute inset-0 flex items-center justify-center bg-black/35"
+            class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35"
         >
             <span
                 class="rounded-full bg-black/55 px-2.5 py-1 text-xs text-white"
@@ -129,22 +181,30 @@ function iconMaskStyle(url: string) {
         <div
             class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/60 via-black/20 to-transparent px-3 pt-8 pb-2 text-white"
         >
-            <span class="flex items-center gap-1">
+            <button
+                type="button"
+                class="pointer-events-auto flex items-center gap-1"
+                :aria-label="isOwner ? t('Show likes') : t('Like')"
+                @click="onHeartClick"
+            >
                 <span
                     aria-hidden="true"
                     class="inline-block size-5 drop-shadow"
-                    :class="post.is_liked ? 'bg-brand-orange' : 'bg-white'"
+                    :class="isLiked ? 'bg-brand-orange' : 'bg-white'"
                     :style="
-                        iconMaskStyle(
-                            post.is_liked ? heartFilledIcon : heartIcon,
-                        )
+                        iconMaskStyle(isLiked ? heartFilledIcon : heartIcon)
                     "
                 ></span>
-                <span v-if="post.likes_count > 0" class="text-xs drop-shadow">{{
-                    post.likes_count
+                <span v-if="likesCount > 0" class="text-xs drop-shadow">{{
+                    likesCount
                 }}</span>
-            </span>
-            <span class="flex items-center gap-1">
+            </button>
+            <button
+                type="button"
+                class="pointer-events-auto flex items-center gap-1"
+                :aria-label="t('Comments')"
+                @click="openComments"
+            >
                 <span
                     aria-hidden="true"
                     class="inline-block size-5 bg-white drop-shadow"
@@ -155,7 +215,7 @@ function iconMaskStyle(url: string) {
                     class="text-xs drop-shadow"
                     >{{ post.comments_count }}</span
                 >
-            </span>
+            </button>
         </div>
-    </button>
+    </div>
 </template>
