@@ -476,5 +476,17 @@
     "Turn on push notifications to receive alerts about activity in your circles.": "Activez les notifications push pour être averti·e de l'activité dans vos cercles.",
     "Turn this off to hide your profile from search results.": "Désactivez ceci pour masquer votre profil des résultats de recherche.",
     "Video saved to your photos": "Vidéo enregistrée dans vos photos",
-    "You disabled push notifications for this app on your device. Open your device settings to turn them back on.": "Vous avez désactivé les notifications push pour cette application sur votre appareil. Ouvrez les paramètres de votre appareil pour les réactiver."
+    "You disabled push notifications for this app on your device. Open your device settings to turn them back on.": "Vous avez désactivé les notifications push pour cette application sur votre appareil. Ouvrez les paramètres de votre appareil pour les réactiver.",
+    "Verify your email": "Vérifiez votre adresse e-mail",
+    "We sent a 6-digit code to": "Nous avons envoyé un code à 6 chiffres à",
+    "Enter it below to continue.": "Saisissez-le ci-dessous pour continuer.",
+    "Verification code": "Code de vérification",
+    "Could not verify email": "Impossible de vérifier l'adresse e-mail",
+    "A new code has been sent to your email": "Un nouveau code a été envoyé à votre adresse e-mail",
+    "Please wait before requesting another code": "Veuillez patienter avant de demander un nouveau code",
+    "Could not resend verification code": "Impossible de renvoyer le code de vérification",
+    "Verify": "Vérifier",
+    "Resend code in :seconds s": "Nouveau code dans :seconds s",
+    "Resend code": "Renvoyer le code",
+    "Use a different account": "Utiliser un autre compte"
 }

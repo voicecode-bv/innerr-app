@@ -8,6 +8,7 @@ use App\Http\Controllers\Spa\AuthController as SpaAuthController;
 use App\Http\Controllers\Spa\BootstrapController as SpaBootstrapController;
 use App\Http\Controllers\Spa\CircleMediaController as SpaCircleMediaController;
 use App\Http\Controllers\Spa\EdgeController as SpaEdgeController;
+use App\Http\Controllers\Spa\EmailVerificationController as SpaEmailVerificationController;
 use App\Http\Controllers\Spa\PersonsController as SpaPersonsController;
 use App\Http\Controllers\Spa\PostsController as SpaPostsController;
 use App\Http\Controllers\Spa\SettingsController as SpaSettingsController;
@@ -26,6 +27,8 @@ Route::prefix('api/spa')->group(function () {
 
     Route::middleware('auth.api')->group(function () {
         Route::post('/auth/logout', [SpaAuthController::class, 'logout']);
+        Route::post('/auth/email/verify', [SpaEmailVerificationController::class, 'verify']);
+        Route::post('/auth/email/resend', [SpaEmailVerificationController::class, 'resend']);
         Route::post('/edge/active-tab', [SpaEdgeController::class, 'setActiveTab']);
 
         Route::post('/settings/profile/avatar', [SpaSettingsController::class, 'updateAvatar']);

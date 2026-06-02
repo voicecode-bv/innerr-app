@@ -627,5 +627,17 @@
     "Edit filters": "Filters aanpassen",
     "All moments. Tap to filter.": "Alle momenten. Tik om te filteren.",
     "No moments match these filters.": "Geen momenten gevonden met deze filters.",
-    "Try widening your selection or date range.": "Probeer je selectie of datumbereik te verruimen."
+    "Try widening your selection or date range.": "Probeer je selectie of datumbereik te verruimen.",
+    "Verify your email": "Bevestig je e-mailadres",
+    "We sent a 6-digit code to": "We hebben een 6-cijferige code gestuurd naar",
+    "Enter it below to continue.": "Vul die hieronder in om verder te gaan.",
+    "Verification code": "Verificatiecode",
+    "Could not verify email": "Kon e-mailadres niet bevestigen",
+    "A new code has been sent to your email": "Er is een nieuwe code naar je e-mail gestuurd",
+    "Please wait before requesting another code": "Wacht even voordat je een nieuwe code aanvraagt",
+    "Could not resend verification code": "Kon de verificatiecode niet opnieuw versturen",
+    "Verify": "Bevestigen",
+    "Resend code in :seconds s": "Nieuwe code over :seconds s",
+    "Resend code": "Code opnieuw versturen",
+    "Use a different account": "Een ander account gebruiken"
 }

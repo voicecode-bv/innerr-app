@@ -55,23 +55,14 @@ class BootstrapController extends Controller
                     'locale' => $result['user']['locale'] ?? $user->locale,
                     'feed_layout' => $result['user']['feed_layout'] ?? $user->feed_layout,
                     'onboarded_at' => $result['user']['onboarded_at'] ?? $user->onboarded_at,
+                    'email_verified_at' => $result['user']['email_verified_at'] ?? $user->email_verified_at,
                 ])->save();
                 $user->refresh();
             }
         }
 
         return response()->json([
-            'user' => $user ? [
-                'id' => $user->api_user_id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'email' => $user->email,
-                'avatar' => $user->avatar,
-                'bio' => $user->bio,
-                'locale' => $user->locale,
-                'feed_layout' => $user->feed_layout,
-                'onboarded' => $user->onboarded_at !== null,
-            ] : null,
+            'user' => $this->presentUser($user),
             'token' => $user ? $this->apiClient->getToken() : null,
             'locale' => app()->getLocale(),
             'api_base' => $apiBase,

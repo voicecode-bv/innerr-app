@@ -168,6 +168,65 @@ class ApiClient
     }
 
     /**
+     * @return array{success: bool, user?: array<string, mixed>, errors?: array<string, mixed>, message?: string}
+     */
+    public function verifyEmail(string $code): array
+    {
+        try {
+            $response = $this->authenticated()->post('/auth/email/verify', ['code' => $code]);
+        } catch (ConnectionException) {
+            return ['success' => false, 'message' => __('Could not connect to the server')];
+        }
+
+        if ($response->successful()) {
+            return ['success' => true, 'user' => $response->json('user')];
+        }
+
+        if ($response->status() === 422) {
+            return [
+                'success' => false,
+                'errors' => $response->json('errors', []),
+                'message' => $response->json('message', __('Validation failed')),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => $response->json('message', __('Could not verify email')),
+        ];
+    }
+
+    /**
+     * @return array{success: bool, status?: int, retry_after?: int|null, message?: string}
+     */
+    public function resendEmailVerification(): array
+    {
+        try {
+            $response = $this->authenticated()->post('/auth/email/resend');
+        } catch (ConnectionException) {
+            return ['success' => false, 'message' => __('Could not connect to the server')];
+        }
+
+        if ($response->successful()) {
+            return ['success' => true, 'message' => $response->json('message')];
+        }
+
+        if ($response->status() === 429) {
+            return [
+                'success' => false,
+                'status' => 429,
+                'retry_after' => $response->json('retry_after'),
+                'message' => $response->json('message', __('Please wait before requesting another code')),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => $response->json('message', __('Could not resend verification code')),
+        ];
+    }
+
+    /**
      * Validate the stored token against the external API.
      *
      * The `status` distinguishes a genuinely rejected token (`invalid`) from a

@@ -39,11 +39,38 @@ trait HandlesAuthenticatedSession
         $user->forceFill([
             'onboarded_at' => $userData['onboarded_at'] ?? null,
             'feed_layout' => $userData['feed_layout'] ?? null,
+            'email_verified_at' => $userData['email_verified_at'] ?? null,
         ])->save();
 
         Auth::login($user);
 
         session()->regenerate();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function presentUser(?User $user): ?array
+    {
+        if ($user === null) {
+            return null;
+        }
+
+        return [
+            'id' => $user->api_user_id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'email' => $user->email,
+            'avatar' => $user->avatar,
+            'bio' => $user->bio,
+            'locale' => $user->locale,
+            'feed_layout' => $user->feed_layout,
+            'onboarded' => $user->onboarded_at !== null,
+            'email_verified' => $user->email_verified_at !== null,
+            // Accounts that existed before verification was enforced were
+            // backfilled in the API, so locally this is simply "not verified".
+            'email_verification_required' => $user->email_verified_at === null,
+        ];
     }
 
     protected function primeSettingsCache(ApiClient $apiClient): void

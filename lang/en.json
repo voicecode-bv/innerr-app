@@ -627,5 +627,17 @@
     "Edit filters": "Edit filters",
     "All moments. Tap to filter.": "All moments. Tap to filter.",
     "No moments match these filters.": "No moments match these filters.",
-    "Try widening your selection or date range.": "Try widening your selection or date range."
+    "Try widening your selection or date range.": "Try widening your selection or date range.",
+    "Verify your email": "Verify your email",
+    "We sent a 6-digit code to": "We sent a 6-digit code to",
+    "Enter it below to continue.": "Enter it below to continue.",
+    "Verification code": "Verification code",
+    "Could not verify email": "Could not verify email",
+    "A new code has been sent to your email": "A new code has been sent to your email",
+    "Please wait before requesting another code": "Please wait before requesting another code",
+    "Could not resend verification code": "Could not resend verification code",
+    "Verify": "Verify",
+    "Resend code in :seconds s": "Resend code in :seconds s",
+    "Resend code": "Resend code",
+    "Use a different account": "Use a different account"
 }

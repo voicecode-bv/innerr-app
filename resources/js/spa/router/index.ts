@@ -68,6 +68,15 @@ const routes: RouteRecordRaw[] = [
         meta: { public: true },
     },
 
+    // Email verification gate (auth, no onboarded check) — reachable during the
+    // post-signup funnel, before the main app unlocks.
+    {
+        path: '/verify-email',
+        name: 'spa.verify-email',
+        component: () => import('@/spa/pages/Auth/VerifyEmail.vue'),
+        meta: { auth: true },
+    },
+
     // Onboarding (auth, no onboarded check)
     {
         path: '/onboarding/intro',
@@ -327,6 +336,27 @@ router.beforeEach(async (to) => {
 
     if (to.meta.onboarded && auth.user && !auth.user.onboarded) {
         return { name: 'spa.onboarding.intro' };
+    }
+
+    // Email verification gate: onboarding is allowed, but the main app
+    // (onboarded routes) stays locked until the email is verified. Grandfathered
+    // accounts have email_verification_required === false and pass straight through.
+    if (
+        to.meta.onboarded &&
+        auth.user &&
+        auth.user.email_verification_required &&
+        !auth.user.email_verified
+    ) {
+        return { name: 'spa.verify-email' };
+    }
+
+    // Keep users who don't need the verification screen out of it.
+    if (
+        to.name === 'spa.verify-email' &&
+        auth.user &&
+        (!auth.user.email_verification_required || auth.user.email_verified)
+    ) {
+        return { name: 'spa.home' };
     }
 
     // Home honours the user's preferred feed layout. Masonry (including the

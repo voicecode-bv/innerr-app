@@ -77,7 +77,11 @@ const routeTransition = computed(() => {
 // onboarding. Anders zou de tour kunnen proberen te starten op een lazy
 // onboarding-route waar de bijbehorende selectors niet bestaan.
 const showFeatureTour = computed(
-    () => auth.user !== null && auth.user.onboarded === true,
+    () =>
+        auth.user !== null &&
+        auth.user.onboarded === true &&
+        // Don't start the tour while the email-verification gate is still active.
+        !(auth.user.email_verification_required && !auth.user.email_verified),
 );
 </script>
 

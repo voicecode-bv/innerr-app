@@ -25,6 +25,9 @@ export interface User {
     // to masonry and shows a one-time chooser.
     feed_layout: FeedLayout | null;
     onboarded: boolean;
+    email_verified: boolean;
+    // Grandfathered accounts return false: they never have to verify.
+    email_verification_required: boolean;
 }
 
 interface BootstrapPayload {
@@ -106,6 +109,16 @@ export const useAuthStore = defineStore('spa-auth', {
             await secureStorage.set(TOKEN_KEY, data.token);
 
             return { redirect_to: data.redirect_to };
+        },
+        async verifyEmail(code: string): Promise<void> {
+            const data = await api.post<{ user: User }>(
+                '/api/spa/auth/email/verify',
+                { code },
+            );
+            this.user = data.user;
+        },
+        async resendEmailVerification(): Promise<void> {
+            await api.post('/api/spa/auth/email/resend');
         },
         async logout(): Promise<void> {
             try {

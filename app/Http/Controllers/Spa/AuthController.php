@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Spa;
 use App\Http\Controllers\Auth\Concerns\HandlesAuthenticatedSession;
 use App\Http\Controllers\Controller;
 use App\Jobs\SyncDeviceInfo;
-use App\Models\User;
 use App\Services\ApiClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -159,28 +158,6 @@ class AuthController extends Controller
         Edge::clear();
 
         return response()->json(['ok' => true]);
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    protected function presentUser(?User $user): ?array
-    {
-        if ($user === null) {
-            return null;
-        }
-
-        return [
-            'id' => $user->api_user_id,
-            'name' => $user->name,
-            'username' => $user->username,
-            'email' => $user->email,
-            'avatar' => $user->avatar,
-            'bio' => $user->bio,
-            'locale' => $user->locale,
-            'feed_layout' => $user->feed_layout,
-            'onboarded' => $user->onboarded_at !== null,
-        ];
     }
 
     protected function resolveRedirect(): string
