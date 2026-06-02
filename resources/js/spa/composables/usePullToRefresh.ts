@@ -1,6 +1,6 @@
 // import { Device } from '@nativephp/mobile';
-import { onUnmounted, ref, watch  } from 'vue';
-import type {Ref} from 'vue';
+import { onUnmounted, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 
 // Korte tick voor de "armed" feedback. De NativePHP-bridge biedt geen
 // light/medium/heavy-varianten, dus op Android pakken we de Web Vibration
@@ -49,8 +49,8 @@ export function usePullToRefresh(options: Options) {
 
     function onTouchMove(event: TouchEvent): void {
         if (!active) {
-return;
-}
+            return;
+        }
 
         const delta = event.touches[0].clientY - startY;
 
@@ -72,8 +72,8 @@ return;
 
     async function onTouchEnd(): Promise<void> {
         if (!active) {
-return;
-}
+            return;
+        }
 
         active = false;
 
@@ -93,8 +93,8 @@ return;
 
     function detach(): void {
         if (!attached) {
-return;
-}
+            return;
+        }
 
         attached.removeEventListener('touchstart', onTouchStart);
         attached.removeEventListener('touchmove', onTouchMove);

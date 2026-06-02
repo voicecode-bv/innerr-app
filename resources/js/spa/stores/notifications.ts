@@ -20,8 +20,8 @@ export const useNotificationsStore = defineStore('spa-notifications', {
         },
         async refresh(): Promise<number> {
             if (this.loading) {
-return this.loading;
-}
+                return this.loading;
+            }
 
             this.loading = (async () => {
                 try {

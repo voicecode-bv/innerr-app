@@ -9,6 +9,7 @@ export const vRevealOnScroll: Directive<RevealHost> = {
             typeof IntersectionObserver === 'undefined'
         ) {
             el.classList.add('reveal-on-scroll-in');
+
             return;
         }
 

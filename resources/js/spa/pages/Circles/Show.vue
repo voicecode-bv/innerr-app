@@ -1095,7 +1095,7 @@ function maskStyle(icon: string) {
                                 :class="
                                     member.role === 'administrator'
                                         ? 'bg-brand-yellow text-brand-blue hover:bg-brand-yellow/80 dark:bg-brand-yellow/20 dark:text-brand-yellow dark:hover:bg-brand-yellow/30'
-                                        : 'text-ink-muted hover:bg-action-soft hover:text-action'
+                                        : 'hover:bg-action-soft text-ink-muted hover:text-action'
                                 "
                                 :aria-label="
                                     member.role === 'administrator'

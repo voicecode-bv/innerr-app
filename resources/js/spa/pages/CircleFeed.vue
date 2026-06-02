@@ -5,12 +5,9 @@ import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard from '@/spa/components/PostCard.vue';
-import type {PostData} from '@/spa/components/PostCard.vue';
-import {
-    useInfiniteScroll
-
-} from '@/spa/composables/useInfiniteScroll';
-import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import type { PostData } from '@/spa/components/PostCard.vue';
+import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
+import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -160,8 +157,8 @@ async function onPostDeleted(postId: string): Promise<void> {
 
 function activeLikesCount(): number {
     if (likesPostId.value === null) {
-return 0;
-}
+        return 0;
+    }
 
     const target = feed.items.find((p) => p.id === likesPostId.value);
 
@@ -170,8 +167,8 @@ return 0;
 
 function activeCommentsCount(): number {
     if (commentsPostId.value === null) {
-return 0;
-}
+        return 0;
+    }
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 
@@ -180,8 +177,8 @@ return 0;
 
 function bumpActivePostCommentsCount(delta: number): void {
     if (commentsPostId.value === null) {
-return;
-}
+        return;
+    }
 
     const target = feed.items.find((p) => p.id === commentsPostId.value);
 
@@ -287,7 +284,7 @@ function goBack(): void {
             >
                 <div
                     aria-hidden="true"
-                    class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft dark:bg-brand-blue text-ink"
+                    class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft text-ink dark:bg-brand-blue"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -335,6 +332,5 @@ function goBack(): void {
             :initial-count="activeLikesCount()"
             @update:open="isLikesOpen = $event"
         />
-
     </AppLayout>
 </template>

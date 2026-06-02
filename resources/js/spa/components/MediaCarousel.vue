@@ -156,8 +156,7 @@ function animateScroll(
 
 function prefersReducedMotion(): boolean {
     return (
-        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
-        false
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
     );
 }
 

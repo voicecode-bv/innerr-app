@@ -79,8 +79,8 @@ async function loadPage(page: number): Promise<void> {
 
         const incoming = result.data.filter((u) => {
             if (seenIds.has(u.id)) {
-return false;
-}
+                return false;
+            }
 
             seenIds.add(u.id);
 
@@ -106,8 +106,8 @@ function loadMore(): void {
         isLoading.value ||
         currentPage.value >= lastPage.value
     ) {
-return;
-}
+        return;
+    }
 
     void loadPage(currentPage.value + 1);
 }
@@ -147,8 +147,8 @@ watch(
     [() => props.open, () => props.postId],
     ([isOpen]) => {
         if (!isOpen) {
-return;
-}
+            return;
+        }
 
         resetState();
         void loadPage(1);
@@ -189,7 +189,6 @@ function onSheetUpdate(value: boolean): void {
             <SheetHeader :title="t('Likes')" @close="close" />
         </template>
 
-        
         <div
             v-if="isLoading"
             class="flex items-center justify-center px-4 py-10 pb-24"
@@ -236,9 +235,7 @@ function onSheetUpdate(value: boolean): void {
                         class="avatar-ring size-10 rounded-full object-cover"
                     />
                     <div class="min-w-0 flex-1">
-                        <p
-                            class="truncate leading-none font-semibold text-ink"
-                        >
+                        <p class="truncate leading-none font-semibold text-ink">
                             {{ user.name }}
                         </p>
                         <p class="truncate text-ink-muted">
@@ -273,7 +270,10 @@ function onSheetUpdate(value: boolean): void {
                 {{ t('Loading more...') }}
             </div>
 
-            <p v-if="loadError" class="px-4 py-2 text-center text-destructive-ink">
+            <p
+                v-if="loadError"
+                class="px-4 py-2 text-center text-destructive-ink"
+            >
                 {{ loadError }}
             </p>
 

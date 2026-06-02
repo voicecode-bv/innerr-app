@@ -82,8 +82,8 @@ function findScrollableAncestor(start: HTMLElement | null): HTMLElement | null {
         }
 
         if (node === sheetRef.value) {
-break;
-}
+            break;
+        }
 
         node = node.parentElement;
     }
@@ -430,9 +430,7 @@ onUnmounted(() => {
                 v-if="$slots.footer"
                 :class="[
                     'shrink-0 border-t border-sand-200 bg-sand',
-                    open && !keyboardOpen
-                        ? 'pb-24'
-                        : '',
+                    open && !keyboardOpen ? 'pb-24' : '',
                 ]"
             >
                 <slot name="footer" />

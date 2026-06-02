@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
-import {
-    useInfiniteScroll
-    
-} from '@/spa/composables/useInfiniteScroll';
-import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
+import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -130,7 +127,7 @@ function iconMaskStyle(url: string) {
                 <span class="sr-only">{{ t('Search people') }}</span>
                 <span
                     aria-hidden="true"
-                    class="pointer-events-none absolute top-1/2 left-5 z-10 inline-block size-5 -translate-y-1/2 bg-action-muted"
+                    class="bg-action-muted pointer-events-none absolute top-1/2 left-5 z-10 inline-block size-5 -translate-y-1/2"
                     :style="iconMaskStyle(searchIcon)"
                 ></span>
                 <input

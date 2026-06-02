@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue';
-import type { Ref } from 'vue';
 
 // HLS-aware video element. iOS Safari/WKWebView speelt `.m3u8` native af, dus
 // daar zetten we gewoon `<video src>`. Andere browsers (Chrome/Firefox/Edge)
@@ -48,7 +47,10 @@ function isHlsUrl(url: string): boolean {
     return /\.m3u8(\?|$)/i.test(url);
 }
 
-async function attachSource(video: HTMLVideoElement, src: string): Promise<void> {
+async function attachSource(
+    video: HTMLVideoElement,
+    src: string,
+): Promise<void> {
     // Eerdere hls.js instance opruimen voordat we een nieuwe bron koppelen,
     // anders blijven worker-threads draaien en groeit het geheugen elke
     // route-wissel.

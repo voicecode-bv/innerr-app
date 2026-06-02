@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Camera, Dialog, Edge, Events, Off, On } from '@nativephp/mobile';
-import { NativeMedia } from '@innerr/native-media';
 import {
     computed,
     defineAsyncComponent,
@@ -40,8 +39,10 @@ import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { useTagsStore } from '@/spa/stores/tags';
+import { NativeMedia } from '@innerr/native-media';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import cropIcon from '../../../svg/doodle-icons/crop.svg';
+import messageIcon from '../../../svg/doodle-icons/message.svg';
 import photoIcon from '../../../svg/doodle-icons/photo.svg';
 import videoCameraIcon from '../../../svg/doodle-icons/video-camera.svg';
 
@@ -1156,13 +1157,11 @@ const activeItemIsImage = computed(() => {
 
             <div class="relative mt-6 flex-1 space-y-5 px-4 pb-6">
                 <section
+                    v-if="hasMedia"
                     v-show="currentStep === 0"
                     class="overflow-hidden rounded-lg bg-surface/50 shadow-sm backdrop-blur-sm"
                 >
-                    <div
-                        v-if="hasMedia"
-                        class="relative aspect-square overflow-hidden"
-                    >
+                    <div class="relative aspect-square overflow-hidden">
                         <MediaCarousel
                             :items="carouselItems"
                             :active-index="activeIndex"
@@ -1239,33 +1238,98 @@ const activeItemIsImage = computed(() => {
                             {{ t('Add more') }}
                         </button>
                     </div>
+                </section>
 
-                    <button
-                        v-else
-                        class="flex w-full flex-col items-center justify-center gap-3 px-8 py-14 active:bg-sand-100/40"
-                        @click="openSourcePicker"
+                <!-- Empty state styled like the "Write a quote" row below, so
+                     both entry points read as siblings of the same kind. -->
+                <button
+                    v-else
+                    v-show="currentStep === 0"
+                    type="button"
+                    class="flex w-full items-center gap-3 rounded-lg bg-surface/50 px-5 py-4 text-left shadow-sm backdrop-blur-sm active:bg-sand-100/40"
+                    @click="openSourcePicker"
+                >
+                    <span
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success-soft text-ink dark:bg-surface"
                     >
-                        <div
-                            class="flex size-20 items-center justify-center rounded-2xl bg-success-soft text-ink dark:bg-surface"
-                        >
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-10 bg-current"
-                                :style="iconMaskStyle(cameraIcon)"
-                            ></span>
-                        </div>
-                        <span class="text-ink-muted">{{
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-5 bg-current"
+                            :style="iconMaskStyle(cameraIcon)"
+                        ></span>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-ink">{{
                             t('Add a photo')
                         }}</span>
-                    </button>
-
-                    <p
-                        v-if="form.errors.media_path || form.errors.media_paths"
-                        class="px-5 pb-4 text-destructive-ink"
+                        <span class="block text-xs text-ink-muted">{{
+                            t('Share a photo or video')
+                        }}</span>
+                    </span>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-4 shrink-0 text-ink-muted"
+                        aria-hidden="true"
                     >
-                        {{ form.errors.media_path || form.errors.media_paths }}
-                    </p>
-                </section>
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                        />
+                    </svg>
+                </button>
+
+                <p
+                    v-if="form.errors.media_path || form.errors.media_paths"
+                    v-show="currentStep === 0"
+                    class="text-destructive-ink"
+                >
+                    {{ form.errors.media_path || form.errors.media_paths }}
+                </p>
+
+                <!-- Alternative entry: turn a child's words into a quote post. -->
+                <RouterLink
+                    v-show="currentStep === 0"
+                    :to="{ name: 'spa.quotes.create' }"
+                    class="flex items-center gap-3 rounded-lg bg-surface/50 px-5 py-4 shadow-sm backdrop-blur-sm active:bg-sand-100/40"
+                >
+                    <span
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success-soft text-ink dark:bg-surface"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-5 bg-current"
+                            :style="iconMaskStyle(messageIcon)"
+                        ></span>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-ink">{{
+                            t('Write a quote')
+                        }}</span>
+                        <span class="block text-xs text-ink-muted">{{
+                            t('Share something your child said')
+                        }}</span>
+                    </span>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-4 shrink-0 text-ink-muted"
+                        aria-hidden="true"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                        />
+                    </svg>
+                </RouterLink>
 
                 <section
                     v-show="currentStep === 1"

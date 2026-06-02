@@ -89,12 +89,12 @@ watch(
     () => [props.open, props.postId] as const,
     ([open, id]) => {
         if (!open || !id) {
-return;
-}
+            return;
+        }
 
         if (post.value?.id !== id) {
-post.value = null;
-}
+            post.value = null;
+        }
 
         load(id);
     },
@@ -113,8 +113,8 @@ const staticMapUrl = computed<string | null>(() => {
     const token = serviceKeys.mapboxToken;
 
     if (!token || !hasLocation.value || !post.value) {
-return null;
-}
+        return null;
+    }
 
     const lng = post.value.longitude;
     const lat = post.value.latitude;
@@ -133,8 +133,8 @@ const mapTarget = computed(() => {
 
 const hasAnyDetails = computed(() => {
     if (!post.value) {
-return false;
-}
+        return false;
+    }
 
     return (
         (post.value.circles ?? []).length > 0 ||
@@ -149,15 +149,15 @@ function ageAt(
     atDateString: string,
 ): string | null {
     if (!birthdate) {
-return null;
-}
+        return null;
+    }
 
     const birth = new Date(birthdate);
     const at = new Date(atDateString);
 
     if (isNaN(birth.getTime()) || isNaN(at.getTime()) || at < birth) {
-return null;
-}
+        return null;
+    }
 
     const totalDays = Math.floor((at.getTime() - birth.getTime()) / 86_400_000);
 

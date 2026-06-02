@@ -25,12 +25,12 @@ export const useCommentsCacheStore = defineStore('spa-comments-cache', {
             const entry = this.entries[postId];
 
             if (!entry) {
-return null;
-}
+                return null;
+            }
 
             if (Date.now() - entry.cachedAt > ttlMs) {
-return null;
-}
+                return null;
+            }
 
             return entry as PageEntry<T>;
         },

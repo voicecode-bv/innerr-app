@@ -5,10 +5,7 @@ import Button from '@/components/Button.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
-import {
-    createInviteLink,
-    listInviteLinks,
-} from '@/spa/services/inviteLinks';
+import { createInviteLink, listInviteLinks } from '@/spa/services/inviteLinks';
 import type { InviteLink } from '@/spa/services/inviteLinks';
 
 const props = defineProps<{

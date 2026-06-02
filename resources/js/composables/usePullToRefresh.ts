@@ -1,5 +1,5 @@
-import { ref, watch, onUnmounted  } from 'vue';
-import type {Ref} from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
+import type { Ref } from 'vue';
 
 interface PullToRefreshOptions {
     onRefresh: () => Promise<void>;
@@ -27,8 +27,8 @@ export function usePullToRefresh({
 
     function onTouchStart(e: TouchEvent) {
         if (isRefreshing.value) {
-return;
-}
+            return;
+        }
 
         // Reset any stale state from a previously interrupted gesture
         pullDistance.value = 0;
@@ -40,8 +40,8 @@ return;
 
     function onTouchMove(e: TouchEvent) {
         if (!tracking || isRefreshing.value) {
-return;
-}
+            return;
+        }
 
         const currentY = e.touches[0].clientY;
         const currentX = e.touches[0].clientX;
@@ -80,8 +80,8 @@ return;
 
     async function onTouchEnd() {
         if (!tracking || isRefreshing.value) {
-return;
-}
+            return;
+        }
 
         tracking = false;
 
@@ -129,8 +129,8 @@ return;
 
     function unbind() {
         if (!boundTarget) {
-return;
-}
+            return;
+        }
 
         boundTarget.removeEventListener('touchstart', onTouchStart);
         boundTarget.removeEventListener('touchmove', onTouchMove);
@@ -143,12 +143,12 @@ return;
         containerRef,
         (el, oldEl) => {
             if (oldEl) {
-unbind();
-}
+                unbind();
+            }
 
             if (el) {
-bind(el);
-}
+                bind(el);
+            }
         },
         { immediate: true },
     );

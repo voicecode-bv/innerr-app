@@ -90,8 +90,8 @@ const renderItems = computed<RenderItem[]>(() => {
     let hiddenRun: Comment[] = [];
     const flush = () => {
         if (hiddenRun.length === 0) {
-return;
-}
+            return;
+        }
 
         out.push({
             kind: 'hidden',
@@ -119,8 +119,8 @@ function seedCommentsFromCache(): boolean {
     const cached = commentsCache.getStale<Comment>(props.postId);
 
     if (!cached) {
-return false;
-}
+        return false;
+    }
 
     comments.value = cached.comments;
     currentPage.value = cached.currentPage;
@@ -184,8 +184,8 @@ async function loadPage(page: number): Promise<void> {
         } else {
             const incoming = result.data.filter((c) => {
                 if (seenIds.has(c.id)) {
-return false;
-}
+                    return false;
+                }
 
                 seenIds.add(c.id);
 
@@ -213,8 +213,8 @@ function loadMore(): void {
         isLoading.value ||
         currentPage.value >= lastPage.value
     ) {
-return;
-}
+        return;
+    }
 
     void loadPage(currentPage.value + 1);
 }
@@ -236,8 +236,8 @@ watch(
     () => props.open,
     (isOpen) => {
         if (!isOpen) {
-return;
-}
+            return;
+        }
 
         if (!hasLoaded.value) {
             void loadPage(1);
@@ -297,8 +297,8 @@ function rowTransform(commentId: string): string {
 
 function onSwipeStart(event: TouchEvent, comment: Comment): void {
     if (comment.user?.id !== authUserId.value) {
-return;
-}
+        return;
+    }
 
     touchStartX.value = event.touches[0].clientX;
     touchingId.value = comment.id;
@@ -311,8 +311,8 @@ return;
 
 function onSwipeMove(event: TouchEvent): void {
     if (touchingId.value === null) {
-return;
-}
+        return;
+    }
 
     const dx = event.touches[0].clientX - touchStartX.value;
     const baseOffset = swipedId.value === touchingId.value ? -ACTION_WIDTH : 0;
@@ -321,8 +321,8 @@ return;
 
 function onSwipeEnd(): void {
     if (touchingId.value === null) {
-return;
-}
+        return;
+    }
 
     swipedId.value =
         touchOffset.value <= -ACTION_WIDTH / 2 ? touchingId.value : null;
@@ -338,8 +338,8 @@ let pendingDeleteComment: Comment | null = null;
 
 async function requestDelete(comment: Comment): Promise<void> {
     if (comment.user?.id !== authUserId.value) {
-return;
-}
+        return;
+    }
 
     pendingDeleteComment = comment;
     swipedId.value = null;
@@ -356,15 +356,15 @@ async function handleButtonPressed(payload: {
     id?: string | null;
 }): Promise<void> {
     if (payload.id !== 'delete-comment-confirm' || payload.index !== 1) {
-return;
-}
+        return;
+    }
 
     const target = pendingDeleteComment;
     pendingDeleteComment = null;
 
     if (target) {
-await deleteComment(target);
-}
+        await deleteComment(target);
+    }
 }
 
 onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
@@ -378,8 +378,8 @@ async function deleteComment(comment: Comment): Promise<void> {
     const backupIndex = comments.value.findIndex((c) => c.id === comment.id);
 
     if (backupIndex === -1) {
-return;
-}
+        return;
+    }
 
     comments.value = comments.value.filter((c) => c.id !== comment.id);
 
@@ -396,8 +396,8 @@ return;
 
 async function toggleCommentLike(comment: Comment): Promise<void> {
     if (!comment.user || comment.user.id === authUserId.value) {
-return;
-}
+        return;
+    }
 
     const wasLiked = comment.is_liked ?? false;
     comment.is_liked = !wasLiked;
@@ -447,8 +447,8 @@ function scrollToBottom(): void {
         const last = comments.value[comments.value.length - 1];
 
         if (!last) {
-return;
-}
+            return;
+        }
 
         const el = document.querySelector(`[data-comment-id="${last.id}"]`);
 
@@ -462,8 +462,8 @@ async function submitComment(): Promise<void> {
     const value = body.value.trim();
 
     if (!value || isSubmitting.value) {
-return;
-}
+        return;
+    }
 
     const optimistic = makeOptimisticComment(value);
     comments.value = [...comments.value, optimistic];
@@ -571,7 +571,10 @@ defineExpose({
         </div>
 
         <div v-else class="space-y-3 px-3 py-3">
-            <template v-for="item in renderItems" :key="item.kind === 'hidden' ? item.key : item.comment.id">
+            <template
+                v-for="item in renderItems"
+                :key="item.kind === 'hidden' ? item.key : item.comment.id"
+            >
                 <HiddenCommentsNotice
                     v-if="item.kind === 'hidden'"
                     :count="item.count"
@@ -631,7 +634,10 @@ defineExpose({
                 {{ t('Loading more...') }}
             </div>
 
-            <p v-if="loadError" class="px-4 py-2 text-center text-destructive-ink">
+            <p
+                v-if="loadError"
+                class="px-4 py-2 text-center text-destructive-ink"
+            >
                 {{ loadError }}
             </p>
 

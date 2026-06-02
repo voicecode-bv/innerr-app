@@ -34,8 +34,8 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 async function loadCircles(force = false): Promise<void> {
     try {
         if (force) {
-circlesStore.invalidate();
-}
+            circlesStore.invalidate();
+        }
 
         await circlesStore.ensureLoaded();
     } catch {

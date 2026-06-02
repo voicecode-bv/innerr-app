@@ -26,7 +26,7 @@ const fetchUrl = computed(() => `/circles/${circleId.value}/photos/map`);
 
 onMounted(async () => {
     try {
-        const [_, circleResp] = await Promise.all([
+        const [, circleResp] = await Promise.all([
             serviceKeys.ensureLoaded(),
             externalApi.get<{ data: Circle }>(`/circles/${circleId.value}`),
         ]);

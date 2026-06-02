@@ -122,9 +122,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                             :key="key"
                             class="flex items-center justify-between gap-3 py-3"
                         >
-                            <span class="text-base text-ink">{{
-                                label
-                            }}</span>
+                            <span class="text-base text-ink">{{ label }}</span>
                             <span
                                 class="h-8 w-14 shrink-0 animate-pulse rounded-full bg-sand-200"
                             />

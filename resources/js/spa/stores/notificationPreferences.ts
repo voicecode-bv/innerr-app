@@ -37,8 +37,8 @@ export const useNotificationPreferencesStore = defineStore(
             },
             async refresh(): Promise<NotificationPreferences> {
                 if (this.loading) {
-return this.loading;
-}
+                    return this.loading;
+                }
 
                 this.loading = (async () => {
                     try {
@@ -58,8 +58,8 @@ return this.loading;
             },
             async toggle(key: keyof NotificationPreferences): Promise<void> {
                 if (!this.preferences) {
-return;
-}
+                    return;
+                }
 
                 const previous = { ...this.preferences };
                 this.preferences = {

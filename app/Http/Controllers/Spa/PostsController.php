@@ -63,6 +63,9 @@ class PostsController extends Controller
             'media_metadata.*.latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'media_metadata.*.longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'caption' => ['nullable', 'string', 'max:2200'],
+            'type' => ['nullable', 'string', 'in:media,quote'],
+            'quote_text' => ['nullable', 'required_if:type,quote', 'string', 'max:280'],
+            'quote_author' => ['nullable', 'string', 'max:100'],
             'location' => ['nullable', 'string', 'max:255'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
@@ -98,6 +101,15 @@ class PostsController extends Controller
             'tag_ids' => $validated['tag_ids'] ?? [],
             'person_ids' => $validated['person_ids'] ?? [],
         ];
+
+        // Quote posts carry their text + attribution alongside the rendered
+        // image. Only forwarded when present so regular posts stay untouched
+        // and the external API keeps defaulting `type` to 'media'.
+        if (($validated['type'] ?? 'media') === 'quote') {
+            $data['type'] = 'quote';
+            $data['quote_text'] = $validated['quote_text'] ?? '';
+            $data['quote_author'] = $validated['quote_author'] ?? null;
+        }
 
         // Single-file pad behoudt de huidige externe API-shape (top-level
         // EXIF + single `media` veld) zodat dit blijft werken zonder dat de

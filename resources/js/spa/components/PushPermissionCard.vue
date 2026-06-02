@@ -147,7 +147,7 @@ defineExpose({ refresh: refreshStatus });
         <button
             v-if="dismissible"
             type="button"
-            class="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full text-brand-blue/60 dark:text-ink-muted transition-colors hover:bg-brand-blue/10 hover:text-brand-blue"
+            class="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full text-brand-blue/60 transition-colors hover:bg-brand-blue/10 hover:text-brand-blue dark:text-ink-muted"
             :aria-label="t('Dismiss')"
             @click="dismiss"
         >

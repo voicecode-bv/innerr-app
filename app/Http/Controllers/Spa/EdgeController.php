@@ -46,9 +46,11 @@ class EdgeController extends Controller
 
     protected function shouldHideBottomNav(string $path): bool
     {
-        // Onboarding + de create-post wizard nemen de volledige hoogte: de
-        // native bottom-bar zit in de weg van hun eigen sticky footer.
-        return $this->isOnboardingPath($path) || $path === '/posts/create';
+        // Onboarding + de create-post/quote wizards nemen de volledige hoogte:
+        // de native bottom-bar zit in de weg van hun eigen sticky footer.
+        return $this->isOnboardingPath($path)
+            || $path === '/posts/create'
+            || $path === '/quotes/create';
     }
 
     protected function resolveActiveTab(string $path): string
@@ -65,7 +67,7 @@ class EdgeController extends Controller
             // back to the index instead of being a no-op on an already-active
             // tab.
             $path === '/circles' => 'circles',
-            $path === '/posts/create' => 'add',
+            $path === '/posts/create' || $path === '/quotes/create' => 'add',
             str_starts_with($path, '/profiles/') => 'profile',
             // Pages without a matching tab (notifications, settings, post detail,
             // etc.) leave every tab inactive so tapping any tab — including Home

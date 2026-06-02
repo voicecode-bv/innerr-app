@@ -201,11 +201,11 @@
 }
 
 @utility field {
-    @apply w-full rounded-full border-2 border-action/20 bg-surface px-6 py-4 text-base font-medium text-ink placeholder-ink-muted/80 outline-none transition-all duration-200 hover:border-action/40 focus:border-action focus:ring-4 focus:ring-action/15;
+    @apply w-full rounded-full border-2 border-action/20 bg-surface px-6 py-4 text-base font-medium text-ink placeholder-ink-muted/80 transition-all duration-200 outline-none hover:border-action/40 focus:border-action focus:ring-4 focus:ring-action/15;
 }
 
 @utility field-area {
-    @apply w-full resize-none rounded-3xl border-2 border-action/20 bg-surface px-6 py-4 text-base font-medium text-ink placeholder-ink-muted/80 outline-none transition-all duration-200 hover:border-action/40 focus:border-action focus:ring-4 focus:ring-action/15;
+    @apply w-full resize-none rounded-3xl border-2 border-action/20 bg-surface px-6 py-4 text-base font-medium text-ink placeholder-ink-muted/80 transition-all duration-200 outline-none hover:border-action/40 focus:border-action focus:ring-4 focus:ring-action/15;
 }
 
 @utility no-scrollbar {

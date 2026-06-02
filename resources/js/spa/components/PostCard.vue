@@ -43,6 +43,8 @@ export interface PostFirstVisibleLiker {
 
 export interface PostData {
     id: string;
+    /** 'media' for a regular photo/video post, 'quote' for a rendered quote. */
+    type?: 'media' | 'quote';
     media_url: string;
     media_type: string;
     thumbnail_url: string | null;
@@ -52,6 +54,8 @@ export interface PostData {
     height?: number | null;
     media?: PostMediaItem[];
     caption: string | null;
+    quote_text?: string | null;
+    quote_author?: string | null;
     location: string | null;
     created_at: string;
     user: {

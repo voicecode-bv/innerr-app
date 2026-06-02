@@ -21,8 +21,8 @@ export const useDefaultCirclesStore = defineStore('spa-default-circles', {
         },
         async refresh(): Promise<string[]> {
             if (this.loading) {
-return this.loading;
-}
+                return this.loading;
+            }
 
             this.loading = (async () => {
                 try {

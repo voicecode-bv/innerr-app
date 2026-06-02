@@ -19,12 +19,12 @@ export const usePostCacheStore = defineStore('spa-post-cache', {
             const entry = this.entries[postId];
 
             if (!entry) {
-return null;
-}
+                return null;
+            }
 
             if (Date.now() - entry.cachedAt > ttlMs) {
-return null;
-}
+                return null;
+            }
 
             return entry.post as T;
         },

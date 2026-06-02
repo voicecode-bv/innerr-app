@@ -551,8 +551,11 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
 // kapot maakt voordat we ze splitsen — namen kunnen zelf placeholder-syntax
 // bevatten, dus we vervangen `:inviter` / `:circle` met onwaarschijnlijke
 // markers en splitsen de string vervolgens om gestylede spans te renderen.
-const INVITER_TOKEN = ' inv-inviter ';
-const CIRCLE_TOKEN = ' inv-circle ';
+// We gebruiken U+E000 (Private Use Area), bewust geen NUL/control-chars: die
+// breken de Vue-parser (unexpected-null-character) en worden door tooling
+// gestript.
+const INVITER_TOKEN = 'inv-inviter';
+const CIRCLE_TOKEN = 'inv-circle';
 
 interface InvitationSegment {
     text: string;

@@ -64,9 +64,7 @@ const iconTileClass = computed(() =>
         </template>
         {{ circle.name }}
         <template
-            v-if="
-                canSeeMemberCount && typeof circle.members_count === 'number'
-            "
+            v-if="canSeeMemberCount && typeof circle.members_count === 'number'"
             #subtitle
         >
             {{

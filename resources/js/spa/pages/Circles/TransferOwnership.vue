@@ -98,8 +98,8 @@ function goBack(): void {
 
 async function confirmTransfer(): Promise<void> {
     if (!selectedMember.value) {
-return;
-}
+        return;
+    }
 
     await Dialog.alert()
         .confirm(

@@ -27,7 +27,7 @@ const fetchUrl = computed(() => `/profiles/${username.value}/photos/map`);
 
 onMounted(async () => {
     try {
-        const [_, profileResp] = await Promise.all([
+        const [, profileResp] = await Promise.all([
             serviceKeys.ensureLoaded(),
             externalApi.get<{ data: Profile }>(`/profiles/${username.value}`),
         ]);

@@ -25,8 +25,8 @@ export const useTagsStore = defineStore('spa-tags', {
         },
         async refresh(): Promise<Tag[]> {
             if (this.loading) {
-return this.loading;
-}
+                return this.loading;
+            }
 
             this.loading = (async () => {
                 try {
@@ -52,8 +52,8 @@ return this.loading;
         },
         update(id: string, patch: Partial<Tag>): void {
             if (!this.items) {
-return;
-}
+                return;
+            }
 
             this.items = this.items.map((t) =>
                 t.id === id ? { ...t, ...patch } : t,
@@ -61,8 +61,8 @@ return;
         },
         remove(id: string): void {
             if (!this.items) {
-return;
-}
+                return;
+            }
 
             this.items = this.items.filter((t) => t.id !== id);
         },

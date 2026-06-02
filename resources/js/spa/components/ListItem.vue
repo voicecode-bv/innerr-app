@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { RouterLink  } from 'vue-router';
-import type {RouteLocationRaw} from 'vue-router';
+import { RouterLink } from 'vue-router';
+import type { RouteLocationRaw } from 'vue-router';
 
 withDefaults(
     defineProps<{

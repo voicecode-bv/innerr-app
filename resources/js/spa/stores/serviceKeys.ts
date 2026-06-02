@@ -16,21 +16,21 @@ const TTL_MS = 60 * 60 * 1000; // 1 uur — Mapbox-token verandert zelden
 
 function readCache(): CacheEntry | null {
     if (typeof window === 'undefined') {
-return null;
-}
+        return null;
+    }
 
     try {
         const raw = window.localStorage?.getItem(STORAGE_KEY);
 
         if (!raw) {
-return null;
-}
+            return null;
+        }
 
         const parsed = JSON.parse(raw) as CacheEntry;
 
         if (Date.now() - parsed.fetched_at > TTL_MS) {
-return null;
-}
+            return null;
+        }
 
         return parsed;
     } catch {
@@ -40,8 +40,8 @@ return null;
 
 function writeCache(entry: CacheEntry): void {
     if (typeof window === 'undefined') {
-return;
-}
+        return;
+    }
 
     try {
         window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(entry));

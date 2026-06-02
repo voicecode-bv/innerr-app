@@ -299,6 +299,79 @@ it('rejects map-picker coordinates that are out of range', function () {
         ->assertJsonValidationErrors('latitude');
 });
 
+it('forwards quote fields to the external API on a quote post', function () {
+    $user = User::factory()->create();
+
+    $sentData = null;
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('attach')->andReturnSelf();
+    $pending->shouldReceive('post')->once()->with('/posts', Mockery::on(function ($data) use (&$sentData) {
+        $sentData = $data;
+
+        return true;
+    }))->andReturn(new Response(Http::response(['data' => ['id' => POST_ID]], 201)->wait()));
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $client->shouldReceive('proxyMediaUrls')->andReturn(['id' => POST_ID]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_path' => $this->tempPath,
+            'type' => 'quote',
+            'quote_text' => 'Why is the moon following us?',
+            'quote_author' => 'Mila',
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(201);
+
+    expect($sentData['type'])->toBe('quote')
+        ->and($sentData['quote_text'])->toBe('Why is the moon following us?')
+        ->and($sentData['quote_author'])->toBe('Mila');
+});
+
+it('does not forward quote fields on a regular media post', function () {
+    $user = User::factory()->create();
+
+    $sentData = null;
+    $pending = Mockery::mock(PendingRequest::class);
+    $pending->shouldReceive('attach')->andReturnSelf();
+    $pending->shouldReceive('post')->once()->with('/posts', Mockery::on(function ($data) use (&$sentData) {
+        $sentData = $data;
+
+        return true;
+    }))->andReturn(new Response(Http::response(['data' => ['id' => POST_ID]], 201)->wait()));
+
+    $client = Mockery::mock(ApiClient::class);
+    $client->shouldReceive('authenticated')->andReturn($pending);
+    $client->shouldReceive('proxyMediaUrls')->andReturn(['id' => POST_ID]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_path' => $this->tempPath,
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(201);
+
+    expect($sentData)->not->toHaveKey('type')
+        ->and($sentData)->not->toHaveKey('quote_text');
+});
+
+it('requires quote_text when type is quote', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/spa/posts', [
+            'media_path' => $this->tempPath,
+            'type' => 'quote',
+            'circle_ids' => [CIRCLE_ID_A],
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('quote_text');
+});
+
 it('flattens external media.{i} errors to media_paths.{i}', function () {
     $user = User::factory()->create();
 

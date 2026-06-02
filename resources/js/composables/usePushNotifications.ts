@@ -23,7 +23,9 @@ async function resolvePlatform(): Promise<'ios' | 'android' | null> {
 async function sendToken(token: string): Promise<void> {
     try {
         const platform = await resolvePlatform();
-        const payload: { token: string; platform?: 'ios' | 'android' } = { token };
+        const payload: { token: string; platform?: 'ios' | 'android' } = {
+            token,
+        };
 
         if (platform) {
             payload.platform = platform;

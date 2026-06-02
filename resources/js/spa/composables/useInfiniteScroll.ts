@@ -1,5 +1,5 @@
-import { onMounted, onUnmounted, reactive, ref, watch  } from 'vue';
-import type {Ref} from 'vue';
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 
 export interface PaginatedResponse<T> {
     data: T[];
@@ -48,8 +48,8 @@ export function useInfiniteScroll<T>(
         const id = (item as { id?: string | number }).id;
 
         if (id !== undefined) {
-seenIds.add(id);
-}
+            seenIds.add(id);
+        }
     }
 
     async function loadMore(): Promise<void> {
@@ -68,8 +68,8 @@ seenIds.add(id);
 
                 if (id !== undefined) {
                     if (seenIds.has(id)) {
-continue;
-}
+                        continue;
+                    }
 
                     seenIds.add(id);
                 }
@@ -103,8 +103,8 @@ continue;
     // response binnen is — voorkomt een lege flits tussen "stale toon" en "verse".
     async function softRefresh(): Promise<PaginatedResponse<T> | null> {
         if (loading.value) {
-return null;
-}
+            return null;
+        }
 
         loading.value = true;
         error.value = null;
@@ -120,8 +120,8 @@ return null;
 
                 if (id !== undefined) {
                     if (freshSeen.has(id)) {
-continue;
-}
+                        continue;
+                    }
 
                     freshSeen.add(id);
                 }
@@ -133,8 +133,8 @@ continue;
             seenIds.clear();
 
             for (const id of freshSeen) {
-seenIds.add(id);
-}
+                seenIds.add(id);
+            }
 
             lastPage.value = response.meta.last_page;
             page.value = response.meta.current_page + 1;

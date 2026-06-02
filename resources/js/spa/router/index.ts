@@ -5,7 +5,7 @@ import {
     createMemoryHistory,
 } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { usePlatform } from '@/spa/composables/usePlatform';
+import { isNativeRuntime, usePlatform } from '@/spa/composables/usePlatform';
 import { api } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useFeatureTourStore } from '@/spa/stores/featureTour';
@@ -22,7 +22,7 @@ declare module 'vue-router' {
     }
 }
 
-const isNative = typeof window !== 'undefined' && '__nativephp' in window;
+const isNative = isNativeRuntime();
 const isLocalEnv =
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
@@ -129,6 +129,12 @@ const routes: RouteRecordRaw[] = [
         path: '/posts/create',
         name: 'spa.posts.create',
         component: () => import('@/spa/pages/CreatePost.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
+        path: '/quotes/create',
+        name: 'spa.quotes.create',
+        component: () => import('@/spa/pages/CreateQuote.vue'),
         meta: { auth: true, onboarded: true },
     },
     {

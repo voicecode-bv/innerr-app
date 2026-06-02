@@ -440,8 +440,8 @@ async function handleMediaSelected(payload: {
         pendingPhotoPreview.value = null;
     } catch {
         if (previous) {
-personsStore.update(personId, previous);
-}
+            personsStore.update(personId, previous);
+        }
     } finally {
         photoUploading.value = false;
     }
@@ -762,10 +762,7 @@ function iconMaskStyle(url: string) {
 
                 <form class="space-y-4" @submit.prevent="submit">
                     <div>
-                        <label
-                            for="person-name"
-                            class="font-semibold text-ink"
-                        >
+                        <label for="person-name" class="font-semibold text-ink">
                             {{ t('Name') }}
                         </label>
                         <input

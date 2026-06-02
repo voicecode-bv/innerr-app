@@ -1,5 +1,5 @@
-import { onMounted, onUnmounted, ref, watch  } from 'vue';
-import type {Ref} from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 
 type FullscreenVideoElement = HTMLVideoElement & {
     webkitEnterFullscreen?: () => void;
@@ -105,8 +105,8 @@ export function useVideoFullscreen(
 
     watch(isFullscreen, (val) => {
         if (typeof document === 'undefined') {
-return;
-}
+            return;
+        }
 
         const main = document.querySelector('main') as HTMLElement | null;
 
@@ -147,8 +147,8 @@ return;
             const main = document.querySelector('main') as HTMLElement | null;
 
             if (main) {
-main.style.overflow = '';
-}
+                main.style.overflow = '';
+            }
 
             document.body.style.overflow = '';
         }

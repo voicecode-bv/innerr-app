@@ -32,8 +32,8 @@ export const usePersonsStore = defineStore('spa-persons', {
         },
         async refresh(): Promise<Person[]> {
             if (this.loading) {
-return this.loading;
-}
+                return this.loading;
+            }
 
             this.loading = (async () => {
                 try {
@@ -59,8 +59,8 @@ return this.loading;
         },
         update(id: string, patch: Partial<Person>): void {
             if (!this.items) {
-return;
-}
+                return;
+            }
 
             this.items = this.items.map((p) =>
                 p.id === id ? { ...p, ...patch } : p,
@@ -68,8 +68,8 @@ return;
         },
         remove(id: string): void {
             if (!this.items) {
-return;
-}
+                return;
+            }
 
             this.items = this.items.filter((p) => p.id !== id);
         },

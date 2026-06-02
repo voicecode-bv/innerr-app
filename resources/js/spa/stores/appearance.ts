@@ -38,7 +38,10 @@ function applyHtmlClass(isDark: boolean): void {
     const meta = document.querySelector('meta[name="theme-color"]');
 
     if (meta) {
-        meta.setAttribute('content', isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
+        meta.setAttribute(
+            'content',
+            isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT,
+        );
     }
 }
 
@@ -79,9 +82,9 @@ export const useAppearanceStore = defineStore('spa-appearance', {
         },
         attachSystemListener(): void {
             if (
-                this.mediaQueryAttached
-                || typeof window === 'undefined'
-                || !window.matchMedia
+                this.mediaQueryAttached ||
+                typeof window === 'undefined' ||
+                !window.matchMedia
             ) {
                 return;
             }

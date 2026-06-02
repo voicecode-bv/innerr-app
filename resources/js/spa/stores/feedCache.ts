@@ -15,8 +15,8 @@ const FRESH_TTL_MS = 30 * 1000;
 
 function readStorage(): Record<string, FeedCacheEntry<FeedItem>> {
     if (typeof window === 'undefined') {
-return {};
-}
+        return {};
+    }
 
     try {
         const raw = window.localStorage?.getItem(STORAGE_KEY);
@@ -31,8 +31,8 @@ return {};
 
 function writeStorage(value: Record<string, FeedCacheEntry<FeedItem>>): void {
     if (typeof window === 'undefined') {
-return;
-}
+        return;
+    }
 
     try {
         window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(value));
@@ -85,8 +85,8 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
             const existing = this.entries[key];
 
             if (!existing) {
-return;
-}
+                return;
+            }
 
             this.entries[key] = {
                 ...existing,
@@ -110,9 +110,7 @@ return;
                 return;
             }
 
-            const index = existing.items.findIndex(
-                (item) => item.id === oldId,
-            );
+            const index = existing.items.findIndex((item) => item.id === oldId);
 
             if (index === -1) {
                 return;

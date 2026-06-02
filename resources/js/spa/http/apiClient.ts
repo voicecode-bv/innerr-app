@@ -16,8 +16,8 @@ export class ApiError extends Error {
 // HTTP-date. Geeft null bij ontbrekende of niet-parseerbare waarde.
 export function parseRetryAfter(header: string | null): number | null {
     if (!header) {
-return null;
-}
+        return null;
+    }
 
     const seconds = Number(header);
 
@@ -42,8 +42,8 @@ export class NetworkError extends Error {
 
 function isTransient(error: unknown): boolean {
     if (error instanceof NetworkError) {
-return true;
-}
+        return true;
+    }
 
     if (error instanceof ApiError) {
         return (

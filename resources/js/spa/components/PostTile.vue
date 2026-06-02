@@ -32,6 +32,7 @@ const auth = useAuthStore();
 const isOwner = computed(() => props.post.user?.id === auth.user?.id);
 
 const isVideo = computed(() => props.post.media_type === 'video');
+const isQuote = computed(() => props.post.type === 'quote');
 const isProcessing = computed(() => props.post.media_status === 'processing');
 
 // Image tiles render the display image at its natural ratio; video tiles use
@@ -156,6 +157,13 @@ function iconMaskStyle(url: string) {
                 @load="onMediaLoad"
             />
         </button>
+
+        <span
+            v-if="isQuote"
+            aria-hidden="true"
+            class="pointer-events-none absolute top-2 left-2 flex size-7 items-center justify-center rounded-full bg-black/45 font-display text-base leading-none text-white backdrop-blur-sm"
+            >&ldquo;</span
+        >
 
         <span
             v-if="isVideo && !isProcessing"

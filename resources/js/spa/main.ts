@@ -1,10 +1,5 @@
 import { flare } from '@flareapp/js';
 import { flareVue } from '@flareapp/vue';
-import {
-    AnimatedSplash,
-    resolveSplashConfig,
-    type ResolvedSplashConfig,
-} from '@voicecode-bv/nativephp-animated-splash';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 import App from '@/spa/App.vue';
@@ -20,6 +15,11 @@ import { useAppearanceStore } from '@/spa/stores/appearance';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
+import {
+    AnimatedSplash,
+    resolveSplashConfig,
+} from '@voicecode-bv/nativephp-animated-splash';
+import type { ResolvedSplashConfig } from '@voicecode-bv/nativephp-animated-splash';
 
 if (typeof window !== 'undefined' && import.meta.env.PROD) {
     flare.light();

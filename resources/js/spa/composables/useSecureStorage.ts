@@ -7,72 +7,89 @@ export const TOKEN_KEY = 'api_token';
 
 const FALLBACK_PREFIX = 'spa.secure.';
 
-function isNativePhp(): boolean {
-    if (typeof window === 'undefined') {
-return false;
-}
-
-    return Boolean(
-        (window as unknown as { __nativephp?: unknown }).__nativephp,
-    );
-}
-
 function fallbackKey(key: string): string {
     return `${FALLBACK_PREFIX}${key}`;
 }
 
-export const secureStorage = {
-    async get(key: string): Promise<string | null> {
-        if (isNativePhp()) {
-            try {
-                const result = await SecureStorage.get(key);
+function localGet(key: string): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
 
-                if (result?.value !== undefined && result?.value !== null) {
-                    return result.value;
-                }
-            } catch {
-                // Native bridge niet beschikbaar — val terug op localStorage.
-            }
-        }
-
-        if (typeof window === 'undefined') {
-return null;
+    return window.localStorage?.getItem(fallbackKey(key)) ?? null;
 }
 
-        return window.localStorage?.getItem(fallbackKey(key)) ?? null;
+function localSet(key: string, value: string): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.localStorage?.setItem(fallbackKey(key), value);
+}
+
+function localDelete(key: string): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.localStorage?.removeItem(fallbackKey(key));
+}
+
+// We detecteren de native context niet via een window-vlag (die wordt in de
+// huidige NativePHP-runtime niet meer gezet, waardoor het token stilletjes in
+// het niet-duurzame WKWebView-localStorage belandde i.p.v. de Keychain). In
+// plaats daarvan proberen we simpelweg de bridge: op het toestel slaagt de
+// `/_native/api/call` fetch en gebruiken we de Keychain; op web/desktop faalt
+// die en vallen we terug op localStorage.
+export const secureStorage = {
+    async get(key: string): Promise<string | null> {
+        try {
+            const result = (await SecureStorage.get(key)) as {
+                value?: string | null;
+            } | null;
+            const stored = result?.value;
+
+            if (typeof stored === 'string' && stored !== '') {
+                return stored;
+            }
+
+            // Keychain leeg: migreer een token dat nog in localStorage staat
+            // (van vóór deze fix) naar de Keychain, zodat bestaande gebruikers
+            // niet onnodig uitgelogd worden.
+            const legacy = localGet(key);
+
+            if (legacy) {
+                try {
+                    await SecureStorage.set(key, legacy);
+                    localDelete(key);
+                } catch {
+                    // Migratie mislukt — laat de localStorage-kopie staan.
+                }
+            }
+
+            return legacy;
+        } catch {
+            // Bridge niet bereikbaar (web/desktop) — val terug op localStorage.
+            return localGet(key);
+        }
     },
 
     async set(key: string, value: string): Promise<void> {
-        if (isNativePhp()) {
-            try {
-                await SecureStorage.set(key, value);
-
-                return;
-            } catch {
-                // Bridge niet beschikbaar — fallback hieronder.
-            }
+        try {
+            await SecureStorage.set(key, value);
+        } catch {
+            localSet(key, value);
         }
-
-        if (typeof window === 'undefined') {
-return;
-}
-
-        window.localStorage?.setItem(fallbackKey(key), value);
     },
 
     async delete(key: string): Promise<void> {
-        if (isNativePhp()) {
-            try {
-                await SecureStorage.delete(key);
-            } catch {
-                // Negeren — best-effort delete.
-            }
+        try {
+            await SecureStorage.delete(key);
+        } catch {
+            // Negeren — best-effort delete.
         }
 
-        if (typeof window === 'undefined') {
-return;
-}
-
-        window.localStorage?.removeItem(fallbackKey(key));
+        // Ruim ook een eventuele localStorage-kopie op, ongeacht de bridge.
+        localDelete(key);
     },
 };

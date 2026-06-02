@@ -15,8 +15,8 @@ async function loadBundle(locale: string): Promise<Record<string, string>> {
     const key = loaders[locale] ? locale : 'en';
 
     if (cache[key]) {
-return cache[key];
-}
+        return cache[key];
+    }
 
     const mod = await loaders[key]();
     cache[key] = mod.default;

@@ -113,7 +113,10 @@ function skip(): void {
                             />
                         </div>
                     </div>
-                    <p v-if="form.errors.name" class="mt-2 text-destructive-ink">
+                    <p
+                        v-if="form.errors.name"
+                        class="mt-2 text-destructive-ink"
+                    >
                         {{ form.errors.name }}
                     </p>
                 </div>

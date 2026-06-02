@@ -12,13 +12,10 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import InviteToCircleSheet from '@/spa/components/InviteToCircleSheet.vue';
-import type {PostData} from '@/spa/components/PostCard.vue';
+import type { PostData } from '@/spa/components/PostCard.vue';
 import PostMasonry from '@/spa/components/PostMasonry.vue';
-import {
-    useInfiniteScroll
-    
-} from '@/spa/composables/useInfiniteScroll';
-import type {PaginatedResponse} from '@/spa/composables/useInfiniteScroll';
+import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
+import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api } from '@/spa/http/apiClient';
@@ -114,8 +111,8 @@ const cropSource = ref<string | null>(null);
 
 async function pickAvatar(): Promise<void> {
     if (avatarUploading.value) {
-return;
-}
+        return;
+    }
 
     await Camera.pickImages().all();
 }
@@ -228,8 +225,8 @@ onUnmounted(() => {
 
 async function shareProfile(): Promise<void> {
     if (!profile.value) {
-return;
-}
+        return;
+    }
 
     const url = `https://innerr.app/profiles/${profile.value.username}`;
     await Share.url('', '', url);
@@ -426,7 +423,7 @@ function iconMaskStyle(url: string) {
                 >
                     <div
                         aria-hidden="true"
-                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft dark:bg-brand-blue text-ink"
+                        class="mb-4 flex size-16 items-center justify-center rounded-2xl bg-success-soft text-ink dark:bg-brand-blue"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

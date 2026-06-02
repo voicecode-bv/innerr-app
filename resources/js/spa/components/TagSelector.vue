@@ -42,8 +42,8 @@ const tags = computed<Tag[]>(() => {
 
     for (const tag of [...(props.availableTags ?? []), ...localTags.value]) {
         if (seen.has(tag.id)) {
-continue;
-}
+            continue;
+        }
 
         seen.add(tag.id);
         merged.push(tag);
@@ -79,12 +79,12 @@ const filteredTags = computed<Tag[]>(() => {
 
     return tags.value.filter((tag) => {
         if (props.selectedIds.includes(tag.id)) {
-return false;
-}
+            return false;
+        }
 
         if (q === '') {
-return true;
-}
+            return true;
+        }
 
         return tag.name.toLowerCase().includes(q);
     });
@@ -113,8 +113,8 @@ function closeDropdown(): void {
 
 function selectTag(tagId: string): void {
     if (props.selectedIds.includes(tagId)) {
-return;
-}
+        return;
+    }
 
     emit('update:selectedIds', [...props.selectedIds, tagId]);
     query.value = '';
@@ -143,8 +143,8 @@ function onBackspace(): void {
 
 function moveActive(delta: number): void {
     if (optionsCount.value === 0) {
-return;
-}
+        return;
+    }
 
     isOpen.value = true;
     activeIndex.value =
@@ -171,8 +171,8 @@ function commitActive(): void {
 
 async function createTag(): Promise<void> {
     if (!canCreate.value) {
-return;
-}
+        return;
+    }
 
     isCreating.value = true;
     createError.value = null;
@@ -300,7 +300,9 @@ return;
             </ul>
         </div>
 
-        <p v-if="createError" class="mt-2 text-destructive-ink">{{ createError }}</p>
+        <p v-if="createError" class="mt-2 text-destructive-ink">
+            {{ createError }}
+        </p>
         <p v-if="error" class="mt-2 text-destructive-ink">{{ error }}</p>
     </div>
 </template>

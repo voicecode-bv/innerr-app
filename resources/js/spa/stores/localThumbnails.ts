@@ -67,10 +67,16 @@ export const useLocalThumbnailsStore = defineStore('spa-local-thumbnails', {
 
             if (ids.length > MAX_ENTRIES) {
                 const sorted = ids
-                    .map((id) => ({ id, createdAt: this.entries[id]!.createdAt }))
+                    .map((id) => ({
+                        id,
+                        createdAt: this.entries[id]!.createdAt,
+                    }))
                     .sort((a, b) => a.createdAt - b.createdAt);
 
-                for (const { id } of sorted.slice(0, ids.length - MAX_ENTRIES)) {
+                for (const { id } of sorted.slice(
+                    0,
+                    ids.length - MAX_ENTRIES,
+                )) {
                     delete this.entries[id];
                 }
             }

@@ -11,8 +11,8 @@ import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
-import { useTagsStore  } from '@/spa/stores/tags';
-import type {Tag} from '@/spa/stores/tags';
+import { useTagsStore } from '@/spa/stores/tags';
+import type { Tag } from '@/spa/stores/tags';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -30,8 +30,8 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 async function loadTags(force = false): Promise<void> {
     try {
         if (force) {
-tagsStore.invalidate();
-}
+            tagsStore.invalidate();
+        }
 
         await tagsStore.ensureLoaded();
     } catch {
@@ -63,8 +63,8 @@ async function createTag(): Promise<void> {
     const name = createForm.data.name.trim();
 
     if (!name || createForm.processing) {
-return;
-}
+        return;
+    }
 
     const optimistic: Tag = {
         id: `optimistic-${crypto.randomUUID()}`,
@@ -103,8 +103,8 @@ async function saveEdit(tag: Tag): Promise<void> {
     const newName = editForm.data.name.trim();
 
     if (!newName || editForm.processing) {
-return;
-}
+        return;
+    }
 
     const previousName = tag.name;
     tagsStore.update(tag.id, { name: newName });
@@ -166,8 +166,8 @@ async function handleButtonPressed(payload: {
         await externalApi.delete(`/tags/${tagId}`);
     } catch {
         if (previous) {
-tagsStore.prepend(previous);
-}
+            tagsStore.prepend(previous);
+        }
     }
 }
 
