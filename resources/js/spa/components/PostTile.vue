@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { PostData } from '@/spa/components/PostCard.vue';
+import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -34,6 +35,26 @@ const isOwner = computed(() => props.post.user?.id === auth.user?.id);
 const isVideo = computed(() => props.post.media_type === 'video');
 const isQuote = computed(() => props.post.type === 'quote');
 const isProcessing = computed(() => props.post.media_status === 'processing');
+
+// Only ready videos can stream; processing/failed ones stay on the poster.
+const isVideoReady = computed(
+    () => isVideo.value && props.post.media_status === 'ready',
+);
+
+// Autoplay is gated on visibility: an IntersectionObserver mounts the
+// VideoPlayer only while the tile is on (or near) screen and unmounts it on
+// the way out. That caps the number of live hls.js workers to the handful of
+// visible tiles, so a grid full of videos never spins up a player per item.
+const rootRef = ref<HTMLElement | null>(null);
+const isInView = ref(false);
+const videoLoaded = ref(false);
+let intersectionObserver: IntersectionObserver | null = null;
+
+const showVideo = computed(() => isVideoReady.value && isInView.value);
+
+function onVideoLoaded(): void {
+    videoLoaded.value = true;
+}
 
 // Image tiles render the display image at its natural ratio; video tiles use
 // the poster (also aspect-preserving). Both reserve their height up front from
@@ -121,6 +142,37 @@ function openDetails(): void {
     });
 }
 
+onMounted(() => {
+    if (typeof IntersectionObserver === 'undefined' || !rootRef.value) {
+        // No observer support: leave videos on their poster rather than eagerly
+        // mounting a player for every tile.
+        return;
+    }
+
+    intersectionObserver = new IntersectionObserver(
+        (entries) => {
+            isInView.value = entries[0]?.isIntersecting ?? false;
+
+            if (!isInView.value) {
+                // Reset so the next time the tile scrolls back in, the freshly
+                // mounted player fades in over its poster again.
+                videoLoaded.value = false;
+            }
+        },
+        // Start buffering just before the tile reaches the viewport so playback
+        // begins without a visible gap, but keep the margin tight to avoid
+        // mounting players that are still well off-screen.
+        { rootMargin: '100px 0px', threshold: 0.1 },
+    );
+
+    intersectionObserver.observe(rootRef.value);
+});
+
+onUnmounted(() => {
+    intersectionObserver?.disconnect();
+    intersectionObserver = null;
+});
+
 function iconMaskStyle(url: string) {
     return {
         maskImage: `url(${url})`,
@@ -137,6 +189,7 @@ function iconMaskStyle(url: string) {
 
 <template>
     <div
+        ref="rootRef"
         class="relative w-full overflow-hidden rounded-2xl bg-sand shadow-sm ring-1 ring-sand-100"
         :style="{ aspectRatio }"
     >
@@ -156,6 +209,18 @@ function iconMaskStyle(url: string) {
                 loading="lazy"
                 @load="onMediaLoad"
             />
+            <VideoPlayer
+                v-if="showVideo"
+                :src="post.media_url"
+                :poster="post.thumbnail_url"
+                class="absolute inset-0 size-full object-cover transition-opacity duration-500"
+                :class="videoLoaded ? 'opacity-100' : 'opacity-0'"
+                muted
+                autoplay
+                loop
+                preload="metadata"
+                @loadeddata="onVideoLoaded"
+            />
         </button>
 
         <span
@@ -166,7 +231,7 @@ function iconMaskStyle(url: string) {
         >
 
         <span
-            v-if="isVideo && !isProcessing"
+            v-if="isVideo && !isProcessing && !(showVideo && videoLoaded)"
             aria-hidden="true"
             class="pointer-events-none absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
         >
