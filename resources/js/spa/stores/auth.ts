@@ -70,10 +70,12 @@ export const useAuthStore = defineStore('spa-auth', {
             if (data.token) {
                 this.token = data.token;
                 await secureStorage.set(TOKEN_KEY, data.token);
-            } else if (!this.token) {
-                // Geen token in BFF en geen lokaal — niets te bewaren.
-                await secureStorage.delete(TOKEN_KEY);
             }
+            // Wis het durable token hier bewust NIET als de BFF er geen
+            // teruggeeft: tijdens een cold-start kan `restoreToken()` even
+            // gefaald hebben (Keychain nog niet leesbaar), waardoor `this.token`
+            // null is terwijl er wel degelijk een geldig token in de Keychain
+            // staat. Het token verwijderen we alleen bij een expliciete logout.
 
             return data;
         },
@@ -124,15 +126,25 @@ export const useAuthStore = defineStore('spa-auth', {
             try {
                 await api.post('/api/spa/auth/logout');
             } finally {
-                this.clear();
+                // Expliciete logout: het durable token mag nu wel weg.
+                this.clear(true);
             }
         },
         // Houden we sync zodat http-client `clear: () => void` callbacks blijven
         // werken; de Keychain-wipe is fire-and-forget.
-        clear(): void {
+        //
+        // `forgetToken` wist het token uit de Keychain. Standaard false: een 401
+        // (transient of door een verlopen token) mag het durable token NIET
+        // verwijderen, anders verandert een tijdelijke leesfout na een herstart
+        // in een permanente uitlog. Alleen een expliciete logout zet dit op true.
+        clear(forgetToken = false): void {
             this.user = null;
             this.token = null;
-            void secureStorage.delete(TOKEN_KEY);
+
+            if (forgetToken) {
+                void secureStorage.delete(TOKEN_KEY);
+            }
+
             // Resource-caches leegmaken zodat een volgende sessie/gebruiker
             // niet stale data ziet.
             useCirclesStore().clear();
