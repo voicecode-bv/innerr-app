@@ -114,7 +114,8 @@
         "patches": {
             "nativephp/mobile": {
                 "PR #131: Android theme colors (dark mode picker buttons)": "patches/nativephp-mobile-pr131-android-theme.patch",
-                "PR #134: Localize iOS permission strings via InfoPlist.strings": "patches/nativephp-mobile-pr134-ios-permission-l10n.patch"
+                "PR #134: Localize iOS permission strings via InfoPlist.strings": "patches/nativephp-mobile-pr134-ios-permission-l10n.patch",
+                "Atomic iOS app extraction: self-heal partial/interrupted bundle unzip": "patches/nativephp-mobile-atomic-app-extraction.patch"
             }
         }
     },
