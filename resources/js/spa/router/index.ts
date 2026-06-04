@@ -26,8 +26,25 @@ const isNative = isNativeRuntime();
 const isLocalEnv =
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
+// First-run chooser landing: a brand-new device lands here, returning devices
+// (that have authenticated before) skip straight to login. Keep this in sync
+// with the guard below and the catch-all redirect.
+function guestLanding(): { name: string } {
+    const auth = useAuthStore();
+
+    return {
+        name: auth.hasAuthenticatedBefore ? 'spa.login' : 'spa.welcome',
+    };
+}
+
 const routes: RouteRecordRaw[] = [
     // Auth (guest-only)
+    {
+        path: '/welcome',
+        name: 'spa.welcome',
+        component: () => import('@/spa/pages/Auth/Welcome.vue'),
+        meta: { guest: true },
+    },
     {
         path: '/login',
         name: 'spa.login',
@@ -306,10 +323,10 @@ const routes: RouteRecordRaw[] = [
           ]
         : []),
 
-    // Catch-all → login
+    // Catch-all → welcome (new device) or login (returning device)
     {
         path: '/:pathMatch(.*)*',
-        redirect: { name: 'spa.login' },
+        redirect: () => guestLanding(),
     },
 ];
 
@@ -327,7 +344,7 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.auth && !auth.user) {
-        return { name: 'spa.login' };
+        return guestLanding();
     }
 
     if (to.meta.guest && auth.user) {

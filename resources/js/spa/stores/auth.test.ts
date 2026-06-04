@@ -16,6 +16,7 @@ vi.mock('@/spa/http/apiClient', () => ({
 
 vi.mock('@/spa/composables/useSecureStorage', () => ({
     TOKEN_KEY: 'api_token',
+    HAS_AUTHENTICATED_KEY: 'has_authenticated',
     secureStorage: {
         get: (key: string) => storageGet(key),
         set: (key: string, value: string) => storageSet(key, value),
@@ -120,5 +121,70 @@ describe('auth store token durability', () => {
 
         expect(auth.token).toBe('fresh-token');
         expect(storageSet).toHaveBeenCalledWith('api_token', 'fresh-token');
+    });
+});
+
+describe('auth store "has authenticated before" marker', () => {
+    it('restores the marker from the Keychain', async () => {
+        storageGet.mockResolvedValue('1');
+
+        const auth = useAuthStore();
+        await auth.restoreHasAuthenticated();
+
+        expect(storageGet).toHaveBeenCalledWith('has_authenticated');
+        expect(auth.hasAuthenticatedBefore).toBe(true);
+    });
+
+    it('stays false when the Keychain has no marker', async () => {
+        storageGet.mockResolvedValue(null);
+
+        const auth = useAuthStore();
+        await auth.restoreHasAuthenticated();
+
+        expect(auth.hasAuthenticatedBefore).toBe(false);
+    });
+
+    it('writes the durable marker only once (idempotent)', async () => {
+        const auth = useAuthStore();
+
+        await auth.markAuthenticated();
+        await auth.markAuthenticated();
+
+        expect(auth.hasAuthenticatedBefore).toBe(true);
+        expect(
+            storageSet.mock.calls.filter(
+                ([key]) => key === 'has_authenticated',
+            ),
+        ).toHaveLength(1);
+    });
+
+    it('marks the device after a successful login', async () => {
+        apiPost.mockResolvedValue({
+            user: { id: '1' },
+            token: 'tok',
+            redirect_to: '/',
+        });
+
+        const auth = useAuthStore();
+        await auth.login('opa@example.com', 'secret');
+
+        expect(auth.hasAuthenticatedBefore).toBe(true);
+        expect(storageSet).toHaveBeenCalledWith('has_authenticated', '1');
+    });
+
+    it('keeps the marker after an explicit logout so welcome is skipped', async () => {
+        apiPost.mockResolvedValue(undefined);
+
+        const auth = useAuthStore();
+        auth.hasAuthenticatedBefore = true;
+        auth.token = 'tok';
+
+        await auth.logout();
+
+        // The token is wiped, but "has logged in before" must survive so a
+        // returning user lands on login instead of the first-run welcome screen.
+        expect(storageDelete).toHaveBeenCalledWith('api_token');
+        expect(storageDelete).not.toHaveBeenCalledWith('has_authenticated');
+        expect(auth.hasAuthenticatedBefore).toBe(true);
     });
 });

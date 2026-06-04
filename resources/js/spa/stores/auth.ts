@@ -1,5 +1,9 @@
 import { defineStore } from 'pinia';
-import { secureStorage, TOKEN_KEY } from '@/spa/composables/useSecureStorage';
+import {
+    HAS_AUTHENTICATED_KEY,
+    secureStorage,
+    TOKEN_KEY,
+} from '@/spa/composables/useSecureStorage';
 import { api } from '@/spa/http/apiClient';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
@@ -46,6 +50,10 @@ export const useAuthStore = defineStore('spa-auth', {
         apiBase: '' as string,
         appVersion: '' as string,
         socialAuthUrls: { google: '', apple: '' },
+        // True zodra dit toestel ooit succesvol heeft ingelogd. Blijft true na
+        // uitloggen, zodat terugkerende gebruikers het welkomstkeuzescherm
+        // overslaan en direct op inloggen landen.
+        hasAuthenticatedBefore: false,
     }),
     actions: {
         // Wordt vroeg in `main.ts` aangeroepen, vóór de BFF bootstrap-call,
@@ -56,6 +64,26 @@ export const useAuthStore = defineStore('spa-auth', {
             if (stored) {
                 this.token = stored;
             }
+        },
+        // Laadt de durable "ooit ingelogd"-marker uit de Keychain. Moet vóór de
+        // eerste routing-beslissing klaar zijn zodat de guard synchroon kan
+        // kiezen tussen welkomstscherm (nieuw) en inloggen (terugkerend).
+        async restoreHasAuthenticated(): Promise<void> {
+            const stored = await secureStorage.get(HAS_AUTHENTICATED_KEY);
+
+            if (stored) {
+                this.hasAuthenticatedBefore = true;
+            }
+        },
+        // Markeert dit toestel als "heeft ooit ingelogd". Idempotent: schrijft
+        // alleen naar de Keychain als de marker er nog niet stond.
+        async markAuthenticated(): Promise<void> {
+            if (this.hasAuthenticatedBefore) {
+                return;
+            }
+
+            this.hasAuthenticatedBefore = true;
+            await secureStorage.set(HAS_AUTHENTICATED_KEY, '1');
         },
         async bootstrap(): Promise<BootstrapPayload> {
             const data = await api.get<BootstrapPayload>('/api/spa/bootstrap');
@@ -70,6 +98,12 @@ export const useAuthStore = defineStore('spa-auth', {
             if (data.token) {
                 this.token = data.token;
                 await secureStorage.set(TOKEN_KEY, data.token);
+            }
+
+            // Een terugkerende sessie telt ook als "ooit ingelogd": markeer het
+            // toestel zodat een latere logout op inloggen landt, niet op welkom.
+            if (data.user) {
+                await this.markAuthenticated();
             }
             // Wis het durable token hier bewust NIET als de BFF er geen
             // teruggeeft: tijdens een cold-start kan `restoreToken()` even
@@ -91,6 +125,7 @@ export const useAuthStore = defineStore('spa-auth', {
             this.user = data.user;
             this.token = data.token;
             await secureStorage.set(TOKEN_KEY, data.token);
+            await this.markAuthenticated();
 
             return { redirect_to: data.redirect_to };
         },
@@ -109,6 +144,7 @@ export const useAuthStore = defineStore('spa-auth', {
             this.user = data.user;
             this.token = data.token;
             await secureStorage.set(TOKEN_KEY, data.token);
+            await this.markAuthenticated();
 
             return { redirect_to: data.redirect_to };
         },

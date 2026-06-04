@@ -142,7 +142,7 @@ function lowercase(value: string): string {
 
         <div class="relative flex items-center justify-between pt-4">
             <RouterLink
-                :to="{ name: 'spa.login' }"
+                :to="{ name: 'spa.welcome' }"
                 class="inline-flex items-center gap-1 rounded-full bg-brand-sand/15 px-3 py-2 text-brand-sand shadow-sm backdrop-blur-sm transition hover:-translate-x-0.5 hover:bg-brand-sand/25"
             >
                 <svg

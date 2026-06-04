@@ -6,6 +6,12 @@ import { isNativeRuntime } from '@/spa/composables/usePlatform';
 // SecureStorageTokenStore dezelfde entry leest tijdens de migratie-fase.
 export const TOKEN_KEY = 'api_token';
 
+// Durable marker that survives logout: records that this device has completed a
+// successful sign-in at least once. Used to skip the first-run welcome chooser
+// for returning users (even after they log out). Stored in the Keychain so it
+// reliably persists across native relaunches, just like the token.
+export const HAS_AUTHENTICATED_KEY = 'has_authenticated';
+
 const FALLBACK_PREFIX = 'spa.secure.';
 
 // Tijdens een cold-start kan de Keychain-bridge nog niet klaar zijn (bridge

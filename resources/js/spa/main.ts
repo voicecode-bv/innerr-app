@@ -121,6 +121,10 @@ async function bootstrap(): Promise<void> {
     // wanneer de Laravel-session verlopen is maar het token nog wél geldig is.
     await auth.restoreToken();
 
+    // Durable "ooit ingelogd"-marker laden zodat de router-guard direct kan
+    // kiezen tussen welkomstscherm (nieuw toestel) en inloggen (terugkerend).
+    await auth.restoreHasAuthenticated();
+
     configureApiClient({
         auth: () => ({
             token: auth.token,

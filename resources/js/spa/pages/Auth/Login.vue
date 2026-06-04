@@ -12,6 +12,8 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import handIcon from '../../../../svg/doodle-icons/hand.svg';
+import keyIcon from '../../../../svg/doodle-icons/key.svg';
+import mailIcon from '../../../../svg/doodle-icons/mail.svg';
 import innerrLogo from '../../../../svg/innerr-logo-on-blue.svg';
 
 function iconMaskStyle(url: string) {
@@ -160,7 +162,29 @@ async function submit(): Promise<void> {
             </svg>
         </div>
 
-        <div class="relative flex justify-end pt-4">
+        <div class="relative flex items-center justify-between pt-4">
+            <RouterLink
+                v-if="!auth.hasAuthenticatedBefore"
+                :to="{ name: 'spa.welcome' }"
+                class="inline-flex items-center gap-1 rounded-full bg-brand-sand/15 px-3 py-2 text-brand-sand shadow-sm backdrop-blur-sm transition hover:-translate-x-0.5 hover:bg-brand-sand/25"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2.5"
+                    stroke="currentColor"
+                    class="size-4"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 19.5 8.25 12l7.5-7.5"
+                    />
+                </svg>
+                {{ t('Back') }}
+            </RouterLink>
+            <span v-else></span>
             <LanguageSelector />
         </div>
 
@@ -267,40 +291,36 @@ async function submit(): Promise<void> {
                             {{ form.processing ? '...' : t('Log in') }}
                         </Button>
 
-                        <RouterLink
-                            :to="{ name: 'spa.forgot-password' }"
-                            class="block text-center text-brand-sand/80 underline decoration-brand-yellow/60 decoration-wavy decoration-2 underline-offset-4 hover:text-brand-yellow"
-                        >
-                            {{ t('Forgot password?') }}
-                        </RouterLink>
+                        <div class="pt-4">
+                            <RouterLink
+                                :to="{ name: 'spa.forgot-password' }"
+                                class="flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-6 py-3.5 text-base font-semibold text-brand-blue shadow-sm transition hover:-translate-y-0.5 hover:bg-white/90"
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-5 bg-current"
+                                    :style="iconMaskStyle(keyIcon)"
+                                ></span>
+                                {{ t('Forgot password?') }}
+                            </RouterLink>
+                        </div>
                     </form>
 
                     <button
                         v-else
                         type="button"
-                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-brand-yellow transition hover:text-brand-yellow/80"
+                        class="flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-6 py-3.5 text-base font-semibold text-brand-blue shadow-sm transition hover:-translate-y-0.5 hover:bg-white/90"
                         @click="showEmailForm = true"
                     >
-                        <span>{{ t('Log in with email') }}</span>
                         <span
-                            class="transition-transform group-hover:translate-x-0.5"
-                            >→</span
-                        >
+                            aria-hidden="true"
+                            class="inline-block size-5 bg-current"
+                            :style="iconMaskStyle(mailIcon)"
+                        ></span>
+                        <span>{{ t('Log in with email') }}</span>
                     </button>
                 </div>
             </div>
-        </div>
-
-        <div class="relative pt-4 pb-8">
-            <p class="text-center text-brand-sand/80">
-                {{ t('New to innerr?') }}
-                <RouterLink
-                    :to="{ name: 'spa.register' }"
-                    class="font-semibold text-brand-yellow decoration-brand-yellow/60 decoration-wavy decoration-2 underline-offset-4 hover:underline"
-                >
-                    {{ t('Create an account') }}
-                </RouterLink>
-            </p>
         </div>
     </div>
 </template>
