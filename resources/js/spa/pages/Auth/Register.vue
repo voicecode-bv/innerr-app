@@ -12,6 +12,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
+import mailIcon from '../../../../svg/doodle-icons/mail.svg';
 import thumbsUpIcon from '../../../../svg/doodle-icons/thumbs-up.svg';
 import innerrLogo from '../../../../svg/innerr-logo-on-blue.svg';
 
@@ -335,14 +336,15 @@ function lowercase(value: string): string {
                     <button
                         v-else
                         type="button"
-                        class="group flex w-full items-center justify-center gap-1.5 pt-1 text-center text-brand-yellow transition hover:text-brand-yellow/80"
+                        class="flex w-full items-center justify-center gap-2.5 rounded-full bg-white px-6 py-3.5 text-base font-semibold text-brand-blue shadow-sm transition hover:-translate-y-0.5 hover:bg-white/90"
                         @click="showEmailForm = true"
                     >
-                        <span>{{ t('Sign up with email') }}</span>
                         <span
-                            class="transition-transform group-hover:translate-x-0.5"
-                            >→</span
-                        >
+                            aria-hidden="true"
+                            class="inline-block size-5 bg-current"
+                            :style="iconMaskStyle(mailIcon)"
+                        ></span>
+                        <span>{{ t('Sign up with email') }}</span>
                     </button>
                 </div>
             </div>
