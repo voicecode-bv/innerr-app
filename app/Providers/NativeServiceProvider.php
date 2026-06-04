@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Codingwithrk\PackageInfo\PackageInfoServiceProvider;
 use Developernauts\NativephpInappPurchases\NativephpInappPurchasesServiceProvider;
+use Developernauts\NativephpMobileLocales\NativephpMobileLocalesServiceProvider;
 use Illuminate\Support\ServiceProvider;
 use Innerr\NativeMedia\NativeMediaServiceProvider;
 use Native\Mobile\Providers\BrowserServiceProvider;
@@ -66,6 +67,7 @@ class NativeServiceProvider extends ServiceProvider
             NativeMediaServiceProvider::class,
             NativeBadgeServiceProvider::class,
             AnimatedSplashServiceProvider::class,
+            NativephpMobileLocalesServiceProvider::class,
 
         ];
     }

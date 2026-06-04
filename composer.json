@@ -13,6 +13,7 @@
         "blade-ui-kit/blade-icons": "^1.9",
         "codingwithrk/package-info": "^1.0",
         "developernauts/nativephp-inapp-purchases": "*",
+        "developernauts/nativephp-mobile-locales": "*",
         "innerr/native-media": "^1.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",

@@ -1,5 +1,3 @@
-import { flare } from '@flareapp/js';
-import { flareVue } from '@flareapp/vue';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 import App from '@/spa/App.vue';
@@ -20,10 +18,6 @@ import {
     resolveSplashConfig,
 } from '@voicecode-bv/nativephp-animated-splash';
 import type { ResolvedSplashConfig } from '@voicecode-bv/nativephp-animated-splash';
-
-if (typeof window !== 'undefined' && import.meta.env.PROD) {
-    flare.light();
-}
 
 function inferInitialLocale(): string {
     if (typeof window === 'undefined') {
@@ -180,7 +174,6 @@ async function bootstrap(): Promise<void> {
     };
 
     app.use(router);
-    app.use(flareVue);
 
     // NativePhp's Edge bottom-nav roept `window.router.visit(path)` aan voor
     // SPA-style navigatie en valt anders terug op `window.location.href = path`,

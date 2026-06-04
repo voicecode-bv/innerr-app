@@ -1,4 +1,3 @@
-import flareSourcemapUploader from '@flareapp/vite';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -34,8 +33,5 @@ export default defineConfig({
             },
         }),
         nativephpMobile(),
-        flareSourcemapUploader({
-            key: 'oMOs3SauYfrkKxMcjjBJim2LHp7rfnnt',
-        }),
     ],
 });
