@@ -1291,9 +1291,11 @@ const activeItemIsImage = computed(() => {
                     {{ form.errors.media_path || form.errors.media_paths }}
                 </p>
 
-                <!-- Alternative entry: turn a child's words into a quote post. -->
+                <!-- Alternative entry: turn a child's words into a quote post.
+                     Hidden once media is chosen, since a post is either media
+                     or a quote, never both. -->
                 <RouterLink
-                    v-show="currentStep === 0"
+                    v-show="currentStep === 0 && !hasMedia"
                     :to="{ name: 'spa.quotes.create' }"
                     class="flex items-center gap-3 rounded-lg bg-surface/50 px-5 py-4 shadow-sm backdrop-blur-sm active:bg-sand-100/40"
                 >

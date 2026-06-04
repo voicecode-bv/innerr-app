@@ -869,6 +869,7 @@ function timeAgo(dateString: string): string {
                 <VideoPlayer
                     v-if="post.media_status === 'ready'"
                     ref="videoPlayerRef"
+                    v-pinch-zoom
                     :src="post.media_url"
                     :poster="post.thumbnail_url"
                     :class="[

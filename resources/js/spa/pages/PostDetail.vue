@@ -24,6 +24,7 @@ import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
+import { vPinchZoom } from '@/spa/directives/pinchZoom';
 import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -880,6 +881,7 @@ watch(
                     />
                     <img
                         v-if="!hasMultipleMedia && post.media_type === 'image'"
+                        v-pinch-zoom
                         :src="post.media_url"
                         :alt="post.caption ?? t('Photo')"
                         :class="[
@@ -898,6 +900,7 @@ watch(
                             post.media_status === 'ready'
                         "
                         ref="videoPlayerRef"
+                        v-pinch-zoom
                         :src="post.media_url"
                         :poster="post.thumbnail_url"
                         :class="

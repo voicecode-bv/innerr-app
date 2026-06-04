@@ -260,6 +260,7 @@ onBeforeUnmount(() => {
             >
                 <VideoPlayer
                     v-if="item.type === 'video'"
+                    v-pinch-zoom
                     :src="item.url"
                     :poster="item.thumbnail"
                     class="size-full object-cover"

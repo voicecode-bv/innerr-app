@@ -1,13 +1,17 @@
 import type { Directive } from 'vue';
 
-// Pinch-to-zoom voor feed-foto's. We laten de originele <img> staan en tillen
-// een fixed-positioned kloon boven een donkere backdrop uit, zodat de
-// `overflow-hidden` van de PostCard-container het ingezoomde beeld niet
-// afknipt en de verticale feed-scroll niet meeschuift. Bij het loslaten veert
-// de kloon terug naar zijn oorspronkelijke plek (Instagram-stijl).
+// Pinch-to-zoom for post media (photos and videos). We keep the original
+// element in place and lift a fixed-positioned copy above a dark backdrop, so
+// the container's `overflow-hidden` doesn't clip the zoomed media and the
+// vertical feed scroll doesn't shift. On release the copy springs back to its
+// original spot (Instagram style).
+//
+// Photos copy cleanly via cloneNode. Videos don't (a cloned <video> restarts
+// and shows a different frame), so we snapshot the current frame onto a canvas
+// and lift that instead, falling back to the poster when no frame is decoded.
 
 interface PinchState {
-    clone: HTMLImageElement | null;
+    clone: HTMLElement | null;
     backdrop: HTMLDivElement | null;
     startDistance: number;
     startMidX: number;
@@ -18,7 +22,7 @@ interface PinchState {
     onTouchEnd: (event: TouchEvent) => void;
 }
 
-type PinchHost = HTMLImageElement & { _pinchZoom?: PinchState };
+type PinchHost = HTMLElement & { _pinchZoom?: PinchState };
 
 const MAX_SCALE = 4;
 const RESTORE_MS = 250;
@@ -45,6 +49,65 @@ export const vPinchZoom: Directive<PinchHost> = {
             onTouchEnd: () => {},
         };
 
+        function createLiftedNode(
+            rect: DOMRect,
+            midX: number,
+            midY: number,
+        ): HTMLElement | null {
+            const cssText =
+                `position:fixed;top:${rect.top}px;left:${rect.left}px;` +
+                `width:${rect.width}px;height:${rect.height}px;margin:0;` +
+                `object-fit:${getComputedStyle(el).objectFit};z-index:9999;` +
+                `transform-origin:${midX - rect.left}px ${midY - rect.top}px;` +
+                'will-change:transform;pointer-events:none;';
+
+            if (el instanceof HTMLVideoElement) {
+                // Snapshot the frame the user currently sees; the original keeps
+                // playing underneath while hidden.
+                if (el.videoWidth > 0 && el.videoHeight > 0) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = el.videoWidth;
+                    canvas.height = el.videoHeight;
+                    const context = canvas.getContext('2d');
+
+                    if (context) {
+                        try {
+                            context.drawImage(
+                                el,
+                                0,
+                                0,
+                                canvas.width,
+                                canvas.height,
+                            );
+                            canvas.style.cssText = cssText;
+
+                            return canvas;
+                        } catch {
+                            // drawImage can throw on some platforms; fall
+                            // through to the poster below.
+                        }
+                    }
+                }
+
+                const poster = el.getAttribute('poster');
+
+                if (poster) {
+                    const image = document.createElement('img');
+                    image.src = poster;
+                    image.style.cssText = cssText;
+
+                    return image;
+                }
+
+                return null;
+            }
+
+            const clone = el.cloneNode(true) as HTMLElement;
+            clone.style.cssText = cssText;
+
+            return clone;
+        }
+
         function begin(event: TouchEvent): void {
             if (event.touches.length !== 2 || state.active) {
                 return;
@@ -54,6 +117,14 @@ export const vPinchZoom: Directive<PinchHost> = {
             const rect = el.getBoundingClientRect();
             const midX = (a.clientX + b.clientX) / 2;
             const midY = (a.clientY + b.clientY) / 2;
+
+            const lifted = createLiftedNode(rect, midX, midY);
+
+            // No frame and no poster yet: let the gesture fall through to a
+            // normal scroll instead of flashing an empty overlay.
+            if (!lifted) {
+                return;
+            }
 
             state.active = true;
             state.startDistance = distanceBetween(a, b);
@@ -66,18 +137,11 @@ export const vPinchZoom: Directive<PinchHost> = {
             document.body.appendChild(backdrop);
             state.backdrop = backdrop;
 
-            const clone = el.cloneNode(true) as HTMLImageElement;
-            clone.style.cssText =
-                `position:fixed;top:${rect.top}px;left:${rect.left}px;` +
-                `width:${rect.width}px;height:${rect.height}px;margin:0;` +
-                `object-fit:${getComputedStyle(el).objectFit};z-index:9999;` +
-                `transform-origin:${midX - rect.left}px ${midY - rect.top}px;` +
-                'will-change:transform;pointer-events:none;';
-            document.body.appendChild(clone);
-            state.clone = clone;
+            document.body.appendChild(lifted);
+            state.clone = lifted;
 
-            // Verberg het origineel zodat we geen dubbele foto zien; de lopende
-            // touch-sequence blijft op dit element gericht.
+            // Hide the original so we don't see a duplicate; the active touch
+            // sequence stays targeted at this element.
             el.style.visibility = 'hidden';
 
             event.preventDefault();
