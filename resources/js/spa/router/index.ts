@@ -5,7 +5,7 @@ import {
     createMemoryHistory,
 } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { isNativeRuntime, usePlatform } from '@/spa/composables/usePlatform';
+import { usePlatform } from '@/spa/composables/usePlatform';
 import { api } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useFeatureTourStore } from '@/spa/stores/featureTour';
@@ -22,7 +22,16 @@ declare module 'vue-router' {
     }
 }
 
-const isNative = isNativeRuntime();
+// iOS serves the WebView over the custom `php://` scheme, where the HTML5
+// History API (pushState/replaceState) is unreliable, so it stays on in-memory
+// history and leans on in-app back buttons / edge-swipe. Android serves over
+// `http://127.0.0.1` and web runs on a real domain — both fully support the
+// History API. Using web history there means SPA navigations push real
+// `window.history` entries, so the Android hardware back button (which checks
+// `WebView.canGoBack()` and calls `goBack()`) walks back through the SPA
+// instead of finishing the activity and closing the app.
+const useMemoryHistory =
+    typeof window !== 'undefined' && window.location.protocol === 'php:';
 const isLocalEnv =
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
@@ -331,7 +340,7 @@ const routes: RouteRecordRaw[] = [
 ];
 
 export const router = createRouter({
-    history: isNative ? createMemoryHistory() : createWebHistory(),
+    history: useMemoryHistory ? createMemoryHistory() : createWebHistory(),
     routes,
 });
 
