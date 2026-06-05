@@ -62,6 +62,37 @@ const form = useApiForm({
 
 const showEmailForm = ref(false);
 
+// Verborgen gebaar: tik 10× op het innerr-logo om de (publieke) debugpagina te
+// openen. Bedoeld om token/secure-storage problemen te kunnen onderzoeken,
+// óók wanneer de gebruiker ogenschijnlijk uitgelogd is. De teller reset zodra
+// er even niet getikt wordt, zodat losse tikken niets doen.
+const LOGO_TAPS_REQUIRED = 10;
+const LOGO_TAP_RESET_MS = 1500;
+
+let logoTapCount = 0;
+let logoTapResetTimer: ReturnType<typeof setTimeout> | null = null;
+
+function handleLogoTap(): void {
+    logoTapCount += 1;
+
+    if (logoTapResetTimer) {
+        clearTimeout(logoTapResetTimer);
+        logoTapResetTimer = null;
+    }
+
+    if (logoTapCount >= LOGO_TAPS_REQUIRED) {
+        logoTapCount = 0;
+        router.push({ name: 'spa.dev.debug' });
+
+        return;
+    }
+
+    logoTapResetTimer = setTimeout(() => {
+        logoTapCount = 0;
+        logoTapResetTimer = null;
+    }, LOGO_TAP_RESET_MS);
+}
+
 async function submit(): Promise<void> {
     flashError.value = null;
 
@@ -201,11 +232,18 @@ async function submit(): Promise<void> {
                     ></span>
                 </span>
                 <h1 class="mt-4">
-                    <img
-                        :src="innerrLogo"
-                        alt="innerr"
-                        class="mx-auto h-16 w-auto"
-                    />
+                    <button
+                        type="button"
+                        class="mx-auto block"
+                        aria-label="innerr"
+                        @click="handleLogoTap"
+                    >
+                        <img
+                            :src="innerrLogo"
+                            alt="innerr"
+                            class="mx-auto h-16 w-auto"
+                        />
+                    </button>
                 </h1>
                 <p class="mt-3 text-base font-medium text-brand-sand/85">
                     {{ t('Safely share with those who matter') }}

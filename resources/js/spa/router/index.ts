@@ -32,8 +32,6 @@ declare module 'vue-router' {
 // instead of finishing the activity and closing the app.
 const useMemoryHistory =
     typeof window !== 'undefined' && window.location.protocol === 'php:';
-const isLocalEnv =
-    (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
 // First-run chooser landing: a brand-new device lands here, returning devices
 // (that have authenticated before) skip straight to login. Keep this in sync
@@ -320,17 +318,16 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true, mobileOnly: true },
     },
 
-    // Dev tools — only registered outside production (e.g. the debug page).
-    ...(isLocalEnv
-        ? [
-              {
-                  path: '/dev/debug',
-                  name: 'spa.dev.debug',
-                  component: () => import('@/spa/pages/Dev/Debug.vue'),
-                  meta: { auth: true, onboarded: true },
-              } as RouteRecordRaw,
-          ]
-        : []),
+    // Debug page — publicly reachable (no auth/onboarded gate) via the hidden
+    // 10-tap gesture on the login logo. Kept public on purpose so it can be used
+    // to diagnose token / secure-storage issues even when the user appears to be
+    // logged out.
+    {
+        path: '/dev/debug',
+        name: 'spa.dev.debug',
+        component: () => import('@/spa/pages/Dev/Debug.vue'),
+        meta: { public: true },
+    },
 
     // Catch-all → welcome (new device) or login (returning device)
     {

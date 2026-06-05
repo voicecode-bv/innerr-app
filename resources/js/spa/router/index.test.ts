@@ -47,3 +47,19 @@ describe('router history mode', () => {
         expect(router.options.history.location).not.toBe('/feed');
     });
 });
+
+describe('debug route', () => {
+    it('is registered and publicly reachable without auth or onboarding', async () => {
+        setUrl('https://innerr-app.test/');
+
+        const { router } = await import('./index');
+        const debug = router.resolve({ name: 'spa.dev.debug' });
+
+        expect(debug.path).toBe('/dev/debug');
+        // Public so the 10-tap gesture on the login logo can open it even when
+        // the user appears to be logged out — must NOT require auth/onboarded.
+        expect(debug.meta.public).toBe(true);
+        expect(debug.meta.auth).toBeUndefined();
+        expect(debug.meta.onboarded).toBeUndefined();
+    });
+});

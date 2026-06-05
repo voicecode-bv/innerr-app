@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { BridgeCall } from '@nativephp/mobile';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
+import {
+    HAS_AUTHENTICATED_KEY,
+    secureStorage,
+    TOKEN_KEY,
+} from '@/spa/composables/useSecureStorage';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import { setBadge } from '@voicecode-bv/nativephp-badge';
 
-// Local-only debug page for exercising native bridge behaviour (app icon
-// badge, background tasks, etc.). Strings are kept in English on purpose: this
-// page is never shipped to production builds, so it does not belong in the
-// translation files.
+// Debug page for exercising native bridge behaviour (app icon badge, background
+// tasks, etc.) and inspecting what lives in secure storage. Reachable publicly
+// via the hidden 10-tap gesture on the login logo, so it doubles as a way to
+// diagnose token / sign-in issues on real devices. Strings are kept in English
+// on purpose: this is a diagnostics screen, not part of the translated app.
 
 const router = useRouter();
 const notifications = useNotificationsStore();
@@ -69,8 +75,47 @@ async function runBackgroundTasksNow(): Promise<void> {
     }
 }
 
+// Token + durable markers as they currently sit in secure storage (Keychain on
+// device, localStorage fallback on web). Reads go through the same retrying
+// `secureStorage` helper the auth flow uses, so this reflects exactly what the
+// app would restore on cold-start.
+const secureToken = ref<string | null>(null);
+const hasAuthenticatedMarker = ref<string | null>(null);
+const loadingSecureStorage = ref(false);
+
+async function loadSecureStorage(): Promise<void> {
+    loadingSecureStorage.value = true;
+
+    try {
+        secureToken.value = await secureStorage.get(TOKEN_KEY);
+        hasAuthenticatedMarker.value = await secureStorage.get(
+            HAS_AUTHENTICATED_KEY,
+        );
+        record('Secure storage read.');
+    } catch (error) {
+        record(`Secure storage read failed: ${(error as Error).message}`);
+    } finally {
+        loadingSecureStorage.value = false;
+    }
+}
+
+async function copyToken(): Promise<void> {
+    if (!secureToken.value) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(secureToken.value);
+        record('Token copied to clipboard.');
+    } catch (error) {
+        record(`Copy failed: ${(error as Error).message}`);
+    }
+}
+
+onMounted(loadSecureStorage);
+
 function goBack(): void {
-    router.push({ name: 'spa.home' });
+    router.back();
 }
 </script>
 
@@ -97,8 +142,8 @@ function goBack(): void {
 
         <div class="mt-10 space-y-4 px-4 pt-4 pb-24">
             <p class="text-sm text-sand-600">
-                Local-only page for exercising native bridge calls. Results are
-                appended to the call log below.
+                Diagnostics page for inspecting secure storage and exercising
+                native bridge calls. Results are appended to the call log below.
             </p>
 
             <div class="rounded-lg border border-dark-sand bg-surface p-4">
@@ -116,6 +161,64 @@ function goBack(): void {
                         </dd>
                     </div>
                 </dl>
+            </div>
+
+            <div class="rounded-lg border border-dark-sand bg-surface p-4">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <h2 class="text-sm font-semibold text-ink">
+                        Secure storage
+                    </h2>
+                    <button
+                        class="text-xs font-medium text-brand-blue underline disabled:opacity-50"
+                        :disabled="loadingSecureStorage"
+                        @click="loadSecureStorage"
+                    >
+                        {{ loadingSecureStorage ? 'Loading…' : 'Refresh' }}
+                    </button>
+                </div>
+                <dl class="space-y-3 text-sm">
+                    <div>
+                        <dt class="text-sand-600">
+                            API token
+                            <span class="font-mono text-xs"
+                                >({{ TOKEN_KEY }})</span
+                            >
+                        </dt>
+                        <dd
+                            class="mt-1 font-mono text-xs break-all"
+                            :class="secureToken ? 'text-ink' : 'text-sand-600'"
+                        >
+                            {{ secureToken ?? '— (none stored)' }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sand-600">
+                            Has authenticated marker
+                            <span class="font-mono text-xs"
+                                >({{ HAS_AUTHENTICATED_KEY }})</span
+                            >
+                        </dt>
+                        <dd
+                            class="mt-1 font-mono text-xs break-all"
+                            :class="
+                                hasAuthenticatedMarker
+                                    ? 'text-ink'
+                                    : 'text-sand-600'
+                            "
+                        >
+                            {{ hasAuthenticatedMarker ?? '— (none stored)' }}
+                        </dd>
+                    </div>
+                </dl>
+                <Button
+                    v-if="secureToken"
+                    block
+                    variant="secondary"
+                    class="mt-3"
+                    @click="copyToken"
+                >
+                    Copy token
+                </Button>
             </div>
 
             <div class="space-y-2">
