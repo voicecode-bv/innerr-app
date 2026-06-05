@@ -45,6 +45,16 @@ export const useNotificationsStore = defineStore('spa-notifications', {
             this.loadedAt = Date.now();
             this.syncIconBadge();
         },
+        /**
+         * Set the unread count to an exact value. Used when marking the feed read
+         * leaves actionable items (pending circle invitations, ownership transfer
+         * requests) that intentionally stay unread until accepted or declined.
+         */
+        setUnreadCount(count: number): void {
+            this.unreadCount = Math.max(0, count);
+            this.loadedAt = Date.now();
+            this.syncIconBadge();
+        },
         decrement(by: number = 1): void {
             this.unreadCount = Math.max(0, this.unreadCount - by);
             this.syncIconBadge();

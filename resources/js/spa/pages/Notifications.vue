@@ -230,9 +230,16 @@ async function loadMore(): Promise<void> {
 }
 
 async function markAllAsRead(): Promise<void> {
-    const unreadIds = items.value.filter((n) => !n.read_at).map((n) => n.id);
+    // Marking all read only clears the feed. Pending circle invitations and
+    // ownership transfer requests stay unread (the API keeps them) until the
+    // user accepts or declines them, so the badge keeps counting them.
+    const unreadIds = items.value
+        .filter((n) => !n.read_at && !hiddenNotificationTypes.has(n.type))
+        .map((n) => n.id);
     unreadIds.forEach((id) => optimisticallyRead.value.add(id));
-    notificationsStore.markAllRead();
+    notificationsStore.setUnreadCount(
+        circleInvitations.value.length + ownershipTransfers.value.length,
+    );
 
     try {
         await externalApi.post('/notifications/read', {});
@@ -301,6 +308,7 @@ async function acceptInvitation(invitationId: number): Promise<void> {
         circleInvitations.value = circleInvitations.value.filter(
             (i) => i.id !== invitationId,
         );
+        notificationsStore.decrement();
     } catch {
         // ignore — gebruiker kan opnieuw proberen
     } finally {
@@ -320,6 +328,7 @@ async function declineInvitation(invitationId: number): Promise<void> {
         circleInvitations.value = circleInvitations.value.filter(
             (i) => i.id !== invitationId,
         );
+        notificationsStore.decrement();
     } catch {
         // ignore — gebruiker kan opnieuw proberen
     } finally {
@@ -341,6 +350,7 @@ async function acceptTransfer(transferId: number): Promise<void> {
         ownershipTransfers.value = ownershipTransfers.value.filter(
             (tr) => tr.id !== transferId,
         );
+        notificationsStore.decrement();
     } catch {
         // ignore — gebruiker kan opnieuw proberen
     } finally {
@@ -362,6 +372,7 @@ async function declineTransfer(transferId: number): Promise<void> {
         ownershipTransfers.value = ownershipTransfers.value.filter(
             (tr) => tr.id !== transferId,
         );
+        notificationsStore.decrement();
     } catch {
         // ignore — gebruiker kan opnieuw proberen
     } finally {
@@ -652,12 +663,10 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     <div class="flex items-center gap-3 px-5 pt-5">
                         <IconTile :icon="crownIcon" size="sm" tone="accent" />
                         <div class="min-w-0">
-                            <h3
-                                class="font-semibold text-ink dark:text-sand-100"
-                            >
+                            <h3 class="font-semibold text-ink">
                                 {{ t('Ownership transfers') }}
                             </h3>
-                            <p class="text-ink-muted dark:text-sand-400">
+                            <p class="text-ink-muted">
                                 {{
                                     t(':count pending', {
                                         count: ownershipTransfers.length,
@@ -695,7 +704,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-ink dark:text-sand-100">
+                                <p class="text-ink">
                                     {{
                                         t(
                                             ':name wants to transfer ownership of :circle to you',
@@ -706,9 +715,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                         )
                                     }}
                                 </p>
-                                <p
-                                    class="mt-0.5 text-ink-muted dark:text-sand-400"
-                                >
+                                <p class="mt-0.5 text-ink-muted">
                                     {{ timeAgo(transfer.created_at) }}
                                 </p>
                                 <div class="mt-3 flex gap-2">
@@ -744,12 +751,10 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                             tone="accent"
                         />
                         <div class="min-w-0">
-                            <h3
-                                class="font-semibold text-ink dark:text-sand-100"
-                            >
+                            <h3 class="font-semibold text-ink">
                                 {{ t('Circle invitations') }}
                             </h3>
-                            <p class="text-ink-muted dark:text-sand-400">
+                            <p class="text-ink-muted">
                                 {{
                                     t(':count pending', {
                                         count: circleInvitations.length,
@@ -787,7 +792,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-ink dark:text-sand-100">
+                                <p class="text-ink">
                                     <template
                                         v-for="(
                                             segment, idx
@@ -806,16 +811,12 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             class="font-semibold text-ink dark:text-sage-100"
                                             >{{ segment.text }}</span
                                         >
-                                        <span
-                                            v-else
-                                            class="text-ink-muted dark:text-sand-400"
-                                            >{{ segment.text }}</span
-                                        >
+                                        <span v-else class="text-ink-muted">{{
+                                            segment.text
+                                        }}</span>
                                     </template>
                                 </p>
-                                <p
-                                    class="mt-0.5 text-ink-muted dark:text-sand-400"
-                                >
+                                <p class="mt-0.5 text-ink-muted">
                                     {{ timeAgo(invitation.created_at) }}
                                 </p>
                                 <div class="mt-3 flex gap-2">
