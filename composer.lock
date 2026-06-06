@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2f4d4134ebf2902d7fbf404d146c620a",
+    "content-hash": "061264772761e0ca4f547fa05942b78b",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -8273,6 +8273,60 @@
                 }
             ],
             "time": "2026-04-26T05:33:54+00:00"
+        },
+        {
+            "name": "wilsonatb/nativephp-in-app-reviews",
+            "version": "1.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wilsonatb/nativephp-in-app-reviews.git",
+                "reference": "ffd3ca8e6ab5c5f397e49744e5b06f3b866904c4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wilsonatb/nativephp-in-app-reviews/zipball/ffd3ca8e6ab5c5f397e49744e5b06f3b866904c4",
+                "reference": "ffd3ca8e6ab5c5f397e49744e5b06f3b866904c4",
+                "shasum": ""
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "pestphp/pest": "^3.0"
+            },
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Nativephp\\InAppReviews\\InAppReviewsServiceProvider"
+                    ]
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Nativephp\\InAppReviews\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Wilson Tovar",
+                    "email": "diwdesign.wilson@gmail.com"
+                }
+            ],
+            "description": "In-App Reviews API",
+            "support": {
+                "issues": "https://github.com/wilsonatb/nativephp-in-app-reviews/issues",
+                "source": "https://github.com/wilsonatb/nativephp-in-app-reviews/tree/1.0.4"
+            },
+            "time": "2026-04-09T23:00:12+00:00"
         },
         {
             "name": "workerman/workerman",

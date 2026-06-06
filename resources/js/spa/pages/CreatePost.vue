@@ -19,6 +19,7 @@ import type { PostData } from '@/spa/components/PostCard.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { uploadInChunks } from '@/spa/composables/useChunkedUpload';
 import { useMapboxGeocoding } from '@/spa/composables/useMapboxGeocoding';
+import { useReviewPrompt } from '@/spa/composables/useReviewPrompt';
 
 const ImageCropModal = defineAsyncComponent(
     () => import('@/components/ImageCropModal.vue'),
@@ -107,6 +108,7 @@ const personsStore = usePersonsStore();
 const tagsStore = useTagsStore();
 const defaultCirclesStore = useDefaultCirclesStore();
 const geocoding = useMapboxGeocoding();
+const { maybeRequestReview } = useReviewPrompt();
 
 const circles = computed<Circle[]>(() => circlesStore.items ?? []);
 const defaultCircleIds = computed<string[]>(
@@ -998,6 +1000,11 @@ async function submit(): Promise<void> {
                 realPostId = response?.data?.id;
             },
         });
+
+        // Vraag, zodra de gebruiker meer dan 5 posts heeft geplaatst, eenmalig
+        // om een app-review. Leest de echte posts_count van het profiel; de
+        // zojuist geplaatste post is daarin al meegeteld. Faalt stil.
+        void maybeRequestReview(auth.user?.username);
 
         if (optimistic && realPostId) {
             const swapped: PostData = { ...optimistic, id: realPostId };

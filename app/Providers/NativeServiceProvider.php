@@ -68,6 +68,8 @@ class NativeServiceProvider extends ServiceProvider
             NativeBadgeServiceProvider::class,
             AnimatedSplashServiceProvider::class,
             NativephpMobileLocalesServiceProvider::class,
+            \Nativephp\InAppReviews\InAppReviewsServiceProvider::class,
+        
 
         ];
     }

@@ -2,7 +2,7 @@
 
 return [
 
-    'base_url' => env('API_BASE_URL', 'https://innerr-api.test/api'),
+    'base_url' => env('API_BASE_URL', 'https://api.innerr.app/api'),
 
     'timeout' => (int) env('API_TIMEOUT', 15),
 

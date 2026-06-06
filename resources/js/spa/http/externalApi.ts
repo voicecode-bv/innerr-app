@@ -22,20 +22,23 @@ interface AuthLike {
     clear(): void;
 }
 
-let baseUrl: string | null = null;
+// Resolver i.p.v. een vaste string: de base-url kan al uit de durable snapshot
+// komen vóór de bootstrap-call hem ververst, zodat externe calls ook werken
+// wanneer de bootstrap (offline) faalt.
+let baseUrlResolver: (() => string) | null = null;
 let authResolver: (() => AuthLike) | null = null;
 let localeResolver: (() => string) | null = null;
 let appVersionResolver: (() => string) | null = null;
 let unauthorizedHandler: (() => void) | null = null;
 
 export function configureExternalApi(opts: {
-    baseUrl: string;
+    baseUrl: () => string;
     auth: () => AuthLike;
     locale: () => string;
     appVersion: () => string;
     onUnauthorized: () => void;
 }): void {
-    baseUrl = opts.baseUrl.replace(/\/+$/, '');
+    baseUrlResolver = opts.baseUrl;
     authResolver = opts.auth;
     localeResolver = opts.locale;
     appVersionResolver = opts.appVersion;
@@ -47,6 +50,8 @@ async function performCall<T>(
     path: string,
     body?: unknown,
 ): Promise<T> {
+    const baseUrl = (baseUrlResolver?.() ?? '').replace(/\/+$/, '');
+
     if (!baseUrl) {
         throw new Error(
             'externalApi not configured. Call configureExternalApi first.',

@@ -84,12 +84,14 @@ describe('auth store token durability', () => {
         expect(auth.token).toBeNull();
     });
 
-    it('keeps the restored token when bootstrap returns no token', async () => {
-        // Simulate a cold-start where the Keychain token was restored but the
-        // Laravel session expired, so the BFF returns no token.
+    it('flags awaitingConnection and keeps the token when bootstrap is unreachable', async () => {
+        // Cold-start where the Keychain token was restored but the external API
+        // could not confirm it (transient). The token must survive and the app
+        // must enter the reconnect state instead of bouncing to login.
         apiGet.mockResolvedValue({
             user: null,
-            token: null,
+            token: 'restored-token',
+            auth_status: 'unreachable',
             locale: 'nl',
             api_base: 'https://api.innerr.app',
             app_version: '1.0.0',
@@ -102,6 +104,8 @@ describe('auth store token durability', () => {
         await auth.bootstrap();
 
         expect(auth.token).toBe('restored-token');
+        expect(auth.awaitingConnection).toBe(true);
+        // A transient must never wipe the durable token.
         expect(storageDelete).not.toHaveBeenCalled();
     });
 
@@ -121,6 +125,71 @@ describe('auth store token durability', () => {
 
         expect(auth.token).toBe('fresh-token');
         expect(storageSet).toHaveBeenCalledWith('api_token', 'fresh-token');
+    });
+});
+
+describe('auth store reconnect handling', () => {
+    const payload = (overrides: Record<string, unknown>) => ({
+        user: null,
+        token: null,
+        auth_status: 'unauthenticated',
+        locale: 'nl',
+        api_base: 'https://api.innerr.app',
+        app_version: '1.0.0',
+        social_auth_urls: { google: '', apple: '' },
+        ...overrides,
+    });
+
+    it('clears the reconnect flag on an authenticated bootstrap', async () => {
+        apiGet.mockResolvedValue(
+            payload({
+                auth_status: 'authenticated',
+                user: { id: '7', username: 'mees' },
+                token: 'fresh',
+            }),
+        );
+
+        const auth = useAuthStore();
+        // Simulate that we were sitting on the reconnect screen.
+        auth.awaitingConnection = true;
+
+        await auth.bootstrap();
+
+        expect(auth.user).toEqual({ id: '7', username: 'mees' });
+        expect(auth.awaitingConnection).toBe(false);
+    });
+
+    it('clears the user and reconnect flag on an unauthenticated bootstrap', async () => {
+        apiGet.mockResolvedValue(payload({ auth_status: 'unauthenticated' }));
+
+        const auth = useAuthStore();
+        auth.user = { id: '7' } as never;
+        auth.awaitingConnection = true;
+
+        await auth.bootstrap();
+
+        expect(auth.user).toBeNull();
+        expect(auth.awaitingConnection).toBe(false);
+    });
+
+    it('does not enter the reconnect state on unreachable without a token', async () => {
+        apiGet.mockResolvedValue(payload({ auth_status: 'unreachable' }));
+
+        const auth = useAuthStore();
+        // No token held: an unreachable result is just an offline guest, who
+        // belongs on the login/welcome flow, not the reconnect screen.
+        await auth.bootstrap();
+
+        expect(auth.awaitingConnection).toBe(false);
+    });
+
+    it('resets the reconnect flag on clear()', () => {
+        const auth = useAuthStore();
+        auth.awaitingConnection = true;
+
+        auth.clear();
+
+        expect(auth.awaitingConnection).toBe(false);
     });
 });
 

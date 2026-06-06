@@ -4,6 +4,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { usePushNotifications } from '@/composables/usePushNotifications';
 import FeatureTourMount from '@/spa/components/FeatureTourMount.vue';
+import ReconnectOverlay from '@/spa/components/ReconnectOverlay.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 
 useNetworkStatus();
@@ -109,4 +110,9 @@ const showFeatureTour = computed(
     </div>
 
     <FeatureTourMount v-if="showFeatureTour" />
+
+    <!-- Reconnect-scherm: getoond wanneer we een geldig token vasthouden maar de
+ sessie nog niet bevestigd kon worden (externe API onbereikbaar). Dekt alles af
+ en probeert het zelf opnieuw, i.p.v. de gebruiker naar login te sturen. -->
+    <ReconnectOverlay v-if="auth.awaitingConnection && !auth.user" />
 </template>

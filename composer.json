@@ -30,7 +30,8 @@
         "spatie/laravel-ray": "^1.43",
         "voicecode-bv/mobile-photos": "^1.0",
         "voicecode-bv/nativephp-animated-splash": "dev-main",
-        "voicecode-bv/nativephp-badge": "^1.0"
+        "voicecode-bv/nativephp-badge": "^1.0",
+        "wilsonatb/nativephp-in-app-reviews": "^1.0"
     },
     "require-dev": {
         "cweagans/composer-patches": "^1.7",

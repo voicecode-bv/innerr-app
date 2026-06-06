@@ -5,6 +5,7 @@ import { RouterLink, useRouter } from 'vue-router';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
+import { useReviewPrompt } from '@/spa/composables/useReviewPrompt';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { vPinchZoom } from '@/spa/directives/pinchZoom';
@@ -137,6 +138,7 @@ function openLikes(): void {
 
 const { t } = useTranslations();
 const auth = useAuthStore();
+const { maybeRequestReview } = useReviewPrompt();
 
 const authUserId = computed(() => auth.user?.id ?? null);
 const isOwner = computed(() => props.post.user.id === authUserId.value);
@@ -424,6 +426,9 @@ async function toggleLike(): Promise<void> {
             await externalApi.delete(`/posts/${props.post.id}/like`);
         } else {
             await externalApi.post(`/posts/${props.post.id}/like`);
+            // Alleen bij het toevoegen van een like telt de activiteit mee voor
+            // de review-drempel.
+            void maybeRequestReview(auth.user?.username);
         }
     } catch {
         isLiked.value = wasLiked;

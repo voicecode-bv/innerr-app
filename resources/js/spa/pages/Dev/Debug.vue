@@ -9,6 +9,7 @@ import {
     secureStorage,
     TOKEN_KEY,
 } from '@/spa/composables/useSecureStorage';
+import { api } from '@/spa/http/apiClient';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import { setBadge } from '@voicecode-bv/nativephp-badge';
@@ -96,6 +97,26 @@ async function loadSecureStorage(): Promise<void> {
         record(`Secure storage read failed: ${(error as Error).message}`);
     } finally {
         loadingSecureStorage.value = false;
+    }
+}
+
+// Vergeet de BFF-session server-side maar laat het token in de Keychain staan.
+// Bootst "sessie weg, token nog geldig" na: zet hierna vliegtuigmodus aan en
+// herstart de app om het reconnect-scherm te testen zonder herinstall.
+const forgettingSession = ref(false);
+
+async function forgetSession(): Promise<void> {
+    forgettingSession.value = true;
+
+    try {
+        await api.post('/api/spa/debug/forget-session');
+        record(
+            'BFF session forgotten (token kept). Enable airplane mode and relaunch to hit the reconnect screen.',
+        );
+    } catch (error) {
+        record(`forget-session rejected: ${(error as Error).message}`);
+    } finally {
+        forgettingSession.value = false;
     }
 }
 
@@ -219,6 +240,27 @@ function goBack(): void {
                 >
                     Copy token
                 </Button>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-sm font-semibold text-ink">Reconnect test</h2>
+                <Button
+                    block
+                    variant="danger"
+                    :disabled="forgettingSession"
+                    @click="forgetSession"
+                >
+                    {{
+                        forgettingSession
+                            ? 'Forgetting…'
+                            : 'Forget BFF session (keep token)'
+                    }}
+                </Button>
+                <p class="text-xs text-sand-600">
+                    Clears the local Laravel session but keeps the API token.
+                    Turn on airplane mode and relaunch to land on the reconnect
+                    screen.
+                </p>
             </div>
 
             <div class="space-y-2">

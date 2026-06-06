@@ -14,6 +14,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import SheetHeader from '@/components/SheetHeader.vue';
 import CommentBubble from '@/spa/components/CommentBubble.vue';
 import HiddenCommentsNotice from '@/spa/components/HiddenCommentsNotice.vue';
+import { useReviewPrompt } from '@/spa/composables/useReviewPrompt';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -66,6 +67,7 @@ const emit = defineEmits<{
 
 const { t } = useTranslations();
 const auth = useAuthStore();
+const { maybeRequestReview } = useReviewPrompt();
 const commentsCache = useCommentsCacheStore();
 const authUserId = computed(() => auth.user?.id ?? null);
 
@@ -408,6 +410,8 @@ async function toggleCommentLike(comment: Comment): Promise<void> {
             await externalApi.delete(`/comments/${comment.id}/like`);
         } else {
             await externalApi.post(`/comments/${comment.id}/like`);
+            // Like op een comment telt mee voor de review-drempel.
+            void maybeRequestReview(auth.user?.username);
         }
     } catch {
         comment.is_liked = wasLiked;
@@ -489,6 +493,9 @@ async function submitComment(): Promise<void> {
 
         commentsCache.invalidate(props.postId);
         emit('commentAdded', created);
+
+        // Geplaatste comment telt mee voor de review-drempel.
+        void maybeRequestReview(auth.user?.username);
     } catch {
         comments.value = comments.value.filter((c) => c.id !== optimistic.id);
         body.value = submittedBody;

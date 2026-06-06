@@ -26,8 +26,13 @@ const feedFilter = useFeedFilterStore();
 const notificationsStore = useNotificationsStore();
 const { setLayout } = useFeedLayout();
 
-// Debug page is only registered outside production (see router).
+// Quick link to the debug page during local development. The page itself is
+// always registered (also reachable via the hidden login-logo gesture); this
+// shortcut only shows on local/dev so it never clutters the production UI.
+// Honours the Vite dev server too, so it appears under `npm run dev` even when
+// VITE_APP_ENV is left at production.
 const isLocalEnv =
+    import.meta.env.DEV ||
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
 const circles = computed(() => circlesStore.items);

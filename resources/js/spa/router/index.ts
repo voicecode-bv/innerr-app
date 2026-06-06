@@ -350,6 +350,11 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.auth && !auth.user) {
+        // Bij `awaitingConnection` (token aanwezig maar API onbereikbaar) landen
+        // we ook hier: we navigeren gewoon naar login/welkom, maar de
+        // ReconnectOverlay in App.vue dekt dat scherm volledig af en probeert het
+        // opnieuw. We aborten de navigatie bewust NIET — dat zou de initiële
+        // router-navigatie laten hangen en de splash nooit laten verdwijnen.
         return guestLanding();
     }
 

@@ -34,9 +34,18 @@ export interface User {
     email_verification_required: boolean;
 }
 
+type AuthStatus = 'authenticated' | 'unreachable' | 'unauthenticated';
+
 interface BootstrapPayload {
     user: User | null;
     token: string | null;
+    // 'authenticated'   -> user bevestigd, render de app.
+    // 'unreachable'      -> token nog geldig maar externe API onbereikbaar; toon
+    //                       het reconnect-scherm i.p.v. uitloggen.
+    // 'unauthenticated'  -> definitief uitgelogd (geen/afgewezen token).
+    // Optioneel voor forward-compat: ontbreekt het veld, dan leiden we het af
+    // uit de aanwezigheid van `user`.
+    auth_status?: AuthStatus;
     locale: string;
     api_base: string;
     app_version: string;
@@ -54,6 +63,11 @@ export const useAuthStore = defineStore('spa-auth', {
         // uitloggen, zodat terugkerende gebruikers het welkomstkeuzescherm
         // overslaan en direct op inloggen landen.
         hasAuthenticatedBefore: false,
+        // True wanneer we een token vasthouden maar de bootstrap de gebruiker
+        // niet kon bevestigen omdat de externe API onbereikbaar was. De app
+        // toont dan het reconnect-scherm i.p.v. de gebruiker naar login te
+        // sturen; een geldig token leidt nooit tot een gedwongen re-login.
+        awaitingConnection: false,
     }),
     actions: {
         // Wordt vroeg in `main.ts` aangeroepen, vóór de BFF bootstrap-call,
@@ -87,29 +101,53 @@ export const useAuthStore = defineStore('spa-auth', {
         },
         async bootstrap(): Promise<BootstrapPayload> {
             const data = await api.get<BootstrapPayload>('/api/spa/bootstrap');
-            this.user = data.user;
+
+            // api_base/app_version/social_auth_urls komen uit server-config en
+            // zijn er altijd, ongeacht auth-status; meteen overnemen.
             this.apiBase = data.api_base;
             this.appVersion = data.app_version;
             this.socialAuthUrls = data.social_auth_urls;
 
-            // BFF token blijft de bron van waarheid voor backwards-compat.
-            // Sync naar Keychain zodat we de volgende cold-start direct kunnen
-            // booten zonder BFF round-trip nodig te hebben.
+            // Forward-compat: leid de status af als de BFF het veld (nog) niet
+            // meestuurt.
+            const status: AuthStatus =
+                data.auth_status ??
+                (data.user ? 'authenticated' : 'unauthenticated');
+
+            // Token nooit hier wissen: bij een cold-start kan `restoreToken()`
+            // even gefaald hebben (Keychain nog niet leesbaar). Alleen bij een
+            // expliciete logout of een definitieve afwijzing verdwijnt het token.
             if (data.token) {
                 this.token = data.token;
                 await secureStorage.set(TOKEN_KEY, data.token);
             }
 
-            // Een terugkerende sessie telt ook als "ooit ingelogd": markeer het
-            // toestel zodat een latere logout op inloggen landt, niet op welkom.
+            if (status === 'unreachable') {
+                // Externe API onbereikbaar maar token nog geldig. Niet uitloggen:
+                // markeer dat we op verbinding wachten zodat de app het reconnect-
+                // scherm toont en het opnieuw probeert.
+                this.awaitingConnection = !!this.token;
+
+                return data;
+            }
+
+            // authenticated of unauthenticated: de status is definitief bevestigd.
+            this.awaitingConnection = false;
+
+            if (status === 'unauthenticated') {
+                this.user = null;
+
+                return data;
+            }
+
+            // authenticated
+            this.user = data.user;
+
             if (data.user) {
+                // Een terugkerende sessie telt ook als "ooit ingelogd": markeer
+                // het toestel zodat een latere logout op inloggen landt.
                 await this.markAuthenticated();
             }
-            // Wis het durable token hier bewust NIET als de BFF er geen
-            // teruggeeft: tijdens een cold-start kan `restoreToken()` even
-            // gefaald hebben (Keychain nog niet leesbaar), waardoor `this.token`
-            // null is terwijl er wel degelijk een geldig token in de Keychain
-            // staat. Het token verwijderen we alleen bij een expliciete logout.
 
             return data;
         },
@@ -124,6 +162,7 @@ export const useAuthStore = defineStore('spa-auth', {
             }>('/api/spa/auth/login', { email, password });
             this.user = data.user;
             this.token = data.token;
+            this.awaitingConnection = false;
             await secureStorage.set(TOKEN_KEY, data.token);
             await this.markAuthenticated();
 
@@ -143,6 +182,7 @@ export const useAuthStore = defineStore('spa-auth', {
             }>('/api/spa/auth/register', payload);
             this.user = data.user;
             this.token = data.token;
+            this.awaitingConnection = false;
             await secureStorage.set(TOKEN_KEY, data.token);
             await this.markAuthenticated();
 
@@ -176,6 +216,9 @@ export const useAuthStore = defineStore('spa-auth', {
         clear(forgetToken = false): void {
             this.user = null;
             this.token = null;
+            // Een 401 (of logout) is een definitieve auth-uitkomst, geen
+            // verbindingsprobleem: nooit in reconnect-stand blijven hangen.
+            this.awaitingConnection = false;
 
             if (forgetToken) {
                 void secureStorage.delete(TOKEN_KEY);

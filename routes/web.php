@@ -13,6 +13,8 @@ use App\Http\Controllers\Spa\PersonsController as SpaPersonsController;
 use App\Http\Controllers\Spa\PostsController as SpaPostsController;
 use App\Http\Controllers\Spa\SettingsController as SpaSettingsController;
 use App\Http\Controllers\UploadSessionController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // SPA BFF — alleen wat technisch niet client-side kan: bootstrap-mirror,
@@ -24,6 +26,19 @@ Route::prefix('api/spa')->group(function () {
     Route::post('/auth/register', [SpaAuthController::class, 'register']);
     Route::post('/auth/forgot-password', [SpaAuthController::class, 'forgotPassword']);
     Route::post('/auth/reset-password', [SpaAuthController::class, 'resetPassword']);
+
+    // Debug/test: vergeet alleen de Laravel-session (logout + invalidate) maar
+    // laat het token in de secure storage staan. Bootst "sessie weg, token nog
+    // geldig" na zodat de reconnect-flow op een echt toestel getest kan worden
+    // zonder de app te herinstalleren. Raakt uitsluitend de eigen sessie van de
+    // aanroeper. Bereikbaar via de verborgen debug-pagina.
+    Route::post('/debug/forget-session', function (Request $request) {
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json(['ok' => true]);
+    });
 
     Route::middleware('auth.api')->group(function () {
         Route::post('/auth/logout', [SpaAuthController::class, 'logout']);

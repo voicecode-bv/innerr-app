@@ -136,22 +136,25 @@ async function bootstrap(): Promise<void> {
         },
     });
 
+    // externalApi vooraf configureren met een lui-gelezen base-url (snapshot of
+    // bootstrap). Buiten de try, zodat externe calls ook werken wanneer de
+    // bootstrap-call zelf (offline) faalt.
+    configureExternalApi({
+        baseUrl: () => auth.apiBase,
+        auth: () => ({ token: auth.token, clear: () => auth.clear() }),
+        locale: () => i18n.locale,
+        appVersion: () => auth.appVersion,
+        onUnauthorized: () => {
+            router.push({ name: 'spa.login' });
+        },
+    });
+
     try {
         const data = await auth.bootstrap();
 
         if (data.locale && data.locale !== i18n.locale) {
             await i18n.load(data.locale);
         }
-
-        configureExternalApi({
-            baseUrl: data.api_base,
-            auth: () => ({ token: auth.token, clear: () => auth.clear() }),
-            locale: () => i18n.locale,
-            appVersion: () => auth.appVersion,
-            onUnauthorized: () => {
-                router.push({ name: 'spa.login' });
-            },
-        });
 
         // Pre-warm service-keys (Mapbox token etc.) parallel zodat de eerste
         // Map-page bezoek niet hoeft te wachten op een netwerk-roundtrip.
@@ -160,8 +163,15 @@ async function bootstrap(): Promise<void> {
                 .ensureLoaded()
                 .catch(() => null);
         }
-    } catch {
-        // Bootstrap failed; route guards will redirect to login.
+    } catch (error) {
+        // Alleen een echte netwerkfout (BFF onbereikbaar) is een verbindings-
+        // probleem dat we via het reconnect-scherm opvangen. Een server-fout
+        // (500 e.d.) is een bug, geen hik: die laten we vallen zodat de guards
+        // normaal naar login gaan i.p.v. de gebruiker op het reconnect-scherm
+        // vast te zetten.
+        if (auth.token && error instanceof NetworkError) {
+            auth.awaitingConnection = true;
+        }
     }
 
     // Globale error-tap: validation/auth errors worden door pages zelf

@@ -21,6 +21,11 @@ class BootstrapController extends Controller
         $user = $request->user();
         $apiBase = rtrim((string) config('api-client.base_url'), '/');
 
+        // Onthoudt of de externe API onbereikbaar was tijdens deze bootstrap. Dan
+        // konden we de user niet bevestigen, maar het token is nog wél geldig: de
+        // SPA mag op die signaal de gebruiker NIET naar login sturen.
+        $upstreamUnreachable = false;
+
         // Rehydrate sessie vanuit een Bearer-token dat de SPA in de Authorization
         // header meestuurt (token komt uit Keychain/SecureStorage). Hiermee blijft
         // de gebruiker ingelogd zelfs als de Laravel-session is verlopen.
@@ -40,6 +45,9 @@ class BootstrapController extends Controller
                     // zodat een volgende bootstrap kan herstellen i.p.v. de
                     // gebruiker onnodig uit te loggen.
                     $this->tokenStore->delete();
+                } else {
+                    // Transient: token blijft staan, user kon niet bevestigd worden.
+                    $upstreamUnreachable = true;
                 }
             }
         }
@@ -61,9 +69,21 @@ class BootstrapController extends Controller
             }
         }
 
+        // Expliciet auth-signaal voor de SPA zodat die "echt uitgelogd" kan
+        // onderscheiden van "even niet bereikbaar". Bij `unreachable` houdt de SPA
+        // de laatst bekende user uit zijn snapshot vast i.p.v. naar login te gaan.
+        $authStatus = match (true) {
+            $user !== null => 'authenticated',
+            $upstreamUnreachable && $this->apiClient->hasToken() => 'unreachable',
+            default => 'unauthenticated',
+        };
+
         return response()->json([
             'user' => $this->presentUser($user),
-            'token' => $user ? $this->apiClient->getToken() : null,
+            // Geef het token terug zolang we er nog één vasthouden (ook bij
+            // unreachable), zodat de SPA zijn Bearer kan blijven gebruiken.
+            'token' => $this->apiClient->hasToken() ? $this->apiClient->getToken() : null,
+            'auth_status' => $authStatus,
             'locale' => app()->getLocale(),
             'api_base' => $apiBase,
             'app_version' => (string) config('nativephp.version'),
