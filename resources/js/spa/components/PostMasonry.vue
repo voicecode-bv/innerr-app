@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { Dialog } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import Button from '@/components/Button.vue';
+import BatchAssignCircleSheet from '@/spa/components/BatchAssignCircleSheet.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import PostTile from '@/spa/components/PostTile.vue';
 import { useMasonry } from '@/spa/composables/useMasonry';
+import { useTranslations } from '@/spa/composables/useTranslations';
+import { addPostsToCircles } from '@/spa/services/postCircles';
+import { useCirclesStore } from '@/spa/stores/circles';
+import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 
 const props = withDefaults(
     defineProps<{
@@ -16,12 +23,26 @@ const props = withDefaults(
          * that are still transcoding.
          */
         resolvePoster?: (post: PostData) => string | null;
+        /**
+         * Enables the "select photos and add them to a circle" flow on this
+         * surface. The Select toggle lives in the page header and drives the
+         * shared selection store; this masonry then renders the checkboxes,
+         * action bar, and circle sheet.
+         */
+        selectable?: boolean;
     }>(),
     {
         loading: false,
         resolvePoster: undefined,
+        selectable: false,
     },
 );
+
+const { t } = useTranslations();
+const selection = useFeedSelectionStore();
+const circlesStore = useCirclesStore();
+
+const selectionActive = computed(() => props.selectable && selection.active);
 
 // Responsive column count from the grid's own width: 2 on phones, more on
 // wider tablets. Driven by a ResizeObserver so it adapts to rotation/split-view.
@@ -89,6 +110,62 @@ function bumpActivePostCommentsCount(delta: number): void {
     }
 }
 
+// Batch "add to circle" flow, hosted here so every selectable masonry surface
+// (home grid, own profile) gets it for free.
+const assignSheetOpen = ref(false);
+const assignSubmitting = ref(false);
+
+function mergeCirclesIntoSelectedPosts(circleIds: string[]): void {
+    const chosen = (circlesStore.items ?? [])
+        .filter((circle) => circleIds.includes(circle.id))
+        .map((circle) => ({
+            id: circle.id,
+            name: circle.name,
+            photo: circle.photo,
+        }));
+
+    for (const post of props.posts) {
+        if (!selection.selectedIds.has(post.id)) {
+            continue;
+        }
+
+        const existing = post.circles ?? [];
+        const additions = chosen.filter(
+            (circle) => !existing.some((current) => current.id === circle.id),
+        );
+        post.circles = [...existing, ...additions];
+    }
+}
+
+async function onConfirmAssign(circleIds: string[]): Promise<void> {
+    const postIds = [...selection.selectedIds];
+
+    if (postIds.length === 0 || circleIds.length === 0) {
+        return;
+    }
+
+    assignSubmitting.value = true;
+
+    try {
+        await addPostsToCircles(postIds, circleIds);
+        mergeCirclesIntoSelectedPosts(circleIds);
+        assignSheetOpen.value = false;
+        selection.disable();
+        await Dialog.toast(
+            postIds.length === 1
+                ? t('Photo added to your circles')
+                : t('Photos added to your circles'),
+        );
+    } catch {
+        await Dialog.alert(
+            t('Something went wrong'),
+            t('Could not add the photos to the circles. Please try again.'),
+        );
+    } finally {
+        assignSubmitting.value = false;
+    }
+}
+
 onMounted(() => {
     if (typeof ResizeObserver !== 'undefined' && gridRef.value) {
         resizeObserver = new ResizeObserver((entries) => {
@@ -137,8 +214,11 @@ onUnmounted(() => {
                     :key="post.id"
                     :post="post"
                     :resolve-poster="resolvePoster"
+                    :selection-mode="selectionActive"
+                    :selected="selection.isSelected(post.id)"
                     @open-comments="openCommentsForPost"
                     @open-likes="openLikesForPost"
+                    @toggle-select="selection.toggle"
                 />
             </div>
         </div>
@@ -159,6 +239,41 @@ onUnmounted(() => {
             :post-id="likesPostId"
             :initial-count="activeLikesCount()"
             @update:open="isLikesOpen = $event"
+        />
+
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="translate-y-full"
+                enter-to-class="translate-y-0"
+                leave-active-class="transition duration-150 ease-in"
+                leave-from-class="translate-y-0"
+                leave-to-class="translate-y-full"
+            >
+                <div
+                    v-if="selectionActive && selection.count > 0"
+                    class="fixed inset-x-0 bottom-0 z-[60] flex items-center justify-between gap-3 border-t border-sand-200 bg-surface px-4 pt-3 pb-24 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
+                >
+                    <span class="font-medium text-ink">
+                        {{ t(':count selected', { count: selection.count }) }}
+                    </span>
+                    <Button
+                        variant="primary"
+                        size="md"
+                        @click="assignSheetOpen = true"
+                    >
+                        {{ t('Add to circle') }}
+                    </Button>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <BatchAssignCircleSheet
+            v-if="selectable"
+            v-model:open="assignSheetOpen"
+            :post-count="selection.count"
+            :submitting="assignSubmitting"
+            @confirm="onConfirmAssign"
         />
     </div>
 </template>

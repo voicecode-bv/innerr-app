@@ -6,24 +6,37 @@ import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
+import copyIcon from '../../../svg/doodle-icons/copy.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
 import playIcon from '../../../svg/doodle-icons/play.svg';
 
-const props = defineProps<{
-    post: PostData;
-    /**
-     * Optional poster override. Profiles use it to swap in a locally-generated
-     * thumbnail for a freshly uploaded video that has no CDN poster yet. When
-     * it returns null the tile falls back to the API media below.
-     */
-    resolvePoster?: (post: PostData) => string | null;
-}>();
+const props = withDefaults(
+    defineProps<{
+        post: PostData;
+        /**
+         * Optional poster override. Profiles use it to swap in a locally-generated
+         * thumbnail for a freshly uploaded video that has no CDN poster yet. When
+         * it returns null the tile falls back to the API media below.
+         */
+        resolvePoster?: (post: PostData) => string | null;
+        /** Selection mode is active: tapping toggles selection instead of opening. */
+        selectionMode?: boolean;
+        /** Whether this tile is currently part of the selection. */
+        selected?: boolean;
+    }>(),
+    {
+        resolvePoster: undefined,
+        selectionMode: false,
+        selected: false,
+    },
+);
 
 const emit = defineEmits<{
     (e: 'open-comments', postId: string): void;
     (e: 'open-likes', postId: string): void;
+    (e: 'toggle-select', postId: string): void;
 }>();
 
 const { t } = useTranslations();
@@ -32,8 +45,18 @@ const auth = useAuthStore();
 
 const isOwner = computed(() => props.post.user?.id === auth.user?.id);
 
+// Only the user's own posts can be added to a circle, so in selection mode
+// other people's tiles are dimmed and inert.
+const isSelectable = computed(() => props.selectionMode && isOwner.value);
+
 const isVideo = computed(() => props.post.media_type === 'video');
 const isQuote = computed(() => props.post.type === 'quote');
+
+// Multi-photo posts collapse to a single cover tile in the masonry grid, so the
+// only cue that more media is hidden behind it is this badge. Tapping the tile
+// opens the detail carousel, which lets the user swipe through the rest.
+const mediaCount = computed(() => props.post.media?.length ?? 0);
+const hasMultipleMedia = computed(() => mediaCount.value > 1);
 const isProcessing = computed(() => props.post.media_status === 'processing');
 
 // Only ready videos can stream; processing/failed ones stay on the poster.
@@ -142,6 +165,18 @@ function openDetails(): void {
     });
 }
 
+function onTileClick(): void {
+    if (props.selectionMode) {
+        if (isSelectable.value) {
+            emit('toggle-select', props.post.id);
+        }
+
+        return;
+    }
+
+    openDetails();
+}
+
 onMounted(() => {
     if (typeof IntersectionObserver === 'undefined' || !rootRef.value) {
         // No observer support: leave videos on their poster rather than eagerly
@@ -190,14 +225,25 @@ function iconMaskStyle(url: string) {
 <template>
     <div
         ref="rootRef"
-        class="relative w-full overflow-hidden rounded-2xl bg-sand shadow-sm ring-1 ring-sand-100"
+        class="relative w-full overflow-hidden rounded-2xl bg-sand shadow-sm transition-all"
+        :class="[
+            selected ? 'ring-2 ring-action' : 'ring-1 ring-sand-100',
+            selectionMode && !isSelectable ? 'opacity-40' : '',
+        ]"
         :style="{ aspectRatio }"
     >
         <button
             type="button"
             class="block size-full active:opacity-90"
-            :aria-label="t('Open post')"
-            @click="openDetails"
+            :disabled="selectionMode && !isSelectable"
+            :aria-label="
+                selectionMode
+                    ? selected
+                        ? t('Deselect photo')
+                        : t('Select photo')
+                    : t('Open post')
+            "
+            @click="onTileClick"
         >
             <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
             <img
@@ -224,22 +270,65 @@ function iconMaskStyle(url: string) {
         </button>
 
         <span
+            v-if="isSelectable"
+            aria-hidden="true"
+            class="pointer-events-none absolute top-2 left-2 flex size-6 items-center justify-center rounded-full ring-2 ring-white transition-colors"
+            :class="selected ? 'bg-action' : 'bg-black/30'"
+        >
+            <svg
+                v-if="selected"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="3"
+                stroke="currentColor"
+                class="size-3.5 text-white"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m4.5 12.75 6 6 9-13.5"
+                />
+            </svg>
+        </span>
+
+        <span
             v-if="isQuote"
             aria-hidden="true"
             class="pointer-events-none absolute top-2 left-2 flex size-7 items-center justify-center rounded-full bg-black/45 font-display text-base leading-none text-white backdrop-blur-sm"
             >&ldquo;</span
         >
 
-        <span
-            v-if="isVideo && !isProcessing && !(showVideo && videoLoaded)"
-            aria-hidden="true"
-            class="pointer-events-none absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+        <div
+            v-if="
+                hasMultipleMedia ||
+                (isVideo && !isProcessing && !(showVideo && videoLoaded))
+            "
+            class="pointer-events-none absolute top-2 right-2 flex items-center gap-1.5"
         >
             <span
-                class="inline-block size-4 bg-white"
-                :style="iconMaskStyle(playIcon)"
-            ></span>
-        </span>
+                v-if="hasMultipleMedia"
+                class="flex h-7 items-center gap-1 rounded-full bg-black/50 px-2 text-white backdrop-blur-sm"
+                :aria-label="t(':count photos', { count: mediaCount })"
+            >
+                <span
+                    aria-hidden="true"
+                    class="inline-block size-3.5 bg-white"
+                    :style="iconMaskStyle(copyIcon)"
+                ></span>
+                <span class="text-xs leading-none">{{ mediaCount }}</span>
+            </span>
+            <span
+                v-if="isVideo && !isProcessing && !(showVideo && videoLoaded)"
+                aria-hidden="true"
+                class="flex size-7 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+            >
+                <span
+                    class="inline-block size-4 bg-white"
+                    :style="iconMaskStyle(playIcon)"
+                ></span>
+            </span>
+        </div>
 
         <div
             v-if="isProcessing"
@@ -252,6 +341,7 @@ function iconMaskStyle(url: string) {
         </div>
 
         <div
+            v-if="!selectionMode"
             class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/60 via-black/20 to-transparent px-3 pt-8 pb-2 text-white"
         >
             <button

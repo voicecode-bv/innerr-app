@@ -104,11 +104,22 @@ async function enablePushNotifications(): Promise<void> {
             } catch {
                 // Niet kritiek; usePushNotifications probeert opnieuw bij volgende launch.
             }
+
+            // Een token wordt door FCM alleen afgegeven nadat de gebruiker de
+            // permissie heeft verleend. De native checkPermission-status is
+            // direct na enroll soms nog niet bijgewerkt ('not_determined'),
+            // waardoor de banner bleef staan tot een volgende refresh. Met een
+            // token weten we zeker dat push aanstaat, dus zetten we de status
+            // hier zelf zodat de banner meteen verdwijnt.
+            permissionStatus.value = 'granted';
+        } else {
+            // Geen token: geweigerd of nog onbeslist — lees de echte status.
+            await refreshStatus();
         }
     } catch {
         // Gebruiker heeft geweigerd of bridge niet beschikbaar.
-    } finally {
         await refreshStatus();
+    } finally {
         enrolling.value = false;
         emit('permission-changed', permissionStatus.value);
     }

@@ -22,7 +22,28 @@ export interface Circle {
     is_owner?: boolean;
     is_administrator?: boolean;
     created_at?: string;
+    updated_at?: string;
     pending_invitations?: CirclePendingInvitation[];
+}
+
+/**
+ * Most recently changed circle first, based on `updated_at`. Falls back to
+ * `created_at`, then name, so warm-cache entries from older app versions that
+ * predate the `updated_at` field still sort deterministically. Returns a new
+ * array; the input is left untouched.
+ */
+export function sortByRecentlyUpdated(circles: readonly Circle[]): Circle[] {
+    const timestamp = (circle: Circle): number => {
+        const value = circle.updated_at ?? circle.created_at;
+
+        return value ? Date.parse(value) : 0;
+    };
+
+    return [...circles].sort((a, b) => {
+        const diff = timestamp(b) - timestamp(a);
+
+        return diff !== 0 ? diff : a.name.localeCompare(b.name);
+    });
 }
 
 const STORAGE_KEY = 'spa.circles.cache.v2';

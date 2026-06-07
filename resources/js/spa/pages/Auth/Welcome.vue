@@ -2,6 +2,7 @@
 import Button from '@/components/Button.vue';
 import LanguageSelector from '@/spa/components/LanguageSelector.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { useAuthStore } from '@/spa/stores/auth';
 import handIcon from '../../../../svg/doodle-icons/hand.svg';
 import innerrLogo from '../../../../svg/innerr-logo-on-blue.svg';
 
@@ -19,6 +20,7 @@ function iconMaskStyle(url: string) {
 }
 
 const { t } = useTranslations();
+const auth = useAuthStore();
 </script>
 
 <template>
@@ -135,6 +137,13 @@ const { t } = useTranslations();
                 </Button>
             </div>
         </div>
+
+        <p
+            v-if="auth.appVersion"
+            class="relative pb-4 text-center text-xs text-brand-sand/50"
+        >
+            {{ t('Version :version', { version: auth.appVersion }) }}
+        </p>
     </div>
 </template>
 

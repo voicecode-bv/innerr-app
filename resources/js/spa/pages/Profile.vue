@@ -22,7 +22,10 @@ import { api } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
+import checklistIcon from '../../../svg/doodle-icons/checklist.svg';
+import crossIcon from '../../../svg/doodle-icons/cross.svg';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
 
 const ImageCropModal = defineAsyncComponent(
@@ -43,6 +46,7 @@ const { t } = useTranslations();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const feedSelection = useFeedSelectionStore();
 const localThumbnails = useLocalThumbnailsStore();
 
 // PostTile renders images from the aspect-preserving `media_url` and videos
@@ -221,6 +225,8 @@ onMounted(() => {
 
 onUnmounted(() => {
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
+    // Never carry a selection across navigation away from the profile.
+    feedSelection.disable();
 });
 
 async function shareProfile(): Promise<void> {
@@ -274,18 +280,47 @@ function iconMaskStyle(url: string) {
         </template>
 
         <template v-if="profile && isOwnProfile" #header-right>
-            <RouterLink
-                :to="{ name: 'spa.settings' }"
-                class="flex items-center text-ink"
-                :aria-label="t('Open settings')"
-                data-tour="profile.settings"
-            >
-                <span
-                    aria-hidden="true"
-                    class="inline-block size-5 bg-current"
-                    :style="iconMaskStyle(settingsIcon)"
-                ></span>
-            </RouterLink>
+            <div class="flex items-center gap-4">
+                <button
+                    type="button"
+                    class="flex items-center text-ink"
+                    :aria-label="
+                        feedSelection.active
+                            ? t('Cancel selection')
+                            : t('Select photos')
+                    "
+                    @click="feedSelection.toggleActive()"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-5"
+                        :class="
+                            feedSelection.active
+                                ? 'bg-brand-orange'
+                                : 'bg-current'
+                        "
+                        :style="
+                            iconMaskStyle(
+                                feedSelection.active
+                                    ? crossIcon
+                                    : checklistIcon,
+                            )
+                        "
+                    ></span>
+                </button>
+                <RouterLink
+                    :to="{ name: 'spa.settings' }"
+                    class="flex items-center text-ink"
+                    :aria-label="t('Open settings')"
+                    data-tour="profile.settings"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-5 bg-current"
+                        :style="iconMaskStyle(settingsIcon)"
+                    ></span>
+                </RouterLink>
+            </div>
         </template>
 
         <div class="mt-10 pb-24">
@@ -406,6 +441,7 @@ function iconMaskStyle(url: string) {
                     :posts="feed.items"
                     :loading="feed.loading"
                     :resolve-poster="resolvedPoster"
+                    :selectable="isOwnProfile"
                 />
 
                 <div

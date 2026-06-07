@@ -3,7 +3,8 @@ import { computed } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import { useFeedLayout } from '@/spa/composables/useFeedLayout';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { useCirclesStore } from '@/spa/stores/circles';
+import type { Circle } from '@/spa/stores/circles';
+import { sortByRecentlyUpdated, useCirclesStore } from '@/spa/stores/circles';
 import { useFeedFilterStore } from '@/spa/stores/feedFilter';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import bugIcon from '../../../svg/doodle-icons/bug.svg';
@@ -35,7 +36,12 @@ const isLocalEnv =
     import.meta.env.DEV ||
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
 
-const circles = computed(() => circlesStore.items);
+// The strip shows circles with the most recently changed on top. We sort a copy
+// client-side (circles per user are few) so the shared store and its other
+// consumers keep their own ordering.
+const circles = computed<Circle[] | null>(() =>
+    circlesStore.items ? sortByRecentlyUpdated(circlesStore.items) : null,
+);
 
 const unreadNotifications = computed(() => notificationsStore.unreadCount);
 const unreadBadge = computed(() =>

@@ -269,6 +269,12 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true },
     },
     {
+        path: '/settings/support',
+        name: 'spa.settings.support',
+        component: () => import('@/spa/pages/Settings/Support.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+    {
         path: '/settings/edit-profile',
         name: 'spa.settings.edit-profile',
         component: () => import('@/spa/pages/Settings/EditProfile.vue'),

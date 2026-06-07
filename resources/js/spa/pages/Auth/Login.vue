@@ -360,6 +360,13 @@ async function submit(): Promise<void> {
                 </div>
             </div>
         </div>
+
+        <p
+            v-if="auth.appVersion"
+            class="relative pb-4 text-center text-xs text-brand-sand/50"
+        >
+            {{ t('Version :version', { version: auth.appVersion }) }}
+        </p>
     </div>
 </template>
 

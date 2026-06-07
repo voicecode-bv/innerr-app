@@ -19,7 +19,16 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        $middleware->preventRequestForgery();
+        // CSRF protection is unavailable to the BFF/API endpoints: they are hit
+        // as an API from the NativePHP WebView (and across devices), where the
+        // browser-managed token/Origin is not present. These endpoints are
+        // instead protected by bearer/API-token auth and rate limiting.
+        $middleware->preventRequestForgery(except: [
+            'api/spa/*',
+            'posts/cropped-media',
+            'posts/upload-session',
+            'posts/upload-session/*',
+        ]);
 
         $middleware->alias([
             'auth.api' => AuthenticateApiToken::class,

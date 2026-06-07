@@ -15,6 +15,7 @@ import circleIcon from '../../../../svg/doodle-icons/circle.svg';
 import cloudIcon from '../../../../svg/doodle-icons/cloud.svg';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
+import headphoneIcon from '../../../../svg/doodle-icons/headphone.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
 import questionIcon from '../../../../svg/doodle-icons/question.svg';
@@ -85,6 +86,12 @@ const menuItems = computed(() => [
         icon: lockIcon,
         label: 'Account',
         tone: 'green' as const,
+    },
+    {
+        routeName: 'spa.settings.support',
+        icon: headphoneIcon,
+        label: 'Support',
+        tone: 'teal' as const,
     },
 ]);
 
@@ -167,6 +174,13 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
                 <Button variant="danger" size="lg" block @click="logout">
                     {{ t('Log out') }}
                 </Button>
+
+                <p
+                    v-if="auth.appVersion"
+                    class="text-center text-xs text-ink/40"
+                >
+                    {{ t('Version :version', { version: auth.appVersion }) }}
+                </p>
             </div>
         </div>
     </AppLayout>

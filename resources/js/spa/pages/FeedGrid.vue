@@ -6,6 +6,7 @@ import FeedHeader from '@/spa/components/FeedHeader.vue';
 import FeedLayoutChooser from '@/spa/components/FeedLayoutChooser.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import PostMasonry from '@/spa/components/PostMasonry.vue';
+import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
 import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
 import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
@@ -30,6 +31,8 @@ const FEED_KEY = 'home';
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
 const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 const sentinelRef = ref<HTMLElement | null>(null);
+const permissionCardRef =
+    useTemplateRef<InstanceType<typeof PushPermissionCard>>('permissionCard');
 
 async function loadCircles(): Promise<void> {
     try {
@@ -80,13 +83,25 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
         circlesStore.invalidate();
         feedCache.invalidate(FEED_KEY);
         notificationsStore.invalidate();
-        await Promise.all([loadCircles(), loadUnreadCount(), feed.reset()]);
+        await Promise.all([
+            loadCircles(),
+            loadUnreadCount(),
+            feed.reset(),
+            permissionCardRef.value?.refresh() ?? Promise.resolve(),
+        ]);
     },
     containerRef,
 });
 
 onMounted(loadCircles);
 onMounted(loadUnreadCount);
+
+async function onPushPermissionChanged(): Promise<void> {
+    // Nadat de gebruiker de native prompt heeft beantwoord — granted óf denied
+    // — willen we een verse feed tonen zonder visuele schok.
+    feedCache.invalidate(FEED_KEY);
+    await feed.softRefresh();
+}
 
 function iconMaskStyle(url: string) {
     return {
@@ -112,6 +127,13 @@ function iconMaskStyle(url: string) {
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
+            />
+
+            <PushPermissionCard
+                ref="permissionCard"
+                class="mx-4 mt-6"
+                dismissible
+                @permission-changed="onPushPermissionChanged"
             />
 
             <PostMasonry
