@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Spa;
 use App\Http\Controllers\Auth\Concerns\HandlesAuthenticatedSession;
 use App\Http\Controllers\Controller;
 use App\Services\ApiClient;
-use App\Services\TokenStore\TokenStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +13,7 @@ class BootstrapController extends Controller
 {
     use HandlesAuthenticatedSession;
 
-    public function __construct(protected ApiClient $apiClient, protected TokenStore $tokenStore) {}
+    public function __construct(protected ApiClient $apiClient) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -26,47 +25,52 @@ class BootstrapController extends Controller
         // SPA mag op die signaal de gebruiker NIET naar login sturen.
         $upstreamUnreachable = false;
 
-        // Rehydrate sessie vanuit een Bearer-token dat de SPA in de Authorization
-        // header meestuurt (token komt uit Keychain/SecureStorage). Hiermee blijft
-        // de gebruiker ingelogd zelfs als de Laravel-session is verlopen.
+        // Adopt the Bearer token the SPA forwards in the Authorization header
+        // (sourced from Keychain/SecureStorage) so the session can be rehydrated
+        // even when the Laravel session itself has expired.
         if (! $user) {
             $bearer = $request->bearerToken();
             if ($bearer && (! $this->apiClient->hasToken() || $this->apiClient->getToken() !== $bearer)) {
-                $this->tokenStore->set($bearer);
-            }
-            if ($this->apiClient->hasToken()) {
-                $result = $this->apiClient->validateToken();
-                if (($result['valid'] ?? false) && isset($result['user'])) {
-                    $this->syncLocalUser($result['user']);
-                    $user = Auth::user();
-                } elseif (($result['status'] ?? 'invalid') === 'invalid') {
-                    // Alleen bij een definitieve afwijzing wissen. Bij een
-                    // transient API-fout (unreachable) laten we het token staan
-                    // zodat een volgende bootstrap kan herstellen i.p.v. de
-                    // gebruiker onnodig uit te loggen.
-                    $this->tokenStore->delete();
-                } else {
-                    // Transient: token blijft staan, user kon niet bevestigd worden.
-                    $upstreamUnreachable = true;
-                }
+                $this->apiClient->storeToken($bearer);
             }
         }
 
-        // Sync lokaal user-mirror met externe API (avatar/bio/locale/onboarded_at
-        // kunnen via directe SPA→API calls zijn gewijzigd zonder dat de BFF het ziet).
-        if ($user && $this->apiClient->hasToken()) {
-            $result = $this->apiClient->validateToken();
-            if (($result['valid'] ?? false) && isset($result['user'])) {
-                $user->forceFill([
-                    'avatar' => $result['user']['avatar'] ?? $user->avatar,
-                    'bio' => $result['user']['bio'] ?? $user->bio,
-                    'locale' => $result['user']['locale'] ?? $user->locale,
-                    'feed_layout' => $result['user']['feed_layout'] ?? $user->feed_layout,
-                    'onboarded_at' => $result['user']['onboarded_at'] ?? $user->onboarded_at,
-                    'email_verified_at' => $result['user']['email_verified_at'] ?? $user->email_verified_at,
-                ])->save();
-                $user->refresh();
+        // Validate the token a single time and reuse the result for both the
+        // session rehydration and the user-mirror sync below, so a cold-start
+        // bootstrap costs one upstream round-trip instead of two.
+        $result = $this->apiClient->hasToken() ? $this->apiClient->validateToken() : null;
+        $validatedUser = ($result['valid'] ?? false) && isset($result['user']) ? $result['user'] : null;
+
+        // Rehydrate the session from the validated token when we have no local
+        // user yet (cold start or expired Laravel session).
+        if (! $user && $result !== null) {
+            if ($validatedUser !== null) {
+                $this->syncLocalUser($validatedUser);
+                $user = Auth::user();
+            } elseif (($result['status'] ?? 'invalid') === 'invalid') {
+                // Only drop the token on a definitive rejection. On a transient
+                // API failure (unreachable) we keep it so a later bootstrap can
+                // recover instead of logging the user out unnecessarily.
+                $this->apiClient->clearToken();
+            } else {
+                // Transient: token stays, user could not be confirmed.
+                $upstreamUnreachable = true;
             }
+        }
+
+        // Sync the local user-mirror with the external API (avatar/bio/locale/
+        // onboarded_at may have changed via direct SPA→API calls without the BFF
+        // seeing it).
+        if ($user && $validatedUser !== null) {
+            $user->forceFill([
+                'avatar' => $validatedUser['avatar'] ?? $user->avatar,
+                'bio' => $validatedUser['bio'] ?? $user->bio,
+                'locale' => $validatedUser['locale'] ?? $user->locale,
+                'feed_layout' => $validatedUser['feed_layout'] ?? $user->feed_layout,
+                'onboarded_at' => $validatedUser['onboarded_at'] ?? $user->onboarded_at,
+                'email_verified_at' => $validatedUser['email_verified_at'] ?? $user->email_verified_at,
+            ])->save();
+            $user->refresh();
         }
 
         // Expliciet auth-signaal voor de SPA zodat die "echt uitgelogd" kan

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
+use App\Http\Controllers\Auth\Concerns\HandlesAuthenticatedSession;
 use App\Services\ApiClient;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateApiToken
 {
+    use HandlesAuthenticatedSession;
+
     public function __construct(protected ApiClient $apiClient) {}
 
     /**
@@ -46,24 +48,15 @@ class AuthenticateApiToken
             return $this->unauthorized();
         }
 
-        $userData = $result['user'];
+        // Reuse the same rehydration the bootstrap pad uses so both auth entry
+        // points produce an identical local user mirror (keyed on api_user_id,
+        // including onboarded_at/feed_layout/email_verified_at and conflict
+        // cleanup) instead of a divergent, slimmed-down copy.
+        $this->syncLocalUser($result['user']);
 
-        $user = User::updateOrCreate(
-            ['email' => $userData['email']],
-            [
-                'api_user_id' => $userData['id'],
-                'name' => $userData['name'],
-                'username' => $userData['username'],
-                'avatar' => $userData['avatar'] ?? null,
-                'bio' => $userData['bio'] ?? null,
-                'locale' => $userData['locale'] ?? config('app.locale'),
-                'password' => 'api-managed',
-            ],
-        );
+        $user = Auth::user();
 
-        Auth::login($user);
-
-        if ($user->locale) {
+        if ($user?->locale) {
             app()->setLocale($user->locale);
         }
 

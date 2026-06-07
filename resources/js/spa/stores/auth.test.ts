@@ -17,6 +17,7 @@ vi.mock('@/spa/http/apiClient', () => ({
 vi.mock('@/spa/composables/useSecureStorage', () => ({
     TOKEN_KEY: 'api_token',
     HAS_AUTHENTICATED_KEY: 'has_authenticated',
+    SecureStorageUnavailableError: class SecureStorageUnavailableError extends Error {},
     secureStorage: {
         get: (key: string) => storageGet(key),
         set: (key: string, value: string) => storageSet(key, value),
@@ -47,6 +48,8 @@ vi.mock('@/spa/stores/commentsCache', () => ({
 }));
 
 const { useAuthStore } = await import('./auth');
+const { SecureStorageUnavailableError } =
+    await import('@/spa/composables/useSecureStorage');
 
 beforeEach(() => {
     setActivePinia(createPinia());
@@ -183,6 +186,21 @@ describe('auth store reconnect handling', () => {
         expect(auth.awaitingConnection).toBe(false);
     });
 
+    it('stays in the reconnect state on unauthenticated when secure storage was unreadable', async () => {
+        apiGet.mockResolvedValue(payload({ auth_status: 'unauthenticated' }));
+
+        const auth = useAuthStore();
+        // The Keychain read never returned: a valid token may exist but was
+        // unreadable, so no Bearer was sent. This "unauthenticated" is not
+        // trustworthy and must NOT drop the user to welcome/login.
+        auth.storageUnavailable = true;
+
+        await auth.bootstrap();
+
+        expect(auth.user).toBeNull();
+        expect(auth.awaitingConnection).toBe(true);
+    });
+
     it('resets the reconnect flag on clear()', () => {
         const auth = useAuthStore();
         auth.awaitingConnection = true;
@@ -190,6 +208,36 @@ describe('auth store reconnect handling', () => {
         auth.clear();
 
         expect(auth.awaitingConnection).toBe(false);
+    });
+});
+
+describe('auth store secure-storage resilience', () => {
+    it('flags storageUnavailable on an unreadable Keychain without dropping the token', async () => {
+        storageGet.mockRejectedValue(new SecureStorageUnavailableError());
+
+        const auth = useAuthStore();
+        await auth.restoreToken();
+
+        // A glitchy cold-start bridge must never look like "no token": flag it
+        // so the app shows the reconnect screen instead of logging out.
+        expect(auth.storageUnavailable).toBe(true);
+        expect(auth.token).toBeNull();
+    });
+
+    it('restoreFromStorage clears a stale flag and reads token and marker', async () => {
+        storageGet.mockImplementation((key: string) =>
+            Promise.resolve(key === 'api_token' ? 'kc-token' : '1'),
+        );
+
+        const auth = useAuthStore();
+        // Stale flag from an earlier failed read; a successful re-read clears it.
+        auth.storageUnavailable = true;
+
+        await auth.restoreFromStorage();
+
+        expect(auth.storageUnavailable).toBe(false);
+        expect(auth.token).toBe('kc-token');
+        expect(auth.hasAuthenticatedBefore).toBe(true);
     });
 });
 

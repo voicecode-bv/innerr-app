@@ -26,6 +26,14 @@ async function retry(): Promise<void> {
     retrying.value = true;
 
     try {
+        // Belandden we hier omdat de Keychain bij de cold-start onleesbaar was,
+        // probeer hem dan eerst opnieuw te lezen: lukt dat, dan stuurt de
+        // bootstrap hieronder alsnog een geldig Bearer mee i.p.v. de gebruiker
+        // (onterecht) uit te loggen.
+        if (auth.storageUnavailable) {
+            await auth.restoreFromStorage();
+        }
+
         await auth.bootstrap();
     } catch {
         // Nog steeds onbereikbaar: blijf op het reconnect-scherm en probeer het

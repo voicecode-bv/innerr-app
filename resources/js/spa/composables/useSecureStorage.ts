@@ -16,11 +16,32 @@ const FALLBACK_PREFIX = 'spa.secure.';
 
 // Tijdens een cold-start kan de Keychain-bridge nog niet klaar zijn (bridge
 // nog niet opgezet, of Keychain-items met WhenUnlocked-accessibility zijn na
-// een reboot pas leesbaar ná de eerste unlock). We retryen daarom een paar
-// keer voordat we opgeven, in plaats van een geldig token als "afwezig" te
-// behandelen en de gebruiker uit te loggen.
-const NATIVE_RETRIES = 5;
-const NATIVE_RETRY_DELAY_MS = 120;
+// een reboot pas leesbaar ná de eerste unlock). We retryen daarom met
+// oplopende backoff voordat we opgeven, in plaats van een geldig token als
+// "afwezig" te behandelen en de gebruiker uit te loggen. Het totale budget
+// (~5,5s) valt volledig binnen de opstart-splash, dus de gebruiker merkt het
+// wachten niet.
+const NATIVE_RETRIES = 10;
+const NATIVE_RETRY_BASE_MS = 120;
+const NATIVE_RETRY_MAX_MS = 800;
+
+function backoffDelayMs(attempt: number): number {
+    return Math.min(NATIVE_RETRY_BASE_MS * 2 ** attempt, NATIVE_RETRY_MAX_MS);
+}
+
+/**
+ * Thrown by `secureStorage.get()` when the native bridge never returned a
+ * definitive answer (every attempt failed). The caller MUST treat this as
+ * "could not read", not as "no value": a valid token may still live in the
+ * Keychain. Distinguishing this from a resolved-empty read (genuine absence) is
+ * what keeps a transient cold-start glitch from turning into a forced logout.
+ */
+export class SecureStorageUnavailableError extends Error {
+    constructor() {
+        super('Secure storage bridge unavailable');
+        this.name = 'SecureStorageUnavailableError';
+    }
+}
 
 function fallbackKey(key: string): string {
     return `${FALLBACK_PREFIX}${key}`;
@@ -112,17 +133,18 @@ export const secureStorage = {
                 // niets in de Keychain. Migreer een eventueel legacy-token.
                 return await migrateLegacyToken(key);
             } catch {
-                // Bridge nog niet klaar: kort wachten en opnieuw proberen.
+                // Bridge nog niet klaar: oplopend wachten en opnieuw proberen.
                 if (attempt < NATIVE_RETRIES - 1) {
-                    await delay(NATIVE_RETRY_DELAY_MS);
+                    await delay(backoffDelayMs(attempt));
                 }
             }
         }
 
-        // Bridge bleef onbereikbaar. Geef null terug, maar wis niets: de
-        // aanroeper mag dit niet als "geen token" interpreteren en de Keychain
-        // leegmaken. Een volgende cold-start leest het token alsnog.
-        return null;
+        // Bridge bleef onbereikbaar; we hebben nooit een definitief antwoord
+        // gekregen. Gooi expliciet i.p.v. null terug te geven, zodat de
+        // aanroeper dit kan onderscheiden van een bevestigd-lege Keychain en de
+        // gebruiker niet uitlogt op een geldig-maar-onleesbaar token. Wis niets.
+        throw new SecureStorageUnavailableError();
     },
 
     async set(key: string, value: string): Promise<void> {
@@ -139,7 +161,7 @@ export const secureStorage = {
                 return;
             } catch {
                 if (attempt < NATIVE_RETRIES - 1) {
-                    await delay(NATIVE_RETRY_DELAY_MS);
+                    await delay(backoffDelayMs(attempt));
                 }
             }
         }

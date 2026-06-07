@@ -2,7 +2,6 @@
 
 use App\Models\User;
 use App\Services\ApiClient;
-use App\Services\TokenStore\TokenStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -12,12 +11,8 @@ it('deletes the stored token on a definitive rejection during rehydrate', functi
     $client->shouldReceive('hasToken')->andReturn(true);
     $client->shouldReceive('validateToken')->andReturn(['valid' => false, 'status' => 'invalid']);
     $client->shouldReceive('getToken')->andReturn(null);
+    $client->shouldReceive('clearToken')->once();
     $this->app->instance(ApiClient::class, $client);
-
-    $tokenStore = Mockery::mock(TokenStore::class);
-    $tokenStore->shouldReceive('set')->andReturnTrue();
-    $tokenStore->shouldReceive('delete')->once();
-    $this->app->instance(TokenStore::class, $tokenStore);
 
     $response = $this->withToken('rejected')->getJson('/api/spa/bootstrap');
 
@@ -29,12 +24,8 @@ it('keeps the stored token and reports unreachable on a transient failure during
     $client->shouldReceive('hasToken')->andReturn(true);
     $client->shouldReceive('validateToken')->andReturn(['valid' => false, 'status' => 'unreachable']);
     $client->shouldReceive('getToken')->andReturn('still-valid');
+    $client->shouldNotReceive('clearToken');
     $this->app->instance(ApiClient::class, $client);
-
-    $tokenStore = Mockery::mock(TokenStore::class);
-    $tokenStore->shouldReceive('set')->andReturnTrue();
-    $tokenStore->shouldNotReceive('delete');
-    $this->app->instance(TokenStore::class, $tokenStore);
 
     $response = $this->withToken('still-valid')->getJson('/api/spa/bootstrap');
 
@@ -87,6 +78,34 @@ it('keeps existing local user fields when validateToken fails', function () {
     $response = $this->actingAs($user)->getJson('/api/spa/bootstrap');
 
     $response->assertOk()->assertJsonPath('user.avatar', 'https://existing.example.com/a.jpg');
+});
+
+it('validates the token only once when rehydrating a session from a bearer', function () {
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('hasToken')->andReturn(true);
+    $client->shouldReceive('getToken')->andReturn('jwt-token');
+    // A successful cold-start rehydrate both creates the session AND syncs the
+    // mirror; this must cost a single upstream validation, not two.
+    $client->shouldReceive('validateToken')->once()->andReturn([
+        'valid' => true,
+        'user' => [
+            'id' => '550e8400-e29b-41d4-a716-446655440099',
+            'name' => 'Rehydrated User',
+            'username' => 'rehydrated',
+            'email' => 'rehydrated@example.com',
+            'avatar' => null,
+            'bio' => null,
+            'locale' => 'en',
+            'onboarded_at' => null,
+        ],
+    ]);
+    $this->app->instance(ApiClient::class, $client);
+
+    $response = $this->withToken('jwt-token')->getJson('/api/spa/bootstrap');
+
+    $response->assertOk()
+        ->assertJsonPath('user.username', 'rehydrated')
+        ->assertJsonPath('auth_status', 'authenticated');
 });
 
 it('returns authenticated user payload with token mirror', function () {

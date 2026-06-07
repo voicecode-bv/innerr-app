@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import {
     HAS_AUTHENTICATED_KEY,
     secureStorage,
+    SecureStorageUnavailableError,
     TOKEN_KEY,
 } from '@/spa/composables/useSecureStorage';
 import { api } from '@/spa/http/apiClient';
@@ -68,25 +69,61 @@ export const useAuthStore = defineStore('spa-auth', {
         // toont dan het reconnect-scherm i.p.v. de gebruiker naar login te
         // sturen; een geldig token leidt nooit tot een gedwongen re-login.
         awaitingConnection: false,
+        // True wanneer de Keychain-bridge bij een cold-start geen definitief
+        // antwoord gaf: er kan een geldig token bestaan dat we (nog) niet konden
+        // lezen. We behandelen dit NOOIT als "uitgelogd" maar tonen het
+        // reconnect-scherm, dat de Keychain-lees opnieuw probeert.
+        storageUnavailable: false,
     }),
     actions: {
-        // Wordt vroeg in `main.ts` aangeroepen, vóór de BFF bootstrap-call,
-        // zodat externalApi al een Bearer kan sturen tijdens cold-start.
+        // Leest token én "ooit ingelogd"-marker uit de Keychain en zet
+        // `storageUnavailable` als de bridge geen definitief antwoord gaf. Wordt
+        // vroeg in `main.ts` aangeroepen (vóór de BFF bootstrap) en opnieuw door
+        // het reconnect-scherm, zodat een aanvankelijk mislukte lees alsnog kan
+        // herstellen i.p.v. de gebruiker uit te loggen.
+        async restoreFromStorage(): Promise<void> {
+            this.storageUnavailable = false;
+            await this.restoreToken();
+            await this.restoreHasAuthenticated();
+        },
+        // Wordt vroeg aangeroepen zodat externalApi al een Bearer kan sturen
+        // tijdens cold-start. Een onleesbare bridge zet `storageUnavailable`
+        // i.p.v. het token als afwezig te behandelen.
         async restoreToken(): Promise<void> {
-            const stored = await secureStorage.get(TOKEN_KEY);
+            try {
+                const stored = await secureStorage.get(TOKEN_KEY);
 
-            if (stored) {
-                this.token = stored;
+                if (stored) {
+                    this.token = stored;
+                }
+            } catch (error) {
+                if (error instanceof SecureStorageUnavailableError) {
+                    this.storageUnavailable = true;
+
+                    return;
+                }
+
+                throw error;
             }
         },
         // Laadt de durable "ooit ingelogd"-marker uit de Keychain. Moet vóór de
         // eerste routing-beslissing klaar zijn zodat de guard synchroon kan
         // kiezen tussen welkomstscherm (nieuw) en inloggen (terugkerend).
         async restoreHasAuthenticated(): Promise<void> {
-            const stored = await secureStorage.get(HAS_AUTHENTICATED_KEY);
+            try {
+                const stored = await secureStorage.get(HAS_AUTHENTICATED_KEY);
 
-            if (stored) {
-                this.hasAuthenticatedBefore = true;
+                if (stored) {
+                    this.hasAuthenticatedBefore = true;
+                }
+            } catch (error) {
+                if (error instanceof SecureStorageUnavailableError) {
+                    this.storageUnavailable = true;
+
+                    return;
+                }
+
+                throw error;
             }
         },
         // Markeert dit toestel als "heeft ooit ingelogd". Idempotent: schrijft
@@ -136,6 +173,14 @@ export const useAuthStore = defineStore('spa-auth', {
 
             if (status === 'unauthenticated') {
                 this.user = null;
+
+                // Konden we de Keychain niet lezen, dan is deze "unauthenticated"
+                // niet te vertrouwen: er ging geen Bearer mee. Blijf in reconnect-
+                // stand zodat het overlay de Keychain-lees blijft proberen i.p.v.
+                // de gebruiker naar welkom/login te sturen.
+                if (this.storageUnavailable) {
+                    this.awaitingConnection = true;
+                }
 
                 return data;
             }
@@ -217,8 +262,10 @@ export const useAuthStore = defineStore('spa-auth', {
             this.user = null;
             this.token = null;
             // Een 401 (of logout) is een definitieve auth-uitkomst, geen
-            // verbindingsprobleem: nooit in reconnect-stand blijven hangen.
+            // verbindings- of opslagprobleem: nooit in reconnect-stand blijven
+            // hangen.
             this.awaitingConnection = false;
+            this.storageUnavailable = false;
 
             if (forgetToken) {
                 void secureStorage.delete(TOKEN_KEY);

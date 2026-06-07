@@ -21,7 +21,8 @@ vi.mock('@/spa/composables/usePlatform', () => ({
     isNativeRuntime: () => native,
 }));
 
-const { secureStorage, TOKEN_KEY } = await import('./useSecureStorage');
+const { secureStorage, SecureStorageUnavailableError, TOKEN_KEY } =
+    await import('./useSecureStorage');
 
 const fallbackKey = `spa.secure.${TOKEN_KEY}`;
 
@@ -82,15 +83,26 @@ describe('secureStorage on a device (Keychain bridge available)', () => {
         expect(get.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('returns null without touching localStorage when the bridge keeps failing', async () => {
+    it('throws SecureStorageUnavailableError without touching localStorage when the bridge keeps failing', async () => {
+        vi.useFakeTimers();
         get.mockRejectedValue(new Error('bridge down'));
         // A token still lives in the Keychain; a failed read must NOT be
-        // reported as "no token" by falling back to the empty WKWebView store.
+        // reported as "no token" by falling back to the empty WKWebView store,
+        // nor as a definitive null — it must surface as "unreadable".
         window.localStorage.setItem(fallbackKey, 'should-be-ignored');
 
-        await expect(secureStorage.get(TOKEN_KEY)).resolves.toBeNull();
+        const promise = secureStorage.get(TOKEN_KEY);
+        // Attach the rejection assertion before draining the backoff timers so
+        // the rejection is never momentarily unhandled.
+        const expectation = expect(promise).rejects.toBeInstanceOf(
+            SecureStorageUnavailableError,
+        );
+        await vi.runAllTimersAsync();
+        await expectation;
+
         // The durable copy is never wiped as a side-effect of a failed read.
         expect(del).not.toHaveBeenCalled();
+        vi.useRealTimers();
     });
 
     it('writes to the Keychain on set', async () => {

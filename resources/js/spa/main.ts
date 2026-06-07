@@ -116,14 +116,13 @@ async function bootstrap(): Promise<void> {
         .ensureDetected()
         .catch(() => null);
 
-    // Lees token uit Keychain (of localStorage-fallback) zodat externalApi al
-    // een Bearer kan sturen vóór de BFF bootstrap-call. Voorkomt uitloggen
-    // wanneer de Laravel-session verlopen is maar het token nog wél geldig is.
-    await auth.restoreToken();
-
-    // Durable "ooit ingelogd"-marker laden zodat de router-guard direct kan
-    // kiezen tussen welkomstscherm (nieuw toestel) en inloggen (terugkerend).
-    await auth.restoreHasAuthenticated();
+    // Lees token + durable "ooit ingelogd"-marker uit de Keychain (of
+    // localStorage-fallback) zodat externalApi al een Bearer kan sturen vóór de
+    // BFF bootstrap-call en de router-guard direct kan kiezen tussen
+    // welkomstscherm (nieuw toestel) en inloggen (terugkerend). Voorkomt
+    // uitloggen wanneer de Laravel-session verlopen is maar het token nog wél
+    // geldig is. Een onleesbare bridge zet `auth.storageUnavailable`.
+    await auth.restoreFromStorage();
 
     configureApiClient({
         auth: () => ({
@@ -172,6 +171,13 @@ async function bootstrap(): Promise<void> {
         if (auth.token && error instanceof NetworkError) {
             auth.awaitingConnection = true;
         }
+    }
+
+    // Kon de Keychain niet gelezen worden, dan kan er een geldig token bestaan
+    // dat we (nog) niet zagen. Niet naar welkom/login vallen: ga in reconnect-
+    // stand zodat het overlay de Keychain-lees opnieuw probeert.
+    if (auth.storageUnavailable && !auth.user) {
+        auth.awaitingConnection = true;
     }
 
     // Globale error-tap: validation/auth errors worden door pages zelf
