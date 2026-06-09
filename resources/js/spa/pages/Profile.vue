@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Camera, Events, Off, On, Share } from '@nativephp/mobile';
+import { Camera, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     defineAsyncComponent,
@@ -26,6 +26,7 @@ import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import checklistIcon from '../../../svg/doodle-icons/checklist.svg';
 import crossIcon from '../../../svg/doodle-icons/cross.svg';
+import editIcon from '../../../svg/doodle-icons/pencil.svg';
 import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
 
 const ImageCropModal = defineAsyncComponent(
@@ -107,6 +108,36 @@ function goBack(): void {
     } else {
         router.push({ name: 'spa.home' });
     }
+}
+
+// Hidden gesture: tap the "Profile" title 10× to open the (public) debug page,
+// mirroring the 10-tap logo gesture on the login screen. The counter resets if
+// tapping pauses, so stray taps do nothing.
+const TITLE_TAPS_REQUIRED = 10;
+const TITLE_TAP_RESET_MS = 1500;
+
+let titleTapCount = 0;
+let titleTapResetTimer: ReturnType<typeof setTimeout> | null = null;
+
+function handleTitleTap(): void {
+    titleTapCount += 1;
+
+    if (titleTapResetTimer) {
+        clearTimeout(titleTapResetTimer);
+        titleTapResetTimer = null;
+    }
+
+    if (titleTapCount >= TITLE_TAPS_REQUIRED) {
+        titleTapCount = 0;
+        router.push({ name: 'spa.dev.debug' });
+
+        return;
+    }
+
+    titleTapResetTimer = setTimeout(() => {
+        titleTapCount = 0;
+        titleTapResetTimer = null;
+    }, TITLE_TAP_RESET_MS);
 }
 
 const avatarUploading = ref(false);
@@ -229,15 +260,6 @@ onUnmounted(() => {
     feedSelection.disable();
 });
 
-async function shareProfile(): Promise<void> {
-    if (!profile.value) {
-        return;
-    }
-
-    const url = `https://innerr.app/profiles/${profile.value.username}`;
-    await Share.url('', '', url);
-}
-
 const inviteSheetOpen = ref(false);
 
 function openInviteSheet(): void {
@@ -260,6 +282,12 @@ function iconMaskStyle(url: string) {
 
 <template>
     <AppLayout ref="layout" :title="t('Profile')">
+        <template #title>
+            <button type="button" class="max-w-full truncate p-0" @click="handleTitleTap">
+                {{ t('Profile') }}
+            </button>
+        </template>
+
         <template #header-left>
             <button class="flex items-center text-ink" @click="goBack">
                 <svg
@@ -280,47 +308,18 @@ function iconMaskStyle(url: string) {
         </template>
 
         <template v-if="profile && isOwnProfile" #header-right>
-            <div class="flex items-center gap-4">
-                <button
-                    type="button"
-                    class="flex items-center text-ink"
-                    :aria-label="
-                        feedSelection.active
-                            ? t('Cancel selection')
-                            : t('Select photos')
-                    "
-                    @click="feedSelection.toggleActive()"
-                >
-                    <span
-                        aria-hidden="true"
-                        class="inline-block size-5"
-                        :class="
-                            feedSelection.active
-                                ? 'bg-brand-orange'
-                                : 'bg-current'
-                        "
-                        :style="
-                            iconMaskStyle(
-                                feedSelection.active
-                                    ? crossIcon
-                                    : checklistIcon,
-                            )
-                        "
-                    ></span>
-                </button>
-                <RouterLink
-                    :to="{ name: 'spa.settings' }"
-                    class="flex items-center text-ink"
-                    :aria-label="t('Open settings')"
-                    data-tour="profile.settings"
-                >
-                    <span
-                        aria-hidden="true"
-                        class="inline-block size-5 bg-current"
-                        :style="iconMaskStyle(settingsIcon)"
-                    ></span>
-                </RouterLink>
-            </div>
+            <RouterLink
+                :to="{ name: 'spa.settings' }"
+                class="flex items-center text-ink"
+                :aria-label="t('Open settings')"
+                data-tour="profile.settings"
+            >
+                <span
+                    aria-hidden="true"
+                    class="inline-block size-5 bg-current"
+                    :style="iconMaskStyle(settingsIcon)"
+                ></span>
+            </RouterLink>
         </template>
 
         <div class="mt-10 pb-24">
@@ -404,23 +403,58 @@ function iconMaskStyle(url: string) {
                         </div>
                     </div>
 
-                    <div v-if="isOwnProfile" class="mt-4 flex gap-2">
-                        <Button
-                            variant="primary"
-                            size="lg"
+                    <div
+                        v-if="isOwnProfile"
+                        class="mt-4 -mx-4 flex items-center border-y border-dark-sand px-4 py-3"
+                    >
+                        <RouterLink
                             :to="{ name: 'spa.settings.edit-profile' }"
-                            class="flex-1"
+                            class="flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-sand-100"
                         >
-                            {{ t('Edit') }}
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="lg"
-                            class="flex-1"
-                            @click="shareProfile"
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-5 bg-ink"
+                                :style="iconMaskStyle(editIcon)"
+                            ></span>
+                            <span class="text-sm font-medium text-ink">{{
+                                t('Edit')
+                            }}</span>
+                        </RouterLink>
+                        <button
+                            type="button"
+                            class="flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:bg-sand-100"
+                            @click="feedSelection.toggleActive()"
                         >
-                            {{ t('Share') }}
-                        </Button>
+                            <span
+                                aria-hidden="true"
+                                class="inline-block size-5"
+                                :class="
+                                    feedSelection.active
+                                        ? 'bg-brand-orange'
+                                        : 'bg-ink'
+                                "
+                                :style="
+                                    iconMaskStyle(
+                                        feedSelection.active
+                                            ? crossIcon
+                                            : checklistIcon,
+                                    )
+                                "
+                            ></span>
+                            <span
+                                class="text-sm font-medium"
+                                :class="
+                                    feedSelection.active
+                                        ? 'text-brand-orange'
+                                        : 'text-ink'
+                                "
+                                >{{
+                                    feedSelection.active
+                                        ? t('Cancel selection')
+                                        : t('Select photos')
+                                }}</span
+                            >
+                        </button>
                     </div>
                     <Button
                         v-else

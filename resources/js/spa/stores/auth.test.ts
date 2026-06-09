@@ -16,7 +16,6 @@ vi.mock('@/spa/http/apiClient', () => ({
 
 vi.mock('@/spa/composables/useSecureStorage', () => ({
     TOKEN_KEY: 'api_token',
-    HAS_AUTHENTICATED_KEY: 'has_authenticated',
     SecureStorageUnavailableError: class SecureStorageUnavailableError extends Error {},
     secureStorage: {
         get: (key: string) => storageGet(key),
@@ -224,9 +223,9 @@ describe('auth store secure-storage resilience', () => {
         expect(auth.token).toBeNull();
     });
 
-    it('restoreFromStorage clears a stale flag and reads token and marker', async () => {
+    it('restoreFromStorage clears a stale flag and reads the token', async () => {
         storageGet.mockImplementation((key: string) =>
-            Promise.resolve(key === 'api_token' ? 'kc-token' : '1'),
+            Promise.resolve(key === 'api_token' ? 'kc-token' : null),
         );
 
         const auth = useAuthStore();
@@ -237,71 +236,19 @@ describe('auth store secure-storage resilience', () => {
 
         expect(auth.storageUnavailable).toBe(false);
         expect(auth.token).toBe('kc-token');
-        expect(auth.hasAuthenticatedBefore).toBe(true);
     });
 });
 
-describe('auth store "has authenticated before" marker', () => {
-    it('restores the marker from the Keychain', async () => {
-        storageGet.mockResolvedValue('1');
-
-        const auth = useAuthStore();
-        await auth.restoreHasAuthenticated();
-
-        expect(storageGet).toHaveBeenCalledWith('has_authenticated');
-        expect(auth.hasAuthenticatedBefore).toBe(true);
-    });
-
-    it('stays false when the Keychain has no marker', async () => {
-        storageGet.mockResolvedValue(null);
-
-        const auth = useAuthStore();
-        await auth.restoreHasAuthenticated();
-
-        expect(auth.hasAuthenticatedBefore).toBe(false);
-    });
-
-    it('writes the durable marker only once (idempotent)', async () => {
-        const auth = useAuthStore();
-
-        await auth.markAuthenticated();
-        await auth.markAuthenticated();
-
-        expect(auth.hasAuthenticatedBefore).toBe(true);
-        expect(
-            storageSet.mock.calls.filter(
-                ([key]) => key === 'has_authenticated',
-            ),
-        ).toHaveLength(1);
-    });
-
-    it('marks the device after a successful login', async () => {
-        apiPost.mockResolvedValue({
-            user: { id: '1' },
-            token: 'tok',
-            redirect_to: '/',
-        });
-
-        const auth = useAuthStore();
-        await auth.login('opa@example.com', 'secret');
-
-        expect(auth.hasAuthenticatedBefore).toBe(true);
-        expect(storageSet).toHaveBeenCalledWith('has_authenticated', '1');
-    });
-
-    it('keeps the marker after an explicit logout so welcome is skipped', async () => {
+describe('auth store logout', () => {
+    it('wipes the token from the Keychain on an explicit logout', async () => {
         apiPost.mockResolvedValue(undefined);
 
         const auth = useAuthStore();
-        auth.hasAuthenticatedBefore = true;
         auth.token = 'tok';
 
         await auth.logout();
 
-        // The token is wiped, but "has logged in before" must survive so a
-        // returning user lands on login instead of the first-run welcome screen.
         expect(storageDelete).toHaveBeenCalledWith('api_token');
-        expect(storageDelete).not.toHaveBeenCalledWith('has_authenticated');
-        expect(auth.hasAuthenticatedBefore).toBe(true);
+        expect(auth.token).toBeNull();
     });
 });

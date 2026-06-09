@@ -33,15 +33,11 @@ declare module 'vue-router' {
 const useMemoryHistory =
     typeof window !== 'undefined' && window.location.protocol === 'php:';
 
-// First-run chooser landing: a brand-new device lands here, returning devices
-// (that have authenticated before) skip straight to login. Keep this in sync
-// with the guard below and the catch-all redirect.
+// Guest landing: every unauthenticated visitor lands on the welcome chooser,
+// including users who just logged out. Keep this in sync with the guard below
+// and the catch-all redirect.
 function guestLanding(): { name: string } {
-    const auth = useAuthStore();
-
-    return {
-        name: auth.hasAuthenticatedBefore ? 'spa.login' : 'spa.welcome',
-    };
+    return { name: 'spa.welcome' };
 }
 
 const routes: RouteRecordRaw[] = [
@@ -124,6 +120,12 @@ const routes: RouteRecordRaw[] = [
         path: '/onboarding/circles/:circle/permissions',
         name: 'spa.onboarding.circle-permissions',
         component: () => import('@/spa/pages/Onboarding/CirclePermissions.vue'),
+        meta: { auth: true },
+    },
+    {
+        path: '/onboarding/circles/:circle/children',
+        name: 'spa.onboarding.add-children',
+        component: () => import('@/spa/pages/Onboarding/AddChildren.vue'),
         meta: { auth: true },
     },
     {
@@ -335,7 +337,7 @@ const routes: RouteRecordRaw[] = [
         meta: { public: true },
     },
 
-    // Catch-all → welcome (new device) or login (returning device)
+    // Catch-all → welcome
     {
         path: '/:pathMatch(.*)*',
         redirect: () => guestLanding(),

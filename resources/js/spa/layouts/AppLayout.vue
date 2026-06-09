@@ -88,7 +88,7 @@ defineExpose({ mainRef });
             <h1
                 class="min-w-0 flex-1 truncate text-center font-sans text-lg font-semibold tracking-tight text-ink"
             >
-                {{ title ?? t('Innerr') }}
+                <slot name="title">{{ title ?? t('Innerr') }}</slot>
             </h1>
             <div class="flex w-16 items-center justify-end">
                 <slot name="header-right" />

@@ -4,13 +4,11 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
-import {
-    HAS_AUTHENTICATED_KEY,
-    secureStorage,
-    TOKEN_KEY,
-} from '@/spa/composables/useSecureStorage';
+import { secureStorage, TOKEN_KEY } from '@/spa/composables/useSecureStorage';
 import { api } from '@/spa/http/apiClient';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { sendSupportRequest } from '@/spa/services/support';
+import { useAuthStore } from '@/spa/stores/auth';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import { setBadge } from '@voicecode-bv/nativephp-badge';
 
@@ -21,8 +19,21 @@ import { setBadge } from '@voicecode-bv/nativephp-badge';
 // on purpose: this is a diagnostics screen, not part of the translated app.
 
 const router = useRouter();
+const auth = useAuthStore();
 const notifications = useNotificationsStore();
-const { isIos, isAndroid } = usePlatform();
+const { isIos, isAndroid, ensureDetected } = usePlatform();
+
+function resolvePlatform(): 'ios' | 'android' | 'web' {
+    if (isIos.value) {
+        return 'ios';
+    }
+
+    if (isAndroid.value) {
+        return 'android';
+    }
+
+    return 'web';
+}
 
 const platformLabel = computed(() => {
     if (isIos.value) {
@@ -76,12 +87,11 @@ async function runBackgroundTasksNow(): Promise<void> {
     }
 }
 
-// Token + durable markers as they currently sit in secure storage (Keychain on
-// device, localStorage fallback on web). Reads go through the same retrying
-// `secureStorage` helper the auth flow uses, so this reflects exactly what the
-// app would restore on cold-start.
+// Token as it currently sits in secure storage (Keychain on device, localStorage
+// fallback on web). Reads go through the same retrying `secureStorage` helper the
+// auth flow uses, so this reflects exactly what the app would restore on
+// cold-start.
 const secureToken = ref<string | null>(null);
-const hasAuthenticatedMarker = ref<string | null>(null);
 const loadingSecureStorage = ref(false);
 
 async function loadSecureStorage(): Promise<void> {
@@ -89,9 +99,6 @@ async function loadSecureStorage(): Promise<void> {
 
     try {
         secureToken.value = await secureStorage.get(TOKEN_KEY);
-        hasAuthenticatedMarker.value = await secureStorage.get(
-            HAS_AUTHENTICATED_KEY,
-        );
         record('Secure storage read.');
     } catch (error) {
         record(`Secure storage read failed: ${(error as Error).message}`);
@@ -117,6 +124,54 @@ async function forgetSession(): Promise<void> {
         record(`forget-session rejected: ${(error as Error).message}`);
     } finally {
         forgettingSession.value = false;
+    }
+}
+
+// Email a dump of the BFF Laravel session + held token, plus the client-side
+// secure-storage state, to the support inbox (hallo@innerr.app) by reusing the
+// same support endpoint as the Settings > Support screen. Lets us inspect a
+// real device's auth state without physical access.
+interface SessionDump {
+    session_id: string | null;
+    session: Record<string, unknown>;
+    server_token: string | null;
+    auth_status: string;
+    user: { id: string; email: string; username: string } | null;
+}
+
+const sendingDump = ref(false);
+
+async function emailDiagnostics(): Promise<void> {
+    sendingDump.value = true;
+
+    try {
+        const dump = await api.get<SessionDump>('/api/spa/debug/session-dump');
+
+        const lines = [
+            `Platform: ${platformLabel.value}`,
+            `App version: ${auth.appVersion || 'unknown'}`,
+            `Auth status (BFF): ${dump.auth_status}`,
+            `Session id: ${dump.session_id ?? '—'}`,
+            `User: ${dump.user ? `${dump.user.username} <${dump.user.email}> (${dump.user.id})` : '—'}`,
+            '',
+            `Client secure-storage token: ${secureToken.value ?? '— (none stored)'}`,
+            `Server-held token (BFF): ${dump.server_token ?? '— (none stored)'}`,
+            '',
+            'Laravel session:',
+            JSON.stringify(dump.session, null, 2),
+        ];
+
+        // The support endpoint caps the message at 5000 characters.
+        const message = lines.join('\n').slice(0, 5000);
+
+        await ensureDetected();
+        await sendSupportRequest(message, auth.appVersion, resolvePlatform());
+
+        record('Session + token dump emailed to hallo@innerr.app.');
+    } catch (error) {
+        record(`Dump email failed: ${(error as Error).message}`);
+    } finally {
+        sendingDump.value = false;
     }
 }
 
@@ -212,24 +267,6 @@ function goBack(): void {
                             {{ secureToken ?? '— (none stored)' }}
                         </dd>
                     </div>
-                    <div>
-                        <dt class="text-sand-600">
-                            Has authenticated marker
-                            <span class="font-mono text-xs"
-                                >({{ HAS_AUTHENTICATED_KEY }})</span
-                            >
-                        </dt>
-                        <dd
-                            class="mt-1 font-mono text-xs break-all"
-                            :class="
-                                hasAuthenticatedMarker
-                                    ? 'text-ink'
-                                    : 'text-sand-600'
-                            "
-                        >
-                            {{ hasAuthenticatedMarker ?? '— (none stored)' }}
-                        </dd>
-                    </div>
                 </dl>
                 <Button
                     v-if="secureToken"
@@ -240,6 +277,23 @@ function goBack(): void {
                 >
                     Copy token
                 </Button>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-sm font-semibold text-ink">
+                    Diagnostics email
+                </h2>
+                <Button block :disabled="sendingDump" @click="emailDiagnostics">
+                    {{
+                        sendingDump
+                            ? 'Sending…'
+                            : 'Email session + token dump to support'
+                    }}
+                </Button>
+                <p class="text-xs text-sand-600">
+                    Sends the Laravel session and API token (client + server) to
+                    hallo@innerr.app via the support inbox.
+                </p>
             </div>
 
             <div class="space-y-2">

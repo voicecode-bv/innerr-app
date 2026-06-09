@@ -33,6 +33,7 @@ interface Notification {
         user_avatar?: string | null;
         post_id?: number;
         post_media_url?: string | null;
+        post_thumbnail_url?: string | null;
         post_thumbnail_small_url?: string | null;
         comment_id?: number;
         comment_body?: string;
@@ -92,16 +93,24 @@ const notificationsStore = useNotificationsStore();
 const localThumbnails = useLocalThumbnailsStore();
 
 // Voor video-posts bevat `post_media_url` de .m3u8-stream die niet als
-// <img>-src laadt. De backend stuurt daarom `post_thumbnail_small_url` mee
-// met de 300x300 poster zodra transcoding klaar is; daar gaat onze voorkeur
-// naartoe. Valt die weg (oude notificaties of post nog in transcoding) dan
-// pakken we de lokaal gegenereerde JPEG-thumbnail uit de plugin-store, en
-// pas als laatste de `post_media_url` voor image-posts.
+// <img>-src laadt. De 300x300 `post_thumbnail_small_url` bestaat alleen voor
+// image-posts, dus video-notificaties vielen altijd terug op de stream-URL en
+// toonden niets. Daarom pakken we daarna de `post_thumbnail_url` (de poster die
+// de backend wel synchroon voor video's genereert). Valt die ook weg (oude
+// notificaties of post nog in transcoding) dan pakken we de lokaal gegenereerde
+// JPEG-thumbnail uit de plugin-store, en pas als laatste de `post_media_url`
+// voor image-posts.
 function thumbnailFor(notification: Notification): string | null {
-    const thumbnail = notification.data.post_thumbnail_small_url;
+    const smallThumbnail = notification.data.post_thumbnail_small_url;
 
-    if (typeof thumbnail === 'string' && thumbnail.length > 0) {
-        return thumbnail;
+    if (typeof smallThumbnail === 'string' && smallThumbnail.length > 0) {
+        return smallThumbnail;
+    }
+
+    const posterThumbnail = notification.data.post_thumbnail_url;
+
+    if (typeof posterThumbnail === 'string' && posterThumbnail.length > 0) {
+        return posterThumbnail;
     }
 
     const postId = notification.data.post_id;
@@ -177,19 +186,11 @@ async function loadInitial(): Promise<void> {
         circleInvitations.value = invitations.data;
         ownershipTransfers.value = transfers.data;
 
-        // Opening the notifications page acknowledges everything. Mark all read
-        // (which resets the in-app bell and the native app icon badge) whenever
-        // anything is unread, including hidden-type notifications or a count set
-        // by a push. If nothing is unread locally the OS may still show an icon
-        // badge from a push payload, so clear it explicitly.
-        if (
-            notificationsStore.unreadCount > 0 ||
-            items.value.some((notification) => !notification.read_at)
-        ) {
-            markAllAsRead();
-        } else {
-            notificationsStore.syncIconBadge();
-        }
+        // Opening the page no longer acknowledges anything: read notifications
+        // stay visible in the list and unread ones keep their highlight until
+        // the user taps them (openNotification) or uses "Mark all read". Just
+        // mirror the current unread count onto the native app icon badge.
+        notificationsStore.syncIconBadge();
     } catch {
         // ignore
     } finally {
@@ -643,7 +644,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
             <div class="relative space-y-4 px-4 pt-4">
                 <div v-if="hasUnread" class="reveal-item flex justify-end px-1">
                     <button
-                        class="inline-flex items-center gap-1.5 rounded-full bg-surface/70 px-3 py-1.5 text-ink shadow-sm backdrop-blur-sm transition hover:bg-surface dark:bg-sand-800/60 dark:text-sage-100 dark:hover:bg-sand-800"
+                        class="inline-flex items-center gap-1.5 rounded-full bg-surface/70 px-3 py-1.5 text-ink shadow-sm backdrop-blur-sm"
                         @click="markAllAsRead"
                     >
                         <span
@@ -895,7 +896,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                     <button
                                         class="flex w-full items-start gap-3 px-5 py-4 text-left transition"
                                         :class="{
-                                            'bg-sage-50/60 dark:bg-sage-900/20':
+                                            'bg-surface/70 dark:bg-surface/70':
                                                 !isRead(notification),
                                         }"
                                         @click="openNotification(notification)"

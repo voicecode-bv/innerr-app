@@ -17,7 +17,6 @@ import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
 import headphoneIcon from '../../../../svg/doodle-icons/headphone.svg';
 import lockIcon from '../../../../svg/doodle-icons/lock.svg';
-import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
 import questionIcon from '../../../../svg/doodle-icons/question.svg';
 import tagIcon from '../../../../svg/doodle-icons/tag.svg';
 import usersIcon from '../../../../svg/doodle-icons/user.svg';
@@ -29,12 +28,6 @@ const router = useRouter();
 const { isIos, isAndroid } = usePlatform();
 
 const menuItems = computed(() => [
-    {
-        routeName: 'spa.settings.edit-profile',
-        icon: pencilIcon,
-        label: 'Edit profile',
-        tone: 'teal' as const,
-    },
     {
         routeName: 'spa.settings.default-circles',
         icon: circleIcon,

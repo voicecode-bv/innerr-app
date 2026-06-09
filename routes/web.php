@@ -13,6 +13,7 @@ use App\Http\Controllers\Spa\PersonsController as SpaPersonsController;
 use App\Http\Controllers\Spa\PostsController as SpaPostsController;
 use App\Http\Controllers\Spa\SettingsController as SpaSettingsController;
 use App\Http\Controllers\UploadSessionController;
+use App\Services\ApiClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,26 @@ Route::prefix('api/spa')->group(function () {
         $request->session()->regenerateToken();
 
         return response()->json(['ok' => true]);
+    });
+
+    // Debug/test: dump of the caller's own Laravel session + held API token. The
+    // hidden debug page forwards this via the support endpoint so token/session
+    // issues can be inspected from a real device. Reads only the caller's own
+    // session, just like forget-session above.
+    Route::get('/debug/session-dump', function (Request $request, ApiClient $apiClient) {
+        $user = $request->user();
+
+        return response()->json([
+            'session_id' => $request->session()->getId(),
+            'session' => $request->session()->all(),
+            'server_token' => $apiClient->hasToken() ? $apiClient->getToken() : null,
+            'auth_status' => $user ? 'authenticated' : 'guest',
+            'user' => $user ? [
+                'id' => $user->api_user_id,
+                'email' => $user->email,
+                'username' => $user->username,
+            ] : null,
+        ]);
     });
 
     Route::middleware('auth.api')->group(function () {

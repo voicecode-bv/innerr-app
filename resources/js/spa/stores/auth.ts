@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import {
-    HAS_AUTHENTICATED_KEY,
     secureStorage,
     SecureStorageUnavailableError,
     TOKEN_KEY,
@@ -60,10 +59,6 @@ export const useAuthStore = defineStore('spa-auth', {
         apiBase: '' as string,
         appVersion: '' as string,
         socialAuthUrls: { google: '', apple: '' },
-        // True zodra dit toestel ooit succesvol heeft ingelogd. Blijft true na
-        // uitloggen, zodat terugkerende gebruikers het welkomstkeuzescherm
-        // overslaan en direct op inloggen landen.
-        hasAuthenticatedBefore: false,
         // True wanneer we een token vasthouden maar de bootstrap de gebruiker
         // niet kon bevestigen omdat de externe API onbereikbaar was. De app
         // toont dan het reconnect-scherm i.p.v. de gebruiker naar login te
@@ -76,15 +71,14 @@ export const useAuthStore = defineStore('spa-auth', {
         storageUnavailable: false,
     }),
     actions: {
-        // Leest token én "ooit ingelogd"-marker uit de Keychain en zet
-        // `storageUnavailable` als de bridge geen definitief antwoord gaf. Wordt
-        // vroeg in `main.ts` aangeroepen (vóór de BFF bootstrap) en opnieuw door
-        // het reconnect-scherm, zodat een aanvankelijk mislukte lees alsnog kan
-        // herstellen i.p.v. de gebruiker uit te loggen.
+        // Leest het token uit de Keychain en zet `storageUnavailable` als de
+        // bridge geen definitief antwoord gaf. Wordt vroeg in `main.ts`
+        // aangeroepen (vóór de BFF bootstrap) en opnieuw door het reconnect-
+        // scherm, zodat een aanvankelijk mislukte lees alsnog kan herstellen
+        // i.p.v. de gebruiker uit te loggen.
         async restoreFromStorage(): Promise<void> {
             this.storageUnavailable = false;
             await this.restoreToken();
-            await this.restoreHasAuthenticated();
         },
         // Wordt vroeg aangeroepen zodat externalApi al een Bearer kan sturen
         // tijdens cold-start. Een onleesbare bridge zet `storageUnavailable`
@@ -105,36 +99,6 @@ export const useAuthStore = defineStore('spa-auth', {
 
                 throw error;
             }
-        },
-        // Laadt de durable "ooit ingelogd"-marker uit de Keychain. Moet vóór de
-        // eerste routing-beslissing klaar zijn zodat de guard synchroon kan
-        // kiezen tussen welkomstscherm (nieuw) en inloggen (terugkerend).
-        async restoreHasAuthenticated(): Promise<void> {
-            try {
-                const stored = await secureStorage.get(HAS_AUTHENTICATED_KEY);
-
-                if (stored) {
-                    this.hasAuthenticatedBefore = true;
-                }
-            } catch (error) {
-                if (error instanceof SecureStorageUnavailableError) {
-                    this.storageUnavailable = true;
-
-                    return;
-                }
-
-                throw error;
-            }
-        },
-        // Markeert dit toestel als "heeft ooit ingelogd". Idempotent: schrijft
-        // alleen naar de Keychain als de marker er nog niet stond.
-        async markAuthenticated(): Promise<void> {
-            if (this.hasAuthenticatedBefore) {
-                return;
-            }
-
-            this.hasAuthenticatedBefore = true;
-            await secureStorage.set(HAS_AUTHENTICATED_KEY, '1');
         },
         async bootstrap(): Promise<BootstrapPayload> {
             const data = await api.get<BootstrapPayload>('/api/spa/bootstrap');
@@ -188,12 +152,6 @@ export const useAuthStore = defineStore('spa-auth', {
             // authenticated
             this.user = data.user;
 
-            if (data.user) {
-                // Een terugkerende sessie telt ook als "ooit ingelogd": markeer
-                // het toestel zodat een latere logout op inloggen landt.
-                await this.markAuthenticated();
-            }
-
             return data;
         },
         async login(
@@ -209,7 +167,6 @@ export const useAuthStore = defineStore('spa-auth', {
             this.token = data.token;
             this.awaitingConnection = false;
             await secureStorage.set(TOKEN_KEY, data.token);
-            await this.markAuthenticated();
 
             return { redirect_to: data.redirect_to };
         },
@@ -229,7 +186,6 @@ export const useAuthStore = defineStore('spa-auth', {
             this.token = data.token;
             this.awaitingConnection = false;
             await secureStorage.set(TOKEN_KEY, data.token);
-            await this.markAuthenticated();
 
             return { redirect_to: data.redirect_to };
         },

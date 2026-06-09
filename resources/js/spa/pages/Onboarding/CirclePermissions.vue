@@ -71,7 +71,7 @@ async function continueOnboarding(): Promise<void> {
 
     trackOnboardingStep('circle_permissions');
     router.push({
-        name: 'spa.onboarding.invite-members',
+        name: 'spa.onboarding.add-children',
         params: { circle: circleId },
     });
 }

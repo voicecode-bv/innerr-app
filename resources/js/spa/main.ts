@@ -116,10 +116,8 @@ async function bootstrap(): Promise<void> {
         .ensureDetected()
         .catch(() => null);
 
-    // Lees token + durable "ooit ingelogd"-marker uit de Keychain (of
-    // localStorage-fallback) zodat externalApi al een Bearer kan sturen vóór de
-    // BFF bootstrap-call en de router-guard direct kan kiezen tussen
-    // welkomstscherm (nieuw toestel) en inloggen (terugkerend). Voorkomt
+    // Lees het token uit de Keychain (of localStorage-fallback) zodat
+    // externalApi al een Bearer kan sturen vóór de BFF bootstrap-call. Voorkomt
     // uitloggen wanneer de Laravel-session verlopen is maar het token nog wél
     // geldig is. Een onleesbare bridge zet `auth.storageUnavailable`.
     await auth.restoreFromStorage();

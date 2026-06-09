@@ -72,7 +72,14 @@ function currentBboxString(): string | null {
     const lngPad = (east - west) * BBOX_PADDING_RATIO;
     const latPad = (north - south) * BBOX_PADDING_RATIO;
 
-    return `${west - lngPad},${south - latPad},${east + lngPad},${north + latPad}`;
+    // Clamp to valid WGS84 ranges; Mapbox bounds plus padding can exceed
+    // [-180, 180] / [-90, 90], which the API rejects with a 422.
+    const clampedWest = Math.max(-180, west - lngPad);
+    const clampedSouth = Math.max(-90, south - latPad);
+    const clampedEast = Math.min(180, east + lngPad);
+    const clampedNorth = Math.min(90, north + latPad);
+
+    return `${clampedWest},${clampedSouth},${clampedEast},${clampedNorth}`;
 }
 
 function buildFetchUrl(bbox: string): string {
@@ -465,6 +472,9 @@ onMounted(async () => {
         style: 'mapbox://styles/mapbox/streets-v12',
         center: NETHERLANDS_CENTER,
         zoom: FALLBACK_ZOOM,
+        // Flat (Web Mercator) projection instead of the default 3D globe so the
+        // map renders as a flat surface at all zoom levels.
+        projection: 'mercator',
     });
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');

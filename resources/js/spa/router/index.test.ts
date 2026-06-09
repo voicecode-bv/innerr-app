@@ -48,6 +48,24 @@ describe('router history mode', () => {
     });
 });
 
+describe('add-children onboarding route', () => {
+    it('resolves to the circle-scoped children step and requires auth', async () => {
+        setUrl('https://innerr-app.test/');
+
+        const { router } = await import('./index');
+        const route = router.resolve({
+            name: 'spa.onboarding.add-children',
+            params: { circle: 'abc-123' },
+        });
+
+        expect(route.path).toBe('/onboarding/circles/abc-123/children');
+        // Reachable during the post-signup funnel: authenticated but the
+        // onboarded gate must not yet apply.
+        expect(route.meta.auth).toBe(true);
+        expect(route.meta.onboarded).toBeUndefined();
+    });
+});
+
 describe('debug route', () => {
     it('is registered and publicly reachable without auth or onboarding', async () => {
         setUrl('https://innerr-app.test/');

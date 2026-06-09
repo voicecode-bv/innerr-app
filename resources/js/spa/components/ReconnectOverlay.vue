@@ -50,12 +50,8 @@ async function retry(): Promise<void> {
     }
 
     if (!auth.awaitingConnection) {
-        // Token definitief afgewezen (echte 401): naar login.
-        await router
-            .replace({
-                name: auth.hasAuthenticatedBefore ? 'spa.login' : 'spa.welcome',
-            })
-            .catch(() => {});
+        // Token definitief afgewezen (echte 401): naar het welkomstscherm.
+        await router.replace({ name: 'spa.welcome' }).catch(() => {});
     }
 }
 
@@ -77,11 +73,7 @@ async function logOut(): Promise<void> {
         loggingOut.value = false;
     }
 
-    await router
-        .replace({
-            name: auth.hasAuthenticatedBefore ? 'spa.login' : 'spa.welcome',
-        })
-        .catch(() => {});
+    await router.replace({ name: 'spa.welcome' }).catch(() => {});
 }
 
 watch(isOnline, (online) => {
