@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Camera, Dialog, Edge, Events, Off, On } from '@nativephp/mobile';
+import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     defineAsyncComponent,
@@ -31,7 +31,7 @@ const LocationPickerSheet = defineAsyncComponent(
     () => import('@/spa/components/LocationPickerSheet.vue'),
 );
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { api, ApiError } from '@/spa/http/apiClient';
+import { ApiError } from '@/spa/http/apiClient';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
@@ -872,17 +872,6 @@ async function handleCropped(
 }
 
 onMounted(() => {
-    // Native edge bottom-nav verbergen vóór de eerste paint: anders overlapt
-    // hij onze sticky wizard-footer tot de async EdgeController-call resolved
-    // is, en zijn de Back/Next-knoppen niet aan te tikken. Sync via de bridge,
-    // geen netwerkronde. afterEach in de router herstelt de bottom-nav weer
-    // bij navigatie naar een volgende route.
-    try {
-        Edge.clearSync();
-    } catch {
-        // Niet-native context (browser preview): geen edge-bar om te clearen.
-    }
-
     loadFormData();
     On(Events.Camera.PhotoTaken, handlePhotoTaken);
     On(Events.Camera.VideoRecorded, handleVideoRecorded);
@@ -977,15 +966,6 @@ async function submit(): Promise<void> {
     }
 
     router.push({ name: 'spa.home' });
-
-    // De router.afterEach POST naar /api/spa/edge/active-tab herstelt de
-    // native bottom-nav (die we in onMounted hebben gewist). Op de
-    // single-threaded native PHP-runtime kan die fire-and-forget POST achter
-    // de upload hieronder gequeued raken en bij netwerkdruk silently falen,
-    // waardoor de gebruiker op de feed terechtkomt zonder bottom-nav. Doe
-    // dezelfde call hier expliciet en wacht 'm af zodat de bar terug is
-    // vóór de upload start; afterEach's tweede call is een no-op duplicate.
-    await api.post('/api/spa/edge/active-tab', { path: '/' }).catch(() => null);
 
     try {
         // Pak de echte post-id uit de response en swap die in de cache zodat

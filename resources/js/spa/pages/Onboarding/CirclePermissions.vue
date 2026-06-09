@@ -49,7 +49,7 @@ onMounted(async () => {
         membersCanViewMembers.value = data.data.members_can_view_members;
         membersCanDownload.value = data.data.members_can_download;
     } catch {
-        router.push({ name: 'spa.onboarding.first-circle' });
+        router.push({ name: 'spa.onboarding.notifications' });
     }
 });
 

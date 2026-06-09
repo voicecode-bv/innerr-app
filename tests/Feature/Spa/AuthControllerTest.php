@@ -167,3 +167,36 @@ it('requires token, email and password on reset-password', function () {
         ->assertStatus(422)
         ->assertJsonValidationErrors(['token', 'email', 'password']);
 });
+
+it('creates a Family circle on register and routes to onboarding', function () {
+    Queue::fake();
+
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('register')
+        ->once()
+        ->with('Jane', 'jane', 'jane@example.com', 'secret123')
+        ->andReturn([
+            'success' => true,
+            'user' => [
+                'id' => '550e8400-e29b-41d4-a716-446655440042',
+                'name' => 'Jane', 'username' => 'jane', 'email' => 'jane@example.com',
+                'avatar' => null, 'bio' => null, 'locale' => 'en', 'onboarded_at' => null,
+            ],
+        ]);
+    $client->shouldReceive('getToken')->andReturn('jwt-token');
+    $client->shouldReceive('post')->once()->with('/circles', ['name' => 'Family']);
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->postJson('/api/spa/auth/register', [
+        'name' => 'Jane',
+        'username' => 'jane',
+        'email' => 'jane@example.com',
+        'password' => 'secret123',
+        'terms_accepted' => true,
+    ])->assertOk()
+        ->assertJsonPath('token', 'jwt-token')
+        ->assertJsonPath('redirect_to', '/onboarding/intro');
+
+    $this->assertDatabaseHas('users', ['username' => 'jane', 'api_user_id' => '550e8400-e29b-41d4-a716-446655440042']);
+    $this->assertAuthenticated();
+});

@@ -91,12 +91,12 @@ function confirm(): void {
 
         <div
             v-if="isLoading && (circlesStore.items?.length ?? 0) === 0"
-            class="flex items-center justify-center px-4 py-10 pb-24"
+            class="flex items-center justify-center px-4 py-10"
         >
             <LoadingSpinner />
         </div>
 
-        <div v-else-if="loadError" class="px-4 py-10 pb-24 text-center">
+        <div v-else-if="loadError" class="px-4 py-10 text-center">
             <p class="text-destructive-ink">{{ loadError }}</p>
             <button class="mt-2 text-ink-muted" @click="loadCircles()">
                 {{ t('Try again') }}
@@ -105,14 +105,17 @@ function confirm(): void {
 
         <div
             v-else-if="(circlesStore.items?.length ?? 0) === 0"
-            class="px-4 py-10 pb-24 text-center"
+            class="px-4 py-10 text-center"
         >
             <p class="text-ink-muted">
                 {{ t('No circles available') }}
             </p>
         </div>
 
-        <div v-else class="px-4 pb-28">
+        <div
+            v-else
+            class="px-4 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))]"
+        >
             <CirclePicker
                 :circles="circlesStore.items ?? []"
                 :selected-ids="selectedCircleIds"

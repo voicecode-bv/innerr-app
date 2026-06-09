@@ -241,7 +241,9 @@ function goBack(): void {
             </RouterLink>
         </template>
 
-        <div class="mt-10 pb-24">
+        <div
+            class="mt-10 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+        >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"

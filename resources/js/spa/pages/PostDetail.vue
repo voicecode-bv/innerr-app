@@ -733,79 +733,20 @@ watch(
 </script>
 
 <template>
-    <AppLayout ref="layout" :title="t('Moment')">
-        <template #header-left>
-            <button class="flex items-center text-ink" @click="goBack">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="2"
-                    stroke="currentColor"
-                    class="size-5"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M15.75 19.5 8.25 12l7.5-7.5"
-                    />
-                </svg>
-            </button>
-        </template>
-        <template v-if="isOwner" #header-right>
-            <button
-                class="text-destructive-ink disabled:opacity-50"
-                :aria-label="t('Delete post')"
-                :disabled="isDeleting"
-                @click="deletePost"
-            >
-                <svg
-                    v-if="!isDeleting"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-5"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                    />
-                </svg>
-                <svg
-                    v-else
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    class="size-5 animate-spin"
-                >
-                    <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="3"
-                        stroke-opacity="0.25"
-                    />
-                    <path
-                        d="M22 12a10 10 0 0 1-10 10"
-                        stroke="currentColor"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                    />
-                </svg>
-            </button>
-        </template>
-
-        <div class="mt-10 pb-32">
+    <AppLayout ref="layout" :show-header="false">
+        <div
+            class="pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+        >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
             />
 
-            <div v-if="isLoading && !post" class="animate-pulse">
+            <div
+                v-if="isLoading && !post"
+                class="-mt-[var(--inset-top,0px)] animate-pulse"
+            >
+                <div class="aspect-square w-full bg-sand-200" />
                 <div class="flex items-center gap-3 bg-surface px-4 py-3">
                     <div class="size-10 rounded-full bg-sand-200" />
                     <div class="space-y-2">
@@ -813,56 +754,49 @@ watch(
                         <div class="h-2 w-20 rounded bg-sand-200" />
                     </div>
                 </div>
-                <div class="aspect-square w-full bg-sand-200" />
                 <div class="space-y-2 px-4 py-3">
                     <div class="h-3 w-24 rounded bg-sand-200" />
                     <div class="h-3 w-48 rounded bg-sand-200" />
                 </div>
             </div>
 
-            <div v-if="post" v-reveal-on-scroll class="reveal-on-scroll">
-                <div class="flex items-center gap-3 bg-sand px-4 py-3">
-                    <RouterLink
-                        :to="{
-                            name: 'spa.profiles.show',
-                            params: { username: post.user.username },
-                        }"
-                    >
-                        <img
-                            :src="
-                                post.user.avatar ??
-                                `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`
-                            "
-                            :alt="post.user.name"
-                            class="avatar-ring size-10 rounded-full object-cover"
-                        />
-                    </RouterLink>
-                    <div class="flex-1">
-                        <RouterLink
-                            :to="{
-                                name: 'spa.profiles.show',
-                                params: { username: post.user.username },
-                            }"
-                            class="font-semibold text-ink"
-                        >
-                            {{ post.user.name }}
-                        </RouterLink>
-                    </div>
-                </div>
-
-                <div v-if="post.caption" class="bg-sand px-4 pb-3">
-                    <p class="leading-relaxed whitespace-pre-line text-ink">
-                        {{ post.caption }}
-                    </p>
-                </div>
-
+            <div
+                v-if="post"
+                v-reveal-on-scroll
+                class="reveal-on-scroll -mt-[var(--inset-top,0px)]"
+            >
                 <div
                     :class="[
                         isFullscreen
                             ? 'fixed inset-0 z-50 flex items-center justify-center bg-black'
-                            : 'relative mx-3 aspect-square overflow-hidden rounded-2xl bg-sand-100',
+                            : 'relative aspect-square overflow-hidden bg-sand-100',
                     ]"
                 >
+                    <!-- Back button overlaid on the media (the AppLayout header
+                         is hidden so the media can sit edge-to-edge at the top). -->
+                    <button
+                        v-if="!isFullscreen"
+                        type="button"
+                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] left-3 z-30 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                        :aria-label="t('Back')"
+                        @click="goBack"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="size-5"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M15.75 19.5 8.25 12l7.5-7.5"
+                            />
+                        </svg>
+                    </button>
+
                     <MediaCarousel
                         v-if="hasMultipleMedia && !isFullscreen"
                         :items="carouselItems"
@@ -971,7 +905,7 @@ watch(
                             !isFullscreen
                         "
                         type="button"
-                        class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] left-14 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
                         :aria-label="t('Save to photos')"
                         :disabled="isDownloading"
                         @click="downloadMedia"
@@ -985,7 +919,7 @@ watch(
 
                     <div
                         v-if="(post.circles ?? []).length > 0 && !isFullscreen"
-                        class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
+                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
                     >
                         <RouterLink
                             :to="{
@@ -1039,7 +973,7 @@ watch(
                             'absolute z-20 flex gap-2',
                             isFullscreen
                                 ? 'top-[calc(env(safe-area-inset-top)+1.5rem)] right-3'
-                                : 'top-3 left-3',
+                                : 'top-[calc(var(--inset-top,0px)+0.75rem)] left-14',
                         ]"
                     >
                         <button
@@ -1202,10 +1136,90 @@ watch(
                                 :style="iconMaskStyle(pencilIcon)"
                             ></span>
                         </button>
+                        <button
+                            v-if="isOwner"
+                            class="flex items-center text-white drop-shadow disabled:opacity-50"
+                            :aria-label="t('Delete post')"
+                            :disabled="isDeleting"
+                            @click="deletePost"
+                        >
+                            <svg
+                                v-if="!isDeleting"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="size-6"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                                />
+                            </svg>
+                            <svg
+                                v-else
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                class="size-6 animate-spin"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    stroke-opacity="0.25"
+                                />
+                                <path
+                                    d="M22 12a10 10 0 0 1-10 10"
+                                    stroke="currentColor"
+                                    stroke-width="3"
+                                    stroke-linecap="round"
+                                />
+                            </svg>
+                        </button>
                         <span class="ml-auto text-white/80 drop-shadow">{{
                             timeAgo(post.created_at)
                         }}</span>
                     </div>
+                </div>
+
+                <div class="flex items-center gap-3 bg-sand px-4 pt-3 pb-2">
+                    <RouterLink
+                        :to="{
+                            name: 'spa.profiles.show',
+                            params: { username: post.user.username },
+                        }"
+                    >
+                        <img
+                            :src="
+                                post.user.avatar ??
+                                `https://ui-avatars.com/api/?name=${post.user.name}&background=f0dcc6&color=5c3f24&size=64`
+                            "
+                            :alt="post.user.name"
+                            class="avatar-ring size-10 rounded-full object-cover"
+                        />
+                    </RouterLink>
+                    <div class="flex-1">
+                        <RouterLink
+                            :to="{
+                                name: 'spa.profiles.show',
+                                params: { username: post.user.username },
+                            }"
+                            class="font-semibold text-ink"
+                        >
+                            {{ post.user.name }}
+                        </RouterLink>
+                    </div>
+                </div>
+
+                <div v-if="post.caption" class="bg-sand px-4 pb-3">
+                    <p class="leading-relaxed whitespace-pre-line text-ink">
+                        {{ post.caption }}
+                    </p>
                 </div>
 
                 <button
@@ -1365,7 +1379,12 @@ watch(
                                                           person.user_username,
                                                   },
                                               }
-                                            : undefined
+                                            : {
+                                                  name: 'spa.timeline',
+                                                  params: {
+                                                      person: person.id,
+                                                  },
+                                              }
                                     "
                                 >
                                     <template

@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
-use Native\Mobile\Edge\Edge;
 
 class AuthController extends Controller
 {
@@ -79,6 +78,8 @@ class AuthController extends Controller
         SyncDeviceInfo::dispatch();
 
         $this->primeSettingsCache($this->apiClient);
+
+        $this->bootstrapNewAccount();
 
         return response()->json([
             'user' => $this->presentUser(Auth::user()),
@@ -155,19 +156,30 @@ class AuthController extends Controller
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
-        Edge::clear();
-
         return response()->json(['ok' => true]);
     }
 
     protected function resolveRedirect(): string
     {
-        if (Auth::user()?->onboarded_at !== null) {
-            return '/';
+        // Onboarding wordt gegated op onboarded_at, niet op het aantal kringen:
+        // elke nieuwe account krijgt bij registratie al een "Familie"-kring, dus
+        // de aanwezigheid van een kring zegt niets meer over de voortgang.
+        return Auth::user()?->onboarded_at !== null ? '/' : '/onboarding/intro';
+    }
+
+    /**
+     * Richt een verse account in via de API: maak de standaard "Familie"-kring
+     * aan. Best-effort: faalt de call, dan blijft registratie geslaagd en vangt
+     * de onboarding-flow de rest op.
+     */
+    protected function bootstrapNewAccount(): void
+    {
+        try {
+            $this->apiClient->post('/circles', ['name' => __('Family')]);
+        } catch (\Throwable $e) {
+            report($e);
         }
 
-        $circles = $this->apiClient->cachedCircles();
-
-        return $circles === [] ? '/onboarding/intro' : '/';
+        Cache::forget(ApiClient::circlesCacheKey());
     }
 }

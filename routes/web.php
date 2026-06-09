@@ -7,7 +7,6 @@ use App\Http\Controllers\PostActionController;
 use App\Http\Controllers\Spa\AuthController as SpaAuthController;
 use App\Http\Controllers\Spa\BootstrapController as SpaBootstrapController;
 use App\Http\Controllers\Spa\CircleMediaController as SpaCircleMediaController;
-use App\Http\Controllers\Spa\EdgeController as SpaEdgeController;
 use App\Http\Controllers\Spa\EmailVerificationController as SpaEmailVerificationController;
 use App\Http\Controllers\Spa\PersonsController as SpaPersonsController;
 use App\Http\Controllers\Spa\PostsController as SpaPostsController;
@@ -19,8 +18,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // SPA BFF — alleen wat technisch niet client-side kan: bootstrap-mirror,
-// auth-token-houder, native bridge (Edge), en file-upload paden waarvoor
-// NativePhp Camera een file:// pad oplevert dat alleen serverside leesbaar is.
+// auth-token-houder, en file-upload paden waarvoor NativePhp Camera een
+// file:// pad oplevert dat alleen serverside leesbaar is.
 Route::prefix('api/spa')->group(function () {
     Route::get('/bootstrap', SpaBootstrapController::class);
     Route::post('/auth/login', [SpaAuthController::class, 'login']);
@@ -65,7 +64,6 @@ Route::prefix('api/spa')->group(function () {
         Route::post('/auth/logout', [SpaAuthController::class, 'logout']);
         Route::post('/auth/email/verify', [SpaEmailVerificationController::class, 'verify']);
         Route::post('/auth/email/resend', [SpaEmailVerificationController::class, 'resend']);
-        Route::post('/edge/active-tab', [SpaEdgeController::class, 'setActiveTab']);
 
         Route::post('/settings/profile/avatar', [SpaSettingsController::class, 'updateAvatar']);
         Route::post('/settings/persons/{person}/photo', [SpaPersonsController::class, 'updatePhoto'])->whereUuid('person');

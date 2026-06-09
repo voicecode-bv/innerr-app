@@ -26,7 +26,7 @@ function choose(layout: FeedLayout): void {
 <template>
     <BottomSheet :open="open" @update:open="emit('update:open', $event)">
         <div
-            class="px-4 pt-2 pb-[calc(theme(spacing.24)+env(safe-area-inset-bottom))]"
+            class="px-4 pt-2 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))]"
         >
             <h2 class="text-center font-display text-xl font-semibold text-ink">
                 {{ t('How do you want to see your feed?') }}

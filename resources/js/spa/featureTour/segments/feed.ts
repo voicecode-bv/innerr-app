@@ -28,22 +28,11 @@ export function feedSegment(): TourSegment {
                 },
             },
             {
-                element: '[data-tour="feed.search"]',
+                element: '[data-tour="feed.children-filter"]',
                 popover: {
-                    title: t('Find people'),
+                    title: t('Focus on one child'),
                     description: t(
-                        'Search for friends and family by username to invite them into a circle.',
-                    ),
-                    side: 'bottom',
-                    align: 'start',
-                },
-            },
-            {
-                element: '[data-tour="feed.filter"]',
-                popover: {
-                    title: t('Filter your feed'),
-                    description: t(
-                        'Narrow your feed down to specific people, circles or a date range.',
+                        'Tap here to choose which children to show. Your feed then narrows to just their moments. Switch back to everyone whenever you like.',
                     ),
                     side: 'bottom',
                     align: 'start',

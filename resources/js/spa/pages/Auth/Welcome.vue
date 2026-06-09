@@ -113,7 +113,7 @@ const auth = useAuthStore();
                     />
                 </h1>
                 <p class="mt-3 text-base font-medium text-brand-sand/85">
-                    {{ t('Safely share with those who matter') }}
+                    {{ t('The private album for your family') }}
                 </p>
             </div>
 

@@ -158,7 +158,12 @@ export function useInfiniteScroll<T>(
                     loadMore();
                 }
             },
-            { rootMargin: options.rootMargin ?? '500px' },
+            // Prefetch the next page well before the sentinel reaches the
+            // viewport (~1.5 screens ahead) so the next batch is usually already
+            // in by the time the user scrolls down — the "load more" indicator
+            // is then rarely seen. loadMore() guards on `loading`, so this never
+            // fires overlapping requests.
+            { rootMargin: options.rootMargin ?? '1200px' },
         );
         observer.observe(target);
     }

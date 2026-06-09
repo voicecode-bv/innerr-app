@@ -9,6 +9,7 @@ import {
     useTemplateRef,
     watch,
 } from 'vue';
+import AppText from '@/components/AppText.vue';
 import BottomSheet from '@/components/BottomSheet.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import SheetHeader from '@/components/SheetHeader.vue';
@@ -569,9 +570,9 @@ defineExpose({
             v-else-if="comments.length === 0"
             class="flex flex-col items-center justify-center px-8 py-2 text-center"
         >
-            <h3 class="font-display text-lg font-semibold text-ink">
+            <AppText variant="subheading" class="block">
                 {{ t('No comments yet') }}
-            </h3>
+            </AppText>
             <p class="mt-2 text-ink-muted">
                 {{ t('Share what you think!') }}
             </p>

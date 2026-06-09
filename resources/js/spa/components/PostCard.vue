@@ -58,6 +58,7 @@ export interface PostData {
     quote_text?: string | null;
     quote_author?: string | null;
     location: string | null;
+    taken_at?: string | null;
     created_at: string;
     user: {
         id: string;

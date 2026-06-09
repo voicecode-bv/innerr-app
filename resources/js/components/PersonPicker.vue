@@ -40,6 +40,15 @@ const { t } = useTranslations();
 
 const isCollapsed = ref(props.collapsible && props.defaultCollapsed);
 
+// By default only the tagged children (persons without their own account) are
+// shown. The "show all" link reveals every person, including circle members
+// who have their own account.
+const showAll = ref(false);
+
+const hasNonChildren = computed(() =>
+    props.persons.some((person) => !!person.user_id),
+);
+
 const heading = computed(() => props.title ?? t('Tag persons'));
 
 function iconMaskStyle(url: string) {
@@ -63,8 +72,14 @@ const summaryText = computed(() => {
     return t(':count selected', { count: String(props.selectedIds.length) });
 });
 
+const basePersons = computed(() =>
+    showAll.value
+        ? props.persons
+        : props.persons.filter((person) => !person.user_id),
+);
+
 const sortedPersons = computed(() =>
-    [...props.persons].sort((a, b) =>
+    [...basePersons.value].sort((a, b) =>
         a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
     ),
 );
@@ -128,6 +143,14 @@ function toggle(personId: string) {
                 class="truncate text-ink-muted"
                 >{{ summaryText }}</span
             >
+            <button
+                v-else-if="hasNonChildren"
+                type="button"
+                class="hover:text-ink-light text-ink"
+                @click="showAll = !showAll"
+            >
+                {{ showAll ? t('Show children only') : t('Show all people') }}
+            </button>
         </div>
 
         <div v-if="!isCollapsed && persons.length === 0" class="text-ink-muted">

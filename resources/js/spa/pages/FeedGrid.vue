@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import FeedHeader from '@/spa/components/FeedHeader.vue';
@@ -7,6 +7,8 @@ import FeedLayoutChooser from '@/spa/components/FeedLayoutChooser.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import PostMasonry from '@/spa/components/PostMasonry.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
+import { useChildFeedQuery } from '@/spa/composables/useChildFeedQuery';
+import { useFeedDateBar } from '@/spa/composables/useFeedDateBar';
 import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
 import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
@@ -14,6 +16,7 @@ import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useChildFilterStore } from '@/spa/stores/childFilter';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
@@ -23,7 +26,9 @@ import starIcon from '../../../svg/doodle-icons/star.svg';
 const { t } = useTranslations();
 const circlesStore = useCirclesStore();
 const feedCache = useFeedCacheStore();
+const childFilter = useChildFilterStore();
 const notificationsStore = useNotificationsStore();
+const { childFeedQuery } = useChildFeedQuery();
 // Shares the list feed's cache key so toggling between views reuses the same
 // items without a refetch.
 const FEED_KEY = 'home';
@@ -54,7 +59,7 @@ const cached = feedCache.get<PostData>(FEED_KEY);
 
 async function fetchFeed(page: number): Promise<PaginatedResponse<PostData>> {
     const response = await externalApi.get<PaginatedResponse<PostData>>(
-        `/feed?page=${page}`,
+        `/feed?${await childFeedQuery(page)}`,
     );
 
     if (page === 1) {
@@ -69,6 +74,22 @@ const feed = useInfiniteScroll<PostData>(fetchFeed, sentinelRef, {
     initialItems: cached?.items,
     initialLastPage: cached?.lastPage,
 });
+
+// Sticky date bar: shows the month + year of the timeline at the current scroll
+// position, pinned just below the dynamic-height header.
+const { dateBarRef, currentDateLabel, headerBottom, recompute } =
+    useFeedDateBar(containerRef, () => feed.items.length);
+
+// Re-fetch when the child filter changes, then refresh the date bar (the post
+// count may be unchanged, so the count watcher won't always fire).
+watch(
+    () => childFilter.selectedIds,
+    async () => {
+        feedCache.invalidate(FEED_KEY);
+        await feed.reset();
+        recompute();
+    },
+);
 
 useProcessingPoll(feed.items, () => feed.softRefresh());
 
@@ -121,9 +142,27 @@ function iconMaskStyle(url: string) {
     <AppLayout ref="layout" :show-header="false">
         <template #above>
             <FeedHeader layout="grid" />
+            <!-- Sticky date bar pinned just below the fixed header (its bottom
+                 sits at inset-top + the feed's mt-52). Shows the month + year of
+                 the timeline at the current scroll position. -->
+            <div
+                v-if="feed.items.length > 0"
+                ref="dateBarRef"
+                aria-hidden="true"
+                :style="{ top: `${headerBottom}px` }"
+                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center bg-sand"
+            >
+                <span
+                    class="text-sm font-semibold tracking-wider text-ink-muted uppercase"
+                >
+                    {{ currentDateLabel }}
+                </span>
+            </div>
         </template>
 
-        <div class="mt-40 pb-24">
+        <div
+            class="relative mt-60 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+        >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
@@ -204,7 +243,7 @@ function iconMaskStyle(url: string) {
                 <p class="relative mt-2 text-center text-sand-600">
                     {{
                         t(
-                            'Add a photo and share it with your family and friends.',
+                            'Add the first photo and let grandparents and family follow along.',
                         )
                     }}
                 </p>

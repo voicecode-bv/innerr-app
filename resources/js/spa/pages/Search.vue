@@ -122,7 +122,9 @@ function iconMaskStyle(url: string) {
             </button>
         </template>
 
-        <div class="mt-14 px-4 pt-4 pb-24">
+        <div
+            class="mt-14 px-4 pt-4 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+        >
             <label class="relative block">
                 <span class="sr-only">{{ t('Search people') }}</span>
                 <span

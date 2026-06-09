@@ -1,13 +1,17 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
+import { useCirclesStore } from '@/spa/stores/circles';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 
 const { t } = useTranslations();
 const router = useRouter();
+const circles = useCirclesStore();
+const processing = ref(false);
 
 function iconMaskStyle(url: string) {
     return {
@@ -25,30 +29,56 @@ function iconMaskStyle(url: string) {
 const steps = [
     {
         icon: userIcon,
-        title: t('Gather your circles'),
+        title: t('Build your family circle'),
         description: t(
-            'Create private circles for family and friends. Only people you invite can see what you share.',
+            'Add the people you trust, like grandparents and godparents. Only people you invite can see your child.',
         ),
     },
     {
         icon: cameraIcon,
-        title: t('Share your moments'),
+        title: t("Share your child's moments"),
         description: t(
-            'Post photos and videos to the circles that matter. No public feed, no strangers.',
+            'Post photos and videos of your little one. No public feed, no strangers.',
         ),
     },
     {
         icon: heartIcon,
-        title: t('Stay close'),
+        title: t('Keep family close'),
         description: t(
-            'React with hearts, leave comments, and keep in touch. Calmly, privately, together.',
+            'Let faraway family watch your child grow up. Calmly, privately, together.',
         ),
     },
 ];
 
-function continueOnboarding(): void {
+// De "Familie"-kring wordt bij registratie al door de API aangemaakt, dus we
+// laden de kringen en springen direct naar de rechten-stap van die kring.
+// Lukt het laden niet (of bestaat er onverhoopt geen kring), dan slaan we de
+// kring-stappen over richting notificaties.
+async function continueOnboarding(): Promise<void> {
+    if (processing.value) {
+        return;
+    }
+
     trackOnboardingStep('intro');
-    router.push({ name: 'spa.onboarding.birthdate' });
+    processing.value = true;
+
+    try {
+        const items = await circles.refresh();
+        const familyCircle = items[0];
+
+        if (familyCircle) {
+            await router.push({
+                name: 'spa.onboarding.circle-permissions',
+                params: { circle: familyCircle.id },
+            });
+        } else {
+            await router.push({ name: 'spa.onboarding.notifications' });
+        }
+    } catch {
+        await router.push({ name: 'spa.onboarding.notifications' });
+    } finally {
+        processing.value = false;
+    }
 }
 </script>
 
@@ -71,7 +101,11 @@ function continueOnboarding(): void {
                     {{ t('Welcome to innerr') }}
                 </h1>
                 <p class="mt-3 text-ink-muted">
-                    {{ t('Three simple steps and you are ready to share.') }}
+                    {{
+                        t(
+                            'A private album for your family, in three simple steps.',
+                        )
+                    }}
                 </p>
             </div>
 
@@ -111,10 +145,11 @@ function continueOnboarding(): void {
 
         <div class="relative pt-2 pb-8">
             <button
-                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover"
+                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:opacity-40"
+                :disabled="processing"
                 @click="continueOnboarding"
             >
-                {{ t('Continue') }}
+                {{ processing ? t('Loading...') : t('Continue') }}
             </button>
         </div>
     </div>

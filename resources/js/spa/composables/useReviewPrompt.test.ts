@@ -55,7 +55,10 @@ describe('maybeRequestReview', () => {
 
         await maybeRequestReview('me');
 
-        expect(bridgeCall).toHaveBeenCalledWith('InAppReviews.RequestReview', {});
+        expect(bridgeCall).toHaveBeenCalledWith(
+            'InAppReviews.RequestReview',
+            {},
+        );
     });
 
     it('requests when likes reach 5', async () => {

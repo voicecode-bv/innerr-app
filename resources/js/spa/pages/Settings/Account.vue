@@ -118,7 +118,7 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
         </template>
 
         <div
-            class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
+            class="relative mt-10 min-h-full pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
         >
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <SurfaceCard class="reveal-item">

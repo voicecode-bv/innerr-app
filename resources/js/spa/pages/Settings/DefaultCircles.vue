@@ -105,7 +105,7 @@ async function toggleCircle(circleId: string): Promise<void> {
         </template>
 
         <div
-            class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
+            class="relative mt-10 min-h-full pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
         >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"

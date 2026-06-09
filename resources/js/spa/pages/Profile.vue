@@ -283,7 +283,11 @@ function iconMaskStyle(url: string) {
 <template>
     <AppLayout ref="layout" :title="t('Profile')">
         <template #title>
-            <button type="button" class="max-w-full truncate p-0" @click="handleTitleTap">
+            <button
+                type="button"
+                class="max-w-full truncate p-0"
+                @click="handleTitleTap"
+            >
                 {{ t('Profile') }}
             </button>
         </template>
@@ -322,7 +326,9 @@ function iconMaskStyle(url: string) {
             </RouterLink>
         </template>
 
-        <div class="mt-10 pb-24">
+        <div
+            class="mt-10 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+        >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
@@ -405,7 +411,7 @@ function iconMaskStyle(url: string) {
 
                     <div
                         v-if="isOwnProfile"
-                        class="mt-4 -mx-4 flex items-center border-y border-dark-sand px-4 py-3"
+                        class="-mx-4 mt-4 flex items-center border-y border-dark-sand px-4 py-3"
                     >
                         <RouterLink
                             :to="{ name: 'spa.settings.edit-profile' }"

@@ -1,4 +1,3 @@
-import { Edge } from '@nativephp/mobile';
 import {
     createRouter,
     createWebHistory,
@@ -6,7 +5,6 @@ import {
 } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { usePlatform } from '@/spa/composables/usePlatform';
-import { api } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useFeatureTourStore } from '@/spa/stores/featureTour';
 
@@ -102,18 +100,6 @@ const routes: RouteRecordRaw[] = [
         path: '/onboarding/intro',
         name: 'spa.onboarding.intro',
         component: () => import('@/spa/pages/Onboarding/Intro.vue'),
-        meta: { auth: true },
-    },
-    {
-        path: '/onboarding/birthdate',
-        name: 'spa.onboarding.birthdate',
-        component: () => import('@/spa/pages/Onboarding/BirthDate.vue'),
-        meta: { auth: true },
-    },
-    {
-        path: '/onboarding/first-circle',
-        name: 'spa.onboarding.first-circle',
-        component: () => import('@/spa/pages/Onboarding/FirstCircle.vue'),
         meta: { auth: true },
     },
     {
@@ -234,6 +220,14 @@ const routes: RouteRecordRaw[] = [
         path: '/profiles/:username',
         name: 'spa.profiles.show',
         component: () => import('@/spa/pages/Profile.vue'),
+        meta: { auth: true, onboarded: true },
+    },
+
+    // Timeline of a tagged person (e.g. a child), sorted by taken_at
+    {
+        path: '/timeline/:person',
+        name: 'spa.timeline',
+        component: () => import('@/spa/pages/Timeline.vue'),
         meta: { auth: true, onboarded: true },
     },
 
@@ -429,31 +423,4 @@ router.beforeEach(async (to) => {
             return { name: 'spa.settings' };
         }
     }
-});
-
-router.afterEach((to) => {
-    const auth = useAuthStore();
-
-    if (!auth.user) {
-        return;
-    }
-
-    if (to.meta.hideEdgeBar) {
-        // Routes die de native bottom-nav verbergen (bv. de feed-filter flow):
-        // sla de active-tab POST over die hem juist zou herstellen, en wis hem
-        // synchroon zodat hij niet kort oplicht tijdens het navigeren tussen
-        // stappen. clearSync is een no-op op non-native clients.
-        try {
-            Edge.clearSync();
-        } catch {
-            // Niet-native context (browser preview): geen edge-bar om te wissen.
-        }
-
-        return;
-    }
-
-    api.post('/api/spa/edge/active-tab', { path: to.path }).catch(() => {
-        // Fire-and-forget; native bottom-nav blijft zoals het was bij netwerkfouten.
-        // Edge::set() is een no-op op non-native clients dus altijd veilig om aan te roepen.
-    });
 });

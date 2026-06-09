@@ -2,8 +2,6 @@ import { externalApi } from '@/spa/http/externalApi';
 
 export type OnboardingStep =
     | 'intro'
-    | 'birthdate'
-    | 'first_circle'
     | 'circle_permissions'
     | 'add_children'
     | 'invite_members'

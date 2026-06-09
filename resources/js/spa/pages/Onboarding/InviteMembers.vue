@@ -44,7 +44,7 @@ onMounted(async () => {
         );
         circle.value = { id: data.data.id, name: data.data.name };
     } catch {
-        router.push({ name: 'spa.onboarding.first-circle' });
+        router.push({ name: 'spa.onboarding.notifications' });
     }
 });
 

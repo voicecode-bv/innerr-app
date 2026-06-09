@@ -28,6 +28,11 @@
     --font-sans: 'DM Sans';
     --font-display: 'Fraunces';
 
+    /* Height of the custom SPA bottom navigation bar (excluding the safe-area
+       inset). Pages that scroll under the bar pad their content with
+       calc(var(--bottom-nav-height) + var(--inset-bottom)). */
+    --bottom-nav-height: 4.5rem;
+
     /* ──────────────────────────────────────────────────────────
        Brand palette (May 2026) — synced with innerr-website
        Sand, Green, Blue, Yellow, Orange — five-color system

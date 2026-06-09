@@ -230,7 +230,7 @@ function ageAt(
 
         <div
             v-else-if="post && hasAnyDetails"
-            class="space-y-5 px-4 pt-4 pb-24"
+            class="space-y-5 px-4 pt-4 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))]"
         >
             <section v-if="(post.circles ?? []).length > 0" class="space-y-3">
                 <h3 class="font-semibold text-brand-blue">

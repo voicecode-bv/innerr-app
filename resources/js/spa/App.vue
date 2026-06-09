@@ -3,8 +3,10 @@ import { computed, ref } from 'vue';
 import { RouterView, useRoute, useRouter } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { usePushNotifications } from '@/composables/usePushNotifications';
+import BottomNav from '@/spa/components/BottomNav.vue';
 import FeatureTourMount from '@/spa/components/FeatureTourMount.vue';
 import ReconnectOverlay from '@/spa/components/ReconnectOverlay.vue';
+import { bottomNavVisibleFor } from '@/spa/composables/useBottomNav';
 import { useAuthStore } from '@/spa/stores/auth';
 
 useNetworkStatus();
@@ -15,13 +17,14 @@ const router = useRouter();
 const auth = useAuthStore();
 const isGuestRoute = computed(() => route.meta.guest === true);
 
+// The custom bottom nav lives at the root so it persists across route
+// transitions instead of remounting (and flickering) per page.
+const showBottomNav = computed(() => bottomNavVisibleFor(route, auth.user));
+
 // Volgorde van de onboarding-stappen, gebruikt om de slide-richting te bepalen:
-// naar een latere stap schuift van rechts in, terug van links. De first-circle
-// → notifications "skip" telt als vooruit omdat notifications later staat.
+// naar een latere stap schuift van rechts in, terug van links.
 const ONBOARDING_ORDER = [
     'spa.onboarding.intro',
-    'spa.onboarding.birthdate',
-    'spa.onboarding.first-circle',
     'spa.onboarding.circle-permissions',
     'spa.onboarding.invite-members',
     'spa.onboarding.notifications',
@@ -108,6 +111,8 @@ const showFeatureTour = computed(
             </Transition>
         </RouterView>
     </div>
+
+    <BottomNav v-if="showBottomNav" />
 
     <FeatureTourMount v-if="showFeatureTour" />
 

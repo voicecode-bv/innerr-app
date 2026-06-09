@@ -212,6 +212,8 @@ onUnmounted(() => {
                 <PostTile
                     v-for="post in column"
                     :key="post.id"
+                    :data-created-at="post.created_at"
+                    :data-taken-at="post.taken_at ?? undefined"
                     :post="post"
                     :resolve-poster="resolvePoster"
                     :selection-mode="selectionActive"

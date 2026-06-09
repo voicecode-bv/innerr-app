@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
@@ -9,6 +9,8 @@ import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard from '@/spa/components/PostCard.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
+import { useChildFeedQuery } from '@/spa/composables/useChildFeedQuery';
+import { useFeedDateBar } from '@/spa/composables/useFeedDateBar';
 import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
 import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
@@ -17,6 +19,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useChildFilterStore } from '@/spa/stores/childFilter';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
@@ -26,7 +29,9 @@ import starIcon from '../../../svg/doodle-icons/star.svg';
 const { t } = useTranslations();
 const circlesStore = useCirclesStore();
 const feedCache = useFeedCacheStore();
+const childFilter = useChildFilterStore();
 const notificationsStore = useNotificationsStore();
+const { childFeedQuery } = useChildFeedQuery();
 const FEED_KEY = 'home';
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
@@ -56,7 +61,7 @@ const cached = feedCache.get<PostData>(FEED_KEY);
 async function fetchFeed(page: number): Promise<PaginatedResponse<PostData>> {
     const existingBeforeFetch = feedCache.get<PostData>(FEED_KEY)?.items ?? [];
     const response = await externalApi.get<PaginatedResponse<PostData>>(
-        `/feed?page=${page}`,
+        `/feed?${await childFeedQuery(page)}`,
     );
 
     if (page === 1) {
@@ -112,11 +117,27 @@ const feed = useInfiniteScroll<PostData>(fetchFeed, sentinelRef, {
     initialLastPage: cached?.lastPage,
 });
 
+// Sticky date bar: shows the month + year of the timeline at the current scroll
+// position, pinned just below the dynamic-height header.
+const { dateBarRef, currentDateLabel, headerBottom, recompute } =
+    useFeedDateBar(containerRef, () => feed.items.length);
+
 // Zolang er posts in de feed staan met media_status='processing' (typisch een
 // vers ge-uploade video die nog getranscodeerd wordt), refreshen we de feed
 // elke 5s. Zodra de server status 'ready' meldt is de poll uitgeschakeld en
 // switcht de PostCard van spinner+poster naar de echte VideoPlayer.
 useProcessingPoll(feed.items, () => feed.softRefresh());
+
+// Re-fetch when the child filter changes (shared with the grid view), then
+// refresh the date bar.
+watch(
+    () => childFilter.selectedIds,
+    async () => {
+        feedCache.invalidate(FEED_KEY);
+        await feed.reset();
+        recompute();
+    },
+);
 
 onMounted(() => {
     // Cache toonbaar maar verlopen → fetch op de achtergrond zonder lege flits.
@@ -231,9 +252,27 @@ function iconMaskStyle(url: string) {
     <AppLayout ref="layout" :show-header="false">
         <template #above>
             <FeedHeader layout="list" />
+            <!-- Sticky date bar pinned just below the fixed header (its bottom
+                 sits at inset-top + the feed's mt-60). Shows the month + year of
+                 the timeline at the current scroll position. -->
+            <div
+                v-if="feed.items.length > 0"
+                ref="dateBarRef"
+                aria-hidden="true"
+                :style="{ top: `${headerBottom}px` }"
+                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center bg-sand"
+            >
+                <span
+                    class="text-sm font-semibold tracking-wider text-ink-muted uppercase"
+                >
+                    {{ currentDateLabel }}
+                </span>
+            </div>
         </template>
 
-        <div class="mt-38 pb-24">
+        <div
+            class="relative mt-60 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+        >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
@@ -265,6 +304,8 @@ function iconMaskStyle(url: string) {
                 :key="post.id"
                 v-reveal-on-scroll
                 class="reveal-on-scroll"
+                :data-created-at="post.created_at"
+                :data-taken-at="post.taken_at ?? undefined"
                 :post="post"
                 @open-comments="openCommentsForPost"
                 @open-likes="openLikesForPost"
@@ -334,7 +375,7 @@ function iconMaskStyle(url: string) {
                 <p class="relative mt-2 text-center text-sand-600">
                     {{
                         t(
-                            'Add a photo and share it with your family and friends.',
+                            'Add the first photo and let grandparents and family follow along.',
                         )
                     }}
                 </p>

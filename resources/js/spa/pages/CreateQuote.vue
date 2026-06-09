@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Dialog, Edge } from '@nativephp/mobile';
+import { Dialog } from '@nativephp/mobile';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
@@ -10,7 +10,7 @@ import { uploadInChunks } from '@/spa/composables/useChunkedUpload';
 import { QUOTE_GRADIENTS, renderQuote } from '@/spa/composables/useQuoteCanvas';
 import type { QuoteGradient } from '@/spa/composables/useQuoteCanvas';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import { api, ApiError } from '@/spa/http/apiClient';
+import { ApiError } from '@/spa/http/apiClient';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
@@ -304,14 +304,6 @@ watch(currentStep, (step) => {
 });
 
 onMounted(() => {
-    // Hide the native bottom-nav before first paint so it never overlaps the
-    // sticky wizard footer (see CreatePost for the full rationale).
-    try {
-        Edge.clearSync();
-    } catch {
-        // Non-native context (browser preview): nothing to clear.
-    }
-
     loadFormData();
 });
 
@@ -410,10 +402,6 @@ async function submit(): Promise<void> {
     }
 
     router.push({ name: 'spa.home' });
-
-    // Restore the native bottom-nav (cleared in onMounted) before posting, for
-    // the same reason CreatePost does it explicitly here.
-    await api.post('/api/spa/edge/active-tab', { path: '/' }).catch(() => null);
 
     try {
         let realPostId: string | undefined;

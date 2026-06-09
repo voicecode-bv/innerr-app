@@ -191,14 +191,14 @@ function onSheetUpdate(value: boolean): void {
 
         <div
             v-if="isLoading"
-            class="flex items-center justify-center px-4 py-10 pb-24"
+            class="flex items-center justify-center px-4 py-10"
         >
             <LoadingSpinner />
         </div>
 
         <div
             v-else-if="loadError && users.length === 0"
-            class="px-4 py-10 pb-24 text-center"
+            class="px-4 py-10 text-center"
         >
             <p class="text-destructive-ink">{{ loadError }}</p>
             <button class="mt-2 text-ink-muted" @click="loadPage(1)">
@@ -208,14 +208,17 @@ function onSheetUpdate(value: boolean): void {
 
         <div
             v-else-if="hasLoaded && users.length === 0"
-            class="px-4 py-10 pb-24 text-center"
+            class="px-4 py-10 text-center"
         >
             <p class="text-ink-muted">
                 {{ t('No likes yet') }}
             </p>
         </div>
 
-        <div v-else class="pb-24">
+        <div
+            v-else
+            class="pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))]"
+        >
             <template v-for="user in users" :key="user.id">
                 <RouterLink
                     v-if="user.is_visible !== false && user.username"

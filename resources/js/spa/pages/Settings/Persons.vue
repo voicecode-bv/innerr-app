@@ -544,26 +544,14 @@ function iconMaskStyle(url: string) {
         </template>
 
         <div
-            class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
+            class="relative mt-10 min-h-full pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
         >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
             />
 
-            <div class="relative space-y-4 px-4 pt-4 pb-24">
-                <div
-                    class="reveal-item rounded-2xl bg-action p-4 shadow-sm shadow-action/20"
-                >
-                    <p class="leading-relaxed text-brand-sand/90">
-                        {{
-                            t(
-                                "Add people here who don't have an Innerr account so you can still tag them in your photos. Members of your circles are automatically taggable and don't need to be added.",
-                            )
-                        }}
-                    </p>
-                </div>
-
+            <div class="relative space-y-4 px-4 pt-4 pb-6">
                 <ul
                     v-if="isLoading && persons.length === 0"
                     class="reveal-item divide-y divide-sand-100 overflow-hidden rounded-lg bg-surface/70 backdrop-blur-sm"
@@ -731,7 +719,7 @@ function iconMaskStyle(url: string) {
                         />
                         <span
                             v-else
-                            class="flex size-24 items-center justify-center rounded-full bg-brand-blue text-ink"
+                            class="flex size-24 items-center justify-center rounded-full bg-brand-blue text-white"
                             :class="photoUploading ? 'opacity-50' : ''"
                         >
                             <span
@@ -741,11 +729,11 @@ function iconMaskStyle(url: string) {
                             ></span>
                         </span>
                         <span
-                            class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-brand-blue text-ink shadow-md ring-2 ring-white/70"
+                            class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-brand-yellow shadow-md ring-2 ring-white/70"
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-4 bg-ink"
+                                class="inline-block size-4 bg-brand-blue"
                                 :style="iconMaskStyle(cameraIcon)"
                             ></span>
                         </span>

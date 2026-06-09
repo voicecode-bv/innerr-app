@@ -57,11 +57,9 @@ function goBack(): void {
         </template>
 
         <div
-            class="relative mt-10 min-h-full pb-[calc(theme(spacing.48)+env(safe-area-inset-bottom))]"
+            class="relative mt-10 min-h-full pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
         >
-            <div
-                class="relative space-y-4 px-4 pt-4 pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
-            >
+            <div class="relative space-y-4 px-4 pt-4 pb-6">
                 <div
                     data-tour="give.hero"
                     class="reveal-item rounded-lg bg-action p-6 shadow-sm shadow-action/20"

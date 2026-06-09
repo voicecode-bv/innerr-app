@@ -1,179 +1,231 @@
 <script setup lang="ts">
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
-import { computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { RouterLink } from 'vue-router';
-import Button from '@/components/Button.vue';
-import IconTile from '@/components/IconTile.vue';
-import { usePlatform } from '@/spa/composables/usePlatform';
+import { computed } from 'vue';
+import SurfaceCard from '@/components/SurfaceCard.vue';
+import SettingsMenu from '@/spa/components/SettingsMenu.vue';
+import { useFeedLayout } from '@/spa/composables/useFeedLayout';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useAppearanceStore } from '@/spa/stores/appearance';
+import type { AppearanceMode } from '@/spa/stores/appearance';
 import { useAuthStore } from '@/spa/stores/auth';
-import { useFeatureTourStore } from '@/spa/stores/featureTour';
-import bellIcon from '../../../../svg/doodle-icons/bell.svg';
-import circleIcon from '../../../../svg/doodle-icons/circle.svg';
-import cloudIcon from '../../../../svg/doodle-icons/cloud.svg';
-import crownIcon from '../../../../svg/doodle-icons/crown.svg';
-import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
-import headphoneIcon from '../../../../svg/doodle-icons/headphone.svg';
-import lockIcon from '../../../../svg/doodle-icons/lock.svg';
-import questionIcon from '../../../../svg/doodle-icons/question.svg';
-import tagIcon from '../../../../svg/doodle-icons/tag.svg';
-import usersIcon from '../../../../svg/doodle-icons/user.svg';
+import { useI18nStore } from '@/spa/stores/i18n';
+import masonryIcon from '../../../../svg/doodle-icons/feed-masonry.svg';
+import globeIcon from '../../../../svg/doodle-icons/globe.svg';
+import nightIcon from '../../../../svg/doodle-icons/night.svg';
 
 const { t } = useTranslations();
 const auth = useAuthStore();
-const featureTour = useFeatureTourStore();
-const router = useRouter();
-const { isIos, isAndroid } = usePlatform();
+const i18n = useI18nStore();
+const appearance = useAppearanceStore();
+const { layout: feedLayout, setLayout: setFeedLayout } = useFeedLayout();
 
-const menuItems = computed(() => [
-    {
-        routeName: 'spa.settings.default-circles',
-        icon: circleIcon,
-        label: 'Default circles',
-        tone: 'green' as const,
-    },
-    {
-        routeName: 'spa.settings.persons',
-        icon: usersIcon,
-        label: 'Persons',
-        tone: 'yellow' as const,
-    },
-    {
-        routeName: 'spa.settings.tags',
-        icon: tagIcon,
-        label: 'Tags',
-        tone: 'teal' as const,
-    },
-    {
-        routeName: 'spa.settings.notifications',
-        icon: bellIcon,
-        label: 'Push notifications',
-        tone: 'teal' as const,
-    },
-    {
-        routeName: 'spa.settings.give',
-        icon: foldedHandsIcon,
-        label: 'Inner Gives',
-        tone: 'orange' as const,
-    },
-    {
-        routeName: 'spa.settings.storage',
-        icon: cloudIcon,
-        label: 'Storage',
-        tone: 'green' as const,
-    },
-    ...(isIos.value || isAndroid.value
-        ? [
-              {
-                  routeName: 'spa.settings.subscriptions',
-                  icon: crownIcon,
-                  label: 'Subscription',
-                  tone: 'yellow' as const,
-              },
-          ]
-        : []),
-    {
-        routeName: 'spa.settings.account',
-        icon: lockIcon,
-        label: 'Account',
-        tone: 'green' as const,
-    },
-    {
-        routeName: 'spa.settings.support',
-        icon: headphoneIcon,
-        label: 'Support',
-        tone: 'teal' as const,
-    },
-]);
+const currentLocale = computed(() => i18n.locale);
+const currentAppearance = computed(() => appearance.mode);
+const currentFeedLayout = computed(() => feedLayout.value);
 
-function restartTour(): void {
-    featureTour.restart();
-    router.push({ name: 'spa.home' });
+const languageIconStyle = computed(() => ({
+    maskImage: `url(${globeIcon})`,
+    WebkitMaskImage: `url(${globeIcon})`,
+    maskSize: 'contain',
+    WebkitMaskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    WebkitMaskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+}));
+
+const appearanceIconStyle = computed(() => ({
+    maskImage: `url(${nightIcon})`,
+    WebkitMaskImage: `url(${nightIcon})`,
+    maskSize: 'contain',
+    WebkitMaskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    WebkitMaskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+}));
+
+const feedLayoutIconStyle = computed(() => ({
+    maskImage: `url(${masonryIcon})`,
+    WebkitMaskImage: `url(${masonryIcon})`,
+    maskSize: 'contain',
+    WebkitMaskSize: 'contain',
+    maskRepeat: 'no-repeat',
+    WebkitMaskRepeat: 'no-repeat',
+    maskPosition: 'center',
+    WebkitMaskPosition: 'center',
+}));
+
+function setAppearance(mode: AppearanceMode): void {
+    appearance.set(mode);
 }
 
-async function logout(): Promise<void> {
-    await Dialog.alert()
-        .confirm(t('Log out'), t('Are you sure you want to log out?'))
-        .id('logout-confirm');
-}
+async function setLocale(locale: string): Promise<void> {
+    i18n.set(locale);
 
-async function handleButtonPressed(payload: {
-    index: number;
-    label: string;
-    id?: string | null;
-}): Promise<void> {
-    if (payload.id === 'logout-confirm' && payload.index === 1) {
-        await auth.logout();
-        router.push({ name: 'spa.login' });
+    if (auth.user) {
+        auth.user.locale = locale;
+    }
+
+    try {
+        await externalApi.put('/profile', { locale });
+    } catch {
+        // i18n is al lokaal toegepast; volgende bootstrap synct met server.
     }
 }
-
-onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
-onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 </script>
 
 <template>
     <AppLayout :title="t('Settings')">
         <div
-            class="relative mt-10 min-h-full pb-[calc(theme(spacing.40)+env(safe-area-inset-bottom))]"
+            class="relative mt-10 min-h-full pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
         >
             <div class="relative space-y-4 px-4 pt-4 pb-24">
-                <ul class="divide-y divide-sand-100 bg-surface">
-                    <li
-                        v-for="item in menuItems"
-                        :key="item.routeName"
-                        class="reveal-item"
-                    >
-                        <RouterLink
-                            :to="{ name: item.routeName }"
-                            class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-sand-50"
-                        >
-                            <IconTile
-                                :icon="item.icon"
-                                size="xs"
-                                :tone="item.tone"
-                                class="shrink-0"
-                            />
+                <SurfaceCard class="reveal-item">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between gap-3">
                             <span
-                                class="flex-1 text-base leading-snug font-semibold text-ink"
+                                class="flex items-center gap-2 text-ink-muted"
                             >
-                                {{ t(item.label) }}
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-3.5 bg-current"
+                                    :style="languageIconStyle"
+                                ></span>
+                                {{ t('Language') }}
                             </span>
-                        </RouterLink>
-                    </li>
-                    <li class="reveal-item">
-                        <button
-                            type="button"
-                            class="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-sand-50"
-                            @click="restartTour"
-                        >
-                            <IconTile
-                                :icon="questionIcon"
-                                size="xs"
-                                tone="teal"
-                                class="shrink-0"
-                            />
+                            <div
+                                class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5"
+                            >
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentLocale === 'nl'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setLocale('nl')"
+                                >
+                                    NL
+                                </button>
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentLocale === 'en'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setLocale('en')"
+                                >
+                                    EN
+                                </button>
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentLocale === 'fr'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setLocale('fr')"
+                                >
+                                    FR
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3">
                             <span
-                                class="flex-1 text-base leading-snug font-semibold text-ink"
+                                class="flex items-center gap-2 text-ink-muted"
                             >
-                                {{ t('Replay tour') }}
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-3.5 bg-current"
+                                    :style="appearanceIconStyle"
+                                ></span>
+                                {{ t('Appearance') }}
                             </span>
-                        </button>
-                    </li>
-                </ul>
+                            <div
+                                class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5"
+                            >
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentAppearance === 'system'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setAppearance('system')"
+                                >
+                                    {{ t('Auto') }}
+                                </button>
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentAppearance === 'light'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setAppearance('light')"
+                                >
+                                    {{ t('Light') }}
+                                </button>
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentAppearance === 'dark'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setAppearance('dark')"
+                                >
+                                    {{ t('Dark') }}
+                                </button>
+                            </div>
+                        </div>
 
-                <Button variant="danger" size="lg" block @click="logout">
-                    {{ t('Log out') }}
-                </Button>
+                        <div class="flex items-center justify-between gap-3">
+                            <span
+                                class="flex items-center gap-2 text-ink-muted"
+                            >
+                                <span
+                                    aria-hidden="true"
+                                    class="inline-block size-3.5 bg-current"
+                                    :style="feedLayoutIconStyle"
+                                ></span>
+                                {{ t('Feed view') }}
+                            </span>
+                            <div
+                                class="flex items-center gap-1 rounded-full bg-sand-100/70 p-0.5"
+                            >
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentFeedLayout === 'masonry'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setFeedLayout('masonry')"
+                                >
+                                    {{ t('Grid') }}
+                                </button>
+                                <button
+                                    class="rounded-full px-3 py-1 transition"
+                                    :class="
+                                        currentFeedLayout === 'list'
+                                            ? 'bg-surface text-ink shadow-sm'
+                                            : 'text-ink-muted'
+                                    "
+                                    @click="setFeedLayout('list')"
+                                >
+                                    {{ t('Classic') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </SurfaceCard>
 
-                <p
-                    v-if="auth.appVersion"
-                    class="text-center text-xs text-ink/40"
-                >
-                    {{ t('Version :version', { version: auth.appVersion }) }}
-                </p>
+                <SettingsMenu />
             </div>
         </div>
     </AppLayout>

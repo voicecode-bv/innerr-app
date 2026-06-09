@@ -61,10 +61,12 @@ function unlockBodyScroll() {
 // te scrollen dan de inhoud toelaat (iNoBounce-patroon), zodat de bounce
 // niet doorlekt naar de feed.
 let touchStartY = 0;
+let touchStartX = 0;
 
 function onCaptureTouchStart(event: TouchEvent): void {
     if (event.touches.length > 0) {
         touchStartY = event.touches[0].clientY;
+        touchStartX = event.touches[0].clientX;
     }
 }
 
@@ -91,12 +93,52 @@ function findScrollableAncestor(start: HTMLElement | null): HTMLElement | null {
     return null;
 }
 
+// Mirrors findScrollableAncestor for horizontal scrollers (e.g. the CirclePicker
+// row). Without this the capture-phase blocker treats a horizontally-scrollable
+// child as non-scrollable and kills its swipe.
+function findHorizontalScrollableAncestor(
+    start: HTMLElement | null,
+): HTMLElement | null {
+    let node: HTMLElement | null = start;
+
+    while (node && sheetRef.value && sheetRef.value.contains(node)) {
+        const style = window.getComputedStyle(node);
+        const canScrollX =
+            (style.overflowX === 'auto' || style.overflowX === 'scroll') &&
+            node.scrollWidth > node.clientWidth;
+
+        if (canScrollX) {
+            return node;
+        }
+
+        if (node === sheetRef.value) {
+            break;
+        }
+
+        node = node.parentElement;
+    }
+
+    return null;
+}
+
 function blockBackgroundTouchMove(event: TouchEvent): void {
     const target = event.target as HTMLElement | null;
 
     if (!target || !sheetRef.value || !sheetRef.value.contains(target)) {
         event.preventDefault();
 
+        return;
+    }
+
+    const deltaX = event.touches[0].clientX - touchStartX;
+    const deltaY = event.touches[0].clientY - touchStartY;
+
+    // Horizontal-dominant swipe over a horizontally scrollable element
+    // (e.g. the CirclePicker row): let the browser scroll it natively.
+    if (
+        Math.abs(deltaX) > Math.abs(deltaY) &&
+        findHorizontalScrollableAncestor(target)
+    ) {
         return;
     }
 
@@ -110,7 +152,6 @@ function blockBackgroundTouchMove(event: TouchEvent): void {
         return;
     }
 
-    const deltaY = event.touches[0].clientY - touchStartY;
     const atTop = scrollEl.scrollTop <= 0;
     const atBottom =
         scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
@@ -430,7 +471,9 @@ onUnmounted(() => {
                 v-if="$slots.footer"
                 :class="[
                     'shrink-0 border-t border-sand-200 bg-sand',
-                    open && !keyboardOpen ? 'pb-24' : '',
+                    open && !keyboardOpen
+                        ? 'pb-[calc(theme(spacing.3)+env(safe-area-inset-bottom))]'
+                        : '',
                 ]"
             >
                 <slot name="footer" />

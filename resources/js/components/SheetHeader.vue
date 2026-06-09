@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useTranslations } from '@/spa/composables/useTranslations';
+import AppText from './AppText.vue';
 
 defineProps<{
     title: string;
@@ -15,14 +16,14 @@ const { t } = useTranslations();
 
 <template>
     <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-ink">
+        <AppText variant="heading">
             {{ title }}
             <span
                 v-if="typeof count === 'number' && count > 0"
                 class="font-normal text-ink-muted/70"
                 >({{ count }})</span
             >
-        </h2>
+        </AppText>
         <button
             class="text-ink-muted"
             :aria-label="t('Close')"

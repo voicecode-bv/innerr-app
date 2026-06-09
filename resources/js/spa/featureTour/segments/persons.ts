@@ -9,14 +9,6 @@ export function personsSegment(): TourSegment {
         routeName: 'spa.settings.persons',
         steps: [
             {
-                popover: {
-                    title: t('Persons vs. circles'),
-                    description: t(
-                        "Persons are people you tag in your photos, like your kids. They don't need an Innerr account. Circles are who you share posts with.",
-                    ),
-                },
-            },
-            {
                 element: '[data-tour="persons.list"]',
                 popover: {
                     title: t('Your persons'),

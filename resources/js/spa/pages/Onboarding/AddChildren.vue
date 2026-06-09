@@ -67,7 +67,7 @@ onMounted(async () => {
         );
         circle.value = { id: data.data.id, name: data.data.name };
     } catch {
-        router.push({ name: 'spa.onboarding.first-circle' });
+        router.push({ name: 'spa.onboarding.notifications' });
     }
 });
 
@@ -253,7 +253,7 @@ onUnmounted(() => {
                             />
                             <span
                                 v-else
-                                class="flex size-20 items-center justify-center rounded-full bg-brand-blue text-ink"
+                                class="flex size-20 items-center justify-center rounded-full bg-brand-blue text-white"
                                 :class="photoUploading ? 'opacity-50' : ''"
                             >
                                 <span
@@ -263,11 +263,11 @@ onUnmounted(() => {
                                 ></span>
                             </span>
                             <span
-                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-brand-blue text-ink shadow-md ring-2 ring-white/70"
+                                class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-brand-yellow shadow-md ring-2 ring-white/70"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-4 bg-ink"
+                                    class="inline-block size-4 bg-brand-blue"
                                     :style="iconMaskStyle(cameraIcon)"
                                 ></span>
                             </span>

@@ -683,7 +683,9 @@ function maskStyle(icon: string) {
             </div>
         </template>
 
-        <div class="relative mt-10 pb-24">
+        <div
+            class="relative mt-10 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+        >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
