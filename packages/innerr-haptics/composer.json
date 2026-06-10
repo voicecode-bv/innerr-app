@@ -1,0 +1,34 @@
+{
+    "name": "innerr/haptics",
+    "description": "UI haptic feedback for NativePHP Mobile (impact, notification and selection generators instead of the full-device vibrate the core bridge exposes)",
+    "type": "nativephp-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Innerr"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "nativephp/mobile": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Innerr\\Haptics\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Innerr\\Haptics\\HapticsServiceProvider"
+            ],
+            "aliases": {
+                "Haptics": "Innerr\\Haptics\\Facades\\Haptics"
+            }
+        },
+        "nativephp": {
+            "manifest": "nativephp.json"
+        }
+    }
+}

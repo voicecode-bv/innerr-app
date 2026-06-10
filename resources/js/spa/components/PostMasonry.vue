@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Button from '@/components/Button.vue';
 import BatchAssignCircleSheet from '@/spa/components/BatchAssignCircleSheet.vue';
@@ -12,6 +11,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { addPostsToCircles } from '@/spa/services/postCircles';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
+import { Dialog } from '@nativephp/mobile';
 
 const props = withDefaults(
     defineProps<{
@@ -195,7 +195,7 @@ onUnmounted(() => {
                     <div
                         v-for="n in 3"
                         :key="n"
-                        class="animate-pulse rounded-2xl bg-sand"
+                        class="shimmer rounded-2xl"
                         :style="{
                             aspectRatio: n % 2 === 0 ? '3 / 4' : '1 / 1',
                         }"

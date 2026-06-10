@@ -2,12 +2,15 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import { vPinchZoom } from '@/spa/directives/pinchZoom';
+import { prefersReducedMotion } from '@/spa/services/motion';
 
 export interface CarouselItem {
     id: string;
     url: string;
     type: 'image' | 'video';
     thumbnail?: string | null;
+    /** Small thumbnail rendered blurred under the image while it loads. */
+    thumbnailSmall?: string | null;
     alt?: string;
 }
 
@@ -126,6 +129,13 @@ function goToNext(): void {
 let hintFired = false;
 let intersectionObserver: IntersectionObserver | null = null;
 
+// Per-slide image load state driving the shimmer/blur-up placeholder fade.
+const loadedItems = ref<Record<string, boolean>>({});
+
+function markLoaded(id: string): void {
+    loadedItems.value[id] = true;
+}
+
 function easeInOutCubic(t: number): number {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
@@ -152,12 +162,6 @@ function animateScroll(
 
         requestAnimationFrame(step);
     });
-}
-
-function prefersReducedMotion(): boolean {
-    return (
-        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    );
 }
 
 async function runSwipeHint(): Promise<void> {
@@ -267,14 +271,30 @@ onBeforeUnmount(() => {
                     controls
                     crossorigin="anonymous"
                 />
-                <img
-                    v-else
-                    v-pinch-zoom
-                    :src="item.url"
-                    class="size-full object-cover"
-                    :alt="item.alt ?? ''"
-                    :loading="index === 0 ? 'eager' : 'lazy'"
-                />
+                <template v-else>
+                    <div
+                        v-if="!loadedItems[item.id]"
+                        class="absolute inset-0 shimmer"
+                    />
+                    <img
+                        v-if="item.thumbnailSmall && !loadedItems[item.id]"
+                        :src="item.thumbnailSmall"
+                        alt=""
+                        aria-hidden="true"
+                        class="absolute inset-0 size-full scale-105 object-cover blur-md"
+                    />
+                    <img
+                        v-pinch-zoom
+                        :src="item.url"
+                        class="relative size-full object-cover transition-opacity duration-500"
+                        :class="
+                            loadedItems[item.id] ? 'opacity-100' : 'opacity-0'
+                        "
+                        :alt="item.alt ?? ''"
+                        :loading="index === 0 ? 'eager' : 'lazy'"
+                        @load="markLoaded(item.id)"
+                    />
+                </template>
                 <slot name="slide-overlay" :item="item" :index="index" />
             </div>
         </div>

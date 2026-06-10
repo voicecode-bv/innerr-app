@@ -250,12 +250,12 @@ function goBack(): void {
             />
 
             <template v-if="feed.items.length === 0 && feed.loading">
-                <div v-for="n in 3" :key="n" class="animate-pulse">
+                <div v-for="n in 3" :key="n">
                     <div class="flex items-center gap-3 px-4 py-3">
-                        <div class="size-10 rounded-full bg-sand" />
-                        <div class="h-3 w-32 rounded bg-sand" />
+                        <div class="size-10 shimmer rounded-full" />
+                        <div class="h-3 w-32 shimmer rounded" />
                     </div>
-                    <div class="aspect-square w-full bg-sand" />
+                    <div class="aspect-square w-full shimmer" />
                 </div>
             </template>
 

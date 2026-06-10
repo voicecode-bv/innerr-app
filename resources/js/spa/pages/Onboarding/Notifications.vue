@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Events, On, PushNotifications } from '@nativephp/mobile';
 import { onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -7,6 +6,7 @@ import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useFeatureTourStore } from '@/spa/stores/featureTour';
+import { Events, Off, On, PushNotifications } from '@nativephp/mobile';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
 import messageIcon from '../../../../svg/doodle-icons/message.svg';
@@ -63,17 +63,16 @@ async function sendToken(token: string): Promise<void> {
     }
 }
 
-const tokenListenerOff = On(
-    Events.PushNotification.TokenGenerated,
-    async ({ token }: { token: string }) => {
-        await sendToken(token);
-    },
-);
+// On() returns void; detach via Off() with the same callback reference. The
+// previous "call On()'s return value" version never removed the listener.
+function onTokenGenerated({ token }: { token: string }): void {
+    void sendToken(token);
+}
+
+On(Events.PushNotification.TokenGenerated, onTokenGenerated);
 
 onUnmounted(() => {
-    if (typeof tokenListenerOff === 'function') {
-        tokenListenerOff();
-    }
+    Off(Events.PushNotification.TokenGenerated, onTokenGenerated);
 });
 
 async function completeOnboarding(): Promise<void> {

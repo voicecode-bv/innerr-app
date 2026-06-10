@@ -117,21 +117,21 @@ async function toggleCircle(circleId: string): Promise<void> {
                     v-if="!loaded && circles.length === 0"
                     class="reveal-item"
                 >
-                    <div class="animate-pulse">
+                    <div>
                         <div class="flex items-center gap-3">
-                            <div class="size-9 rounded-lg bg-sand-200" />
-                            <div class="h-3 w-40 rounded bg-sand-200" />
+                            <div class="size-9 shimmer rounded-lg" />
+                            <div class="h-3 w-40 shimmer rounded" />
                         </div>
-                        <div class="mt-3 h-2 w-2/3 rounded bg-sand-200" />
+                        <div class="mt-3 h-2 w-2/3 shimmer rounded" />
                         <ul class="mt-3 divide-y divide-sand-100">
                             <li
                                 v-for="n in 4"
                                 :key="n"
                                 class="flex items-center justify-between gap-3 py-3"
                             >
-                                <span class="h-3 w-32 rounded bg-sand-200" />
+                                <span class="h-3 w-32 shimmer rounded" />
                                 <span
-                                    class="h-8 w-14 shrink-0 rounded-full bg-sand-200"
+                                    class="h-8 w-14 shrink-0 shimmer rounded-full"
                                 />
                             </li>
                         </ul>
@@ -165,7 +165,7 @@ async function toggleCircle(circleId: string): Promise<void> {
                                 >{{ circle.name }}</span
                             >
                             <span
-                                class="h-8 w-14 shrink-0 animate-pulse rounded-full bg-sand-200"
+                                class="h-8 w-14 shrink-0 shimmer rounded-full"
                             />
                         </li>
                     </ul>

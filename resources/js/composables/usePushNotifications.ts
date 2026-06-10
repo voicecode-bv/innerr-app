@@ -1,8 +1,8 @@
-import { Events, Off, On, PushNotifications } from '@nativephp/mobile';
 import { onMounted, onUnmounted, watch } from 'vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
+import { Events, Off, On, PushNotifications } from '@nativephp/mobile';
 
 async function resolvePlatform(): Promise<'ios' | 'android' | null> {
     const { isIos, isAndroid, ensureDetected } = usePlatform();

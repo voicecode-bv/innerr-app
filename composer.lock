@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "061264772761e0ca4f547fa05942b78b",
+    "content-hash": "98b5b5191b2dae81a64999aaa7a73312",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1560,6 +1560,51 @@
                 }
             ],
             "time": "2026-05-23T22:00:21+00:00"
+        },
+        {
+            "name": "innerr/haptics",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/innerr-haptics",
+                "reference": "5acd60a1915df1bd6633ed3600f53f526860c336"
+            },
+            "require": {
+                "nativephp/mobile": "^3.0",
+                "php": "^8.2"
+            },
+            "type": "nativephp-plugin",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Innerr\\Haptics\\HapticsServiceProvider"
+                    ],
+                    "aliases": {
+                        "Haptics": "Innerr\\Haptics\\Facades\\Haptics"
+                    }
+                },
+                "nativephp": {
+                    "manifest": "nativephp.json"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Innerr\\Haptics\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Innerr"
+                }
+            ],
+            "description": "UI haptic feedback for NativePHP Mobile (impact, notification and selection generators instead of the full-device vibrate the core bridge exposes)",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "innerr/native-media",

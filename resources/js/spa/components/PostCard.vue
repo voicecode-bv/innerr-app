@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { BridgeCall, Dialog } from '@nativephp/mobile';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
+import AnimatedCount from '@/components/AnimatedCount.vue';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
@@ -10,11 +10,14 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { vPinchZoom } from '@/spa/directives/pinchZoom';
 import { externalApi } from '@/spa/http/externalApi';
+import { haptics } from '@/spa/services/haptics';
+import { openPostWithHeroTransition } from '@/spa/services/postHeroTransition';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useTagsStore } from '@/spa/stores/tags';
+import { BridgeCall, Dialog } from '@nativephp/mobile';
 import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -214,6 +217,7 @@ const carouselItems = computed(() =>
         url: m.url,
         type: m.type,
         thumbnail: m.thumbnail_url ?? null,
+        thumbnailSmall: m.thumbnail_small_url ?? null,
     })),
 );
 
@@ -411,16 +415,31 @@ function openDetails(): void {
         return;
     }
 
-    router.push({
-        name: 'spa.posts.show',
-        params: { post: props.post.id },
-    });
+    void openPostWithHeroTransition(props.post.id, () =>
+        router.push({
+            name: 'spa.posts.show',
+            params: { post: props.post.id },
+        }),
+    );
 }
+
+// Transient flag driving the heart's pop animation; cleared on animationend
+// so a follow-up like can replay it.
+const likePop = ref(false);
+// Large heart that springs in over the media after a double-tap like.
+const showHeartBurst = ref(false);
 
 async function toggleLike(): Promise<void> {
     const wasLiked = isLiked.value;
     isLiked.value = !wasLiked;
     likesCount.value += wasLiked ? -1 : 1;
+
+    if (wasLiked) {
+        haptics.impactLight();
+    } else {
+        haptics.impactMedium();
+        likePop.value = true;
+    }
 
     try {
         if (wasLiked) {
@@ -442,6 +461,53 @@ function openComments(event: Event): void {
     event.stopPropagation();
     emit('openComments', props.post.id);
 }
+
+// Double-tap on the media likes the post (never unlikes, Instagram style).
+// Because a single tap opens the post detail, likeable posts wait one
+// double-tap window before navigating; own posts keep the instant tap.
+const DOUBLE_TAP_MS = 260;
+let tapTimer: number | null = null;
+
+function onMediaTap(): void {
+    if (props.post.user.id === authUserId.value) {
+        openDetails();
+
+        return;
+    }
+
+    if (tapTimer !== null) {
+        window.clearTimeout(tapTimer);
+        tapTimer = null;
+        likeFromDoubleTap();
+
+        return;
+    }
+
+    tapTimer = window.setTimeout(() => {
+        tapTimer = null;
+        openDetails();
+    }, DOUBLE_TAP_MS);
+}
+
+function likeFromDoubleTap(): void {
+    showHeartBurst.value = true;
+
+    if (isLiked.value) {
+        // Already liked: acknowledge the gesture without toggling it off.
+        haptics.impactLight();
+
+        return;
+    }
+
+    void toggleLike();
+}
+
+onUnmounted(() => {
+    if (tapTimer !== null) {
+        window.clearTimeout(tapTimer);
+        tapTimer = null;
+    }
+});
 
 watch(
     () => props.post.comments_count,
@@ -554,7 +620,8 @@ function timeAgo(dateString: string): string {
         <div
             v-if="hasMultipleMedia"
             class="relative mx-3 aspect-square transform-gpu overflow-hidden rounded-2xl bg-sand"
-            @click="openDetails"
+            :data-post-media="post.id"
+            @click="onMediaTap"
         >
             <MediaCarousel
                 :items="carouselItems"
@@ -562,10 +629,22 @@ function timeAgo(dateString: string): string {
                 @update:active-index="activeMediaIndex = $event"
             />
 
+            <div
+                v-if="showHeartBurst"
+                class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+            >
+                <span
+                    aria-hidden="true"
+                    class="heart-burst inline-block size-24 bg-white drop-shadow-lg"
+                    :style="iconMaskStyle(heartFilledIcon)"
+                    @animationend="showHeartBurst = false"
+                ></span>
+            </div>
+
             <button
                 v-if="canDownload"
                 type="button"
-                class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                class="absolute top-3 right-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
                 :aria-label="t('Save to photos')"
                 :disabled="isDownloading"
                 @click.stop="downloadMedia"
@@ -576,54 +655,6 @@ function timeAgo(dateString: string): string {
                     :style="iconMaskStyle(downloadIcon)"
                 ></span>
             </button>
-
-            <div
-                v-if="post.circles && post.circles.length > 0"
-                class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
-            >
-                <RouterLink
-                    :to="{
-                        name: 'spa.circles.show',
-                        params: { circle: post.circles[0].id },
-                    }"
-                    class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
-                    @click.stop
-                >
-                    <img
-                        v-if="post.circles[0].photo"
-                        :src="post.circles[0].photo"
-                        :alt="post.circles[0].name"
-                        class="size-5 rounded-full object-cover"
-                    />
-                    <div
-                        v-else
-                        class="flex size-5 items-center justify-center rounded-full bg-surface/20"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="size-3 text-white"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
-                            />
-                        </svg>
-                    </div>
-                    <span class="max-w-32 truncate text-white">{{
-                        post.circles[0].name
-                    }}</span>
-                </RouterLink>
-                <span
-                    v-if="post.circles.length > 1"
-                    class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
-                    >+{{ post.circles.length - 1 }}</span
-                >
-            </div>
 
             <div
                 class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
@@ -637,16 +668,18 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="
+                            :class="[
                                 isLiked
                                     ? 'bg-brand-orange'
-                                    : 'bg-surface dark:bg-ink'
-                            "
+                                    : 'bg-surface dark:bg-ink',
+                                likePop ? 'like-pop' : '',
+                            ]"
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
                                 )
                             "
+                            @animationend="likePop = false"
                         ></span>
                     </button>
                     <button
@@ -661,11 +694,11 @@ function timeAgo(dateString: string): string {
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
-                    <span
+                    <AnimatedCount
                         v-if="likesCount > 0"
+                        :value="likesCount"
                         class="text-white drop-shadow"
-                        >{{ likesCount }}</span
-                    >
+                    />
                 </div>
                 <button
                     class="pointer-events-auto flex items-center gap-1 text-white drop-shadow"
@@ -676,7 +709,10 @@ function timeAgo(dateString: string): string {
                         class="inline-block size-6 bg-current"
                         :style="iconMaskStyle(messageIcon)"
                     ></span>
-                    <span v-if="commentsCount > 0">{{ commentsCount }}</span>
+                    <AnimatedCount
+                        v-if="commentsCount > 0"
+                        :value="commentsCount"
+                    />
                 </button>
                 <button
                     v-if="isOwner"
@@ -700,15 +736,23 @@ function timeAgo(dateString: string): string {
         <div
             v-else-if="post.media_type === 'image'"
             class="relative mx-3 aspect-square transform-gpu overflow-hidden rounded-2xl bg-sand"
+            :data-post-media="post.id"
         >
-            <button class="block size-full" type="button" @click="openDetails">
+            <button class="block size-full" type="button" @click="onMediaTap">
                 <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
+                <img
+                    v-if="post.thumbnail_small_url && !mediaLoaded"
+                    :src="post.thumbnail_small_url"
+                    alt=""
+                    aria-hidden="true"
+                    class="absolute inset-0 size-full scale-105 object-cover blur-md"
+                />
                 <img
                     v-if="post.media_url"
                     v-pinch-zoom
                     :src="post.media_url"
                     :alt="post.caption ?? t('Photo')"
-                    class="size-full object-cover transition-opacity duration-500"
+                    class="relative size-full object-cover transition-opacity duration-500"
                     :class="mediaLoaded ? 'opacity-100' : 'opacity-0'"
                     loading="lazy"
                     @load="mediaLoaded = true"
@@ -723,10 +767,21 @@ function timeAgo(dateString: string): string {
                     >
                 </div>
             </button>
+            <div
+                v-if="showHeartBurst"
+                class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+            >
+                <span
+                    aria-hidden="true"
+                    class="heart-burst inline-block size-24 bg-white drop-shadow-lg"
+                    :style="iconMaskStyle(heartFilledIcon)"
+                    @animationend="showHeartBurst = false"
+                ></span>
+            </div>
             <button
                 v-if="canDownload"
                 type="button"
-                class="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                class="absolute top-3 right-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
                 :aria-label="t('Save to photos')"
                 :disabled="isDownloading"
                 @click.stop="downloadMedia"
@@ -737,52 +792,6 @@ function timeAgo(dateString: string): string {
                     :style="iconMaskStyle(downloadIcon)"
                 ></span>
             </button>
-            <div
-                v-if="post.circles && post.circles.length > 0"
-                class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
-            >
-                <RouterLink
-                    :to="{
-                        name: 'spa.circles.show',
-                        params: { circle: post.circles[0].id },
-                    }"
-                    class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
-                >
-                    <img
-                        v-if="post.circles[0].photo"
-                        :src="post.circles[0].photo"
-                        :alt="post.circles[0].name"
-                        class="size-5 rounded-full object-cover"
-                    />
-                    <div
-                        v-else
-                        class="flex size-5 items-center justify-center rounded-full bg-surface/20"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="size-3 text-white"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
-                            />
-                        </svg>
-                    </div>
-                    <span class="max-w-32 truncate text-white">{{
-                        post.circles[0].name
-                    }}</span>
-                </RouterLink>
-                <span
-                    v-if="post.circles.length > 1"
-                    class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
-                    >+{{ post.circles.length - 1 }}</span
-                >
-            </div>
             <div
                 class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
             >
@@ -795,16 +804,18 @@ function timeAgo(dateString: string): string {
                         <span
                             aria-hidden="true"
                             class="inline-block size-6 drop-shadow"
-                            :class="
+                            :class="[
                                 isLiked
                                     ? 'bg-brand-orange'
-                                    : 'bg-surface dark:bg-ink'
-                            "
+                                    : 'bg-surface dark:bg-ink',
+                                likePop ? 'like-pop' : '',
+                            ]"
                             :style="
                                 iconMaskStyle(
                                     isLiked ? heartFilledIcon : heartIcon,
                                 )
                             "
+                            @animationend="likePop = false"
                         ></span>
                     </button>
                     <button
@@ -819,11 +830,11 @@ function timeAgo(dateString: string): string {
                             :style="iconMaskStyle(heartIcon)"
                         ></span>
                     </button>
-                    <span
+                    <AnimatedCount
                         v-if="likesCount > 0"
+                        :value="likesCount"
                         class="text-white drop-shadow"
-                        >{{ likesCount }}</span
-                    >
+                    />
                 </div>
                 <button
                     class="flex items-center gap-1 text-white drop-shadow"
@@ -834,7 +845,10 @@ function timeAgo(dateString: string): string {
                         class="inline-block size-6 bg-current"
                         :style="iconMaskStyle(messageIcon)"
                     ></span>
-                    <span v-if="commentsCount > 0">{{ commentsCount }}</span>
+                    <AnimatedCount
+                        v-if="commentsCount > 0"
+                        :value="commentsCount"
+                    />
                 </button>
                 <button
                     v-if="isOwner"
@@ -862,8 +876,20 @@ function timeAgo(dateString: string): string {
                         ? 'fixed inset-0 z-9999 flex items-center justify-center bg-black'
                         : 'relative mx-3 aspect-square transform-gpu overflow-hidden rounded-2xl bg-sand',
                 ]"
-                @click="openDetails"
+                :data-post-media="isFullscreen ? undefined : post.id"
+                @click="onMediaTap"
             >
+                <div
+                    v-if="showHeartBurst && !isFullscreen"
+                    class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="heart-burst inline-block size-24 bg-white drop-shadow-lg"
+                        :style="iconMaskStyle(heartFilledIcon)"
+                        @animationend="showHeartBurst = false"
+                    ></span>
+                </div>
                 <div
                     v-if="
                         post.media_status === 'ready' &&
@@ -895,10 +921,10 @@ function timeAgo(dateString: string): string {
                 <div
                     v-if="post.media_status === 'ready'"
                     :class="[
-                        'absolute z-20 flex gap-2',
+                        'absolute right-3 z-20 flex gap-2',
                         isFullscreen
-                            ? 'top-[calc(env(safe-area-inset-top)+1.5rem)] right-3'
-                            : 'top-3 left-3',
+                            ? 'top-[calc(env(safe-area-inset-top)+1.5rem)]'
+                            : 'top-3',
                     ]"
                 >
                     <button
@@ -1035,56 +1061,6 @@ function timeAgo(dateString: string): string {
                 </template>
 
                 <div
-                    v-if="
-                        !isFullscreen && post.circles && post.circles.length > 0
-                    "
-                    class="absolute top-3 right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
-                    @click.stop
-                >
-                    <RouterLink
-                        :to="{
-                            name: 'spa.circles.show',
-                            params: { circle: post.circles[0].id },
-                        }"
-                        class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
-                    >
-                        <img
-                            v-if="post.circles[0].photo"
-                            :src="post.circles[0].photo"
-                            :alt="post.circles[0].name"
-                            class="size-5 rounded-full object-cover"
-                        />
-                        <div
-                            v-else
-                            class="flex size-5 items-center justify-center rounded-full bg-surface/20"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.5"
-                                stroke="currentColor"
-                                class="size-3 text-white"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
-                                />
-                            </svg>
-                        </div>
-                        <span class="text-white">{{
-                            post.circles[0].name
-                        }}</span>
-                    </RouterLink>
-                    <span
-                        v-if="post.circles.length > 1"
-                        class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
-                        >+{{ post.circles.length - 1 }}</span
-                    >
-                </div>
-
-                <div
                     v-if="!isFullscreen"
                     class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
                     @click.stop
@@ -1098,16 +1074,18 @@ function timeAgo(dateString: string): string {
                             <span
                                 aria-hidden="true"
                                 class="inline-block size-6 drop-shadow"
-                                :class="
+                                :class="[
                                     isLiked
                                         ? 'bg-brand-orange'
-                                        : 'bg-surface dark:bg-ink'
-                                "
+                                        : 'bg-surface dark:bg-ink',
+                                    likePop ? 'like-pop' : '',
+                                ]"
                                 :style="
                                     iconMaskStyle(
                                         isLiked ? heartFilledIcon : heartIcon,
                                     )
                                 "
+                                @animationend="likePop = false"
                             ></span>
                         </button>
                         <button
@@ -1122,11 +1100,11 @@ function timeAgo(dateString: string): string {
                                 :style="iconMaskStyle(heartIcon)"
                             ></span>
                         </button>
-                        <span
+                        <AnimatedCount
                             v-if="likesCount > 0"
+                            :value="likesCount"
                             class="text-white drop-shadow"
-                            >{{ likesCount }}</span
-                        >
+                        />
                     </div>
                     <button
                         class="flex items-center gap-1 text-white drop-shadow"
@@ -1137,9 +1115,10 @@ function timeAgo(dateString: string): string {
                             class="inline-block size-6 bg-current"
                             :style="iconMaskStyle(messageIcon)"
                         ></span>
-                        <span v-if="commentsCount > 0">{{
-                            commentsCount
-                        }}</span>
+                        <AnimatedCount
+                            v-if="commentsCount > 0"
+                            :value="commentsCount"
+                        />
                     </button>
                     <button
                         v-if="isOwner"

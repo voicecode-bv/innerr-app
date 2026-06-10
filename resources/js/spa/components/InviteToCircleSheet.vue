@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog } from '@nativephp/mobile';
 import { computed, ref, watch } from 'vue';
 import BottomSheet from '@/components/BottomSheet.vue';
 import IconTile from '@/components/IconTile.vue';
@@ -9,6 +8,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import type { Circle, CirclePendingInvitation } from '@/spa/stores/circles';
+import { Dialog } from '@nativephp/mobile';
 import usersIcon from '../../../svg/doodle-icons/user.svg';
 
 type RowState =

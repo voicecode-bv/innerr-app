@@ -1,5 +1,5 @@
-import { Network } from '@nativephp/mobile';
 import { onMounted, onUnmounted, ref } from 'vue';
+import { Network } from '@nativephp/mobile';
 
 const POLL_INTERVAL_MS = 15_000;
 

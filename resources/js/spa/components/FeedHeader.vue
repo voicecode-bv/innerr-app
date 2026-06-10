@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
+import AnimatedCount from '@/components/AnimatedCount.vue';
 import AppPreferences from '@/spa/components/AppPreferences.vue';
 import ChildTimelineMenu from '@/spa/components/ChildTimelineMenu.vue';
 import Drawer from '@/spa/components/Drawer.vue';
@@ -19,6 +20,8 @@ import innerrLogo from '../../../svg/innerr-logo-on-sand.svg';
 
 const props = defineProps<{
     layout: 'list' | 'grid';
+    /** Translucent blur treatment while content is scrolled underneath. */
+    elevated?: boolean;
 }>();
 
 const { t } = useTranslations();
@@ -73,7 +76,8 @@ function iconMaskStyle(url: string) {
 <template>
     <div
         data-feed-header
-        class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-dark-sand bg-sand pt-[var(--inset-top)]"
+        class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-dark-sand pt-[var(--inset-top)] transition-[background-color] duration-300 motion-reduce:transition-none"
+        :class="elevated ? 'bg-sand/85 backdrop-blur-md' : 'bg-sand'"
     >
         <div class="px-4 pt-3 pb-3">
             <div class="flex items-center gap-3">
@@ -147,7 +151,7 @@ function iconMaskStyle(url: string) {
                             v-if="unreadNotifications > 0"
                             class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white"
                         >
-                            {{ unreadBadge }}
+                            <AnimatedCount :value="unreadBadge" />
                         </span>
                     </RouterLink>
                 </div>

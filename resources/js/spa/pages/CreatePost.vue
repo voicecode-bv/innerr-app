@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     defineAsyncComponent,
@@ -33,6 +32,7 @@ const LocationPickerSheet = defineAsyncComponent(
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { haptics } from '@/spa/services/haptics';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
@@ -41,6 +41,7 @@ import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { useTagsStore } from '@/spa/stores/tags';
 import { NativeMedia } from '@innerr/native-media';
+import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import cropIcon from '../../../svg/doodle-icons/crop.svg';
 import messageIcon from '../../../svg/doodle-icons/message.svg';
@@ -980,6 +981,8 @@ async function submit(): Promise<void> {
                 realPostId = response?.data?.id;
             },
         });
+
+        haptics.notifySuccess();
 
         // Vraag, zodra de gebruiker meer dan 5 posts heeft geplaatst, eenmalig
         // om een app-review. Leest de echte posts_count van het profiel; de

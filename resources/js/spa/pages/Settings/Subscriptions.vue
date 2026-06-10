@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Browser } from '@nativephp/mobile';
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
@@ -14,6 +13,7 @@ import { ApiError, externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
+import { Browser } from '@nativephp/mobile';
 import {
     products as fetchProducts,
     purchase as buyProduct,
@@ -766,12 +766,8 @@ onMounted(async () => {
 
                 <template v-else>
                     <div v-if="isLoading" class="space-y-4">
-                        <div
-                            class="h-48 animate-pulse rounded-2xl bg-sand-100"
-                        />
-                        <div
-                            class="h-48 animate-pulse rounded-2xl bg-sand-100"
-                        />
+                        <div class="h-48 shimmer rounded-2xl" />
+                        <div class="h-48 shimmer rounded-2xl" />
                     </div>
 
                     <div

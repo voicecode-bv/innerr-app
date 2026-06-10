@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Browser } from '@nativephp/mobile';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
 import IconTile from '@/components/IconTile.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { Browser } from '@nativephp/mobile';
 import foldedHandsIcon from '../../../../svg/doodle-icons/folded-hands.svg';
 import heartFilledIcon from '../../../../svg/doodle-icons/heart-filled.svg';
 

@@ -8,11 +8,13 @@ import {
     ref,
     useSlots,
 } from 'vue';
+import { useScrollHeader } from '@/spa/composables/useScrollHeader';
 import {
     recallScroll,
     rememberScroll,
 } from '@/spa/composables/useScrollMemory';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { prefersReducedMotion } from '@/spa/services/motion';
 
 const props = withDefaults(
     defineProps<{
@@ -35,6 +37,11 @@ const slots = useSlots();
 const hasHeaderLeft = computed(() => !!slots['header-left']);
 
 const mainRef = ref<HTMLElement | null>(null);
+
+// Switch the header to a translucent blur once content is scrolled
+// underneath it. Exposed to the `above` slot so page-specific headers
+// (FeedHeader) follow along.
+const { elevated: headerElevated } = useScrollHeader(mainRef);
 
 // Bij elke nieuwe mount: zet de scroll-positie (hersteld of 0) én forceer een
 // paint-pass. vue-router's `scrollBehavior` werkt niet voor onze custom
@@ -67,7 +74,10 @@ function resetScroll(): void {
 // Tik op de bottom-nav-tab waar je al bent (zie de visit-shim in main.ts):
 // scroll de huidige pagina vloeiend naar boven.
 function scrollToTop(): void {
-    mainRef.value?.scrollTo({ top: 0, behavior: 'smooth' });
+    mainRef.value?.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
 }
 
 onMounted(async () => {
@@ -109,7 +119,8 @@ defineExpose({ mainRef });
     <div class="flex h-dvh flex-col">
         <header
             v-if="props.showHeader"
-            class="fixed right-[var(--inset-right,0)] left-[var(--inset-left,0)] z-100 flex items-center justify-between border-b border-sand-200 bg-sand px-4 py-3 pt-[var(--inset-top,0)]"
+            class="fixed right-[var(--inset-right,0)] left-[var(--inset-left,0)] z-100 flex items-center justify-between border-b border-sand-200 px-4 py-3 pt-[var(--inset-top,0)] transition-[background-color] duration-300 motion-reduce:transition-none"
+            :class="headerElevated ? 'bg-sand/85 backdrop-blur-md' : 'bg-sand'"
         >
             <div class="flex w-16 items-center">
                 <slot name="header-left">
@@ -126,7 +137,7 @@ defineExpose({ mainRef });
             </div>
         </header>
 
-        <slot name="above" />
+        <slot name="above" :header-elevated="headerElevated" />
 
         <main
             ref="mainRef"

@@ -218,12 +218,12 @@ function ageAt(
         </template>
 
         <div v-if="isLoading && !post" class="space-y-4 px-4 py-6">
-            <div class="h-4 w-24 animate-pulse rounded bg-sand-200" />
+            <div class="h-4 w-24 shimmer rounded" />
             <div class="flex flex-wrap gap-2">
                 <div
                     v-for="n in 3"
                     :key="n"
-                    class="h-9 w-28 animate-pulse rounded-full bg-sand-200"
+                    class="h-9 w-28 shimmer rounded-full"
                 />
             </div>
         </div>

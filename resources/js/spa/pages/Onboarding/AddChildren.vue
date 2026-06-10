@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Camera, Events, Off, On } from '@nativephp/mobile';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
+import { Camera, Events, Off, On } from '@nativephp/mobile';
 import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';

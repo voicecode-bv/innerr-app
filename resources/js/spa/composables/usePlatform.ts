@@ -1,5 +1,5 @@
-import { System } from '@nativephp/mobile';
 import { ref } from 'vue';
+import { System } from '@nativephp/mobile';
 
 const isIos = ref(false);
 const isAndroid = ref(false);

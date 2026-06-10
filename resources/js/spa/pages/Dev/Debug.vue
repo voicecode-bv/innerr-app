@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { BridgeCall } from '@nativephp/mobile';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
@@ -10,6 +9,7 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { sendSupportRequest } from '@/spa/services/support';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useNotificationsStore } from '@/spa/stores/notifications';
+import { BridgeCall } from '@nativephp/mobile';
 import { setBadge } from '@voicecode-bv/nativephp-badge';
 
 // Debug page for exercising native bridge behaviour (app icon badge, background

@@ -1,6 +1,6 @@
-import { BridgeCall } from '@nativephp/mobile';
 import { isNativeRuntime } from '@/spa/composables/usePlatform';
 import { externalApi } from '@/spa/http/externalApi';
+import { BridgeCall } from '@nativephp/mobile';
 
 // Drempels waarboven we de gebruiker om een review vragen:
 // - meer dan 5 geplaatste posts (dus vanaf 6), of

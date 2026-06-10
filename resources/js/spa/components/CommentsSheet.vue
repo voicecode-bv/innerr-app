@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     nextTick,
@@ -20,6 +19,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCommentsCacheStore } from '@/spa/stores/commentsCache';
+import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import deleteIcon from '../../../svg/doodle-icons/delete.svg';
 import sendIcon from '../../../svg/doodle-icons/send.svg';
 
@@ -86,6 +86,51 @@ const sentinelRef = useTemplateRef<HTMLDivElement>('sentinel');
 let observer: IntersectionObserver | null = null;
 const seenIds = new Set<string>();
 
+// Staggered reveal window: rows mounting right after the first page renders
+// cascade in; later pagination appends without animation.
+const initialReveal = ref(false);
+let initialRevealTimer: number | null = null;
+
+function startInitialReveal(): void {
+    initialReveal.value = true;
+
+    if (initialRevealTimer !== null) {
+        window.clearTimeout(initialRevealTimer);
+    }
+
+    initialRevealTimer = window.setTimeout(() => {
+        initialReveal.value = false;
+        initialRevealTimer = null;
+    }, 700);
+}
+
+// Cascade over the last (visible, bottom-anchored) rows only: everything
+// before the final eight appears immediately.
+function revealDelayFor(index: number, total: number): string {
+    const fromWindowStart = index - Math.max(0, total - 8);
+
+    return `${Math.max(0, fromWindowStart) * 40}ms`;
+}
+
+// Briefly highlight a freshly submitted comment. Holds the optimistic id and
+// then the server id after reconciliation (the row remounts under its new
+// key, which simply restarts the short fade).
+const highlightedId = ref<string | null>(null);
+let highlightTimer: number | null = null;
+
+function highlightComment(commentId: string): void {
+    highlightedId.value = commentId;
+
+    if (highlightTimer !== null) {
+        window.clearTimeout(highlightTimer);
+    }
+
+    highlightTimer = window.setTimeout(() => {
+        highlightedId.value = null;
+        highlightTimer = null;
+    }, 1600);
+}
+
 // Groepeert opeenvolgende verborgen comments tot één compacte melding,
 // zodat de timeline-volgorde behouden blijft (visible — N verborgen — visible …).
 const renderItems = computed<RenderItem[]>(() => {
@@ -135,6 +180,7 @@ function seedCommentsFromCache(): boolean {
     }
 
     hasLoaded.value = true;
+    startInitialReveal();
 
     return true;
 }
@@ -183,6 +229,7 @@ async function loadPage(page: number): Promise<void> {
                 result.meta.current_page,
                 result.meta.last_page,
             );
+            startInitialReveal();
             scrollToBottom();
         } else {
             const incoming = result.data.filter((c) => {
@@ -375,6 +422,14 @@ onUnmounted(() => {
     Off(Events.Alert.ButtonPressed, handleButtonPressed);
     observer?.disconnect();
     observer = null;
+
+    if (initialRevealTimer !== null) {
+        window.clearTimeout(initialRevealTimer);
+    }
+
+    if (highlightTimer !== null) {
+        window.clearTimeout(highlightTimer);
+    }
 });
 
 async function deleteComment(comment: Comment): Promise<void> {
@@ -473,6 +528,7 @@ async function submitComment(): Promise<void> {
     const optimistic = makeOptimisticComment(value);
     comments.value = [...comments.value, optimistic];
 
+    highlightComment(optimistic.id);
     scrollToComment(optimistic.id);
 
     const submittedBody = body.value;
@@ -491,6 +547,10 @@ async function submitComment(): Promise<void> {
             c.id === optimistic.id ? created : c,
         );
         seenIds.add(created.id);
+
+        if (highlightedId.value === optimistic.id) {
+            highlightComment(created.id);
+        }
 
         commentsCache.invalidate(props.postId);
         emit('commentAdded', created);
@@ -580,7 +640,7 @@ defineExpose({
 
         <div v-else class="space-y-3 px-3 py-3">
             <template
-                v-for="item in renderItems"
+                v-for="(item, index) in renderItems"
                 :key="item.kind === 'hidden' ? item.key : item.comment.id"
             >
                 <HiddenCommentsNotice
@@ -591,6 +651,17 @@ defineExpose({
                     v-else-if="item.comment.user"
                     :data-comment-id="item.comment.id"
                     class="relative overflow-hidden"
+                    :class="initialReveal ? 'reveal-item' : ''"
+                    :style="
+                        initialReveal
+                            ? {
+                                  '--reveal-delay': revealDelayFor(
+                                      index,
+                                      renderItems.length,
+                                  ),
+                              }
+                            : undefined
+                    "
                 >
                     <button
                         v-if="item.comment.user.id === authUserId"
@@ -607,11 +678,14 @@ defineExpose({
                     </button>
                     <div
                         class="bg-sand"
-                        :class="
+                        :class="[
                             touchingId === item.comment.id
                                 ? ''
-                                : 'transition-transform duration-200 ease-out'
-                        "
+                                : 'transition-transform duration-200 ease-out',
+                            highlightedId === item.comment.id
+                                ? 'comment-highlight'
+                                : '',
+                        ]"
                         :style="{ transform: rowTransform(item.comment.id) }"
                         @touchstart.passive="onSwipeStart($event, item.comment)"
                         @touchmove.passive="onSwipeMove"

@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { haptics } from '@/spa/services/haptics';
+import {
+    createVelocityTracker,
+    prefersReducedMotion,
+    settleDurationMs,
+} from '@/spa/services/motion';
 
 const props = defineProps<{
     open: boolean;
@@ -28,6 +34,13 @@ const isDragging = computed(() => dragX.value !== null);
 const EDGE_ZONE = 24;
 // Movement (px) before we commit to a horizontal (drawer) vs vertical (scroll) axis.
 const AXIS_THRESHOLD = 8;
+// Above this horizontal release velocity (px/ms) the flick direction wins from
+// the midpoint rule, so a short sharp swipe still opens/closes the drawer.
+const FLICK_VELOCITY = 0.5;
+
+const velocityTracker = createVelocityTracker();
+// Settle duration scales with release velocity; 300ms for programmatic toggles.
+const settleDuration = ref(300);
 
 let scrollLocked = false;
 let savedBodyOverflow = '';
@@ -80,6 +93,10 @@ function handleKeydown(event: KeyboardEvent): void {
 watch(
     () => props.open,
     (val) => {
+        if (!isDragging.value) {
+            settleDuration.value = prefersReducedMotion() ? 0 : 300;
+        }
+
         if (val) {
             lockScroll();
             document.addEventListener('keydown', handleKeydown);
@@ -125,6 +142,7 @@ function onTouchStart(event: TouchEvent): void {
     startX = touch.clientX;
     startY = touch.clientY;
     axis = null;
+    velocityTracker.start(touch.clientX);
 
     if (!props.open && touch.clientX <= EDGE_ZONE) {
         candidate = 'open';
@@ -174,6 +192,8 @@ function onTouchMove(event: TouchEvent): void {
     const dx = touch.clientX - startX;
     const dy = touch.clientY - startY;
 
+    velocityTracker.move(touch.clientX);
+
     if (axis === null) {
         if (Math.abs(dx) > AXIS_THRESHOLD || Math.abs(dy) > AXIS_THRESHOLD) {
             axis = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
@@ -209,22 +229,34 @@ function onTouchEnd(): void {
 
     const dragging = dragX.value !== null;
     const width = panelWidth();
+    const releaseVelocity = velocityTracker.velocity();
+    // A decisive flick wins from the midpoint rule (right = open, left = close).
     const settleOpen = dragging
-        ? (dragX.value as number) > -width / 2
+        ? Math.abs(releaseVelocity) > FLICK_VELOCITY
+            ? releaseVelocity > 0
+            : (dragX.value as number) > -width / 2
         : props.open;
 
     candidate = null;
     touchId = null;
 
     if (dragging) {
-        endDrag(settleOpen);
+        endDrag(settleOpen, releaseVelocity);
     }
 }
 
-function endDrag(settleOpen: boolean): void {
+function endDrag(settleOpen: boolean, releaseVelocity = 0): void {
     // Animate to the settled edge, then hand control back to the class system.
+    const target = settleOpen ? 0 : -panelWidth();
+    const remaining = Math.abs((dragX.value ?? target) - target);
+
+    settleDuration.value = prefersReducedMotion()
+        ? 0
+        : settleDurationMs(remaining, releaseVelocity);
+
     settling.value = true;
-    dragX.value = settleOpen ? 0 : -panelWidth();
+    dragX.value = target;
+    haptics.impactMedium();
 
     settleTimer = window.setTimeout(() => {
         settling.value = false;
@@ -241,7 +273,7 @@ function endDrag(settleOpen: boolean): void {
         } else {
             unlockScroll();
         }
-    }, 300);
+    }, settleDuration.value);
 }
 
 const overlayProgress = computed(() => {
@@ -306,11 +338,14 @@ onUnmounted(() => {
         <aside
             ref="panelRef"
             :class="[
-                'fixed top-0 bottom-0 left-0 z-9999 flex w-80 max-w-[85%] touch-pan-y flex-col bg-sand shadow-2xl transition-transform duration-300 ease-out',
+                'fixed top-0 bottom-0 left-0 z-9999 flex w-80 max-w-[85%] touch-pan-y flex-col bg-sand shadow-2xl transition-transform ease-spring-soft',
                 'pt-[var(--inset-top)] pb-[var(--inset-bottom)] pl-[var(--inset-left)]',
                 displayOpen ? 'translate-x-0' : '-translate-x-full',
             ]"
-            :style="panelStyle"
+            :style="{
+                transitionDuration: `${settleDuration}ms`,
+                ...panelStyle,
+            }"
             role="dialog"
             aria-modal="true"
         >

@@ -123,7 +123,7 @@ function tileTo(tile: GridTile) {
         <div
             v-for="n in 30"
             :key="n"
-            class="aspect-square animate-pulse rounded-lg bg-sand-100"
+            class="aspect-square shimmer rounded-lg"
         />
     </div>
 
@@ -136,7 +136,7 @@ function tileTo(tile: GridTile) {
         >
             <div
                 v-if="!loadedMedia[tile.src] && tile.mediaType !== 'unknown'"
-                class="absolute inset-0 animate-pulse bg-sand"
+                class="absolute inset-0 shimmer"
             />
             <img
                 v-if="tile.mediaType === 'image' || tile.mediaType === 'video'"

@@ -237,8 +237,8 @@ function iconMaskStyle(url: string) {
 
 <template>
     <AppLayout ref="layout" :show-header="false" scroll-key="spa.home">
-        <template #above>
-            <FeedHeader layout="list" />
+        <template #above="{ headerElevated }">
+            <FeedHeader layout="list" :elevated="headerElevated" />
             <!-- Sticky date bar pinned just below the fixed header (its bottom
                  sits at inset-top + the feed's mt-36). Shows the month + year of
                  the timeline at the current scroll position. -->
@@ -247,7 +247,10 @@ function iconMaskStyle(url: string) {
                 ref="dateBarRef"
                 aria-hidden="true"
                 :style="{ top: `${headerBottom}px` }"
-                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center bg-sand"
+                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center transition-[background-color] duration-300 motion-reduce:transition-none"
+                :class="
+                    headerElevated ? 'bg-sand/85 backdrop-blur-md' : 'bg-sand'
+                "
             >
                 <span
                     class="text-sm font-semibold tracking-wider text-ink-muted uppercase"
@@ -273,15 +276,15 @@ function iconMaskStyle(url: string) {
             />
 
             <template v-if="feed.items.length === 0 && feed.loading">
-                <div v-for="n in 3" :key="n" class="animate-pulse">
+                <div v-for="n in 3" :key="n">
                     <div class="flex items-center gap-3 px-4 py-3">
-                        <div class="size-10 rounded-full bg-sand" />
-                        <div class="h-3 w-32 rounded bg-sand" />
+                        <div class="size-10 shimmer rounded-full" />
+                        <div class="h-3 w-32 shimmer rounded" />
                     </div>
-                    <div class="aspect-square w-full bg-sand" />
+                    <div class="aspect-square w-full shimmer" />
                     <div class="space-y-2 px-4 py-3">
-                        <div class="h-3 w-24 rounded bg-sand" />
-                        <div class="h-3 w-48 rounded bg-sand" />
+                        <div class="h-3 w-24 shimmer rounded" />
+                        <div class="h-3 w-48 shimmer rounded" />
                     </div>
                 </div>
             </template>

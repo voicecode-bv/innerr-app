@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
@@ -8,6 +7,7 @@ import { usePlatform } from '@/spa/composables/usePlatform';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useFeatureTourStore } from '@/spa/stores/featureTour';
+import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
 import circleIcon from '../../../svg/doodle-icons/circle.svg';
 import cloudIcon from '../../../svg/doodle-icons/cloud.svg';

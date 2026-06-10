@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { Browser } from '@nativephp/mobile';
 import { computed } from 'vue';
+import { Browser } from '@nativephp/mobile';
 import googleButtonEn from '../../../svg/google-button-en.png';
 import googleButtonNl from '../../../svg/google-button-nl.png';
 

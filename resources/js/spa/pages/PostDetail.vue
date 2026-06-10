@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { BridgeCall, Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     nextTick,
@@ -10,6 +9,7 @@ import {
     watch,
 } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import AnimatedCount from '@/components/AnimatedCount.vue';
 import Chip from '@/components/Chip.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
@@ -21,6 +21,7 @@ import type {
     PostMediaItem,
 } from '@/spa/components/PostCard.vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
+import { stackedOverlayScaled } from '@/spa/composables/useBackgroundScale';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
@@ -28,6 +29,7 @@ import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { vPinchZoom } from '@/spa/directives/pinchZoom';
 import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
+import { closePostWithHeroTransition } from '@/spa/services/postHeroTransition';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
@@ -35,6 +37,7 @@ import { usePersonsStore } from '@/spa/stores/persons';
 import { usePostCacheStore } from '@/spa/stores/postCache';
 import { useServiceKeysStore } from '@/spa/stores/serviceKeys';
 import { useTagsStore } from '@/spa/stores/tags';
+import { BridgeCall, Dialog, Events, Off, On } from '@nativephp/mobile';
 import calendarIcon from '../../../svg/doodle-icons/calendar.svg';
 import downloadIcon from '../../../svg/doodle-icons/download.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
@@ -599,12 +602,25 @@ async function handleButtonPressed(payload: {
 onMounted(() => On(Events.Alert.ButtonPressed, handleButtonPressed));
 onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 
-function goBack(): void {
-    if (window.history.length > 1) {
+// router.back() resolves via popstate, not a promise; the hero morph needs to
+// know when the route swap is done, so wait for the next afterEach.
+function backAndWait(): Promise<void> {
+    return new Promise((resolve) => {
+        const off = router.afterEach(() => {
+            off();
+            resolve();
+        });
         router.back();
-    } else {
-        router.push({ name: 'spa.home' });
-    }
+    });
+}
+
+function goBack(): void {
+    const navigate =
+        window.history.length > 1
+            ? backAndWait
+            : () => router.push({ name: 'spa.home' });
+
+    void closePostWithHeroTransition(post.value?.id ?? null, navigate);
 }
 
 function iconMaskStyle(url: string) {
@@ -765,7 +781,10 @@ watch(
 <template>
     <div
         ref="scrollRef"
-        class="fixed inset-0 z-120 overflow-y-auto overscroll-contain bg-surface pt-[var(--inset-top,0px)]"
+        class="fixed inset-0 z-120 overflow-y-auto overscroll-contain bg-surface pt-[var(--inset-top,0px)] transition-[scale,filter,border-radius] duration-300 ease-spring-soft"
+        :class="
+            stackedOverlayScaled ? 'scale-[0.96] rounded-2xl brightness-90' : ''
+        "
         style="transform: translate3d(0, 0, 0); will-change: transform"
     >
         <div class="pb-[var(--inset-bottom,0px)]">
@@ -774,21 +793,18 @@ watch(
                 :is-refreshing="isRefreshing"
             />
 
-            <div
-                v-if="isLoading && !post"
-                class="-mt-[var(--inset-top,0px)] animate-pulse"
-            >
-                <div class="aspect-square w-full bg-sand-200" />
+            <div v-if="isLoading && !post" class="-mt-[var(--inset-top,0px)]">
+                <div class="aspect-square w-full shimmer" />
                 <div class="flex items-center gap-3 bg-surface px-4 py-3">
-                    <div class="size-10 rounded-full bg-sand-200" />
+                    <div class="size-10 shimmer rounded-full" />
                     <div class="space-y-2">
-                        <div class="h-3 w-32 rounded bg-sand-200" />
-                        <div class="h-2 w-20 rounded bg-sand-200" />
+                        <div class="h-3 w-32 shimmer rounded" />
+                        <div class="h-2 w-20 shimmer rounded" />
                     </div>
                 </div>
                 <div class="space-y-2 px-4 py-3">
-                    <div class="h-3 w-24 rounded bg-sand-200" />
-                    <div class="h-3 w-48 rounded bg-sand-200" />
+                    <div class="h-3 w-24 shimmer rounded" />
+                    <div class="h-3 w-48 shimmer rounded" />
                 </div>
             </div>
 
@@ -803,6 +819,11 @@ watch(
                             ? 'fixed inset-0 z-50 flex items-center justify-center bg-black'
                             : 'relative aspect-square overflow-hidden bg-sand-100',
                     ]"
+                    :style="
+                        isFullscreen
+                            ? undefined
+                            : { viewTransitionName: 'post-hero' }
+                    "
                 >
                     <!-- Back button overlaid on the media; the overlay has no
                          header so the media sits edge-to-edge at the top. -->
@@ -843,7 +864,7 @@ watch(
                             !mediaLoaded &&
                             !isFullscreen
                         "
-                        class="absolute inset-0 animate-pulse bg-sand-200"
+                        class="absolute inset-0 shimmer"
                     />
                     <img
                         v-if="!hasMultipleMedia && post.media_type === 'image'"
@@ -937,7 +958,7 @@ watch(
                             !isFullscreen
                         "
                         type="button"
-                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] left-14 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
+                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] right-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
                         :aria-label="t('Save to photos')"
                         :disabled="isDownloading"
                         @click="downloadMedia"
@@ -950,62 +971,15 @@ watch(
                     </button>
 
                     <div
-                        v-if="(post.circles ?? []).length > 0 && !isFullscreen"
-                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] right-3 z-10 flex max-w-[70%] items-center justify-end gap-1.5"
-                    >
-                        <RouterLink
-                            :to="{
-                                name: 'spa.circles.show',
-                                params: { circle: post.circles![0].id },
-                            }"
-                            class="flex items-center gap-1.5 rounded-full bg-black/50 py-0.5 pr-2.5 pl-0.5 backdrop-blur-sm"
-                        >
-                            <img
-                                v-if="post.circles![0].photo"
-                                :src="post.circles![0].photo!"
-                                :alt="post.circles![0].name"
-                                class="size-5 rounded-full object-cover"
-                            />
-                            <div
-                                v-else
-                                class="flex size-5 items-center justify-center rounded-full bg-surface/20"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke-width="1.5"
-                                    stroke="currentColor"
-                                    class="size-3 text-white"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z"
-                                    />
-                                </svg>
-                            </div>
-                            <span class="max-w-32 truncate text-white">{{
-                                post.circles![0].name
-                            }}</span>
-                        </RouterLink>
-                        <span
-                            v-if="post.circles!.length > 1"
-                            class="rounded-full bg-black/50 px-2 py-0.5 text-white backdrop-blur-sm"
-                            >+{{ post.circles!.length - 1 }}</span
-                        >
-                    </div>
-
-                    <div
                         v-if="
                             post.media_type === 'video' &&
                             post.media_status === 'ready'
                         "
                         :class="[
-                            'absolute z-20 flex gap-2',
+                            'absolute right-3 z-20 flex gap-2',
                             isFullscreen
-                                ? 'top-[calc(env(safe-area-inset-top)+1.5rem)] right-3'
-                                : 'top-[calc(var(--inset-top,0px)+0.75rem)] left-14',
+                                ? 'top-[calc(env(safe-area-inset-top)+1.5rem)]'
+                                : 'top-[calc(var(--inset-top,0px)+0.75rem)]',
                         ]"
                     >
                         <button
@@ -1136,11 +1110,11 @@ watch(
                                     :style="iconMaskStyle(heartIcon)"
                                 ></span>
                             </button>
-                            <span
+                            <AnimatedCount
                                 v-if="post.likes_count > 0"
+                                :value="post.likes_count"
                                 class="text-white drop-shadow"
-                                >{{ post.likes_count }}</span
-                            >
+                            />
                         </div>
                         <button
                             class="flex items-center gap-1 text-white drop-shadow"
@@ -1152,9 +1126,10 @@ watch(
                                 class="inline-block size-6 bg-current"
                                 :style="iconMaskStyle(messageIcon)"
                             ></span>
-                            <span v-if="post.comments_count > 0">{{
-                                post.comments_count
-                            }}</span>
+                            <AnimatedCount
+                                v-if="post.comments_count > 0"
+                                :value="post.comments_count"
+                            />
                         </button>
                         <button
                             v-if="isOwner"

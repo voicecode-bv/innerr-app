@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Camera, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     defineAsyncComponent,
@@ -24,6 +23,7 @@ import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
+import { Camera, Events, Off, On } from '@nativephp/mobile';
 import checklistIcon from '../../../svg/doodle-icons/checklist.svg';
 import crossIcon from '../../../svg/doodle-icons/cross.svg';
 import editIcon from '../../../svg/doodle-icons/pencil.svg';
@@ -319,6 +319,19 @@ function iconMaskStyle(url: string) {
             />
 
             <div>
+                <!-- Header skeleton mirroring the real layout below, shown
+                     until the profile request resolves. -->
+                <div v-if="!profile" class="bg-sand px-4 py-6">
+                    <div class="flex items-center gap-4">
+                        <div class="size-20 shrink-0 shimmer rounded-full" />
+                        <div class="min-w-0 flex-1 space-y-2">
+                            <div class="h-5 w-40 shimmer rounded" />
+                            <div class="h-3.5 w-24 shimmer rounded" />
+                            <div class="h-3.5 w-28 shimmer rounded" />
+                        </div>
+                    </div>
+                </div>
+
                 <div
                     v-if="profile"
                     data-tour="profile.header"

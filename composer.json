@@ -14,6 +14,7 @@
         "codingwithrk/package-info": "^1.0",
         "developernauts/nativephp-inapp-purchases": "*",
         "developernauts/nativephp-mobile-locales": "*",
+        "innerr/haptics": "*",
         "innerr/native-media": "^1.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
@@ -136,6 +137,13 @@
         {
             "type": "path",
             "url": "packages/innerr-native-media",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "packages/innerr-haptics",
             "options": {
                 "symlink": true
             }

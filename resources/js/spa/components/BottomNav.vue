@@ -108,7 +108,7 @@ onBeforeUnmount(() => {
 <template>
     <nav
         :aria-label="t('Main navigation')"
-        class="fixed right-[var(--inset-right,0)] bottom-0 left-[var(--inset-left,0)] z-50 border-t border-dark-sand bg-sand pb-[var(--inset-bottom,0px)]"
+        class="fixed right-[var(--inset-right,0)] bottom-0 left-[var(--inset-left,0)] z-50 border-t border-dark-sand bg-sand/85 pb-[var(--inset-bottom,0px)] backdrop-blur-md"
     >
         <div
             class="relative mx-auto flex h-[var(--bottom-nav-height)] max-w-md items-stretch justify-between px-2"

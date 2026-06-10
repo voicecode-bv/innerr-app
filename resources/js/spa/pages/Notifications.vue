@@ -861,16 +861,14 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                             class="flex items-start gap-3 px-5 py-4"
                         >
                             <div
-                                class="size-11 shrink-0 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
+                                class="size-11 shrink-0 shimmer rounded-full"
                             />
                             <div class="min-w-0 flex-1 space-y-2">
                                 <div
-                                    class="h-3.5 animate-pulse rounded-full bg-sand-200 dark:bg-sand-700"
+                                    class="h-3.5 shimmer rounded-full"
                                     :style="{ width: `${55 + n * 6}%` }"
                                 />
-                                <div
-                                    class="h-3 w-20 animate-pulse rounded-full bg-sand-200/70 dark:bg-sand-700/70"
-                                />
+                                <div class="h-3 w-20 shimmer rounded-full" />
                             </div>
                         </div>
                     </div>

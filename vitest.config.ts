@@ -13,6 +13,10 @@ export default defineConfig({
                 __dirname,
                 'vendor/nativephp/mobile/resources/dist/native.js',
             ),
+            '@innerr/haptics': path.resolve(
+                __dirname,
+                'packages/innerr-haptics/resources/js/index.ts',
+            ),
             '@innerr/native-media': path.resolve(
                 __dirname,
                 'packages/innerr-native-media/resources/js/index.ts',

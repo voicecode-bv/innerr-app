@@ -1,6 +1,7 @@
 import { computed } from 'vue';
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 import { useRoute, useRouter } from 'vue-router';
+import { haptics } from '@/spa/services/haptics';
 import { useAuthStore } from '@/spa/stores/auth';
 
 export type BottomNavTab = 'home' | 'circles' | 'add' | 'map' | 'profile' | '';
@@ -107,6 +108,8 @@ export function useBottomNav() {
      * a rejected navigation; otherwise push the target route.
      */
     function navigate(targetPath: string): void {
+        haptics.selection();
+
         if (router.resolve(targetPath).path === route.path) {
             window.dispatchEvent(new CustomEvent('spa:tab-reselect'));
 

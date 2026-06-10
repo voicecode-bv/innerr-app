@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
@@ -13,6 +12,7 @@ import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useTagsStore } from '@/spa/stores/tags';
 import type { Tag } from '@/spa/stores/tags';
+import { Dialog, Events, Off, On } from '@nativephp/mobile';
 
 const { t } = useTranslations();
 const router = useRouter();
@@ -302,16 +302,10 @@ function lowercase(event: Event, target: { name: string }): void {
                         :key="n"
                         class="flex items-center gap-4 px-4 py-4"
                     >
-                        <div
-                            class="size-9 shrink-0 animate-pulse rounded-lg bg-sand-200"
-                        />
+                        <div class="size-9 shrink-0 shimmer rounded-lg" />
                         <div class="flex-1 space-y-2">
-                            <div
-                                class="h-4 w-24 animate-pulse rounded bg-sand-200"
-                            />
-                            <div
-                                class="h-3 w-16 animate-pulse rounded bg-sand-200/70"
-                            />
+                            <div class="h-4 w-24 shimmer rounded" />
+                            <div class="h-3 w-16 shimmer rounded" />
                         </div>
                     </li>
                 </ul>

@@ -184,16 +184,10 @@ async function createCircle(): Promise<void> {
                         :key="n"
                         class="flex items-center gap-4 px-4 py-4"
                     >
-                        <div
-                            class="size-12 shrink-0 animate-pulse rounded-full bg-sand-200"
-                        />
+                        <div class="size-12 shrink-0 shimmer rounded-full" />
                         <div class="flex-1 space-y-2">
-                            <div
-                                class="h-4 w-32 animate-pulse rounded bg-sand-200"
-                            />
-                            <div
-                                class="h-3 w-20 animate-pulse rounded bg-sand-200/70"
-                            />
+                            <div class="h-4 w-32 shimmer rounded" />
+                            <div class="h-3 w-20 shimmer rounded" />
                         </div>
                     </li>
                 </ul>

@@ -127,8 +127,8 @@ function iconMaskStyle(url: string) {
 
 <template>
     <AppLayout ref="layout" :show-header="false" scroll-key="spa.home.grid">
-        <template #above>
-            <FeedHeader layout="grid" />
+        <template #above="{ headerElevated }">
+            <FeedHeader layout="grid" :elevated="headerElevated" />
             <!-- Sticky date bar pinned just below the fixed header (its bottom
                  sits at inset-top + the feed's mt-36). Shows the month + year of
                  the timeline at the current scroll position. -->
@@ -137,7 +137,10 @@ function iconMaskStyle(url: string) {
                 ref="dateBarRef"
                 aria-hidden="true"
                 :style="{ top: `${headerBottom}px` }"
-                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center bg-sand"
+                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center transition-[background-color] duration-300 motion-reduce:transition-none"
+                :class="
+                    headerElevated ? 'bg-sand/85 backdrop-blur-md' : 'bg-sand'
+                "
             >
                 <span
                     class="text-sm font-semibold tracking-wider text-ink-muted uppercase"

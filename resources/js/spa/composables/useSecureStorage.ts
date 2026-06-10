@@ -1,5 +1,5 @@
-import { SecureStorage } from '@nativephp/mobile';
 import { isNativeRuntime } from '@/spa/composables/usePlatform';
+import { SecureStorage } from '@nativephp/mobile';
 
 // Keychain-entry waar de SPA het externe-API Bearer token opslaat. Moet
 // overeenkomen met `config/api-client.php#token_key` zodat de PHP-zijde

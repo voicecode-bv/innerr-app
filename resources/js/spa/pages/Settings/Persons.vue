@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     onMounted,
@@ -24,6 +23,7 @@ import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { usePersonsStore } from '@/spa/stores/persons';
+import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
@@ -559,14 +559,12 @@ function iconMaskStyle(url: string) {
                     <li
                         v-for="n in 5"
                         :key="n"
-                        class="flex animate-pulse items-center gap-4 px-4 py-4"
+                        class="flex items-center gap-4 px-4 py-4"
                     >
-                        <div
-                            class="size-12 shrink-0 rounded-full bg-sand-200"
-                        />
+                        <div class="size-12 shrink-0 shimmer rounded-full" />
                         <div class="flex-1 space-y-2">
-                            <div class="h-3 w-32 rounded bg-sand-200" />
-                            <div class="h-2 w-20 rounded bg-sand-200" />
+                            <div class="h-3 w-32 shimmer rounded" />
+                            <div class="h-2 w-20 shimmer rounded" />
                         </div>
                     </li>
                 </ul>

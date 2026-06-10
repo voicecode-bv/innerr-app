@@ -34,6 +34,70 @@
     --bottom-nav-height: 4.5rem;
 
     /* ──────────────────────────────────────────────────────────
+       Motion
+       Spring curves approximated with linear() so gesture surfaces
+       (sheets, drawer) land with a natural overshoot instead of a
+       flat ease-out. `ease-spring` overshoots ~4% and settles;
+       `ease-spring-soft` is critically damped (no overshoot) for
+       elements that must not cross their resting point.
+       ────────────────────────────────────────────────────────── */
+    --ease-spring: linear(
+        0,
+        0.0094,
+        0.0383,
+        0.0865,
+        0.1545,
+        0.243,
+        0.3528,
+        0.4829,
+        0.6212,
+        0.7534,
+        0.8723,
+        0.9696,
+        1.0408,
+        1.0852,
+        1.1049,
+        1.1039,
+        1.0871,
+        1.0596,
+        1.0341,
+        1.0141,
+        1.0007,
+        0.9933,
+        0.9905,
+        0.9908,
+        0.993,
+        0.9959,
+        0.9986,
+        1.0006,
+        1.0017,
+        1.0021,
+        1
+    );
+    --ease-spring-soft: linear(
+        0,
+        0.0865,
+        0.2342,
+        0.3946,
+        0.5408,
+        0.6638,
+        0.7621,
+        0.8377,
+        0.8941,
+        0.9352,
+        0.9645,
+        0.9756,
+        0.9844,
+        0.991,
+        0.9952,
+        0.9976,
+        0.9989,
+        0.9996,
+        0.9999,
+        1
+    );
+
+    /* ──────────────────────────────────────────────────────────
        Brand palette (May 2026) — synced with innerr-website
        Sand, Green, Blue, Yellow, Orange — five-color system
        Sand = page background, Blue (teal) = primary
@@ -332,6 +396,104 @@ input[type='search']::-webkit-search-results-decoration {
         opacity: 1;
         transform: none;
         animation: none;
+    }
+}
+
+/* Shared-element morph between a feed card's media and the post detail hero
+   (View Transitions API, see services/postHeroTransition.ts). The named group
+   gets the soft spring; the root cross-fade stays brisk so the morph reads as
+   the main event. */
+::view-transition-group(post-hero) {
+    animation-duration: 320ms;
+    animation-timing-function: var(--ease-spring-soft);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 220ms;
+}
+
+/* Freshly submitted comment: brief background flash that fades back to the
+   row's own sand background. */
+.comment-highlight {
+    animation: comment-highlight 1.4s ease-out;
+}
+
+@keyframes comment-highlight {
+    from {
+        background-color: var(--color-success-soft);
+    }
+    to {
+        background-color: transparent;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .comment-highlight {
+        animation: none;
+    }
+}
+
+/* Like feedback. `like-pop` replays on the small heart icon each time a post
+   is liked (cleared via @animationend); `heart-burst` is the large heart that
+   springs in over the media after a double-tap like and fades back out. */
+.like-pop {
+    animation: like-pop 350ms var(--ease-spring);
+}
+
+@keyframes like-pop {
+    0% {
+        transform: scale(1);
+    }
+    35% {
+        transform: scale(1.35);
+    }
+    65% {
+        transform: scale(0.92);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.heart-burst {
+    animation: heart-burst 900ms ease-out forwards;
+}
+
+@keyframes heart-burst {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    20% {
+        opacity: 0.9;
+        transform: scale(1.12);
+    }
+    35% {
+        transform: scale(0.98);
+    }
+    45% {
+        transform: scale(1);
+    }
+    70% {
+        opacity: 0.9;
+        transform: scale(1) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1) translateY(-10px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .like-pop {
+        animation: none;
+    }
+
+    /* Keep a brief single-frame appearance so @animationend still fires and
+       clears the burst element. */
+    .heart-burst {
+        animation-duration: 1ms;
     }
 }
 

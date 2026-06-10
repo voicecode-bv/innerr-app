@@ -218,17 +218,13 @@ function iconMaskStyle(url: string) {
                     :key="n"
                     class="flex items-center gap-3 border-b border-sand-50 py-3"
                 >
-                    <div
-                        class="size-11 shrink-0 animate-pulse rounded-full bg-sand-200"
-                    />
+                    <div class="size-11 shrink-0 shimmer rounded-full" />
                     <div class="min-w-0 flex-1 space-y-2">
                         <div
-                            class="h-3.5 animate-pulse rounded bg-sand-200"
+                            class="h-3.5 shimmer rounded"
                             :style="{ width: `${50 + n * 5}%` }"
                         />
-                        <div
-                            class="h-3 w-24 animate-pulse rounded bg-sand-200/70"
-                        />
+                        <div class="h-3 w-24 shimmer rounded" />
                     </div>
                 </li>
             </ul>

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog, Share } from '@nativephp/mobile';
 import { computed, onMounted, ref } from 'vue';
 import Button from '@/components/Button.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
@@ -7,6 +6,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { createInviteLink, listInviteLinks } from '@/spa/services/inviteLinks';
 import type { InviteLink } from '@/spa/services/inviteLinks';
+import { Dialog, Share } from '@nativephp/mobile';
 
 const props = defineProps<{
     circleId: string;

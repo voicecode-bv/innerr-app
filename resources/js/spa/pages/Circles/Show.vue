@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
     defineAsyncComponent,
@@ -21,6 +20,7 @@ import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useCirclesStore } from '@/spa/stores/circles';
+import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import mailIcon from '../../../../svg/doodle-icons/mail.svg';
 import sendIcon from '../../../../svg/doodle-icons/send.svg';

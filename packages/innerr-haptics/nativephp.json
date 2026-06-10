@@ -1,0 +1,41 @@
+{
+    "namespace": "Haptics",
+    "bridge_functions": [
+        {
+            "name": "Haptics.Impact",
+            "android": "app.innerr.haptics.HapticsFunctions.Impact",
+            "ios": "HapticsFunctions.Impact",
+            "description": "Play a physical impact haptic (style: light|medium|heavy|soft|rigid)"
+        },
+        {
+            "name": "Haptics.Notification",
+            "android": "app.innerr.haptics.HapticsFunctions.Notification",
+            "ios": "HapticsFunctions.Notification",
+            "description": "Play a notification haptic (type: success|warning|error)"
+        },
+        {
+            "name": "Haptics.Selection",
+            "android": "app.innerr.haptics.HapticsFunctions.Selection",
+            "ios": "HapticsFunctions.Selection",
+            "description": "Play a subtle selection-changed tick"
+        }
+    ],
+    "android": {
+        "min_version": 26,
+        "permissions": [
+            "android.permission.VIBRATE"
+        ],
+        "dependencies": {
+            "implementation": []
+        }
+    },
+    "ios": {
+        "min_version": "18.2",
+        "info_plist": {},
+        "dependencies": {
+            "swift_packages": [],
+            "pods": []
+        }
+    },
+    "events": []
+}

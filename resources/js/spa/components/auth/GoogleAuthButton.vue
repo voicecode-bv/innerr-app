@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Browser } from '@nativephp/mobile';
 import { computed } from 'vue';
 import { useI18nStore } from '@/spa/stores/i18n';
+import { Browser } from '@nativephp/mobile';
 import googleButtonEn from '../../../../svg/google-button-en.png';
 import googleButtonNl from '../../../../svg/google-button-nl.png';
 

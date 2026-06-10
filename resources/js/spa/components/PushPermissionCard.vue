@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { PushNotifications } from '@nativephp/mobile';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import { PushNotifications } from '@nativephp/mobile';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
 import infoIcon from '../../../svg/doodle-icons/Info.svg';
 

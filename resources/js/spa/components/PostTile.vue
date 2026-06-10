@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import AnimatedCount from '@/components/AnimatedCount.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
+import { haptics } from '@/spa/services/haptics';
+import { openPostWithHeroTransition } from '@/spa/services/postHeroTransition';
 import { useAuthStore } from '@/spa/stores/auth';
 import copyIcon from '../../../svg/doodle-icons/copy.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
@@ -137,10 +140,21 @@ function onHeartClick(): void {
     void toggleLike();
 }
 
+// Transient flag driving the heart's pop animation; cleared on animationend
+// so a follow-up like can replay it. Mirrors PostCard.
+const likePop = ref(false);
+
 async function toggleLike(): Promise<void> {
     const wasLiked = isLiked.value;
     isLiked.value = !wasLiked;
     likesCount.value += wasLiked ? -1 : 1;
+
+    if (wasLiked) {
+        haptics.impactLight();
+    } else {
+        haptics.impactMedium();
+        likePop.value = true;
+    }
 
     try {
         if (wasLiked) {
@@ -159,10 +173,12 @@ function openComments(): void {
 }
 
 function openDetails(): void {
-    router.push({
-        name: 'spa.posts.show',
-        params: { post: props.post.id },
-    });
+    void openPostWithHeroTransition(props.post.id, () =>
+        router.push({
+            name: 'spa.posts.show',
+            params: { post: props.post.id },
+        }),
+    );
 }
 
 function onTileClick(): void {
@@ -231,6 +247,7 @@ function iconMaskStyle(url: string) {
             selectionMode && !isSelectable ? 'opacity-40' : '',
         ]"
         :style="{ aspectRatio }"
+        :data-post-media="post.id"
     >
         <button
             type="button"
@@ -353,14 +370,20 @@ function iconMaskStyle(url: string) {
                 <span
                     aria-hidden="true"
                     class="inline-block size-5 drop-shadow"
-                    :class="isLiked ? 'bg-brand-orange' : 'bg-white'"
+                    :class="[
+                        isLiked ? 'bg-brand-orange' : 'bg-white',
+                        likePop ? 'like-pop' : '',
+                    ]"
                     :style="
                         iconMaskStyle(isLiked ? heartFilledIcon : heartIcon)
                     "
+                    @animationend="likePop = false"
                 ></span>
-                <span v-if="likesCount > 0" class="text-xs drop-shadow">{{
-                    likesCount
-                }}</span>
+                <AnimatedCount
+                    v-if="likesCount > 0"
+                    :value="likesCount"
+                    class="text-xs drop-shadow"
+                />
             </button>
             <button
                 type="button"
@@ -373,11 +396,11 @@ function iconMaskStyle(url: string) {
                     class="inline-block size-5 bg-white drop-shadow"
                     :style="iconMaskStyle(messageIcon)"
                 ></span>
-                <span
+                <AnimatedCount
                     v-if="post.comments_count > 0"
+                    :value="post.comments_count"
                     class="text-xs drop-shadow"
-                    >{{ post.comments_count }}</span
-                >
+                />
             </button>
         </div>
     </div>

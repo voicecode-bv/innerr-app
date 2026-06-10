@@ -6,6 +6,7 @@ use Codingwithrk\PackageInfo\PackageInfoServiceProvider;
 use Developernauts\NativephpInappPurchases\NativephpInappPurchasesServiceProvider;
 use Developernauts\NativephpMobileLocales\NativephpMobileLocalesServiceProvider;
 use Illuminate\Support\ServiceProvider;
+use Innerr\Haptics\HapticsServiceProvider;
 use Innerr\NativeMedia\NativeMediaServiceProvider;
 use Native\Mobile\Providers\BrowserServiceProvider;
 use Native\Mobile\Providers\CameraServiceProvider;
@@ -17,6 +18,7 @@ use Native\Mobile\Providers\SecureStorageServiceProvider;
 use Native\Mobile\Providers\ShareServiceProvider;
 use Native\Mobile\Providers\SystemServiceProvider;
 use NativePHP\BackgroundTasks\BackgroundTasksServiceProvider;
+use Nativephp\InAppReviews\InAppReviewsServiceProvider;
 use Voicecode\Mobile\Photos\PhotosServiceProvider;
 use VoicecodeBv\NativephpAnimatedSplash\AnimatedSplashServiceProvider;
 use VoicecodeBv\NativephpBadge\NativeBadgeServiceProvider;
@@ -65,11 +67,11 @@ class NativeServiceProvider extends ServiceProvider
             ShareServiceProvider::class,
             PhotosServiceProvider::class,
             NativeMediaServiceProvider::class,
+            HapticsServiceProvider::class,
             NativeBadgeServiceProvider::class,
             AnimatedSplashServiceProvider::class,
             NativephpMobileLocalesServiceProvider::class,
-            \Nativephp\InAppReviews\InAppReviewsServiceProvider::class,
-        
+            InAppReviewsServiceProvider::class,
 
         ];
     }

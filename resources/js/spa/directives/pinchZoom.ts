@@ -1,4 +1,5 @@
 import type { Directive } from 'vue';
+import { prefersReducedMotion } from '@/spa/services/motion';
 
 // Pinch-to-zoom for post media (photos and videos). We keep the original
 // element in place and lift a fixed-positioned copy above a dark backdrop, so
@@ -205,17 +206,20 @@ export const vPinchZoom: Directive<PinchHost> = {
                 el.style.visibility = '';
             };
 
-            clone.style.transition = `transform ${RESTORE_MS}ms ease-out`;
+            const restoreMs = prefersReducedMotion() ? 0 : RESTORE_MS;
+
+            clone.style.transition = `transform ${restoreMs}ms var(--ease-spring-soft, ease-out)`;
             clone.style.transform = 'translate(0px, 0px) scale(1)';
 
             if (backdrop) {
-                backdrop.style.transition = `opacity ${RESTORE_MS}ms ease-out`;
+                backdrop.style.transition = `opacity ${restoreMs}ms ease-out`;
                 backdrop.style.opacity = '0';
             }
 
             clone.addEventListener('transitionend', cleanup, { once: true });
-            // Vangnet als transitionend niet vuurt (bv. interrupted reflow).
-            window.setTimeout(cleanup, RESTORE_MS + 100);
+            // Safety net when transitionend does not fire (e.g. interrupted
+            // reflow, or a zero-duration restore under reduced motion).
+            window.setTimeout(cleanup, restoreMs + 100);
         }
 
         state.onTouchStart = begin;

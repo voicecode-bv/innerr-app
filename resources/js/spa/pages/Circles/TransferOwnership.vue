@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
@@ -8,6 +7,7 @@ import SurfaceCard from '@/components/SurfaceCard.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { Dialog, Events, Off, On } from '@nativephp/mobile';
 import arrowCircleRightIcon from '../../../../svg/doodle-icons/arrow-circle-right.svg';
 import crownIcon from '../../../../svg/doodle-icons/crown.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';

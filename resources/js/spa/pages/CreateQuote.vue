@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Dialog } from '@nativephp/mobile';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
@@ -18,6 +17,7 @@ import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import { usePersonsStore } from '@/spa/stores/persons';
+import { Dialog } from '@nativephp/mobile';
 
 interface Circle {
     id: string;

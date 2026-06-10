@@ -148,13 +148,13 @@ onMounted(load);
 
             <div class="relative space-y-4 px-4 pt-4 pb-24">
                 <SurfaceCard v-if="!loaded" class="reveal-item">
-                    <div class="animate-pulse">
+                    <div>
                         <div class="flex items-center gap-3">
-                            <div class="size-9 rounded-lg bg-sand-200" />
-                            <div class="h-3 w-40 rounded bg-sand-200" />
+                            <div class="size-9 shimmer rounded-lg" />
+                            <div class="h-3 w-40 shimmer rounded" />
                         </div>
-                        <div class="mt-4 h-3 w-full rounded-full bg-sand-200" />
-                        <div class="mt-3 h-3 w-1/3 rounded bg-sand-200" />
+                        <div class="mt-4 h-3 w-full shimmer rounded-full" />
+                        <div class="mt-3 h-3 w-1/3 shimmer rounded" />
                     </div>
                 </SurfaceCard>
 

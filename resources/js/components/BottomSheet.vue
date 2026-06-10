@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
+import {
+    acquireBackgroundScale,
+    releaseBackgroundScale,
+} from '@/spa/composables/useBackgroundScale';
+import { haptics } from '@/spa/services/haptics';
+import {
+    createVelocityTracker,
+    prefersReducedMotion,
+    settleDurationMs,
+} from '@/spa/services/motion';
 
 const props = defineProps<{
     open: boolean;
@@ -32,8 +42,17 @@ const displayOpen = ref(false);
 
 let dragStartY = 0;
 let dragPointerId: number | null = null;
+// Haptic arming: tick once when the drag crosses the dismiss threshold,
+// re-arm when it moves back under so a hesitating drag ticks again.
+let dismissArmed = false;
+const velocityTracker = createVelocityTracker();
+// Settle duration scales with release velocity (fast flick = quick settle).
+const settleDuration = ref(300);
 
 const DISMISS_THRESHOLD = 80;
+// Below the position threshold a fast downward flick still dismisses.
+const FLICK_VELOCITY = 0.5; // px/ms
+const FLICK_MIN_OFFSET = 24;
 
 function lockBodyScroll() {
     const body = document.body;
@@ -272,6 +291,8 @@ function onHandlePointerDown(event: PointerEvent) {
     dragStartY = event.clientY;
     isDragging.value = true;
     dragOffset.value = 0;
+    dismissArmed = false;
+    velocityTracker.start(event.clientY);
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 }
 
@@ -280,7 +301,15 @@ function onHandlePointerMove(event: PointerEvent) {
         return;
     }
 
+    velocityTracker.move(event.clientY);
     dragOffset.value = Math.max(0, event.clientY - dragStartY);
+
+    if (!dismissArmed && dragOffset.value > DISMISS_THRESHOLD) {
+        dismissArmed = true;
+        haptics.impactLight();
+    } else if (dismissArmed && dragOffset.value <= DISMISS_THRESHOLD) {
+        dismissArmed = false;
+    }
 }
 
 function endDrag(event: PointerEvent) {
@@ -288,13 +317,27 @@ function endDrag(event: PointerEvent) {
         return;
     }
 
-    const shouldClose = dragOffset.value > DISMISS_THRESHOLD;
+    const releaseVelocity = velocityTracker.velocity();
+    const shouldClose =
+        dragOffset.value > DISMISS_THRESHOLD ||
+        (releaseVelocity > FLICK_VELOCITY &&
+            dragOffset.value > FLICK_MIN_OFFSET);
+
+    settleDuration.value = prefersReducedMotion()
+        ? 0
+        : settleDurationMs(
+              shouldClose
+                  ? window.innerHeight - dragOffset.value
+                  : dragOffset.value,
+              releaseVelocity,
+          );
 
     isDragging.value = false;
     dragPointerId = null;
     dragOffset.value = 0;
 
     if (shouldClose) {
+        haptics.impactMedium();
         close();
     }
 }
@@ -312,6 +355,7 @@ watch(
     () => props.open,
     (val) => {
         if (val) {
+            settleDuration.value = prefersReducedMotion() ? 0 : 300;
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     displayOpen.value = true;
@@ -348,6 +392,7 @@ watch(
         }
 
         if (isOpen) {
+            acquireBackgroundScale();
             lockBodyScroll();
             document.addEventListener('keydown', handleKeydown);
             document.addEventListener('touchstart', onCaptureTouchStart, {
@@ -360,6 +405,7 @@ watch(
             });
             updateKeyboardOffset();
         } else {
+            releaseBackgroundScale();
             unlockBodyScroll();
             document.removeEventListener('keydown', handleKeydown);
             document.removeEventListener('touchstart', onCaptureTouchStart, {
@@ -410,6 +456,7 @@ onUnmounted(() => {
     }
 
     if (props.open) {
+        releaseBackgroundScale();
         unlockBodyScroll();
     }
 });
@@ -431,7 +478,7 @@ onUnmounted(() => {
             ref="sheetRef"
             :class="[
                 'fixed inset-x-0 bottom-0 z-9999 flex flex-col rounded-2xl bg-sand shadow-2xl',
-                isDragging ? '' : 'transition-transform duration-300 ease-out',
+                isDragging ? '' : 'transition-transform ease-spring',
                 displayOpen
                     ? 'translate-y-[calc(var(--drag-offset,0px)+var(--kb-inset,0px)*-1)]'
                     : 'translate-y-full',
@@ -439,6 +486,9 @@ onUnmounted(() => {
             :style="{
                 maxHeight: 'calc(85dvh - var(--kb-inset, 0px))',
                 '--drag-offset': `${dragOffset}px`,
+                transitionDuration: isDragging
+                    ? undefined
+                    : `${settleDuration}ms`,
             }"
             role="dialog"
             aria-modal="true"
@@ -478,6 +528,14 @@ onUnmounted(() => {
             >
                 <slot name="footer" />
             </div>
+            <!-- Opaque filler under the sheet: while the keyboard is open the
+                 sheet is translated up by the keyboard inset, which would
+                 otherwise expose the dimmed page behind it as a dark strip
+                 between the sheet and the iOS keyboard accessory bar. -->
+            <div
+                aria-hidden="true"
+                class="absolute inset-x-0 top-full h-[var(--kb-inset,0px)] bg-sand"
+            />
         </div>
     </teleport>
 </template>

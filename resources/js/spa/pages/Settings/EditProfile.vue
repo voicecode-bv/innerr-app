@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Camera, Events, Off, On } from '@nativephp/mobile';
 import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
@@ -9,6 +8,7 @@ import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
+import { Camera, Events, Off, On } from '@nativephp/mobile';
 import pencilIcon from '../../../../svg/doodle-icons/pencil-3.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
 

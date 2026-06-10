@@ -124,7 +124,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
                         >
                             <span class="text-base text-ink">{{ label }}</span>
                             <span
-                                class="h-8 w-14 shrink-0 animate-pulse rounded-full bg-sand-200"
+                                class="h-8 w-14 shrink-0 shimmer rounded-full"
                             />
                         </li>
                     </ul>

@@ -1,23 +1,6 @@
-// import { Device } from '@nativephp/mobile';
 import { onUnmounted, ref, watch } from 'vue';
 import type { Ref } from 'vue';
-
-// Korte tick voor de "armed" feedback. De NativePHP-bridge biedt geen
-// light/medium/heavy-varianten, dus op Android pakken we de Web Vibration
-// API met een lage duration en op iOS vallen we terug op de bridge.
-// function lightTick(): void {
-//     if (
-//         typeof navigator !== 'undefined' &&
-//         typeof navigator.vibrate === 'function' &&
-//         navigator.vibrate(8)
-//     ) {
-//         return;
-//     }
-//
-//     void Device.vibrate().catch(() => {
-//         /* haptics niet beschikbaar */
-//     });
-// }
+import { haptics } from '@/spa/services/haptics';
 
 interface Options {
     onRefresh: () => Promise<void>;
@@ -33,7 +16,7 @@ export function usePullToRefresh(options: Options) {
     let startY = 0;
     let active = false;
     let attached: HTMLElement | null = null;
-    // let didArm = false;
+    let didArm = false;
 
     function onTouchStart(event: TouchEvent): void {
         if (!attached || attached.scrollTop > 0 || isRefreshing.value) {
@@ -44,7 +27,7 @@ export function usePullToRefresh(options: Options) {
 
         startY = event.touches[0].clientY;
         active = true;
-        // didArm = false;
+        didArm = false;
     }
 
     function onTouchMove(event: TouchEvent): void {
@@ -62,12 +45,12 @@ export function usePullToRefresh(options: Options) {
 
         pullDistance.value = Math.min(delta, threshold * 1.5);
 
-        // Haptic tick op het moment dat de drempel net wordt overschreden, zoals
-        // de native pull-to-refresh van iOS doet.
-        // if (!didArm && pullDistance.value >= threshold) {
-        //     didArm = true;
-        //     lightTick();
-        // }
+        // Haptic tick the moment the threshold is crossed, the way native
+        // iOS pull-to-refresh arms itself.
+        if (!didArm && pullDistance.value >= threshold) {
+            didArm = true;
+            haptics.impactLight();
+        }
     }
 
     async function onTouchEnd(): Promise<void> {
