@@ -27,7 +27,6 @@ import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import checklistIcon from '../../../svg/doodle-icons/checklist.svg';
 import crossIcon from '../../../svg/doodle-icons/cross.svg';
 import editIcon from '../../../svg/doodle-icons/pencil.svg';
-import settingsIcon from '../../../svg/doodle-icons/setting-2.svg';
 
 const ImageCropModal = defineAsyncComponent(
     () => import('@/components/ImageCropModal.vue'),
@@ -309,21 +308,6 @@ function iconMaskStyle(url: string) {
                     />
                 </svg>
             </button>
-        </template>
-
-        <template v-if="profile && isOwnProfile" #header-right>
-            <RouterLink
-                :to="{ name: 'spa.settings' }"
-                class="flex items-center text-ink"
-                :aria-label="t('Open settings')"
-                data-tour="profile.settings"
-            >
-                <span
-                    aria-hidden="true"
-                    class="inline-block size-5 bg-current"
-                    :style="iconMaskStyle(settingsIcon)"
-                ></span>
-            </RouterLink>
         </template>
 
         <div

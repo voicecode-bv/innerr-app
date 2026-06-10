@@ -31,7 +31,7 @@ const selectedIds = computed(() => defaultCirclesStore.ids ?? []);
 const loaded = ref(false);
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');

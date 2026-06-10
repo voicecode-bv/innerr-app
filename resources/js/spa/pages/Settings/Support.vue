@@ -21,7 +21,7 @@ const sent = ref(false);
 const error = ref<string | null>(null);
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 function resolvePlatform(): 'ios' | 'android' | 'web' {

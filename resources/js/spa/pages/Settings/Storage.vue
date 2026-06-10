@@ -89,7 +89,7 @@ function formatBytes(bytes: number | null | undefined): string {
 }
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 function goToSubscriptions(): void {

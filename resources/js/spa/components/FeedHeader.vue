@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
+import AppPreferences from '@/spa/components/AppPreferences.vue';
 import ChildTimelineMenu from '@/spa/components/ChildTimelineMenu.vue';
 import Drawer from '@/spa/components/Drawer.vue';
 import SettingsMenu from '@/spa/components/SettingsMenu.vue';
@@ -80,6 +81,7 @@ function iconMaskStyle(url: string) {
                     <button
                         type="button"
                         :aria-label="t('Open menu')"
+                        data-tour="feed.menu"
                         class="flex size-9 shrink-0 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                         @click="isDrawerOpen = true"
                     >
@@ -192,7 +194,8 @@ function iconMaskStyle(url: string) {
                     class="hidden h-12 w-auto dark:block"
                 />
             </div>
-            <div class="flex-1 overflow-y-auto px-4 pb-4">
+            <div class="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
+                <AppPreferences />
                 <SettingsMenu @navigate="isDrawerOpen = false" />
             </div>
         </Drawer>

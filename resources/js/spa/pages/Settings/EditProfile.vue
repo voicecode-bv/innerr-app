@@ -44,7 +44,7 @@ const showCropModal = ref(false);
 const cropSource = ref<string | null>(null);
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 async function loadProfile(): Promise<void> {

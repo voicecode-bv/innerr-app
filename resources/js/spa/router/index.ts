@@ -255,12 +255,6 @@ const routes: RouteRecordRaw[] = [
 
     // Settings
     {
-        path: '/settings',
-        name: 'spa.settings',
-        component: () => import('@/spa/pages/Settings/Index.vue'),
-        meta: { auth: true, onboarded: true },
-    },
-    {
         path: '/settings/account',
         name: 'spa.settings.account',
         component: () => import('@/spa/pages/Settings/Account.vue'),
@@ -413,7 +407,7 @@ router.beforeEach(async (to) => {
         await ensureDetected();
 
         if (!isIos.value) {
-            return { name: 'spa.settings' };
+            return { name: 'spa.home' };
         }
     }
 
@@ -422,7 +416,7 @@ router.beforeEach(async (to) => {
         await ensureDetected();
 
         if (!isIos.value && !isAndroid.value) {
-            return { name: 'spa.settings' };
+            return { name: 'spa.home' };
         }
     }
 });

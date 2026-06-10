@@ -17,7 +17,7 @@ const prefsStore = useNotificationPreferencesStore();
 const preferences = computed<Preferences | null>(() => prefsStore.preferences);
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');

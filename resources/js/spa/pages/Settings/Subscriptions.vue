@@ -179,7 +179,7 @@ const tiers = computed<Tier[]>(() => {
 const activeEntitlement = computed(() => entitlements.value[0] ?? null);
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 function goToInnerGives(): void {

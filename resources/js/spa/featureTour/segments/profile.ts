@@ -31,17 +31,6 @@ export function profileSegment(): TourSegment {
                 },
             },
             {
-                element: '[data-tour="profile.settings"]',
-                popover: {
-                    title: t('Settings'),
-                    description: t(
-                        "Edit your profile, manage notifications, change your language, or log out. You'll also find 'Replay tour' here.",
-                    ),
-                    side: 'left',
-                    align: 'start',
-                },
-            },
-            {
                 popover: {
                     title: t("You're all set"),
                     description: t(

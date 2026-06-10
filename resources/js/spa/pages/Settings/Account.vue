@@ -22,7 +22,7 @@ const isDeleting = ref(false);
 const exportForm = useApiForm({}, externalApi);
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 async function requestExport(): Promise<void> {

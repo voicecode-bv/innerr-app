@@ -31,7 +31,7 @@ async function openLearnMore(): Promise<void> {
 }
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 </script>
 

@@ -17,6 +17,17 @@ export function feedSegment(): TourSegment {
                 },
             },
             {
+                element: '[data-tour="feed.menu"]',
+                popover: {
+                    title: t('Settings'),
+                    description: t(
+                        "Edit your profile, manage notifications, change your language, or log out. You'll also find 'Replay tour' here.",
+                    ),
+                    side: 'bottom',
+                    align: 'start',
+                },
+            },
+            {
                 element: '[data-tour="feed.children-filter"]',
                 popover: {
                     title: t('Focus on one child'),

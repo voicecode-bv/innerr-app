@@ -21,7 +21,7 @@ const tagsStore = useTagsStore();
 const tags = computed<Tag[] | null>(() => tagsStore.items);
 
 function goBack(): void {
-    router.push({ name: 'spa.settings' });
+    router.push({ name: 'spa.home' });
 }
 
 const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
