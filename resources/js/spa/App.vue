@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, defineAsyncComponent, ref } from 'vue';
 import { RouterView, useRoute, useRouter } from 'vue-router';
+import type { RouteLocationNormalizedLoaded } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { usePushNotifications } from '@/composables/usePushNotifications';
 import BottomNav from '@/spa/components/BottomNav.vue';
 import FeatureTourMount from '@/spa/components/FeatureTourMount.vue';
 import ReconnectOverlay from '@/spa/components/ReconnectOverlay.vue';
+import {
+    backgroundPathOnOverlayEnter,
+    isPostDetailRoute,
+} from '@/spa/composables/postDetailOverlay';
 import { bottomNavVisibleFor } from '@/spa/composables/useBottomNav';
 import { useAuthStore } from '@/spa/stores/auth';
 
@@ -16,6 +21,54 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const isGuestRoute = computed(() => route.meta.guest === true);
+
+// De post-detailpagina rendert als een overlay bovenop de achtergrondpagina.
+// We laden hem lazy (zelfde chunk als de route) zodat de initiële bundel klein
+// blijft; bij het openen van een post heeft de router de chunk al opgehaald.
+const PostDetail = defineAsyncComponent(
+    () => import('@/spa/pages/PostDetail.vue'),
+);
+
+// De locatie die áchter de overlay zichtbaar blijft. Onthouden zodra we de
+// overlay openen, zodat de feed (of welke pagina dan ook) gemount blijft en zijn
+// scroll-positie behoudt. Bij een directe deeplink is dit `null` → val terug op
+// de feed.
+const postBackgroundPath = ref<string | null>(null);
+
+router.beforeEach((to, from) => {
+    const next = backgroundPathOnOverlayEnter(to, from);
+
+    if (next !== undefined) {
+        postBackgroundPath.value = next;
+    }
+});
+
+const isPostOverlayOpen = computed(() => isPostDetailRoute(route));
+
+// Zolang de overlay open is, dwingen we de hoofd-RouterView om de
+// achtergrondlocatie te renderen i.p.v. de actieve (post-)route. Daardoor blijft
+// de achtergrond exact zoals hij was; de overlay zelf rendert los hieronder.
+const postBackgroundRoute = computed<RouteLocationNormalizedLoaded | undefined>(
+    () =>
+        isPostOverlayOpen.value
+            ? // `resolve()` levert een RouteLocationResolved; RouterView's `route`
+              // verwacht een genormaliseerde loaded-locatie. Runtime-compatibel,
+              // dus we casten het verschil in de `matched`-array weg.
+              (router.resolve(
+                  postBackgroundPath.value ?? '/',
+              ) as unknown as RouteLocationNormalizedLoaded)
+            : undefined,
+);
+
+// De overlay schuift van onder in beeld en weer weg; de achtergrond blijft staan.
+const postOverlayTransition = {
+    enterActiveClass: 'transition-transform duration-300 ease-out',
+    enterFromClass: 'translate-y-full',
+    enterToClass: 'translate-y-0',
+    leaveActiveClass: 'transition-transform duration-200 ease-in',
+    leaveFromClass: 'translate-y-0',
+    leaveToClass: 'translate-y-full',
+};
 
 // The custom bottom nav lives at the root so it persists across route
 // transitions instead of remounting (and flickering) per page.
@@ -105,12 +158,19 @@ const showFeatureTour = computed(
     <!-- overflow-x-clip vangt de horizontale slide op zonder een scrollbar of
  een nieuwe scroll-container te maken (clip dwingt de andere as niet naar auto). -->
     <div class="overflow-x-clip">
-        <RouterView v-slot="{ Component }">
+        <RouterView v-slot="{ Component }" :route="postBackgroundRoute">
             <Transition mode="out-in" v-bind="routeTransition">
                 <component :is="Component" />
             </Transition>
         </RouterView>
     </div>
+
+    <!-- Post-detail als full-screen overlay bovenop de achtergrondpagina. Nog
+ steeds een echte route (URL/back-knop/deeplinks blijven werken), maar de feed
+ eronder blijft gemount i.p.v. weg te navigeren. -->
+    <Transition v-bind="postOverlayTransition">
+        <PostDetail v-if="isPostOverlayOpen" />
+    </Transition>
 
     <BottomNav v-if="showBottomNav" />
 
