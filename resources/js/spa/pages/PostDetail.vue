@@ -2,6 +2,7 @@
 import { BridgeCall, Dialog, Events, Off, On } from '@nativephp/mobile';
 import {
     computed,
+    nextTick,
     onMounted,
     onUnmounted,
     ref,
@@ -27,7 +28,6 @@ import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { vPinchZoom } from '@/spa/directives/pinchZoom';
 import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
-import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
@@ -125,8 +125,11 @@ const post = ref<Post | null>(null);
 const isLoading = ref(true);
 const isDeleting = ref(false);
 
-const layoutRef = useTemplateRef<InstanceType<typeof AppLayout>>('layout');
-const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
+// De detailpagina is een eigen full-screen overlay (fixed inset-0) met een
+// eigen scroll-container, los van AppLayout's gedeelde <main>. Dat haalt de
+// geneste scroll-context (en de WKWebView-quirks daarvan) weg en lost het
+// scroll-probleem op.
+const scrollRef = ref<HTMLElement | null>(null);
 
 const commentsSheetRef = useTemplateRef<{ reload: () => Promise<void> }>(
     'commentsSheet',
@@ -173,7 +176,29 @@ useProcessingPoll(postItems, loadPost);
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: refresh,
-    containerRef,
+    containerRef: scrollRef,
+});
+
+// Scroll-reset bij mount. Vue-router's `scrollBehavior` raakt onze eigen
+// scroll-container niet, en WKWebView toont na een route-transitie soms een
+// lege pagina tot er gescrold wordt — beide opgelost door direct, na nextTick
+// en na een rAF-pass naar boven te resetten.
+onMounted(() => {
+    function resetScroll(): void {
+        if (scrollRef.value) {
+            scrollRef.value.scrollTop = 0;
+        }
+    }
+
+    resetScroll();
+    void nextTick(resetScroll);
+
+    if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(() => {
+            resetScroll();
+            requestAnimationFrame(resetScroll);
+        });
+    }
 });
 
 onMounted(async () => {
@@ -733,10 +758,12 @@ watch(
 </script>
 
 <template>
-    <AppLayout ref="layout" :show-header="false">
-        <div
-            class="pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
-        >
+    <div
+        ref="scrollRef"
+        class="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-surface pt-[var(--inset-top,0px)]"
+        style="transform: translate3d(0, 0, 0); will-change: transform"
+    >
+        <div class="pb-[var(--inset-bottom,0px)]">
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
@@ -772,8 +799,8 @@ watch(
                             : 'relative aspect-square overflow-hidden bg-sand-100',
                     ]"
                 >
-                    <!-- Back button overlaid on the media (the AppLayout header
-                         is hidden so the media can sit edge-to-edge at the top). -->
+                    <!-- Back button overlaid on the media; the overlay has no
+                         header so the media sits edge-to-edge at the top. -->
                     <button
                         v-if="!isFullscreen"
                         type="button"
@@ -1560,5 +1587,5 @@ watch(
             @updated="loadPost"
             @deleted="onPostDeleted"
         />
-    </AppLayout>
+    </div>
 </template>

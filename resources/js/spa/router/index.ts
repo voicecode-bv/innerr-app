@@ -162,7 +162,9 @@ const routes: RouteRecordRaw[] = [
         path: '/posts/:post',
         name: 'spa.posts.show',
         component: () => import('@/spa/pages/PostDetail.vue'),
-        meta: { auth: true, onboarded: true },
+        // De detailpagina is een full-screen overlay; de bottom-nav hoort er
+        // niet onder door te schijnen.
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
     },
 
     // Feed filter (guided flow) — verbergt de native bottom-nav.

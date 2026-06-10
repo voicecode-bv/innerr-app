@@ -66,6 +66,25 @@ describe('add-children onboarding route', () => {
     });
 });
 
+describe('post detail route', () => {
+    it('hides the bottom nav so the page can render as a full-screen overlay', async () => {
+        setUrl('https://innerr-app.test/');
+
+        const { router } = await import('./index');
+        const route = router.resolve({
+            name: 'spa.posts.show',
+            params: { post: 'abc-123' },
+        });
+
+        expect(route.path).toBe('/posts/abc-123');
+        expect(route.meta.auth).toBe(true);
+        expect(route.meta.onboarded).toBe(true);
+        // The overlay covers the whole viewport; the bottom nav must not show
+        // through underneath it.
+        expect(route.meta.hideEdgeBar).toBe(true);
+    });
+});
+
 describe('debug route', () => {
     it('is registered and publicly reachable without auth or onboarding', async () => {
         setUrl('https://innerr-app.test/');
