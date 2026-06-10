@@ -738,6 +738,11 @@ watch(
             return;
         }
 
+        // De overlay blijft bij post→post gemount, dus reset de scroll zelf.
+        if (scrollRef.value) {
+            scrollRef.value.scrollTop = 0;
+        }
+
         post.value = null;
         isLikesSheetOpen.value = false;
         isCommentsSheetOpen.value = false;
