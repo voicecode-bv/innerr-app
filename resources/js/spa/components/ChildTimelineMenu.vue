@@ -131,11 +131,11 @@ onMounted(() => {
                             v-if="child.avatar_thumbnail"
                             :src="child.avatar_thumbnail"
                             :alt="child.name"
-                            class="size-12 rounded-full object-cover ring-2 ring-sand"
+                            class="size-9 rounded-full object-cover ring-2 ring-sand"
                         />
                         <span
                             v-else
-                            class="flex size-12 items-center justify-center rounded-full bg-brand-blue text-white ring-2 ring-sand"
+                            class="flex size-6 items-center justify-center rounded-full bg-brand-blue text-white ring-2 ring-sand"
                         >
                             <span
                                 aria-hidden="true"
@@ -146,7 +146,7 @@ onMounted(() => {
                     </template>
                 </span>
                 <span
-                    class="max-w-32 min-w-0 truncate text-sm font-medium text-ink"
+                    class="ml-3 max-w-32 min-w-0 truncate text-base font-medium text-ink"
                 >
                     {{ selectedNames }}
                 </span>
@@ -165,12 +165,24 @@ onMounted(() => {
                         class="shrink-0 text-sm font-medium text-accent transition-colors hover:text-accent/80"
                         @click="toggleAll"
                     >
-                        {{ allSelected ? t('Deselect all') : t('Select all') }}
+                        {{
+                            allSelected
+                                ? t('Deselect everyone')
+                                : t('Select everyone')
+                        }}
                     </button>
                 </div>
             </template>
 
             <div class="px-4 py-5">
+                <p class="mb-5 text-sm text-ink-muted">
+                    {{
+                        t(
+                            'These are all children from all circles you are a member of.',
+                        )
+                    }}
+                </p>
+
                 <div
                     v-if="children.length > 0"
                     class="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4"

@@ -93,7 +93,7 @@ function iconMaskStyle(url: string) {
                 <img
                     :src="innerrLogo"
                     :alt="t('Innerr')"
-                    class="h-7 w-auto shrink-0 dark:hidden"
+                    class="h-9 w-auto shrink-0 dark:hidden"
                 />
                 <img
                     :src="innerrLogoDark"
@@ -153,7 +153,7 @@ function iconMaskStyle(url: string) {
         </div>
 
         <div
-            class="flex items-center justify-between border-t border-dark-sand px-4 pt-2 pb-2"
+            class="flex items-center justify-between border-t border-dark-sand px-4 py-2 pb-2"
         >
             <ChildTimelineMenu />
             <button
@@ -184,12 +184,12 @@ function iconMaskStyle(url: string) {
                 <img
                     :src="innerrLogo"
                     :alt="t('Innerr')"
-                    class="h-7 w-auto dark:hidden"
+                    class="h-12 w-auto dark:hidden"
                 />
                 <img
                     :src="innerrLogoDark"
                     :alt="t('Innerr')"
-                    class="hidden h-7 w-auto dark:block"
+                    class="hidden h-12 w-auto dark:block"
                 />
             </div>
             <div class="flex-1 overflow-y-auto px-4 pb-4">

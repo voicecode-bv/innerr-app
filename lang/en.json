@@ -686,6 +686,9 @@
     "No children yet": "No children yet",
     ":count children": ":count children",
     "Select children": "Who do you want to see?",
+    "Select everyone": "Select everyone",
+    "Deselect everyone": "Deselect everyone",
+    "These are all children from all circles you are a member of.": "These are all children from all circles you are a member of.",
     "View timeline": "View timeline",
     "View timeline (:count)": "View timeline (:count)"
 }

@@ -686,6 +686,9 @@
     "No children yet": "Nog geen kinderen",
     ":count children": ":count kinderen",
     "Select children": "Wie wil je zien?",
+    "Select everyone": "Iedereen selecteren",
+    "Deselect everyone": "Niemand selecteren",
+    "These are all children from all circles you are a member of.": "Dit zijn alle kinderen uit alle kringen waar je lid van bent.",
     "View timeline": "Bekijk tijdlijn",
     "View timeline (:count)": "Bekijk tijdlijn (:count)"
 }
