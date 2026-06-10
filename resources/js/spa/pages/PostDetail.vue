@@ -765,7 +765,7 @@ watch(
 <template>
     <div
         ref="scrollRef"
-        class="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-surface pt-[var(--inset-top,0px)]"
+        class="fixed inset-0 z-120 overflow-y-auto overscroll-contain bg-surface pt-[var(--inset-top,0px)]"
         style="transform: translate3d(0, 0, 0); will-change: transform"
     >
         <div class="pb-[var(--inset-bottom,0px)]">
