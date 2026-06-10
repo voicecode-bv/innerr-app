@@ -9,6 +9,7 @@ import {
 } from '@/spa/http/apiClient';
 import { configureExternalApi } from '@/spa/http/externalApi';
 import { router } from '@/spa/router';
+import { installNativeRouterBridge } from '@/spa/router/nativeBridge';
 import { useAppearanceStore } from '@/spa/stores/appearance';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
@@ -192,6 +193,11 @@ async function bootstrap(): Promise<void> {
     };
 
     app.use(router);
+
+    // Maak `window.router.visit` beschikbaar zodat de native shell binnenkomende
+    // deeplinks (o.a. de OAuth-callback op een warme app) SPA-side kan
+    // afhandelen. Zie installNativeRouterBridge voor de details.
+    installNativeRouterBridge(router);
 
     await router.isReady();
 
