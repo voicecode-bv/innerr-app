@@ -114,7 +114,7 @@ onMounted(() => {
             :aria-label="t('Open a child timeline')"
             :aria-expanded="open"
             aria-haspopup="dialog"
-            class="flex h-9 items-center justify-center gap-1 rounded-full px-1.5 text-accent transition-colors hover:bg-sand-100"
+            class="flex h-12 items-center justify-center gap-1 rounded-full px-1.5 text-accent transition-colors hover:bg-sand-100"
             @click="openSheet"
         >
             <span
@@ -125,21 +125,21 @@ onMounted(() => {
             ></span>
 
             <template v-else>
-                <span class="flex -space-x-2">
+                <span class="flex -space-x-3">
                     <template v-for="child in previewChildren" :key="child.id">
                         <img
                             v-if="child.avatar_thumbnail"
                             :src="child.avatar_thumbnail"
                             :alt="child.name"
-                            class="size-6 rounded-full object-cover ring-2 ring-sand"
+                            class="size-12 rounded-full object-cover ring-2 ring-sand"
                         />
                         <span
                             v-else
-                            class="flex size-6 items-center justify-center rounded-full bg-brand-blue text-white ring-2 ring-sand"
+                            class="flex size-12 items-center justify-center rounded-full bg-brand-blue text-white ring-2 ring-sand"
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-3.5 bg-current"
+                                class="inline-block size-7 bg-current"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </span>

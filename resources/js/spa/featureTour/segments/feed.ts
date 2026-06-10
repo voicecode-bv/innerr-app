@@ -17,17 +17,6 @@ export function feedSegment(): TourSegment {
                 },
             },
             {
-                element: '[data-tour="feed.circles-strip"]',
-                popover: {
-                    title: t('Your circles'),
-                    description: t(
-                        'Each circle is a private group of people you share moments with. Tap a circle to see only its posts.',
-                    ),
-                    side: 'bottom',
-                    align: 'center',
-                },
-            },
-            {
                 element: '[data-tour="feed.children-filter"]',
                 popover: {
                     title: t('Focus on one child'),

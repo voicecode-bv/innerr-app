@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, useSlots } from 'vue';
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    onUnmounted,
+    ref,
+    useSlots,
+} from 'vue';
+import {
+    recallScroll,
+    rememberScroll,
+} from '@/spa/composables/useScrollMemory';
 import { useTranslations } from '@/spa/composables/useTranslations';
 
 const props = withDefaults(
     defineProps<{
         showHeader?: boolean;
         title?: string;
+        // Wanneer gezet onthoudt de layout de scroll-positie onder deze sleutel
+        // en herstelt 'm bij terugkeer (i.p.v. naar boven te resetten). Zo kom
+        // je na het openen van een detailpagina weer terug waar je was. Zonder
+        // sleutel blijft het oude gedrag: elke mount scrollt naar boven.
+        scrollKey?: string;
     }>(),
     {
         showHeader: true,
@@ -19,13 +36,19 @@ const hasHeaderLeft = computed(() => !!slots['header-left']);
 
 const mainRef = ref<HTMLElement | null>(null);
 
-// Bij elke nieuwe mount: scroll-positie naar 0 én forceer een paint-pass.
-// vue-router's `scrollBehavior` werkt niet voor onze custom scroll-container,
-// en WKWebView toont na route-transities soms een lege pagina tot er
-// gescrollt wordt — beide opgelost door deze reset.
+// Bij elke nieuwe mount: zet de scroll-positie (hersteld of 0) én forceer een
+// paint-pass. vue-router's `scrollBehavior` werkt niet voor onze custom
+// scroll-container, en WKWebView toont na route-transities soms een lege pagina
+// tot er gescrollt wordt — beide opgelost door deze reset. Met een `scrollKey`
+// herstellen we de onthouden positie zodat je terugkomt waar je was.
 function resetScroll(): void {
+    const restored =
+        props.scrollKey !== undefined
+            ? recallScroll(props.scrollKey)
+            : undefined;
+
     if (mainRef.value) {
-        mainRef.value.scrollTop = 0;
+        mainRef.value.scrollTop = restored ?? 0;
     }
 
     if (typeof window !== 'undefined') {
@@ -69,6 +92,14 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('spa:tab-reselect', scrollToTop);
+});
+
+// Onthoud de huidige scroll-positie voordat de pagina verdwijnt (bv. bij het
+// openen van een postdetail), zodat we 'm bij terugkeer kunnen herstellen.
+onBeforeUnmount(() => {
+    if (props.scrollKey !== undefined && mainRef.value) {
+        rememberScroll(props.scrollKey, mainRef.value.scrollTop);
+    }
 });
 
 defineExpose({ mainRef });

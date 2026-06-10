@@ -20,14 +20,12 @@ import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useChildFilterStore } from '@/spa/stores/childFilter';
-import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import cameraIcon from '../../../svg/doodle-icons/camera.svg';
 import starIcon from '../../../svg/doodle-icons/star.svg';
 
 const { t } = useTranslations();
-const circlesStore = useCirclesStore();
 const feedCache = useFeedCacheStore();
 const childFilter = useChildFilterStore();
 const notificationsStore = useNotificationsStore();
@@ -39,14 +37,6 @@ const containerRef = computed(() => layoutRef.value?.mainRef ?? null);
 const sentinelRef = ref<HTMLElement | null>(null);
 const permissionCardRef =
     useTemplateRef<InstanceType<typeof PushPermissionCard>>('permissionCard');
-
-async function loadCircles(): Promise<void> {
-    try {
-        await circlesStore.ensureLoaded();
-    } catch {
-        // negeren — strip blijft leeg
-    }
-}
 
 async function loadUnreadCount(): Promise<void> {
     try {
@@ -148,11 +138,9 @@ onMounted(() => {
 
 const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: async () => {
-        circlesStore.invalidate();
         feedCache.invalidate(FEED_KEY);
         notificationsStore.invalidate();
         await Promise.all([
-            loadCircles(),
             loadUnreadCount(),
             feed.reset(),
             permissionCardRef.value?.refresh() ?? Promise.resolve(),
@@ -161,7 +149,6 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     containerRef,
 });
 
-onMounted(loadCircles);
 onMounted(loadUnreadCount);
 
 const commentsPostId = ref<string | null>(null);
@@ -249,11 +236,11 @@ function iconMaskStyle(url: string) {
 </script>
 
 <template>
-    <AppLayout ref="layout" :show-header="false">
+    <AppLayout ref="layout" :show-header="false" scroll-key="spa.home">
         <template #above>
             <FeedHeader layout="list" />
             <!-- Sticky date bar pinned just below the fixed header (its bottom
-                 sits at inset-top + the feed's mt-60). Shows the month + year of
+                 sits at inset-top + the feed's mt-36). Shows the month + year of
                  the timeline at the current scroll position. -->
             <div
                 v-if="feed.items.length > 0"
@@ -271,7 +258,7 @@ function iconMaskStyle(url: string) {
         </template>
 
         <div
-            class="relative mt-60 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
+            class="relative mt-36 pb-[calc(var(--bottom-nav-height)+var(--inset-bottom,0px))]"
         >
             <PullToRefreshIndicator
                 :pull-distance="pullDistance"

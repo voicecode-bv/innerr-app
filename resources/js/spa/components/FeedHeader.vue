@@ -6,8 +6,6 @@ import Drawer from '@/spa/components/Drawer.vue';
 import SettingsMenu from '@/spa/components/SettingsMenu.vue';
 import { useFeedLayout } from '@/spa/composables/useFeedLayout';
 import { useTranslations } from '@/spa/composables/useTranslations';
-import type { Circle } from '@/spa/stores/circles';
-import { sortByRecentlyUpdated, useCirclesStore } from '@/spa/stores/circles';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import bugIcon from '../../../svg/doodle-icons/bug.svg';
 import listIcon from '../../../svg/doodle-icons/feed-list.svg';
@@ -15,7 +13,6 @@ import masonryIcon from '../../../svg/doodle-icons/feed-masonry.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import menuIcon from '../../../svg/doodle-icons/menu.svg';
-import userIcon from '../../../svg/doodle-icons/user.svg';
 import innerrLogoDark from '../../../svg/innerr-logo-on-blue.svg';
 import innerrLogo from '../../../svg/innerr-logo-on-sand.svg';
 
@@ -25,7 +22,6 @@ const props = defineProps<{
 
 const { t } = useTranslations();
 const router = useRouter();
-const circlesStore = useCirclesStore();
 const notificationsStore = useNotificationsStore();
 const { setLayout } = useFeedLayout();
 
@@ -39,13 +35,6 @@ const isDrawerOpen = ref(false);
 const isLocalEnv =
     import.meta.env.DEV ||
     (import.meta.env.VITE_APP_ENV ?? 'production') !== 'production';
-
-// The strip shows circles with the most recently changed on top. We sort a copy
-// client-side (circles per user are few) so the shared store and its other
-// consumers keep their own ordering.
-const circles = computed<Circle[] | null>(() =>
-    circlesStore.items ? sortByRecentlyUpdated(circlesStore.items) : null,
-);
 
 const unreadNotifications = computed(() => notificationsStore.unreadCount);
 const unreadBadge = computed(() =>
@@ -86,7 +75,7 @@ function iconMaskStyle(url: string) {
         class="fixed right-[var(--inset-right)] left-[var(--inset-left)] z-100 border-b border-dark-sand bg-sand pt-[var(--inset-top)]"
     >
         <div class="px-4 pt-3 pb-3">
-            <div class="mb-6 flex items-center gap-3">
+            <div class="flex items-center gap-3">
                 <div class="flex flex-1 items-center">
                     <button
                         type="button"
@@ -161,86 +150,6 @@ function iconMaskStyle(url: string) {
                     </RouterLink>
                 </div>
             </div>
-            <div
-                data-tour="feed.circles-strip"
-                class="-mx-4 px-4 no-scrollbar flex gap-3 overflow-x-auto"
-            >
-                <RouterLink
-                    :to="{ name: 'spa.circles.index' }"
-                    class="group flex shrink-0 flex-col items-center gap-1.5"
-                >
-                    <div
-                        class="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-ink/50 transition-transform duration-500 group-hover:rotate-90"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2"
-                            stroke="currentColor"
-                            class="size-6 text-ink"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M12 4.5v15m7.5-7.5h-15"
-                            />
-                        </svg>
-                    </div>
-                    <span class="text-sm font-medium text-ink">{{
-                        t('Circles')
-                    }}</span>
-                </RouterLink>
-
-                <template v-if="!circles">
-                    <div
-                        v-for="n in 4"
-                        :key="n"
-                        class="flex shrink-0 flex-col items-center gap-1.5"
-                    >
-                        <div
-                            class="size-15 animate-pulse rounded-full bg-sand"
-                        />
-                        <div class="h-3 w-12 animate-pulse rounded bg-sand" />
-                    </div>
-                </template>
-
-                <RouterLink
-                    v-else
-                    v-for="circle in circles"
-                    :key="circle.id"
-                    :to="{
-                        name: 'spa.circles.feed',
-                        params: { circle: circle.id },
-                    }"
-                    class="flex shrink-0 flex-col items-center gap-1.5"
-                >
-                    <div class="circle-ring relative rounded-full p-0.5">
-                        <div class="rounded-full bg-surface p-0.5">
-                            <img
-                                v-if="circle.photo"
-                                :src="circle.photo"
-                                :alt="circle.name"
-                                class="size-14 rounded-full object-cover"
-                            />
-                            <div
-                                v-else
-                                class="flex size-14 items-center justify-center rounded-full bg-sand-100"
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    class="inline-block size-7 bg-sand-600"
-                                    :style="iconMaskStyle(userIcon)"
-                                ></span>
-                            </div>
-                        </div>
-                    </div>
-                    <span
-                        class="max-w-16 truncate text-sm font-medium text-ink"
-                        >{{ circle.name }}</span
-                    >
-                </RouterLink>
-            </div>
         </div>
 
         <div
@@ -289,17 +198,3 @@ function iconMaskStyle(url: string) {
         </Drawer>
     </div>
 </template>
-
-<style scoped>
-/* circle-ring is aliased to the global .avatar-ring utility (in app.css) */
-.circle-ring {
-    background: conic-gradient(
-        from 0deg,
-        var(--color-brand-blue),
-        var(--color-brand-green),
-        var(--color-brand-yellow),
-        var(--color-brand-orange),
-        var(--color-brand-blue)
-    );
-}
-</style>
