@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import Spinner from '@/components/Spinner.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
-import { PushNotifications } from '@nativephp/mobile';
+import { Events, Off, On, PushNotifications } from '@nativephp/mobile';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
 import infoIcon from '../../../svg/doodle-icons/Info.svg';
 
@@ -86,6 +87,37 @@ async function refreshStatus(): Promise<void> {
     }
 }
 
+// iOS keeps reporting the old permission for a moment after the prompt
+// closes, and getToken() can still be null right after enroll. Poll a few
+// times so the card dismisses itself without needing an app relaunch.
+let statusRetryTimers: number[] = [];
+
+function clearStatusRetries(): void {
+    statusRetryTimers.forEach((timer) => window.clearTimeout(timer));
+    statusRetryTimers = [];
+}
+
+function scheduleStatusRetries(): void {
+    clearStatusRetries();
+    statusRetryTimers = [800, 2000, 4500].map((delay) =>
+        window.setTimeout(() => {
+            if (permissionStatus.value === 'not_determined') {
+                void refreshStatus();
+            }
+        }, delay),
+    );
+}
+
+// An FCM token is only ever issued after permission was granted, so the
+// event is a definitive "enabled" signal regardless of where the user
+// enabled it (this card, the onboarding step, or the system settings).
+function onTokenGenerated({ token }: { token: string }): void {
+    if (token && permissionStatus.value !== 'granted') {
+        permissionStatus.value = 'granted';
+        emit('permission-changed', 'granted');
+    }
+}
+
 async function enablePushNotifications(): Promise<void> {
     if (enrolling.value) {
         return;
@@ -115,10 +147,12 @@ async function enablePushNotifications(): Promise<void> {
         } else {
             // Geen token: geweigerd of nog onbeslist — lees de echte status.
             await refreshStatus();
+            scheduleStatusRetries();
         }
     } catch {
         // Gebruiker heeft geweigerd of bridge niet beschikbaar.
         await refreshStatus();
+        scheduleStatusRetries();
     } finally {
         enrolling.value = false;
         emit('permission-changed', permissionStatus.value);
@@ -135,6 +169,7 @@ function onVisibilityChange(): void {
 
 onMounted(() => {
     void refreshStatus();
+    On(Events.PushNotification.TokenGenerated, onTokenGenerated);
 
     if (typeof document !== 'undefined') {
         document.addEventListener('visibilitychange', onVisibilityChange);
@@ -142,6 +177,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    clearStatusRetries();
+    Off(Events.PushNotification.TokenGenerated, onTokenGenerated);
+
     if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', onVisibilityChange);
     }
@@ -153,8 +191,17 @@ defineExpose({ refresh: refreshStatus });
 <template>
     <div
         v-if="hasBanner"
-        class="reveal-item relative rounded-lg border border-brand-blue/15 bg-brand-blue/5 p-5 shadow-sm backdrop-blur-sm"
+        class="reveal-item relative overflow-hidden rounded-2xl bg-surface/80 p-5 shadow-sm ring-1 ring-sand-200/70 backdrop-blur-sm"
     >
+        <!-- Corner glow + film grain: the same album-note atmosphere as the
+             welcome scene, so prompts feel like part of the product. -->
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+            <div
+                class="absolute -top-10 -right-8 size-32 rounded-full bg-accent-soft/25 blur-2xl"
+            ></div>
+            <div class="absolute inset-0 grain opacity-[0.04]"></div>
+        </div>
+
         <button
             v-if="dismissible"
             type="button"
@@ -178,9 +225,9 @@ defineExpose({ refresh: refreshStatus });
             </svg>
         </button>
 
-        <div v-if="showDeniedBanner" class="flex items-start gap-3">
+        <div v-if="showDeniedBanner" class="relative flex items-start gap-4">
             <div
-                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue dark:text-ink-muted"
+                class="flex size-12 shrink-0 rotate-[-6deg] items-center justify-center rounded-xl bg-sand-100 text-ink shadow-sm"
             >
                 <span
                     aria-hidden="true"
@@ -189,7 +236,7 @@ defineExpose({ refresh: refreshStatus });
                 ></span>
             </div>
             <div class="flex-1" :class="dismissible ? 'pr-6' : ''">
-                <h3 class="font-semibold text-brand-blue dark:text-white">
+                <h3 class="font-semibold text-ink">
                     {{ t('Push notifications are off') }}
                 </h3>
                 <p class="mt-1 text-sm leading-relaxed text-ink-muted">
@@ -202,18 +249,27 @@ defineExpose({ refresh: refreshStatus });
             </div>
         </div>
 
-        <div v-else-if="showEnablePrompt" class="flex items-start gap-3">
-            <div
-                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue dark:text-ink-muted"
-            >
+        <div
+            v-else-if="showEnablePrompt"
+            class="relative flex items-start gap-4"
+        >
+            <div class="relative shrink-0">
+                <div
+                    class="flex size-12 rotate-[-6deg] items-center justify-center rounded-xl bg-brand-blue text-brand-sand shadow-sm"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-6 bg-current"
+                        :style="iconMaskStyle(bellIcon)"
+                    ></span>
+                </div>
                 <span
                     aria-hidden="true"
-                    class="inline-block size-6 bg-current"
-                    :style="iconMaskStyle(bellIcon)"
+                    class="absolute -top-1.5 -right-1.5 size-3 rounded-full bg-brand-yellow shadow-sm ring-2 ring-surface"
                 ></span>
             </div>
             <div class="flex-1" :class="dismissible ? 'pr-6' : ''">
-                <h3 class="font-semibold text-brand-blue dark:text-white">
+                <h3 class="font-semibold text-ink">
                     {{ t('Enable push notifications') }}
                 </h3>
                 <p class="mt-1 text-sm leading-relaxed text-ink-muted">
@@ -225,11 +281,12 @@ defineExpose({ refresh: refreshStatus });
                 </p>
                 <button
                     type="button"
-                    class="mt-3 inline-flex items-center rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:opacity-60"
+                    class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-action px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
                     :disabled="enrolling"
                     @click="enablePushNotifications"
                 >
-                    {{ enrolling ? t('Enabling…') : t('Turn on') }}
+                    <Spinner v-if="enrolling" class="size-3.5" />
+                    {{ t('Turn on') }}
                 </button>
             </div>
         </div>

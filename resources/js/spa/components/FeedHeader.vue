@@ -8,6 +8,7 @@ import Drawer from '@/spa/components/Drawer.vue';
 import SettingsMenu from '@/spa/components/SettingsMenu.vue';
 import { useFeedLayout } from '@/spa/composables/useFeedLayout';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { useAuthStore } from '@/spa/stores/auth';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import bugIcon from '../../../svg/doodle-icons/bug.svg';
 import listIcon from '../../../svg/doodle-icons/feed-list.svg';
@@ -15,6 +16,7 @@ import masonryIcon from '../../../svg/doodle-icons/feed-masonry.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import menuIcon from '../../../svg/doodle-icons/menu.svg';
+import userIcon from '../../../svg/doodle-icons/user.svg';
 import innerrLogoDark from '../../../svg/innerr-logo-on-blue.svg';
 import innerrLogo from '../../../svg/innerr-logo-on-sand.svg';
 
@@ -26,10 +28,13 @@ const props = defineProps<{
 
 const { t } = useTranslations();
 const router = useRouter();
+const auth = useAuthStore();
 const notificationsStore = useNotificationsStore();
 const { setLayout } = useFeedLayout();
 
 const isDrawerOpen = ref(false);
+
+const firstName = computed(() => (auth.user?.name ?? '').split(' ')[0] ?? '');
 
 // Quick link to the debug page during local development. The page itself is
 // always registered (also reachable via the hidden login-logo gesture); this
@@ -186,19 +191,60 @@ function iconMaskStyle(url: string) {
         </div>
 
         <Drawer :open="isDrawerOpen" @update:open="isDrawerOpen = $event">
-            <div class="flex justify-center px-4 pt-4 pb-8">
-                <img
-                    :src="innerrLogo"
-                    :alt="t('Innerr')"
-                    class="h-12 w-auto dark:hidden"
-                />
-                <img
-                    :src="innerrLogoDark"
-                    :alt="t('Innerr')"
-                    class="hidden h-12 w-auto dark:block"
-                />
+            <!-- Album-note atmosphere: a soft glow behind the greeting plus
+                 film grain over the whole panel. -->
+            <div
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-0 overflow-hidden"
+            >
+                <div
+                    class="absolute -top-16 -right-12 size-48 rounded-full bg-brand-yellow/20 blur-3xl"
+                ></div>
+                <div
+                    class="absolute -bottom-20 -left-16 size-56 rounded-full bg-accent-soft/15 blur-3xl"
+                ></div>
+                <div class="absolute inset-0 grain opacity-[0.035]"></div>
             </div>
-            <div class="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
+
+            <!-- Personal greeting: this drawer is *your* album, so it opens
+                 with you instead of repeating the wordmark from the header. -->
+            <div class="relative flex items-center gap-4 px-5 pt-6 pb-5">
+                <img
+                    v-if="auth.user?.avatar"
+                    :src="auth.user.avatar"
+                    :alt="auth.user.name"
+                    class="avatar-ring size-14 shrink-0 rounded-full object-cover"
+                />
+                <span
+                    v-else
+                    class="avatar-ring flex size-14 shrink-0 items-center justify-center rounded-full"
+                >
+                    <span
+                        class="flex size-full items-center justify-center rounded-full bg-brand-blue text-brand-sand"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-6 bg-current"
+                            :style="iconMaskStyle(userIcon)"
+                        ></span>
+                    </span>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <p
+                        class="truncate font-display text-2xl font-black tracking-tight text-ink"
+                    >
+                        {{ t('Hi :name', { name: firstName }) }}
+                    </p>
+                    <p
+                        v-if="auth.user?.username"
+                        class="truncate text-sm text-ink-muted"
+                    >
+                        @{{ auth.user.username }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="relative flex-1 space-y-4 overflow-y-auto px-4 pb-4">
                 <AppPreferences />
                 <SettingsMenu @navigate="isDrawerOpen = false" />
             </div>

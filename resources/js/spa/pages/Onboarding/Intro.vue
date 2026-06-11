@@ -30,6 +30,8 @@ function iconMaskStyle(url: string) {
     };
 }
 
+// Each step leans slightly off-axis and carries its own brand colour, so the
+// list reads like notes pinned in an album rather than a feature table.
 const steps = [
     {
         icon: userIcon,
@@ -37,6 +39,8 @@ const steps = [
         description: t(
             'Add the people you trust, like grandparents and godparents. Only people you invite can see your child.',
         ),
+        badgeClass: 'bg-accent',
+        tilt: '-1.2deg',
     },
     {
         icon: cameraIcon,
@@ -44,6 +48,8 @@ const steps = [
         description: t(
             'Post photos and videos of your little one. No public feed, no strangers.',
         ),
+        badgeClass: 'bg-brand-green',
+        tilt: '1deg',
     },
     {
         icon: heartIcon,
@@ -51,6 +57,8 @@ const steps = [
         description: t(
             'Let faraway family watch your child grow up. Calmly, privately, together.',
         ),
+        badgeClass: 'bg-brand-orange',
+        tilt: '-0.8deg',
     },
 ];
 
@@ -121,8 +129,22 @@ async function continueOnboarding(): Promise<void> {
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
+        class="nativephp-safe-area relative isolate flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
+        <!-- Quiet atmosphere on the warm sand: two soft glows and film grain. -->
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 -z-10"
+        >
+            <div
+                class="absolute -top-20 -right-16 size-72 rounded-full bg-sage-200/40 blur-3xl"
+            ></div>
+            <div
+                class="absolute bottom-10 -left-20 size-72 rounded-full bg-accent-soft/20 blur-3xl"
+            ></div>
+            <div class="absolute inset-0 grain opacity-[0.04]"></div>
+        </div>
+
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
@@ -150,7 +172,11 @@ async function continueOnboarding(): Promise<void> {
                 <li
                     v-for="(step, index) in steps"
                     :key="index"
-                    class="relative flex items-start gap-4 rounded-lg bg-surface/50 p-4 shadow-sm backdrop-blur-sm"
+                    class="reveal-item relative flex items-start gap-4 rounded-lg bg-surface/60 p-4 shadow-sm backdrop-blur-sm"
+                    :style="{
+                        rotate: step.tilt,
+                        '--reveal-delay': `${120 + index * 130}ms`,
+                    }"
                 >
                     <div class="relative shrink-0">
                         <div
@@ -163,7 +189,8 @@ async function continueOnboarding(): Promise<void> {
                             ></span>
                         </div>
                         <span
-                            class="absolute -top-2 -left-2 flex size-6 items-center justify-center rounded-full bg-accent leading-none font-semibold text-white shadow-md"
+                            class="absolute -top-2 -left-2 flex size-6 items-center justify-center rounded-full leading-none font-semibold text-white shadow-md"
+                            :class="step.badgeClass"
                         >
                             {{ index + 1 }}
                         </span>

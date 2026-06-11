@@ -42,8 +42,33 @@ function iconMaskStyle(url: string) {
 <template>
     <div
         v-if="appUpdate.updateAvailable"
-        class="reveal-item relative rounded-lg border border-brand-blue/15 bg-brand-blue/5 p-5 shadow-sm backdrop-blur-sm"
+        class="reveal-item relative overflow-hidden rounded-2xl bg-surface/80 p-5 shadow-sm ring-1 ring-sand-200/70 backdrop-blur-sm"
     >
+        <!-- A new release is a small celebration: warm yellow glow, film
+             grain and a couple of sparkles around the gift. -->
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+            <div
+                class="absolute -top-10 -right-8 size-32 rounded-full bg-brand-yellow/30 blur-2xl"
+            ></div>
+            <div class="absolute inset-0 grain opacity-[0.04]"></div>
+            <svg
+                class="absolute top-3 right-10 size-3 text-brand-orange/70"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+            >
+                <path
+                    d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"
+                />
+            </svg>
+            <svg
+                class="absolute top-9 right-5 size-2 text-brand-green/60"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+            >
+                <circle cx="12" cy="12" r="10" />
+            </svg>
+        </div>
+
         <button
             type="button"
             class="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full text-brand-blue/60 transition-colors hover:bg-brand-blue/10 hover:text-brand-blue dark:text-ink-muted"
@@ -66,9 +91,9 @@ function iconMaskStyle(url: string) {
             </svg>
         </button>
 
-        <div class="flex items-start gap-3">
+        <div class="relative flex items-start gap-4">
             <div
-                class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/15 text-brand-blue dark:text-ink-muted"
+                class="flex size-12 shrink-0 rotate-[-6deg] items-center justify-center rounded-xl bg-brand-yellow text-brand-blue shadow-sm"
             >
                 <span
                     aria-hidden="true"
@@ -77,7 +102,13 @@ function iconMaskStyle(url: string) {
                 ></span>
             </div>
             <div class="flex-1 pr-6">
-                <h3 class="font-semibold text-brand-blue dark:text-white">
+                <span
+                    v-if="appUpdate.latestVersion"
+                    class="inline-block rounded-full bg-brand-yellow px-2 py-0.5 text-[11px] leading-tight font-semibold text-brand-blue"
+                >
+                    v{{ appUpdate.latestVersion }}
+                </span>
+                <h3 class="mt-1 font-semibold text-ink">
                     {{ t('A new version of innerr is available') }}
                 </h3>
                 <p class="mt-1 text-sm leading-relaxed text-ink-muted">

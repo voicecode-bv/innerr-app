@@ -137,13 +137,10 @@ function iconMaskStyle(url: string) {
                 ref="dateBarRef"
                 aria-hidden="true"
                 :style="{ top: `${headerBottom}px` }"
-                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center transition-[background-color] duration-300 motion-reduce:transition-none"
-                :class="
-                    headerElevated ? 'bg-sand/85 backdrop-blur-md' : 'bg-sand'
-                "
+                class="pointer-events-none fixed right-[var(--inset-right,0px)] left-[var(--inset-left,0px)] z-[60] flex h-8 items-center justify-center"
             >
                 <span
-                    class="text-sm font-semibold tracking-wider text-ink-muted uppercase"
+                    class="rounded-full bg-surface/85 px-4 py-1 text-xs font-semibold tracking-widest text-ink-muted uppercase shadow-sm ring-1 ring-sand-200/80 backdrop-blur-md"
                 >
                     {{ currentDateLabel }}
                 </span>

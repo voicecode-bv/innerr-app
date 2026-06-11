@@ -143,19 +143,25 @@ onBeforeUnmount(() => {
                 </span>
             </button>
 
-            <!-- Centre FAB: raised, brand-blue, lifts above the bar. -->
+            <!-- Centre FAB: raised, brand-blue, lifted above the bar and
+                 wearing the signature conic brand ring (same language as the
+                 avatar rings in the feed). -->
             <div class="flex w-16 shrink-0 justify-center">
                 <button
                     type="button"
-                    class="-mt-5 flex size-15 flex-col items-center justify-center rounded-full bg-accent shadow-lg ring-4 shadow-accent/30 ring-sand transition-transform active:scale-95"
+                    class="avatar-ring -mt-5 size-15 shadow-lg shadow-accent/30 transition-transform active:scale-95"
                     :aria-label="t('New')"
                     @click="navigate('/posts/create')"
                 >
                     <span
-                        aria-hidden="true"
-                        class="inline-block size-7 bg-brand-sand"
-                        :style="iconMaskStyle(cameraIcon)"
-                    />
+                        class="flex size-full items-center justify-center rounded-full bg-accent"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="inline-block size-6.5 bg-brand-sand"
+                            :style="iconMaskStyle(cameraIcon)"
+                        />
+                    </span>
                 </button>
             </div>
 

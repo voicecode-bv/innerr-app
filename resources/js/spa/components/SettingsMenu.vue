@@ -31,64 +31,76 @@ const featureTour = useFeatureTourStore();
 const router = useRouter();
 const { isIos, isAndroid } = usePlatform();
 
-const menuItems = computed(() => [
+// Grouped into two album-note cards: what fills the album first, then the
+// app-level housekeeping. Easier to scan than one ten-row list.
+const menuGroups = computed(() => [
     {
-        routeName: 'spa.settings.default-circles',
-        icon: circleIcon,
-        label: 'Default circles',
-        tone: 'green' as const,
+        label: 'Your album',
+        items: [
+            {
+                routeName: 'spa.settings.default-circles',
+                icon: circleIcon,
+                label: 'Default circles',
+                tone: 'green' as const,
+            },
+            {
+                routeName: 'spa.settings.persons',
+                icon: usersIcon,
+                label: 'Persons',
+                tone: 'yellow' as const,
+            },
+            {
+                routeName: 'spa.settings.tags',
+                icon: tagIcon,
+                label: 'Tags',
+                tone: 'teal' as const,
+            },
+            {
+                routeName: 'spa.settings.storage',
+                icon: cloudIcon,
+                label: 'Storage',
+                tone: 'green' as const,
+            },
+        ],
     },
     {
-        routeName: 'spa.settings.persons',
-        icon: usersIcon,
-        label: 'Persons',
-        tone: 'yellow' as const,
-    },
-    {
-        routeName: 'spa.settings.tags',
-        icon: tagIcon,
-        label: 'Tags',
-        tone: 'teal' as const,
-    },
-    {
-        routeName: 'spa.settings.notifications',
-        icon: bellIcon,
-        label: 'Push notifications',
-        tone: 'teal' as const,
-    },
-    {
-        routeName: 'spa.settings.give',
-        icon: foldedHandsIcon,
-        label: 'Inner Gives',
-        tone: 'orange' as const,
-    },
-    {
-        routeName: 'spa.settings.storage',
-        icon: cloudIcon,
-        label: 'Storage',
-        tone: 'green' as const,
-    },
-    ...(isIos.value || isAndroid.value
-        ? [
-              {
-                  routeName: 'spa.settings.subscriptions',
-                  icon: crownIcon,
-                  label: 'Subscription',
-                  tone: 'yellow' as const,
-              },
-          ]
-        : []),
-    {
-        routeName: 'spa.settings.account',
-        icon: lockIcon,
-        label: 'Account',
-        tone: 'green' as const,
-    },
-    {
-        routeName: 'spa.settings.support',
-        icon: headphoneIcon,
-        label: 'Support',
-        tone: 'teal' as const,
+        label: 'App',
+        items: [
+            {
+                routeName: 'spa.settings.notifications',
+                icon: bellIcon,
+                label: 'Push notifications',
+                tone: 'teal' as const,
+            },
+            ...(isIos.value || isAndroid.value
+                ? [
+                      {
+                          routeName: 'spa.settings.subscriptions',
+                          icon: crownIcon,
+                          label: 'Subscription',
+                          tone: 'yellow' as const,
+                      },
+                  ]
+                : []),
+            {
+                routeName: 'spa.settings.give',
+                icon: foldedHandsIcon,
+                label: 'Inner Gives',
+                tone: 'orange' as const,
+            },
+            {
+                routeName: 'spa.settings.account',
+                icon: lockIcon,
+                label: 'Account',
+                tone: 'green' as const,
+            },
+            {
+                routeName: 'spa.settings.support',
+                icon: headphoneIcon,
+                label: 'Support',
+                tone: 'teal' as const,
+            },
+        ],
     },
 ]);
 
@@ -120,51 +132,75 @@ onUnmounted(() => Off(Events.Alert.ButtonPressed, handleButtonPressed));
 </script>
 
 <template>
-    <div class="space-y-4">
-        <ul class="divide-y divide-sand-100 bg-surface">
-            <li
-                v-for="item in menuItems"
-                :key="item.routeName"
-                class="reveal-item"
+    <div class="space-y-5">
+        <section v-for="group in menuGroups" :key="group.label">
+            <p
+                class="mb-2 px-1 text-xs font-semibold tracking-widest text-ink-muted uppercase"
             >
-                <RouterLink
-                    :to="{ name: item.routeName }"
-                    class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-sand-50"
-                    @click="emit('navigate')"
+                {{ t(group.label) }}
+            </p>
+            <ul
+                class="divide-y divide-sand-100 overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-sand-200/70"
+            >
+                <li
+                    v-for="item in group.items"
+                    :key="item.routeName"
+                    class="reveal-item"
                 >
-                    <IconTile
-                        :icon="item.icon"
-                        size="xs"
-                        :tone="item.tone"
-                        class="shrink-0"
-                    />
-                    <span
-                        class="flex-1 text-base leading-snug font-semibold text-ink"
+                    <RouterLink
+                        :to="{ name: item.routeName }"
+                        class="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-sand-50 active:bg-sand-50"
+                        @click="emit('navigate')"
                     >
-                        {{ t(item.label) }}
-                    </span>
-                </RouterLink>
-            </li>
-            <li class="reveal-item">
-                <button
-                    type="button"
-                    class="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-sand-50"
-                    @click="restartTour"
-                >
-                    <IconTile
-                        :icon="questionIcon"
-                        size="xs"
-                        tone="teal"
-                        class="shrink-0"
-                    />
-                    <span
-                        class="flex-1 text-base leading-snug font-semibold text-ink"
+                        <IconTile
+                            :icon="item.icon"
+                            size="xs"
+                            :tone="item.tone"
+                            class="shrink-0"
+                        />
+                        <span
+                            class="flex-1 text-base leading-snug font-semibold text-ink"
+                        >
+                            {{ t(item.label) }}
+                        </span>
+                        <svg
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="size-4 shrink-0 text-sand-300"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                            />
+                        </svg>
+                    </RouterLink>
+                </li>
+                <li v-if="group.label === 'App'" class="reveal-item">
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-sand-50 active:bg-sand-50"
+                        @click="restartTour"
                     >
-                        {{ t('Replay tour') }}
-                    </span>
-                </button>
-            </li>
-        </ul>
+                        <IconTile
+                            :icon="questionIcon"
+                            size="xs"
+                            tone="teal"
+                            class="shrink-0"
+                        />
+                        <span
+                            class="flex-1 text-base leading-snug font-semibold text-ink"
+                        >
+                            {{ t('Replay tour') }}
+                        </span>
+                    </button>
+                </li>
+            </ul>
+        </section>
 
         <Button variant="danger" size="lg" block @click="logout">
             {{ t('Log out') }}
