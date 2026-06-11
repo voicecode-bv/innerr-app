@@ -5,7 +5,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
-import { usePersonsStore } from '@/spa/stores/persons';
+import { isOwnChild, usePersonsStore } from '@/spa/stores/persons';
 
 /* Activation checklist for circle owners: the three actions that turn an
    empty album into a living one. Rows deep-link straight into the action,
@@ -44,17 +44,11 @@ const ownedCircle = computed(() =>
     (circles.items ?? []).find((circle) => circle.is_owner),
 );
 
-const hasChild = computed(() => {
-    const circleId = ownedCircle.value?.id;
-
-    if (!circleId) {
-        return false;
-    }
-
-    return (persons.items ?? []).some(
-        (person) => !person.user_id && person.circle_ids?.includes(circleId),
-    );
-});
+const hasChild = computed(() =>
+    (persons.items ?? []).some((person) =>
+        isOwnChild(person, auth.user?.id, ownedCircle.value?.id),
+    ),
+);
 
 const hasInvited = computed(() => (ownedCircle.value?.members_count ?? 0) > 1);
 

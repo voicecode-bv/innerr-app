@@ -19,6 +19,31 @@ export interface Person {
     }[];
 }
 
+/**
+ * Whether a person is a child the current user has added themselves.
+ *
+ * App-wide, an account-less person (`!user_id`) is treated as a child (see
+ * Settings/Persons and the onboarding flow). The getting-started signal scopes
+ * that to the owner's own children: ones they created, or ones in a circle they
+ * own. Relying solely on the owned circle is too strict — a user can own several
+ * circles, and a child added in onboarding need not resolve to the first one.
+ */
+export function isOwnChild(
+    person: Person,
+    userId: string | undefined,
+    ownedCircleId: string | undefined,
+): boolean {
+    if (person.user_id) {
+        return false;
+    }
+
+    return (
+        (userId !== undefined && person.created_by_user_id === userId) ||
+        (ownedCircleId !== undefined &&
+            (person.circle_ids?.includes(ownedCircleId) ?? false))
+    );
+}
+
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 
 export const usePersonsStore = defineStore('spa-persons', {
