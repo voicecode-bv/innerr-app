@@ -195,7 +195,10 @@ defineExpose({ refresh: refreshStatus });
     >
         <!-- Corner glow + film grain: the same album-note atmosphere as the
              welcome scene, so prompts feel like part of the product. -->
-        <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+        >
             <div
                 class="absolute -top-10 -right-8 size-32 rounded-full bg-accent-soft/25 blur-2xl"
             ></div>

@@ -130,7 +130,10 @@ onMounted(async () => {
         v-if="visible"
         class="reveal-item relative overflow-hidden rounded-2xl bg-surface/80 p-5 shadow-sm ring-1 ring-sand-200/70 backdrop-blur-sm"
     >
-        <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+        >
             <div
                 class="absolute -top-10 -right-8 size-32 rounded-full bg-sage-200/40 blur-2xl"
             ></div>

@@ -46,7 +46,10 @@ function iconMaskStyle(url: string) {
     >
         <!-- A new release is a small celebration: warm yellow glow, film
              grain and a couple of sparkles around the gift. -->
-        <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+        >
             <div
                 class="absolute -top-10 -right-8 size-32 rounded-full bg-brand-yellow/30 blur-2xl"
             ></div>
