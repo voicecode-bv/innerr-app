@@ -913,6 +913,11 @@ function iconMaskStyle(url: string) {
                         <CirclePicker
                             :circles="circles"
                             :selected-ids="selectedCircleIds"
+                            :description="
+                                t(
+                                    'Sharing your child with circles makes your child\'s photos visible in those circles.',
+                                )
+                            "
                             :error="editForm.errors.circle_ids"
                             @update:selected-ids="selectedCircleIds = $event"
                         />

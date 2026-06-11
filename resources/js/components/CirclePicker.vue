@@ -21,6 +21,9 @@ const props = withDefaults(
         defaultCollapsed?: boolean;
         layout?: 'scroll' | 'grid';
         title?: string | null;
+        /** Optional helper line under the heading, for context-specific
+            consequences (e.g. what sharing a child means). */
+        description?: string | null;
         collapsible?: boolean;
     }>(),
     {
@@ -28,6 +31,7 @@ const props = withDefaults(
         defaultCollapsed: false,
         layout: 'scroll',
         title: null,
+        description: null,
         collapsible: true,
     },
 );
@@ -155,6 +159,13 @@ function toggleAll() {
                 {{ allSelected ? t('Deselect all') : t('Select all') }}
             </button>
         </div>
+
+        <p
+            v-if="description && !isCollapsed"
+            class="-mt-2 mb-3 text-sm text-ink-muted"
+        >
+            {{ description }}
+        </p>
 
         <div
             v-if="!isCollapsed"

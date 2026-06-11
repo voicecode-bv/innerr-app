@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
@@ -30,6 +31,13 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useTranslations();
+
+// Alphabetical, mirroring CirclePicker, so co-parents are easy to find.
+const sortedCandidates = computed(() =>
+    [...props.candidates].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+    ),
+);
 
 function iconMaskStyle(url: string) {
     return {
@@ -72,7 +80,7 @@ function toggle(userId: string): void {
         <p class="mt-1 mb-3 text-sm text-ink-muted">
             {{
                 t(
-                    'Parents can edit this child and add it to their own circles.',
+                    "Parents can edit this child's details and add it to their own circles.",
                 )
             }}
         </p>
@@ -82,7 +90,7 @@ function toggle(userId: string): void {
             class="-mx-1 no-scrollbar flex gap-3 overflow-x-auto px-1 pb-1"
         >
             <button
-                v-for="candidate in candidates"
+                v-for="candidate in sortedCandidates"
                 :key="candidate.userId"
                 type="button"
                 class="flex shrink-0 flex-col items-center gap-1.5"
