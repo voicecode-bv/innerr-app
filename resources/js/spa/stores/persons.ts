@@ -9,7 +9,14 @@ export interface Person {
     avatar_thumbnail: string | null;
     usage_count: number;
     user_id?: string | null;
+    created_by_user_id?: string;
     circle_ids?: string[];
+    parents?: {
+        id: string;
+        name: string;
+        username: string;
+        avatar_thumbnail: string | null;
+    }[];
 }
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;

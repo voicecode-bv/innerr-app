@@ -7,7 +7,7 @@ import {
     ref,
     watch,
 } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
 import Spinner from '@/components/Spinner.vue';
@@ -32,6 +32,7 @@ const LocationPickerSheet = defineAsyncComponent(
 );
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
+import { trackOnboardingStep } from '@/spa/http/onboarding';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { haptics } from '@/spa/services/haptics';
 import { useAuthStore } from '@/spa/stores/auth';
@@ -102,6 +103,15 @@ const MAX_PHOTOS = 10;
 
 const { t } = useTranslations();
 const router = useRouter();
+const route = useRoute();
+
+// Hand-off from the onboarding first-moment step: after sharing we continue
+// the onboarding (invite step) instead of landing on the feed, and cancel
+// returns to the step instead of the home route.
+const onboardingCircleId =
+    route.query.onboarding === '1' && typeof route.query.circle === 'string'
+        ? route.query.circle
+        : null;
 const auth = useAuthStore();
 const feedCache = useFeedCacheStore();
 const localThumbnails = useLocalThumbnailsStore();
@@ -491,7 +501,11 @@ function goNext(): void {
 
 function goBack(): void {
     if (currentStep.value === 0) {
-        router.push({ name: 'spa.home' });
+        if (onboardingCircleId) {
+            router.back();
+        } else {
+            router.push({ name: 'spa.home' });
+        }
 
         return;
     }
@@ -967,7 +981,15 @@ async function submit(): Promise<void> {
         }
     }
 
-    router.push({ name: 'spa.home' });
+    if (onboardingCircleId) {
+        trackOnboardingStep('first_moment');
+        router.push({
+            name: 'spa.onboarding.invite-members',
+            params: { circle: onboardingCircleId },
+        });
+    } else {
+        router.push({ name: 'spa.home' });
+    }
 
     try {
         // Pak de echte post-id uit de response en swap die in de cache zodat
@@ -1136,9 +1158,7 @@ const activeItemIsImage = computed(() => {
                         })
                     }}
                 </p>
-                <h2
-                    class="mt-1 text-center font-display text-2xl font-semibold text-ink"
-                >
+                <h2 class="mt-1 text-center text-2xl font-bold text-ink">
                     {{ stepHeading }}
                 </h2>
                 <p class="mt-1 text-center text-ink-muted">

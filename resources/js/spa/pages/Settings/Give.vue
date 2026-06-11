@@ -70,9 +70,7 @@ function goBack(): void {
                             size="lg"
                             tone="yellow"
                         />
-                        <h2
-                            class="font-display text-2xl font-semibold text-brand-sand"
-                        >
+                        <h2 class="text-2xl font-bold text-brand-sand">
                             {{ t('Inner Gives') }}
                         </h2>
                         <p class="leading-relaxed text-brand-sand/80">
@@ -112,7 +110,7 @@ function goBack(): void {
                 >
                     <IconTile :icon="heartFilledIcon" size="lg" tone="yellow" />
                     <p
-                        class="font-display text-6xl leading-none font-semibold text-brand-yellow"
+                        class="text-6xl leading-none font-extrabold tracking-tight text-brand-yellow"
                     >
                         {{ DONATION_PERCENTAGE }}<span class="text-4xl">%</span>
                     </p>

@@ -242,7 +242,7 @@ function iconMaskStyle(url: string) {
                 class="flex flex-col items-center px-4 py-10 text-center"
             >
                 <IconTile :icon="cloudIcon" size="lg" tone="sand" />
-                <p class="mt-4 font-display text-lg font-semibold text-ink">
+                <p class="mt-4 text-lg font-bold text-ink">
                     {{ t('Could not search') }}
                 </p>
                 <button
@@ -269,7 +269,7 @@ function iconMaskStyle(url: string) {
                 class="flex flex-col items-center px-4 py-10 text-center"
             >
                 <IconTile :icon="userIcon" size="lg" tone="sage" />
-                <p class="mt-4 font-display text-lg font-semibold text-ink">
+                <p class="mt-4 text-lg font-bold text-ink">
                     {{ t('Nobody in your circles yet') }}
                 </p>
                 <p class="mt-2 text-ink-muted">

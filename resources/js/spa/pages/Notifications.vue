@@ -431,6 +431,16 @@ function notificationMessage(notification: Notification): string {
             return t(':name shared a new moment', { name });
         case 'post-tagged':
             return t(':name tagged you in a post', { name });
+        case 'circle-member-joined': {
+            const circle =
+                (notification.data.circle_name as string | undefined) ?? '';
+
+            if (name && circle) {
+                return t(':name joined :circle', { name, circle });
+            }
+
+            return t('Someone joined your circle');
+        }
         case 'circle-invitation-accepted': {
             const circle =
                 (notification.data.circle_name as string | undefined) ?? '';
@@ -486,6 +496,7 @@ const typeIconMap: Record<string, BadgeConfig> = {
     'new-circle-post': { icon: bellIcon, tone: 'teal' },
     'post-tagged': { icon: tagIcon, tone: 'accent' },
     'circle-invitation-accepted': { icon: userAddIcon, tone: 'sage' },
+    'circle-member-joined': { icon: userAddIcon, tone: 'sage' },
     'circle-ownership-transfer-requested': { icon: crownIcon, tone: 'accent' },
     'circle-ownership-transfer-accepted': { icon: crownIcon, tone: 'sage' },
     'circle-ownership-transfer-declined': { icon: crownIcon, tone: 'sand' },
@@ -1085,9 +1096,7 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                         class="flex flex-col items-center justify-center py-10 text-center"
                     >
                         <IconTile :icon="bellIcon" size="lg" tone="sage" />
-                        <h3
-                            class="mt-4 font-display text-lg font-semibold text-ink"
-                        >
+                        <h3 class="mt-4 text-lg font-bold text-ink">
                             {{ t('No notifications yet') }}
                         </h3>
                         <p class="mt-1 max-w-xs text-sand-600">

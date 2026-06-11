@@ -144,7 +144,7 @@ async function skip(): Promise<void> {
     >
         <!-- 'history' back: this step has no circle param of its own, and the
              previous step (with param) is simply the prior history entry. -->
-        <OnboardingHeader :step="3" back-to="history" />
+        <OnboardingHeader :step="4" back-to="history" />
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
@@ -155,7 +155,7 @@ async function skip(): Promise<void> {
                     {{ t('Notifications') }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-black tracking-tight text-ink"
+                    class="mt-3 text-4xl font-extrabold tracking-tight text-ink"
                 >
                     {{ t('Stay in the loop') }}
                 </h1>

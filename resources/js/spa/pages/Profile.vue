@@ -518,7 +518,7 @@ function iconMaskStyle(url: string) {
                             />
                         </svg>
                     </div>
-                    <h3 class="font-display text-lg font-semibold text-ink">
+                    <h3 class="text-lg font-bold text-ink">
                         {{ t('No moments yet') }}
                     </h3>
                 </div>

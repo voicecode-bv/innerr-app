@@ -231,7 +231,7 @@ function iconMaskStyle(url: string) {
                 <div :key="step" class="flex flex-1 flex-col">
                     <div class="mb-6">
                         <h1
-                            class="font-display text-3xl font-black tracking-tight text-ink"
+                            class="text-3xl font-extrabold tracking-tight text-ink"
                         >
                             {{ title }}
                         </h1>

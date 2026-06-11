@@ -58,9 +58,7 @@ function iconMaskStyle(url: string) {
                 class="inline-block size-3.5 bg-current"
                 :style="iconMaskStyle(iconUrl)"
             ></span>
-            <span v-else class="font-display font-semibold uppercase">{{
-                initial
-            }}</span>
+            <span v-else class="font-bold uppercase">{{ initial }}</span>
         </span>
         {{ label }}
         <slot name="meta" />

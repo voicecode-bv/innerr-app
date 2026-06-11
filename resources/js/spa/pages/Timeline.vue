@@ -125,7 +125,7 @@ function goBack(): void {
                 v-else
                 class="flex min-h-[50vh] flex-col items-center justify-center px-8 text-center"
             >
-                <h3 class="font-display text-xl font-semibold text-ink">
+                <h3 class="text-xl font-bold text-ink">
                     {{ t('No moments yet') }}
                 </h3>
                 <p class="mt-2 text-ink-muted">

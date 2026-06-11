@@ -15,12 +15,15 @@ import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import ListItem from '@/spa/components/ListItem.vue';
+import ParentPicker from '@/spa/components/ParentPicker.vue';
+import type { ParentCandidate } from '@/spa/components/ParentPicker.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { usePersonsStore } from '@/spa/stores/persons';
 import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
@@ -36,7 +39,14 @@ interface Person {
     avatar_thumbnail: string | null;
     usage_count: number;
     user_id?: string | null;
+    created_by_user_id?: string;
     circle_ids?: string[];
+    parents?: {
+        id: string;
+        name: string;
+        username: string;
+        avatar_thumbnail: string | null;
+    }[];
 }
 
 interface Circle {
@@ -50,6 +60,7 @@ interface Circle {
 
 const { t } = useTranslations();
 const router = useRouter();
+const auth = useAuthStore();
 const circlesStore = useCirclesStore();
 const personsStore = usePersonsStore();
 
@@ -115,6 +126,53 @@ function defaultCreateCircleIds(): string[] {
         .map((circle) => circle.id);
 }
 
+// Co-parent selection: candidates are the account-holding member-persons of
+// the selected circles (locally available via the persons store); current
+// parents stay listed even when their circle drops out of the selection.
+const selectedParentIds = ref<string[]>([]);
+
+const parentCandidates = computed<ParentCandidate[]>(() => {
+    const meId = auth.user?.id;
+    const map = new Map<string, ParentCandidate>();
+
+    for (const person of personsStore.items ?? []) {
+        if (!person.user_id || person.user_id === meId) {
+            continue;
+        }
+
+        const shares = (person.circle_ids ?? []).some((id) =>
+            selectedCircleIds.value.includes(id),
+        );
+
+        if (shares) {
+            map.set(person.user_id, {
+                userId: person.user_id,
+                name: person.name,
+                avatar: person.avatar_thumbnail,
+            });
+        }
+    }
+
+    for (const parent of editingPerson.value?.parents ?? []) {
+        if (parent.id !== meId && !map.has(parent.id)) {
+            map.set(parent.id, {
+                userId: parent.id,
+                name: parent.name,
+                avatar: parent.avatar_thumbnail,
+            });
+        }
+    }
+
+    return [...map.values()];
+});
+
+// The creator is a parent by definition; their chip shows checked but fixed.
+const lockedParentIds = computed<string[]>(() => {
+    const creator = editingPerson.value?.created_by_user_id;
+
+    return creator && creator !== auth.user?.id ? [creator] : [];
+});
+
 const editingPersonId = ref<string | null>(null);
 const editingPerson = computed<Person | null>(() => {
     if (editingPersonId.value === null) {
@@ -147,17 +205,40 @@ function openCreate(): void {
     pendingPhotoPreview.value = null;
     formError.value = null;
     selectedCircleIds.value = defaultCreateCircleIds();
+    selectedParentIds.value = [];
     editForm.reset();
     editForm.data.circle_ids = selectedCircleIds.value;
     sheetOpen.value = true;
 }
 
+// Children are managed by their parents only; other families' children from
+// shared circles are visible here but not editable.
+function canManage(person: Person): boolean {
+    const userId = auth.user?.id;
+
+    if (!userId) {
+        return false;
+    }
+
+    return (
+        person.created_by_user_id === userId ||
+        (person.parents ?? []).some((parent) => parent.id === userId)
+    );
+}
+
 function openEdit(person: Person): void {
+    if (!canManage(person)) {
+        return;
+    }
+
     editingPersonId.value = person.id;
     pendingPhotoPath.value = null;
     pendingPhotoPreview.value = null;
     formError.value = null;
     selectedCircleIds.value = [...(person.circle_ids ?? [])];
+    selectedParentIds.value = (person.parents ?? [])
+        .map((parent) => parent.id)
+        .filter((id) => id !== auth.user?.id);
     editForm.data.name = person.name;
     editForm.data.birthdate = person.birthdate ?? '';
     editForm.data.circle_ids = selectedCircleIds.value;
@@ -189,6 +270,28 @@ async function syncCircleIds(
     }
 }
 
+async function syncParentIds(
+    personId: string,
+    current: string[],
+    desired: string[],
+): Promise<void> {
+    const desiredUnique = Array.from(new Set(desired));
+    const currentUnique = Array.from(new Set(current));
+
+    const toAdd = desiredUnique.filter((id) => !currentUnique.includes(id));
+    const toRemove = currentUnique.filter((id) => !desiredUnique.includes(id));
+
+    for (const userId of toAdd) {
+        await externalApi.post(`/persons/${personId}/parents`, {
+            user_id: userId,
+        });
+    }
+
+    for (const userId of toRemove) {
+        await externalApi.delete(`/persons/${personId}/parents/${userId}`);
+    }
+}
+
 async function submit(): Promise<void> {
     formError.value = null;
 
@@ -206,6 +309,9 @@ async function submit(): Promise<void> {
 
     const personId = editingPerson.value.id;
     const currentCircleIds = editingPerson.value.circle_ids ?? [];
+    const currentParentIds = (editingPerson.value.parents ?? [])
+        .map((parent) => parent.id)
+        .filter((id) => id !== auth.user?.id);
 
     try {
         await externalApi.put(`/persons/${personId}`, {
@@ -216,6 +322,11 @@ async function submit(): Promise<void> {
             personId,
             currentCircleIds,
             selectedCircleIds.value,
+        );
+        await syncParentIds(
+            personId,
+            currentParentIds,
+            selectedParentIds.value,
         );
         sheetOpen.value = false;
         await loadData(true);
@@ -260,7 +371,9 @@ async function createPerson(): Promise<void> {
             name: editForm.data.name.trim(),
             birthdate:
                 editForm.data.birthdate === '' ? null : editForm.data.birthdate,
+            is_child: true,
             circle_ids: selectedCircleIds.value,
+            parent_user_ids: selectedParentIds.value,
         });
 
         if (pendingPhotoPath.value) {
@@ -717,12 +830,12 @@ function iconMaskStyle(url: string) {
                         />
                         <span
                             v-else
-                            class="flex size-24 items-center justify-center rounded-full bg-brand-blue text-white"
+                            class="flex size-24 items-center justify-center rounded-full border-2 border-dashed border-sand-300 bg-sand-50 text-ink-muted/70"
                             :class="photoUploading ? 'opacity-50' : ''"
                         >
                             <span
                                 aria-hidden="true"
-                                class="inline-block size-12 bg-current"
+                                class="inline-block size-10 bg-current"
                                 :style="iconMaskStyle(userIcon)"
                             ></span>
                         </span>
@@ -744,6 +857,9 @@ function iconMaskStyle(url: string) {
                     >
                         {{ t('Remove photo') }}
                     </button>
+                    <p v-else class="text-xs text-ink-muted">
+                        {{ t('Add a photo (optional)') }}
+                    </p>
                 </div>
 
                 <form class="space-y-4" @submit.prevent="submit">
@@ -773,6 +889,9 @@ function iconMaskStyle(url: string) {
                             class="font-semibold text-ink"
                         >
                             {{ t('Birthdate') }}
+                            <span class="text-sm font-normal text-ink-muted">
+                                ({{ t('optional') }})
+                            </span>
                         </label>
                         <input
                             id="person-birthdate"
@@ -796,6 +915,15 @@ function iconMaskStyle(url: string) {
                             :selected-ids="selectedCircleIds"
                             :error="editForm.errors.circle_ids"
                             @update:selected-ids="selectedCircleIds = $event"
+                        />
+                    </div>
+
+                    <div>
+                        <ParentPicker
+                            :candidates="parentCandidates"
+                            :selected-ids="selectedParentIds"
+                            :locked-ids="lockedParentIds"
+                            @update:selected-ids="selectedParentIds = $event"
                         />
                     </div>
 

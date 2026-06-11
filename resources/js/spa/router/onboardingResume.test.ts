@@ -29,8 +29,15 @@ describe('onboardingResumeRoute', () => {
         });
     });
 
-    it('resumes at invite-members after add_children', () => {
+    it('resumes at first-moment after add_children', () => {
         expect(onboardingResumeRoute('add_children', 'c-1')).toEqual({
+            name: 'spa.onboarding.first-moment',
+            params: { circle: 'c-1' },
+        });
+    });
+
+    it('resumes at invite-members after first_moment', () => {
+        expect(onboardingResumeRoute('first_moment', 'c-1')).toEqual({
             name: 'spa.onboarding.invite-members',
             params: { circle: 'c-1' },
         });
@@ -84,6 +91,7 @@ describe('onboardingResumeNeedsCircle', () => {
         expect(onboardingResumeNeedsCircle('intro')).toBe(true);
         expect(onboardingResumeNeedsCircle('first_circle')).toBe(true);
         expect(onboardingResumeNeedsCircle('add_children')).toBe(true);
+        expect(onboardingResumeNeedsCircle('first_moment')).toBe(true);
         expect(onboardingResumeNeedsCircle('invite_members')).toBe(false);
         expect(onboardingResumeNeedsCircle(null)).toBe(false);
         expect(onboardingResumeNeedsCircle(undefined)).toBe(false);

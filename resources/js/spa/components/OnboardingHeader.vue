@@ -16,7 +16,7 @@ const props = withDefaults(
         backTo?: RouteLocationRaw | 'history';
     }>(),
     {
-        total: 3,
+        total: 4,
         backTo: undefined,
     },
 );

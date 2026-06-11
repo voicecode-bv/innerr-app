@@ -14,8 +14,9 @@
 }
 
 .driver-popover.innerr-tour .driver-popover-title {
-    font-family: var(--font-display, inherit);
+    font-family: var(--font-sans, inherit);
     font-weight: 800;
+    letter-spacing: -0.025em;
     font-size: 1.25rem;
     color: var(--color-ink, #19454c);
     margin-bottom: 0.5rem;

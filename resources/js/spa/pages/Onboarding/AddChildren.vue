@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Spinner from '@/components/Spinner.vue';
 import OnboardingHeader from '@/spa/components/OnboardingHeader.vue';
@@ -7,7 +7,8 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
-import { Camera, Events, Off, On } from '@nativephp/mobile';
+import { haptics } from '@/spa/services/haptics';
+import { Camera, Dialog, Events, Off, On } from '@nativephp/mobile';
 import cakeIcon from '../../../../svg/doodle-icons/cake.svg';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
@@ -21,6 +22,7 @@ interface Person {
     id: string;
     name: string;
     avatar_thumbnail: string | null;
+    user_id?: string | null;
 }
 
 interface AddedChild {
@@ -49,6 +51,54 @@ function iconMaskStyle(url: string) {
 const circleId = String(route.params.circle);
 const circle = ref<Circle | null>(null);
 const children = ref<AddedChild[]>([]);
+
+const nameInput = useTemplateRef<HTMLInputElement>('nameInput');
+
+// Removing a just-added child (typo, duplicate) without leaving the flow.
+const removingChildId = ref<string | null>(null);
+const removeError = ref<string | null>(null);
+let pendingRemoveChildId: string | null = null;
+
+async function confirmRemoveChild(child: AddedChild): Promise<void> {
+    pendingRemoveChildId = child.id;
+    removeError.value = null;
+
+    await Dialog.alert()
+        .confirm(
+            t('Remove person'),
+            t('Are you sure you want to remove ":name"?', {
+                name: child.name,
+            }),
+        )
+        .id('onboarding-remove-child-confirm');
+}
+
+async function handleAlertButtonPressed(payload: {
+    index: number;
+    id?: string | null;
+}): Promise<void> {
+    if (
+        payload.id !== 'onboarding-remove-child-confirm' ||
+        payload.index !== 1 ||
+        pendingRemoveChildId === null
+    ) {
+        return;
+    }
+
+    const childId = pendingRemoveChildId;
+    pendingRemoveChildId = null;
+    removingChildId.value = childId;
+
+    try {
+        await externalApi.delete(`/persons/${childId}`);
+        children.value = children.value.filter((c) => c.id !== childId);
+        haptics.impactLight();
+    } catch {
+        removeError.value = t('Failed to remove child');
+    } finally {
+        removingChildId.value = null;
+    }
+}
 
 const name = ref('');
 const birthdate = ref('');
@@ -106,7 +156,10 @@ onMounted(async () => {
         children.value = [
             ...children.value,
             ...existing.data
-                .filter((p) => !locallyAdded.has(p.id))
+                // Member-persons (records linked to an account, including
+                // yourself) are taggable people, not children — keep them out
+                // of this list, mirroring the filter the rest of the app uses.
+                .filter((p) => !p.user_id && !locallyAdded.has(p.id))
                 .map((p) => ({
                     id: p.id,
                     name: p.name,
@@ -223,6 +276,10 @@ async function addChild(): Promise<void> {
         ];
 
         resetDraft();
+        // Confirm the add and set up the fast path for the next child:
+        // parents with several kids stay in the flow without re-tapping.
+        haptics.notifySuccess();
+        nameInput.value?.focus();
     } catch (error) {
         if (error instanceof ApiError && error.status === 422) {
             nameError.value = error.errors.name?.[0] ?? null;
@@ -241,31 +298,47 @@ async function addChild(): Promise<void> {
 function continueOnboarding(): void {
     trackOnboardingStep('add_children');
     router.push({
-        name: 'spa.onboarding.invite-members',
+        name: 'spa.onboarding.first-moment',
         params: { circle: circleId },
     });
 }
 
 onMounted(() => {
     On(Events.Gallery.MediaSelected, handleMediaSelected);
+    On(Events.Alert.ButtonPressed, handleAlertButtonPressed);
 });
 
 onUnmounted(() => {
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
+    Off(Events.Alert.ButtonPressed, handleAlertButtonPressed);
 });
 </script>
 
 <template>
     <div
-        class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
+        class="nativephp-safe-area relative isolate flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
+        <!-- Same atmosphere as the rest of the flow: soft glows + film grain. -->
+        <div
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 -z-10"
+        >
+            <div
+                class="absolute -top-20 -right-16 size-72 rounded-full bg-sage-200/40 blur-3xl"
+            ></div>
+            <div
+                class="absolute bottom-10 -left-20 size-72 rounded-full bg-brand-yellow/15 blur-3xl"
+            ></div>
+            <div class="absolute inset-0 grain opacity-[0.04]"></div>
+        </div>
+
         <OnboardingHeader
             :step="1"
             :back-to="{ name: 'spa.onboarding.intro' }"
         />
-        <div
-            class="relative flex flex-1 flex-col items-center justify-center py-12"
-        >
+        <!-- Top-aligned on purpose: the added-children list grows below the
+             form, so the form itself must not shift on every add. -->
+        <div class="relative flex flex-1 flex-col items-center py-8">
             <div class="mb-8 text-center">
                 <span
                     class="inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-success-soft px-3 py-1 text-xs font-medium text-success-ink shadow-sm"
@@ -273,7 +346,7 @@ onUnmounted(() => {
                     {{ circle?.name ?? ' ' }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-black tracking-tight text-ink"
+                    class="mt-3 text-4xl font-extrabold tracking-tight text-ink"
                 >
                     {{ t('Add your children') }}
                 </h1>
@@ -288,7 +361,7 @@ onUnmounted(() => {
 
             <div class="w-full max-w-sm space-y-5">
                 <form
-                    class="rounded-lg bg-surface/50 p-5 shadow-sm backdrop-blur-sm"
+                    class="rounded-2xl bg-surface/80 p-5 shadow-sm ring-1 ring-sand-200/70 backdrop-blur-sm"
                     @submit.prevent="addChild"
                 >
                     <div class="flex flex-col items-center gap-3">
@@ -308,12 +381,12 @@ onUnmounted(() => {
                             />
                             <span
                                 v-else
-                                class="flex size-20 items-center justify-center rounded-full bg-brand-blue text-white"
+                                class="flex size-20 items-center justify-center rounded-full border-2 border-dashed border-sand-300 bg-sand-50 text-ink-muted/70"
                                 :class="photoUploading ? 'opacity-50' : ''"
                             >
                                 <span
                                     aria-hidden="true"
-                                    class="inline-block size-10 bg-current"
+                                    class="inline-block size-9 bg-current"
                                     :style="iconMaskStyle(userIcon)"
                                 ></span>
                             </span>
@@ -341,23 +414,28 @@ onUnmounted(() => {
                         >
                             {{ t('Remove photo') }}
                         </button>
+                        <p v-else class="text-xs text-ink-muted">
+                            {{ t('Add a photo (optional)') }}
+                        </p>
                     </div>
 
                     <div class="mt-4">
                         <label
                             for="child-name"
-                            class="tracking-wider text-ink-muted uppercase"
+                            class="text-xs font-semibold tracking-widest text-ink-muted uppercase"
                         >
                             {{ t('Name') }}
                         </label>
                         <input
                             id="child-name"
+                            ref="nameInput"
                             v-model="name"
                             type="text"
                             :placeholder="t('Name...')"
                             autocapitalize="words"
+                            enterkeyhint="done"
                             maxlength="50"
-                            class="mt-1 w-full border-0 bg-transparent p-0 font-sans text-xl font-semibold text-ink placeholder-ink-muted/50 focus:ring-0 focus:outline-none"
+                            class="mt-2 box-border field w-full min-w-0"
                         />
                         <p v-if="nameError" class="mt-1 text-destructive-ink">
                             {{ nameError }}
@@ -373,7 +451,7 @@ onUnmounted(() => {
                     <div class="mt-4">
                         <label
                             for="child-birthdate"
-                            class="tracking-wider text-ink-muted uppercase"
+                            class="text-xs font-semibold tracking-widest text-ink-muted uppercase"
                         >
                             {{ t('Birthdate') }}
                             <span class="normal-case">
@@ -401,7 +479,7 @@ onUnmounted(() => {
                     <button
                         type="submit"
                         :disabled="!name.trim() || isAdding || photoUploading"
-                        class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-success-soft py-3 font-semibold text-success-ink shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                        class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-action py-3 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         <Spinner v-if="isAdding" class="size-5" />
                         <span
@@ -416,7 +494,9 @@ onUnmounted(() => {
 
                 <div v-if="children.length > 0">
                     <div class="mb-3 flex items-center justify-between">
-                        <p class="tracking-wider text-ink-muted uppercase">
+                        <p
+                            class="text-xs font-semibold tracking-widest text-ink-muted uppercase"
+                        >
                             {{ t('Added') }}
                         </p>
                         <span
@@ -425,11 +505,19 @@ onUnmounted(() => {
                             {{ children.length }}
                         </span>
                     </div>
-                    <ul class="space-y-2">
+                    <TransitionGroup
+                        tag="ul"
+                        class="relative space-y-2"
+                        enter-active-class="transition duration-300 ease-out"
+                        enter-from-class="-translate-y-2 opacity-0"
+                        leave-active-class="absolute inset-x-0 transition duration-200 ease-in"
+                        leave-to-class="opacity-0 -translate-x-2"
+                        move-class="transition-transform duration-300"
+                    >
                         <li
                             v-for="child in children"
                             :key="child.id"
-                            class="flex items-center gap-3 rounded-full bg-surface/70 px-4 py-2 shadow-sm"
+                            class="flex items-center gap-3 rounded-full bg-surface/80 px-4 py-2 shadow-sm ring-1 ring-sand-200/70"
                         >
                             <img
                                 v-if="child.preview"
@@ -439,7 +527,7 @@ onUnmounted(() => {
                             />
                             <span
                                 v-else
-                                class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/50 text-ink"
+                                class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-brand-blue"
                             >
                                 <span
                                     aria-hidden="true"
@@ -447,11 +535,41 @@ onUnmounted(() => {
                                     :style="iconMaskStyle(cakeIcon)"
                                 ></span>
                             </span>
-                            <span class="truncate text-ink">{{
+                            <span class="min-w-0 flex-1 truncate text-ink">{{
                                 child.name
                             }}</span>
+                            <button
+                                type="button"
+                                class="hit-slop relative flex size-7 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-destructive-soft hover:text-destructive-ink"
+                                :aria-label="t('Remove')"
+                                :disabled="removingChildId !== null"
+                                @click="confirmRemoveChild(child)"
+                            >
+                                <Spinner
+                                    v-if="removingChildId === child.id"
+                                    class="size-3.5"
+                                />
+                                <svg
+                                    v-else
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="2"
+                                    stroke="currentColor"
+                                    class="size-4"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M6 18 18 6M6 6l12 12"
+                                    />
+                                </svg>
+                            </button>
                         </li>
-                    </ul>
+                    </TransitionGroup>
+                    <p v-if="removeError" class="mt-2 text-destructive-ink">
+                        {{ removeError }}
+                    </p>
                 </div>
             </div>
         </div>

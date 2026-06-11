@@ -28,7 +28,7 @@ function choose(layout: FeedLayout): void {
         <div
             class="px-4 pt-2 pb-[calc(theme(spacing.4)+env(safe-area-inset-bottom))]"
         >
-            <h2 class="text-center font-display text-xl font-semibold text-ink">
+            <h2 class="text-center text-xl font-bold text-ink">
                 {{ t('How do you want to see your feed?') }}
             </h2>
             <p class="mt-1 text-center text-ink-muted">

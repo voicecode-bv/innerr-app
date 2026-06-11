@@ -682,9 +682,7 @@ onMounted(async () => {
                             />
                         </div>
 
-                        <h3
-                            class="mt-5 font-display text-xl font-semibold text-ink"
-                        >
+                        <h3 class="mt-5 text-xl font-bold text-ink">
                             {{ t('You are a premium member') }}
                         </h3>
                         <p class="mx-auto mt-2 max-w-xs text-ink">
@@ -740,9 +738,7 @@ onMounted(async () => {
                             tone="sage"
                         />
                         <div class="min-w-0 flex-1">
-                            <h3
-                                class="font-display text-xl font-semibold text-ink"
-                            >
+                            <h3 class="text-xl font-bold text-ink">
                                 {{ t('Inner Gives') }}
                             </h3>
                             <p class="mt-1 leading-relaxed text-ink">
@@ -810,7 +806,7 @@ onMounted(async () => {
                         :key="tier.key"
                         class="reveal-item"
                     >
-                        <h3 class="font-display text-lg font-semibold text-ink">
+                        <h3 class="text-lg font-bold text-ink">
                             {{ tier.title }}
                         </h3>
                         <p class="mt-1 text-ink">
@@ -858,9 +854,7 @@ onMounted(async () => {
 
                         <div v-if="selectedProduct(tier)" class="mt-4">
                             <div class="flex items-baseline gap-2">
-                                <span
-                                    class="font-display text-2xl font-semibold text-ink"
-                                >
+                                <span class="text-2xl font-bold text-ink">
                                     {{ selectedProduct(tier)!.price_formatted }}
                                 </span>
                                 <span class="text-ink-muted">

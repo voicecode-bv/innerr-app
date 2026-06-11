@@ -3,6 +3,7 @@ import { externalApi } from '@/spa/http/externalApi';
 export type OnboardingStep =
     | 'intro'
     | 'add_children'
+    | 'first_moment'
     | 'invite_members'
     | 'notifications';
 

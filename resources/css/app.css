@@ -26,6 +26,10 @@
    be hard-coded into each utility and dark mode would never engage. */
 @theme {
     --font-sans: 'DM Sans';
+    /* Fraunces is reserved for the wordmark and for rendered quote content
+       (useQuoteCanvas and its in-app previews). Never use `font-display` for
+       UI text: titles are DM Sans — `font-extrabold tracking-tight` for
+       page/hero titles, `font-bold` for card titles. */
     --font-display: 'Fraunces';
 
     /* Height of the custom SPA bottom navigation bar (excluding the safe-area

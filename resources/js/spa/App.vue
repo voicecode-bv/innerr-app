@@ -130,6 +130,7 @@ useEdgeSwipeBack(routeContainerRef);
 const ONBOARDING_ORDER = [
     'spa.onboarding.intro',
     'spa.onboarding.add-children',
+    'spa.onboarding.first-moment',
     'spa.onboarding.invite-members',
     'spa.onboarding.notifications',
 ];

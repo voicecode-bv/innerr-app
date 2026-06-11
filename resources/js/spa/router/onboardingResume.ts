@@ -22,7 +22,10 @@ export function onboardingResumeNeedsCircle(
     step: string | null | undefined,
 ): boolean {
     return (
-        step === 'intro' || step === 'first_circle' || step === 'add_children'
+        step === 'intro' ||
+        step === 'first_circle' ||
+        step === 'add_children' ||
+        step === 'first_moment'
     );
 }
 
@@ -40,6 +43,13 @@ export function onboardingResumeRoute(
                   }
                 : { name: 'spa.onboarding.intro' };
         case 'add_children':
+            return circleId
+                ? {
+                      name: 'spa.onboarding.first-moment',
+                      params: { circle: circleId },
+                  }
+                : { name: 'spa.onboarding.intro' };
+        case 'first_moment':
             return circleId
                 ? {
                       name: 'spa.onboarding.invite-members',

@@ -164,9 +164,9 @@ async function continueOnboarding(): Promise<void> {
         class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
         <OnboardingHeader
-            :step="2"
+            :step="3"
             :back-to="{
-                name: 'spa.onboarding.add-children',
+                name: 'spa.onboarding.first-moment',
                 params: { circle: circleId },
             }"
         />
@@ -180,7 +180,7 @@ async function continueOnboarding(): Promise<void> {
                     {{ circle?.name ?? ' ' }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-black tracking-tight text-ink"
+                    class="mt-3 text-4xl font-extrabold tracking-tight text-ink"
                 >
                     {{ t('Invite your people') }}
                 </h1>

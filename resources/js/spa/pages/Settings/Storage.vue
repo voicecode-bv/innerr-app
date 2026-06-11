@@ -162,9 +162,7 @@ onMounted(load);
                     v-else-if="usage"
                     class="reveal-item rounded-lg bg-action p-5 shadow-sm shadow-action/20"
                 >
-                    <h3
-                        class="font-display text-lg font-semibold text-brand-sand"
-                    >
+                    <h3 class="text-lg font-bold text-brand-sand">
                         {{ t('Storage usage') }}
                     </h3>
 
@@ -178,9 +176,7 @@ onMounted(load);
 
                     <div class="mt-4">
                         <div class="flex items-baseline justify-between gap-2">
-                            <span
-                                class="font-display text-xl font-semibold text-brand-yellow"
-                            >
+                            <span class="text-xl font-bold text-brand-yellow">
                                 {{ formatBytes(usage.used_bytes) }}
                             </span>
                             <span class="text-brand-sand/80">
@@ -219,9 +215,7 @@ onMounted(load);
                     v-if="showUpgradeCta"
                     class="reveal-item rounded-lg bg-brand-green p-5 shadow-sm shadow-sage-900/20"
                 >
-                    <h3
-                        class="font-display text-lg font-semibold text-brand-sand"
-                    >
+                    <h3 class="text-lg font-bold text-brand-sand">
                         {{ t('Need more space?') }}
                     </h3>
                     <p class="mt-1 text-brand-sand/90">

@@ -53,9 +53,7 @@ function iconMaskStyle(url: string) {
                 :style="iconMaskStyle(downloadIcon)"
             ></span>
         </div>
-        <h1
-            class="mt-6 font-display text-3xl font-black tracking-tight text-ink"
-        >
+        <h1 class="mt-6 text-3xl font-extrabold tracking-tight text-ink">
             {{ t('Update required') }}
         </h1>
         <p class="mx-auto mt-3 max-w-xs text-ink-muted">

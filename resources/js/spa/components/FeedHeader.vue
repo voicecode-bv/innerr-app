@@ -154,7 +154,7 @@ function iconMaskStyle(url: string) {
                         ></span>
                         <span
                             v-if="unreadNotifications > 0"
-                            class="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white"
+                            class="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white"
                         >
                             <AnimatedCount :value="unreadBadge" />
                         </span>
@@ -231,7 +231,7 @@ function iconMaskStyle(url: string) {
                 </span>
                 <div class="min-w-0 flex-1">
                     <p
-                        class="truncate font-display text-2xl font-black tracking-tight text-ink"
+                        class="truncate text-2xl font-extrabold tracking-tight text-ink"
                     >
                         {{ t('Hi :name', { name: firstName }) }}
                     </p>

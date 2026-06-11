@@ -115,6 +115,12 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true },
     },
     {
+        path: '/onboarding/circles/:circle/first-moment',
+        name: 'spa.onboarding.first-moment',
+        component: () => import('@/spa/pages/Onboarding/FirstMoment.vue'),
+        meta: { auth: true },
+    },
+    {
         path: '/onboarding/circles/:circle/invite',
         name: 'spa.onboarding.invite-members',
         component: () => import('@/spa/pages/Onboarding/InviteMembers.vue'),
@@ -376,6 +382,13 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.onboarded && auth.user && !auth.user.onboarded) {
+        // The first-moment onboarding step hands off to the regular CreatePost
+        // wizard; let that one page through instead of bouncing back into the
+        // flow. The email-verification gate above still applies.
+        if (to.name === 'spa.posts.create' && to.query.onboarding === '1') {
+            return;
+        }
+
         // Resume at the step AFTER the furthest one the user completed (the
         // API reports it in the bootstrap payload) instead of restarting the
         // whole flow at the intro. Steps that live under a circle need the

@@ -514,9 +514,7 @@ async function submit(): Promise<void> {
                         })
                     }}
                 </p>
-                <h2
-                    class="mt-1 text-center font-display text-2xl font-semibold text-ink"
-                >
+                <h2 class="mt-1 text-center text-2xl font-bold text-ink">
                     {{ stepHeading }}
                 </h2>
                 <p class="mt-1 text-center text-ink-muted">
