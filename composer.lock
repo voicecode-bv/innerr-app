@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "98b5b5191b2dae81a64999aaa7a73312",
+    "content-hash": "962797b7014a5150542a6ad73efa6c14",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2728,16 +2728,16 @@
         },
         {
             "name": "nativephp/mobile",
-            "version": "3.3.5",
+            "version": "3.3.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/NativePHP/mobile-air.git",
-                "reference": "0afbca69cfed2ecbd837bd2adc46b236817a87c4"
+                "reference": "045bebc999463a351827d7bb7e6087e592e5defe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NativePHP/mobile-air/zipball/0afbca69cfed2ecbd837bd2adc46b236817a87c4",
-                "reference": "0afbca69cfed2ecbd837bd2adc46b236817a87c4",
+                "url": "https://api.github.com/repos/NativePHP/mobile-air/zipball/045bebc999463a351827d7bb7e6087e592e5defe",
+                "reference": "045bebc999463a351827d7bb7e6087e592e5defe",
                 "shasum": ""
             },
             "require": {
@@ -2805,9 +2805,9 @@
             ],
             "support": {
                 "issues": "https://github.com/NativePHP/mobile-air/issues",
-                "source": "https://github.com/NativePHP/mobile-air/tree/3.3.5"
+                "source": "https://github.com/NativePHP/mobile-air/tree/3.3.6"
             },
-            "time": "2026-05-19T23:07:10+00:00"
+            "time": "2026-06-05T17:27:23+00:00"
         },
         {
             "name": "nativephp/mobile-background-tasks",

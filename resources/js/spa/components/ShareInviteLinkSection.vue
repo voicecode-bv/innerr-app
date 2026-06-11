@@ -8,9 +8,21 @@ import { createInviteLink, listInviteLinks } from '@/spa/services/inviteLinks';
 import type { InviteLink } from '@/spa/services/inviteLinks';
 import { Dialog, Share } from '@nativephp/mobile';
 
-const props = defineProps<{
-    circleId: string;
-    circleName: string;
+const props = withDefaults(
+    defineProps<{
+        circleId: string;
+        circleName: string;
+        /** Create a link automatically when none exists yet, so sharing is a
+            single tap (used in onboarding). */
+        eager?: boolean;
+    }>(),
+    { eager: false },
+);
+
+const emit = defineEmits<{
+    /** Fired when the user shares or copies a link, so the parent can treat
+        it as a completed invite action. */
+    (e: 'shared'): void;
 }>();
 
 const { t } = useTranslations();
@@ -32,6 +44,15 @@ async function load(): Promise<void> {
 
     try {
         links.value = await listInviteLinks(props.circleId);
+
+        if (props.eager && links.value.length === 0) {
+            try {
+                links.value = [await createInviteLink(props.circleId)];
+            } catch {
+                // Auto-create is best-effort; the manual create button below
+                // remains as the fallback.
+            }
+        }
     } catch {
         loadError.value = t('Could not load invite links.');
     } finally {
@@ -61,6 +82,8 @@ async function generate(): Promise<void> {
 }
 
 async function copy(link: InviteLink): Promise<void> {
+    emit('shared');
+
     try {
         if (typeof navigator !== 'undefined' && navigator.clipboard) {
             await navigator.clipboard.writeText(link.url);
@@ -76,6 +99,7 @@ async function copy(link: InviteLink): Promise<void> {
 }
 
 async function share(link: InviteLink): Promise<void> {
+    emit('shared');
     const text = t('Join :name on Innerr', { name: props.circleName });
 
     try {
@@ -115,8 +139,8 @@ onMounted(() => {
         </div>
 
         <div v-else>
-            <Button size="md" :disabled="creating" @click="generate">
-                {{ creating ? t('Creating...') : t('Create shareable link') }}
+            <Button size="md" :loading="creating" @click="generate">
+                {{ t('Create shareable link') }}
             </Button>
         </div>
     </div>

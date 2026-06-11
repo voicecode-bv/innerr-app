@@ -324,7 +324,7 @@ onUnmounted(() => {
     <teleport v-if="mounted" to="body">
         <div
             :class="[
-                'fixed inset-0 z-9999 bg-black/50',
+                'fixed inset-0 z-9999 bg-black/40',
                 isDragging && !settling
                     ? ''
                     : 'transition-opacity duration-300',

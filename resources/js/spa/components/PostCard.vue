@@ -626,6 +626,7 @@ function timeAgo(dateString: string): string {
             <MediaCarousel
                 :items="carouselItems"
                 :active-index="activeMediaIndex"
+                indicator-class="bottom-12"
                 @update:active-index="activeMediaIndex = $event"
             />
 
@@ -739,9 +740,16 @@ function timeAgo(dateString: string): string {
             :data-post-media="post.id"
         >
             <button class="block size-full" type="button" @click="onMediaTap">
-                <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
+                <!-- Placeholder underlays stay mounted while the photo fades in
+                     on top (classic blur-up), so the card never flashes the bare
+                     background mid-transition. Once loaded the shimmer swaps to
+                     a static background to stop its animation. -->
+                <div
+                    class="absolute inset-0"
+                    :class="mediaLoaded ? 'bg-surface' : 'shimmer'"
+                />
                 <img
-                    v-if="post.thumbnail_small_url && !mediaLoaded"
+                    v-if="post.thumbnail_small_url"
                     :src="post.thumbnail_small_url"
                     alt=""
                     aria-hidden="true"

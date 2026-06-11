@@ -209,14 +209,14 @@ async function submit(): Promise<void> {
                             variant="inverse"
                             size="lg"
                             block
+                            :loading="form.processing"
                             :disabled="
-                                form.processing ||
                                 !form.data.email ||
                                 !form.data.password ||
                                 !form.data.token
                             "
                         >
-                            {{ form.processing ? '...' : t('Reset password') }}
+                            {{ t('Reset password') }}
                         </Button>
 
                         <p

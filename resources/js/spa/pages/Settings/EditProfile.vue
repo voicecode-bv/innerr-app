@@ -2,6 +2,7 @@
 import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from '@/components/Button.vue';
+import Spinner from '@/components/Spinner.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
@@ -266,6 +267,12 @@ async function save(): Promise<void> {
                                 ></span>
                             </span>
                             <span
+                                v-if="avatarUploading"
+                                class="absolute inset-0 flex items-center justify-center rounded-full bg-black/25"
+                            >
+                                <Spinner class="size-7 text-white" />
+                            </span>
+                            <span
                                 class="absolute -right-1 -bottom-1 flex size-8 items-center justify-center rounded-full bg-action shadow-md ring-2 ring-white dark:ring-ink-muted"
                             >
                                 <span
@@ -433,9 +440,10 @@ async function save(): Promise<void> {
                             <Button
                                 type="submit"
                                 size="md"
-                                :disabled="processing || isLoading"
+                                :loading="processing"
+                                :disabled="isLoading"
                             >
-                                {{ processing ? t('Saving...') : t('Save') }}
+                                {{ t('Save') }}
                             </Button>
                         </div>
                     </form>

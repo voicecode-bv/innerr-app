@@ -281,6 +281,17 @@
     @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
 }
 
+/* Extends a small control's touch target to ~44pt without changing its visual
+   size. The element must be positioned (relative/absolute); the pseudo-element
+   grows symmetrically until the tappable box is at least 2.75rem per axis. */
+@utility hit-slop {
+    &::after {
+        content: '';
+        position: absolute;
+        inset: calc((2.75rem - 100%) / -2);
+    }
+}
+
 /* Verberg het standaard kalender-icoontje in date/datetime inputs.
    Het maakt het veld voller dan we willen en past niet bij onze brand-stijl;
    gebruikers kunnen de picker nog steeds openen door op het veld te tikken. */

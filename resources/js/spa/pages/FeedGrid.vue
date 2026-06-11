@@ -7,6 +7,7 @@ import FeedLayoutChooser from '@/spa/components/FeedLayoutChooser.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import PostMasonry from '@/spa/components/PostMasonry.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
+import UpdateAvailableCard from '@/spa/components/UpdateAvailableCard.vue';
 import { useChildFeedQuery } from '@/spa/composables/useChildFeedQuery';
 import { useFeedDateBar } from '@/spa/composables/useFeedDateBar';
 import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
@@ -93,11 +94,10 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     onRefresh: async () => {
         feedCache.invalidate(FEED_KEY);
         notificationsStore.invalidate();
-        await Promise.all([
-            loadUnreadCount(),
-            feed.reset(),
-            permissionCardRef.value?.refresh() ?? Promise.resolve(),
-        ]);
+        // Fire-and-forget: the permission check is a native bridge call that
+        // can stall, and its result never gates the feed content.
+        void permissionCardRef.value?.refresh();
+        await Promise.all([loadUnreadCount(), feed.reset()]);
     },
     containerRef,
 });
@@ -157,6 +157,8 @@ function iconMaskStyle(url: string) {
                 :pull-distance="pullDistance"
                 :is-refreshing="isRefreshing"
             />
+
+            <UpdateAvailableCard class="mx-4 mt-6" />
 
             <PushPermissionCard
                 ref="permissionCard"

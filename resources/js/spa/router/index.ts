@@ -5,7 +5,13 @@ import {
 } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { usePlatform } from '@/spa/composables/usePlatform';
+import {
+    firstOwnedCircleId,
+    onboardingResumeNeedsCircle,
+    onboardingResumeRoute,
+} from '@/spa/router/onboardingResume';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeatureTourStore } from '@/spa/stores/featureTour';
 
 declare module 'vue-router' {
@@ -100,12 +106,6 @@ const routes: RouteRecordRaw[] = [
         path: '/onboarding/intro',
         name: 'spa.onboarding.intro',
         component: () => import('@/spa/pages/Onboarding/Intro.vue'),
-        meta: { auth: true },
-    },
-    {
-        path: '/onboarding/circles/:circle/permissions',
-        name: 'spa.onboarding.circle-permissions',
-        component: () => import('@/spa/pages/Onboarding/CirclePermissions.vue'),
         meta: { auth: true },
     },
     {
@@ -360,20 +360,40 @@ router.beforeEach(async (to) => {
         return { name: 'spa.home' };
     }
 
-    if (to.meta.onboarded && auth.user && !auth.user.onboarded) {
-        return { name: 'spa.onboarding.intro' };
-    }
-
-    // Email verification gate: onboarding is allowed, but the main app
-    // (onboarded routes) stays locked until the email is verified. Grandfathered
-    // accounts have email_verification_required === false and pass straight through.
+    // Email verification gate, checked BEFORE the onboarding resume so a fresh
+    // account follows register → verify → onboard and never hits the verify
+    // screen as a surprise after finishing the onboarding. Covers both the
+    // main app and the onboarding routes; grandfathered accounts have
+    // email_verification_required === false and pass straight through.
     if (
-        to.meta.onboarded &&
         auth.user &&
         auth.user.email_verification_required &&
-        !auth.user.email_verified
+        !auth.user.email_verified &&
+        (to.meta.onboarded === true ||
+            String(to.name ?? '').startsWith('spa.onboarding.'))
     ) {
         return { name: 'spa.verify-email' };
+    }
+
+    if (to.meta.onboarded && auth.user && !auth.user.onboarded) {
+        // Resume at the step AFTER the furthest one the user completed (the
+        // API reports it in the bootstrap payload) instead of restarting the
+        // whole flow at the intro. Steps that live under a circle need the
+        // family circle id; when that cannot be resolved we fall back to the
+        // intro, which re-resolves it on continue.
+        const step = auth.user.onboarding_step;
+
+        if (!onboardingResumeNeedsCircle(step)) {
+            return onboardingResumeRoute(step, null);
+        }
+
+        try {
+            const circles = await useCirclesStore().ensureLoaded();
+
+            return onboardingResumeRoute(step, firstOwnedCircleId(circles));
+        } catch {
+            return { name: 'spa.onboarding.intro' };
+        }
     }
 
     // Keep users who don't need the verification screen out of it.

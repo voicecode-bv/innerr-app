@@ -274,6 +274,11 @@ function close() {
     emit('update:open', false);
 }
 
+function onBackdropTap() {
+    haptics.impactLight();
+    close();
+}
+
 function onHandlePointerDown(event: PointerEvent) {
     if (event.pointerType === 'mouse' && event.button !== 0) {
         return;
@@ -355,6 +360,7 @@ watch(
     () => props.open,
     (val) => {
         if (val) {
+            haptics.impactLight();
             settleDuration.value = prefersReducedMotion() ? 0 : 300;
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
@@ -370,7 +376,15 @@ watch(
 
 watch(
     () => props.open,
-    (isOpen) => {
+    (isOpen, wasOpen) => {
+        // Sheets behind a v-if mount with `open` already true on their first
+        // use; without `immediate` the open-side effects (background scale,
+        // scroll lock) would only kick in from the second open onwards. The
+        // guard skips the teardown branch when mounting in closed state.
+        if (!isOpen && wasOpen === undefined) {
+            return;
+        }
+
         const scrollContainer = document.querySelector(
             'main',
         ) as HTMLElement | null;
@@ -420,6 +434,7 @@ watch(
             keyboardOpen.value = false;
         }
     },
+    { immediate: true },
 );
 
 onMounted(() => {
@@ -466,12 +481,12 @@ onUnmounted(() => {
     <teleport v-if="mounted" to="body">
         <div
             :class="[
-                'fixed inset-0 z-9999 touch-none bg-black/50 transition-opacity duration-300',
+                'fixed inset-0 z-9999 touch-none bg-black/40 transition-opacity duration-300',
                 displayOpen
                     ? 'pointer-events-auto opacity-100'
                     : 'pointer-events-none opacity-0',
             ]"
-            @click="close"
+            @click="onBackdropTap"
             @touchmove.prevent
         />
         <div

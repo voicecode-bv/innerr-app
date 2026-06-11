@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onUnmounted } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Spinner from '@/components/Spinner.vue';
+import OnboardingHeader from '@/spa/components/OnboardingHeader.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
@@ -75,6 +77,10 @@ onUnmounted(() => {
     Off(Events.PushNotification.TokenGenerated, onTokenGenerated);
 });
 
+// Tracks which footer action is in flight: enrolling + completing take a few
+// network round-trips, and without feedback a double tap could enroll twice.
+const processingAction = ref<'enable' | 'skip' | null>(null);
+
 async function completeOnboarding(): Promise<void> {
     trackOnboardingStep('notifications');
 
@@ -92,6 +98,12 @@ async function completeOnboarding(): Promise<void> {
 }
 
 async function enableNotifications(): Promise<void> {
+    if (processingAction.value) {
+        return;
+    }
+
+    processingAction.value = 'enable';
+
     try {
         await PushNotifications.enroll();
         // getToken() levert de token-string zelf op (of null) — geen { token }.
@@ -104,11 +116,25 @@ async function enableNotifications(): Promise<void> {
         // Permission denied of niet beschikbaar — door naar complete.
     }
 
-    await completeOnboarding();
+    try {
+        await completeOnboarding();
+    } finally {
+        processingAction.value = null;
+    }
 }
 
-function skip(): void {
-    completeOnboarding();
+async function skip(): Promise<void> {
+    if (processingAction.value) {
+        return;
+    }
+
+    processingAction.value = 'skip';
+
+    try {
+        await completeOnboarding();
+    } finally {
+        processingAction.value = null;
+    }
 }
 </script>
 
@@ -116,6 +142,9 @@ function skip(): void {
     <div
         class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
+        <!-- 'history' back: this step has no circle param of its own, and the
+             previous step (with param) is simply the prior history entry. -->
+        <OnboardingHeader :step="3" back-to="history" />
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
@@ -168,12 +197,19 @@ function skip(): void {
 
         <div class="relative pt-2 pb-8">
             <button
-                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="processingAction !== null"
                 @click="enableNotifications"
             >
+                <Spinner v-if="processingAction === 'enable'" class="size-4" />
                 {{ t('Enable notifications') }}
             </button>
-            <button class="mt-3 w-full py-2 text-ink-muted" @click="skip">
+            <button
+                class="mt-3 inline-flex w-full items-center justify-center gap-2 py-2 text-ink-muted disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="processingAction !== null"
+                @click="skip"
+            >
+                <Spinner v-if="processingAction === 'skip'" class="size-4" />
                 {{ t('Maybe later') }}
             </button>
         </div>

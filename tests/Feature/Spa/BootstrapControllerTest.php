@@ -139,3 +139,54 @@ it('returns authenticated user payload with token mirror', function () {
         ->assertJsonPath('token', 'jwt-token')
         ->assertJsonPath('auth_status', 'authenticated');
 });
+
+it('passes the upstream onboarding_step through to the SPA payload', function () {
+    $user = User::factory()->create([
+        'api_user_id' => '550e8400-e29b-41d4-a716-446655440043',
+        'onboarded_at' => null,
+    ]);
+
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('hasToken')->andReturn(true);
+    $client->shouldReceive('validateToken')->andReturn([
+        'valid' => true,
+        'user' => [
+            'avatar' => null,
+            'bio' => null,
+            'locale' => 'en',
+            'onboarded_at' => null,
+            'onboarding_step' => 'add_children',
+        ],
+    ]);
+    $client->shouldReceive('getToken')->andReturn('jwt-token');
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)->getJson('/api/spa/bootstrap')
+        ->assertOk()
+        ->assertJsonPath('user.onboarding_step', 'add_children');
+});
+
+it('returns a null onboarding_step when the upstream omits it', function () {
+    $user = User::factory()->create([
+        'api_user_id' => '550e8400-e29b-41d4-a716-446655440044',
+        'onboarded_at' => null,
+    ]);
+
+    $client = Mockery::mock(ApiClient::class)->shouldIgnoreMissing();
+    $client->shouldReceive('hasToken')->andReturn(true);
+    $client->shouldReceive('validateToken')->andReturn([
+        'valid' => true,
+        'user' => [
+            'avatar' => null,
+            'bio' => null,
+            'locale' => 'en',
+            'onboarded_at' => null,
+        ],
+    ]);
+    $client->shouldReceive('getToken')->andReturn('jwt-token');
+    $this->app->instance(ApiClient::class, $client);
+
+    $this->actingAs($user)->getJson('/api/spa/bootstrap')
+        ->assertOk()
+        ->assertJsonPath('user.onboarding_step', null);
+});

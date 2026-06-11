@@ -243,6 +243,7 @@ function lowercase(value: string): string {
                             name="name"
                             :placeholder="t('Your name')"
                             autocomplete="name"
+                            autocapitalize="words"
                             :error="form.errors.name"
                         />
 
@@ -260,6 +261,7 @@ function lowercase(value: string): string {
                             name="username"
                             :placeholder="t('Username')"
                             autocomplete="username"
+                            autocapitalize="none"
                             :error="form.errors.username"
                             :transform="lowercase"
                         />
@@ -320,8 +322,8 @@ function lowercase(value: string): string {
                             variant="inverse"
                             size="lg"
                             block
+                            :loading="form.processing"
                             :disabled="
-                                form.processing ||
                                 !form.data.email ||
                                 !form.data.name ||
                                 !form.data.username ||
@@ -329,7 +331,7 @@ function lowercase(value: string): string {
                                 !form.data.terms_accepted
                             "
                         >
-                            {{ form.processing ? '...' : t('Create account') }}
+                            {{ t('Create account') }}
                         </Button>
                     </form>
 

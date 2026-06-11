@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { haptics } from '@/spa/services/haptics';
 import { useAuthStore } from '@/spa/stores/auth';
 
 // Periodieke retry-backstop: dekt het geval waarin er wél internet is maar de
@@ -53,6 +54,13 @@ async function retry(): Promise<void> {
         // Token definitief afgewezen (echte 401): naar het welkomstscherm.
         await router.replace({ name: 'spa.welcome' }).catch(() => {});
     }
+}
+
+/* Haptic only for the manual tap; the interval/online-watcher retries must
+   stay silent. */
+function retryFromTap(): void {
+    haptics.impactLight();
+    void retry();
 }
 
 // Ontsnappingsluik: bij een aanhoudende upstream-storing kan reconnect nooit
@@ -121,8 +129,8 @@ onUnmounted(() => {
             <button
                 type="button"
                 :disabled="retrying"
-                class="rounded-full bg-brand-blue px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 disabled:opacity-60"
-                @click="retry"
+                class="rounded-full bg-brand-blue px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                @click="retryFromTap"
             >
                 {{ t('Try again') }}
             </button>

@@ -190,12 +190,10 @@ async function useDifferentAccount(): Promise<void> {
                         variant="inverse"
                         size="lg"
                         block
-                        :disabled="
-                            form.processing ||
-                            form.data.code.length < CODE_LENGTH
-                        "
+                        :loading="form.processing"
+                        :disabled="form.data.code.length < CODE_LENGTH"
                     >
-                        {{ form.processing ? '...' : t('Verify') }}
+                        {{ t('Verify') }}
                     </Button>
                 </form>
 

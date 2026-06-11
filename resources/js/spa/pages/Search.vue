@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
+import IconTile from '@/components/IconTile.vue';
 import { useInfiniteScroll } from '@/spa/composables/useInfiniteScroll';
 import type { PaginatedResponse } from '@/spa/composables/useInfiniteScroll';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { haptics } from '@/spa/services/haptics';
+import cloudIcon from '../../../svg/doodle-icons/cloud.svg';
 import searchIcon from '../../../svg/doodle-icons/search.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 
@@ -67,6 +70,11 @@ watch(query, (next) => {
 function clearQuery(): void {
     query.value = '';
     inputRef.value?.focus();
+}
+
+function retrySearch(): void {
+    haptics.impactLight();
+    void feed.reset();
 }
 
 function goBack(): void {
@@ -229,21 +237,39 @@ function iconMaskStyle(url: string) {
                 </li>
             </ul>
 
-            <div v-else-if="feed.error" class="px-4 py-10 text-center">
-                <p class="text-destructive-ink">{{ t('Could not search') }}</p>
-                <button class="mt-2 text-ink-muted" @click="feed.reset()">
+            <div
+                v-else-if="feed.error"
+                class="flex flex-col items-center px-4 py-10 text-center"
+            >
+                <IconTile :icon="cloudIcon" size="lg" tone="sand" />
+                <p class="mt-4 font-display text-lg font-semibold text-ink">
+                    {{ t('Could not search') }}
+                </p>
+                <button
+                    type="button"
+                    class="mt-4 rounded-full bg-action px-5 py-2.5 font-semibold text-white shadow-sm transition hover:bg-action-hover"
+                    @click="retrySearch"
+                >
                     {{ t('Try again') }}
                 </button>
             </div>
 
-            <div v-else-if="activeTerm !== ''" class="px-4 py-10 text-center">
-                <p class="text-ink-muted">
+            <div
+                v-else-if="activeTerm !== ''"
+                class="flex flex-col items-center px-4 py-10 text-center"
+            >
+                <IconTile :icon="searchIcon" size="lg" tone="sand" />
+                <p class="mt-4 text-ink-muted">
                     {{ t('No people found') }}
                 </p>
             </div>
 
-            <div v-else class="px-4 py-10 text-center">
-                <p class="text-ink">
+            <div
+                v-else
+                class="flex flex-col items-center px-4 py-10 text-center"
+            >
+                <IconTile :icon="userIcon" size="lg" tone="sage" />
+                <p class="mt-4 font-display text-lg font-semibold text-ink">
                     {{ t('Nobody in your circles yet') }}
                 </p>
                 <p class="mt-2 text-ink-muted">

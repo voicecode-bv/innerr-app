@@ -181,7 +181,7 @@ function iconMaskStyle(url: string) {
         <div class="px-6 pt-6">
             <button
                 type="button"
-                class="mb-4 -ml-2 flex size-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-100"
+                class="hit-slop relative mb-4 -ml-2 flex size-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-sand-100"
                 :aria-label="t('Back')"
                 @click="goBack"
             >

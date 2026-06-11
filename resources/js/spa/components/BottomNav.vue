@@ -137,9 +137,7 @@ onBeforeUnmount(() => {
                         class="inline-block size-6 bg-ink"
                         :style="iconMaskStyle(item.icon)"
                     />
-                    <span
-                        class="text-[0.6875rem] leading-none font-medium text-ink"
-                    >
+                    <span class="text-xs leading-none font-medium text-ink">
                         {{ item.label }}
                     </span>
                 </span>
@@ -178,9 +176,7 @@ onBeforeUnmount(() => {
                         class="inline-block size-6 bg-ink"
                         :style="iconMaskStyle(item.icon)"
                     />
-                    <span
-                        class="text-[0.6875rem] leading-none font-medium text-ink"
-                    >
+                    <span class="text-xs leading-none font-medium text-ink">
                         {{ item.label }}
                     </span>
                 </span>

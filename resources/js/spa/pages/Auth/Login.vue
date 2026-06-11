@@ -318,13 +318,10 @@ async function submit(): Promise<void> {
                             variant="inverse"
                             size="lg"
                             block
-                            :disabled="
-                                form.processing ||
-                                !form.data.email ||
-                                !form.data.password
-                            "
+                            :loading="form.processing"
+                            :disabled="!form.data.email || !form.data.password"
                         >
-                            {{ form.processing ? '...' : t('Log in') }}
+                            {{ t('Log in') }}
                         </Button>
 
                         <div class="pt-4">

@@ -39,7 +39,9 @@ class EmailVerificationController extends Controller
         $this->syncLocalUser($result['user']);
 
         return response()->json([
-            'user' => $this->presentUser(Auth::user()),
+            // Pass the upstream payload through so onboarding_step survives:
+            // after verifying, the router resumes the onboarding mid-flow.
+            'user' => $this->presentUser(Auth::user(), $result['user']),
         ]);
     }
 

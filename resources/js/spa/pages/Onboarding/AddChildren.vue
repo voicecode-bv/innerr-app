@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import Spinner from '@/components/Spinner.vue';
+import OnboardingHeader from '@/spa/components/OnboardingHeader.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { api, ApiError } from '@/spa/http/apiClient';
 import { externalApi } from '@/spa/http/externalApi';
@@ -57,6 +59,25 @@ const isAdding = ref(false);
 const photoUploading = ref(false);
 const nameError = ref<string | null>(null);
 const formError = ref<string | null>(null);
+// Non-blocking warning: the child was created but their photo did not make
+// it; silently dropping it would leave the user thinking it was saved.
+const photoWarning = ref<string | null>(null);
+
+// Soft duplicate guard: warns (without blocking, two children can genuinely
+// share a name) when the typed name matches an already-added child.
+const duplicateNameWarning = computed(() => {
+    const trimmed = name.value.trim().toLowerCase();
+
+    if (trimmed === '') {
+        return null;
+    }
+
+    return children.value.some(
+        (child) => child.name.trim().toLowerCase() === trimmed,
+    )
+        ? t('A child with this name is already in your circle.')
+        : null;
+});
 
 const todayIso = new Date().toISOString().slice(0, 10);
 
@@ -67,7 +88,33 @@ onMounted(async () => {
         );
         circle.value = { id: data.data.id, name: data.data.name };
     } catch {
-        router.push({ name: 'spa.onboarding.notifications' });
+        // The fetch only feeds the circle-name badge; the form itself works
+        // off the route param, so a failure must not skip this step.
+    }
+});
+
+// Seed the "Added" list with the circle's existing children. The list is
+// otherwise component-local: navigating back and returning would present an
+// empty list and invite accidental duplicates of an already-added child.
+onMounted(async () => {
+    try {
+        const existing = await externalApi.get<{ data: Person[] }>(
+            `/persons?circle_id=${encodeURIComponent(circleId)}`,
+        );
+
+        const locallyAdded = new Set(children.value.map((c) => c.id));
+        children.value = [
+            ...children.value,
+            ...existing.data
+                .filter((p) => !locallyAdded.has(p.id))
+                .map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    preview: p.avatar_thumbnail,
+                })),
+        ];
+    } catch {
+        // Cosmetic: without the seed the page simply behaves as before.
     }
 });
 
@@ -126,6 +173,7 @@ async function addChild(): Promise<void> {
 
     nameError.value = null;
     formError.value = null;
+    photoWarning.value = null;
 
     if (!trimmed) {
         nameError.value = t('Please enter a name.');
@@ -161,6 +209,9 @@ async function addChild(): Promise<void> {
                 // Foto-upload mag de onboarding niet blokkeren; het kind is al
                 // aangemaakt en de foto kan later in instellingen toegevoegd.
                 preview = null;
+                photoWarning.value = t(
+                    'The photo could not be uploaded. You can add it later.',
+                );
             } finally {
                 photoUploading.value = false;
             }
@@ -208,6 +259,10 @@ onUnmounted(() => {
     <div
         class="nativephp-safe-area relative flex min-h-dvh flex-col overflow-hidden bg-sand px-6 text-ink"
     >
+        <OnboardingHeader
+            :step="1"
+            :back-to="{ name: 'spa.onboarding.intro' }"
+        />
         <div
             class="relative flex flex-1 flex-col items-center justify-center py-12"
         >
@@ -263,6 +318,12 @@ onUnmounted(() => {
                                 ></span>
                             </span>
                             <span
+                                v-if="photoUploading"
+                                class="absolute inset-0 flex items-center justify-center rounded-full bg-black/25"
+                            >
+                                <Spinner class="size-6 text-white" />
+                            </span>
+                            <span
                                 class="absolute -right-1 -bottom-1 flex size-7 items-center justify-center rounded-full bg-brand-yellow shadow-md ring-2 ring-white/70"
                             >
                                 <span
@@ -294,11 +355,18 @@ onUnmounted(() => {
                             v-model="name"
                             type="text"
                             :placeholder="t('Name...')"
+                            autocapitalize="words"
                             maxlength="50"
                             class="mt-1 w-full border-0 bg-transparent p-0 font-sans text-xl font-semibold text-ink placeholder-ink-muted/50 focus:ring-0 focus:outline-none"
                         />
                         <p v-if="nameError" class="mt-1 text-destructive-ink">
                             {{ nameError }}
+                        </p>
+                        <p
+                            v-else-if="duplicateNameWarning"
+                            class="mt-1 text-ink-muted"
+                        >
+                            {{ duplicateNameWarning }}
                         </p>
                     </div>
 
@@ -308,6 +376,9 @@ onUnmounted(() => {
                             class="tracking-wider text-ink-muted uppercase"
                         >
                             {{ t('Birthdate') }}
+                            <span class="normal-case">
+                                ({{ t('optional') }})
+                            </span>
                         </label>
                         <input
                             id="child-birthdate"
@@ -323,19 +394,23 @@ onUnmounted(() => {
                         {{ formError }}
                     </p>
 
+                    <p v-if="photoWarning" class="mt-3 text-ink-muted">
+                        {{ photoWarning }}
+                    </p>
+
                     <button
                         type="submit"
                         :disabled="!name.trim() || isAdding || photoUploading"
-                        class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-success-soft py-3 font-semibold text-success-ink shadow-sm transition-colors disabled:opacity-40"
+                        class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-success-soft py-3 font-semibold text-success-ink shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                     >
+                        <Spinner v-if="isAdding" class="size-5" />
                         <span
+                            v-else
                             aria-hidden="true"
                             class="inline-block size-5 bg-current"
                             :style="iconMaskStyle(userIcon)"
                         ></span>
-                        <span>{{
-                            isAdding ? t('Adding...') : t('Add child')
-                        }}</span>
+                        <span>{{ t('Add child') }}</span>
                     </button>
                 </form>
 
@@ -381,12 +456,22 @@ onUnmounted(() => {
             </div>
         </div>
 
+        <!-- Skipping is a text link, not a primary button: filling the step
+             in should look more attractive than skipping it. -->
         <div class="relative pt-2 pb-8">
             <button
+                v-if="children.length > 0"
                 class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover"
                 @click="continueOnboarding"
             >
-                {{ children.length > 0 ? t('Continue') : t('Add later') }}
+                {{ t('Continue') }}
+            </button>
+            <button
+                v-else
+                class="w-full py-3.5 font-medium text-ink-muted transition-colors hover:text-ink"
+                @click="continueOnboarding"
+            >
+                {{ t('Add later') }}
             </button>
         </div>
     </div>

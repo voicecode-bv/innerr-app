@@ -86,7 +86,7 @@ function iconMaskStyle(url: string) {
                         type="button"
                         :aria-label="t('Open menu')"
                         data-tour="feed.menu"
-                        class="flex size-9 shrink-0 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                        class="-my-1 flex size-11 shrink-0 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                         @click="isDrawerOpen = true"
                     >
                         <span
@@ -111,7 +111,7 @@ function iconMaskStyle(url: string) {
                         v-if="isLocalEnv"
                         :to="{ name: 'spa.dev.debug' }"
                         aria-label="Debug tools (local only)"
-                        class="flex size-9 shrink-0 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                        class="-my-1 flex size-11 shrink-0 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                     >
                         <span
                             aria-hidden="true"
@@ -129,7 +129,7 @@ function iconMaskStyle(url: string) {
                                 : t('Open notifications')
                         "
                         data-tour="feed.notifications"
-                        class="relative flex size-9 shrink-0 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                        class="relative -my-1 flex size-11 shrink-0 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                     >
                         <span
                             aria-hidden="true"
@@ -149,7 +149,7 @@ function iconMaskStyle(url: string) {
                         ></span>
                         <span
                             v-if="unreadNotifications > 0"
-                            class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white"
+                            class="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[10px] leading-none font-semibold text-white shadow-sm ring-2 ring-white"
                         >
                             <AnimatedCount :value="unreadBadge" />
                         </span>
@@ -170,7 +170,7 @@ function iconMaskStyle(url: string) {
                         : t('Switch to list view')
                 "
                 data-tour="feed.layout-toggle"
-                class="flex size-9 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                class="-my-1 flex size-11 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
                 @click="toggleLayout"
             >
                 <span

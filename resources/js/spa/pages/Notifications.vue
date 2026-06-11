@@ -3,11 +3,13 @@ import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import { useRouter } from 'vue-router';
 import IconTile from '@/components/IconTile.vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
+import Spinner from '@/components/Spinner.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
+import { haptics } from '@/spa/services/haptics';
 import { useLocalThumbnailsStore } from '@/spa/stores/localThumbnails';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import bellIcon from '../../../svg/doodle-icons/bell.svg';
@@ -210,6 +212,8 @@ async function loadMore(): Promise<void> {
         return;
     }
 
+    haptics.impactLight();
+
     isLoadingMore.value = true;
     loadMoreError.value = null;
 
@@ -231,6 +235,8 @@ async function loadMore(): Promise<void> {
 }
 
 async function markAllAsRead(): Promise<void> {
+    haptics.impactLight();
+
     // Marking all read only clears the feed. Pending circle invitations and
     // ownership transfer requests stay unread (the API keeps them) until the
     // user accepts or declines them, so the badge keeps counting them.
@@ -286,15 +292,27 @@ async function openNotification(notification: Notification): Promise<void> {
     }
 }
 
-const processingInvitations = ref<Set<number>>(new Set());
-const processingTransfers = ref<Set<number>>(new Set());
+type PendingAction = 'accept' | 'decline';
+
+/* Maps id → tapped action so the spinner only shows on the button that was
+   actually pressed while both stay disabled. */
+const processingInvitations = ref<Map<number, PendingAction>>(new Map());
+const processingTransfers = ref<Map<number, PendingAction>>(new Map());
 
 function isInvitationBusy(id: number): boolean {
     return processingInvitations.value.has(id);
 }
 
+function pendingInvitationAction(id: number): PendingAction | undefined {
+    return processingInvitations.value.get(id);
+}
+
 function isTransferBusy(id: number): boolean {
     return processingTransfers.value.has(id);
+}
+
+function pendingTransferAction(id: number): PendingAction | undefined {
+    return processingTransfers.value.get(id);
 }
 
 async function acceptInvitation(invitationId: number): Promise<void> {
@@ -302,7 +320,8 @@ async function acceptInvitation(invitationId: number): Promise<void> {
         return;
     }
 
-    processingInvitations.value.add(invitationId);
+    haptics.impactMedium();
+    processingInvitations.value.set(invitationId, 'accept');
 
     try {
         await externalApi.post(`/circle-invitations/${invitationId}/accept`);
@@ -322,7 +341,8 @@ async function declineInvitation(invitationId: number): Promise<void> {
         return;
     }
 
-    processingInvitations.value.add(invitationId);
+    haptics.impactMedium();
+    processingInvitations.value.set(invitationId, 'decline');
 
     try {
         await externalApi.post(`/circle-invitations/${invitationId}/decline`);
@@ -342,7 +362,8 @@ async function acceptTransfer(transferId: number): Promise<void> {
         return;
     }
 
-    processingTransfers.value.add(transferId);
+    haptics.impactMedium();
+    processingTransfers.value.set(transferId, 'accept');
 
     try {
         await externalApi.post(
@@ -364,7 +385,8 @@ async function declineTransfer(transferId: number): Promise<void> {
         return;
     }
 
-    processingTransfers.value.add(transferId);
+    haptics.impactMedium();
+    processingTransfers.value.set(transferId, 'decline');
 
     try {
         await externalApi.post(
@@ -721,17 +743,33 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </p>
                                 <div class="mt-3 flex gap-2">
                                     <button
-                                        class="rounded-full bg-action px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-action/90 disabled:opacity-50"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-action px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-action/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-action"
                                         :disabled="isTransferBusy(transfer.id)"
                                         @click="acceptTransfer(transfer.id)"
                                     >
+                                        <Spinner
+                                            v-if="
+                                                pendingTransferAction(
+                                                    transfer.id,
+                                                ) === 'accept'
+                                            "
+                                            class="size-3.5"
+                                        />
                                         {{ t('Accept') }}
                                     </button>
                                     <button
-                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-ink transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-ink transition hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-sand-100 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700 dark:disabled:hover:bg-sand-700/60"
                                         :disabled="isTransferBusy(transfer.id)"
                                         @click="declineTransfer(transfer.id)"
                                     >
+                                        <Spinner
+                                            v-if="
+                                                pendingTransferAction(
+                                                    transfer.id,
+                                                ) === 'decline'
+                                            "
+                                            class="size-3.5"
+                                        />
                                         {{ t('Decline') }}
                                     </button>
                                 </div>
@@ -822,16 +860,24 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                 </p>
                                 <div class="mt-3 flex gap-2">
                                     <button
-                                        class="rounded-full bg-action px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-action/90 disabled:opacity-50"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-action px-4 py-1.5 font-semibold text-white shadow-sm transition hover:bg-action/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-action"
                                         :disabled="
                                             isInvitationBusy(invitation.id)
                                         "
                                         @click="acceptInvitation(invitation.id)"
                                     >
+                                        <Spinner
+                                            v-if="
+                                                pendingInvitationAction(
+                                                    invitation.id,
+                                                ) === 'accept'
+                                            "
+                                            class="size-3.5"
+                                        />
                                         {{ t('Accept') }}
                                     </button>
                                     <button
-                                        class="rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-ink transition hover:bg-sand-200 disabled:opacity-50 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-sand-100 px-4 py-1.5 font-semibold text-ink transition hover:bg-sand-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-sand-100 dark:bg-sand-700/60 dark:text-sand-200 dark:hover:bg-sand-700 dark:disabled:hover:bg-sand-700/60"
                                         :disabled="
                                             isInvitationBusy(invitation.id)
                                         "
@@ -839,6 +885,14 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                                             declineInvitation(invitation.id)
                                         "
                                     >
+                                        <Spinner
+                                            v-if="
+                                                pendingInvitationAction(
+                                                    invitation.id,
+                                                ) === 'decline'
+                                            "
+                                            class="size-3.5"
+                                        />
                                         {{ t('Decline') }}
                                     </button>
                                 </div>
@@ -1006,15 +1060,12 @@ function invitationSegments(invitation: CircleInvitation): InvitationSegment[] {
                     class="flex flex-col items-center gap-2 px-4 py-4"
                 >
                     <button
-                        class="text-ink-muted disabled:opacity-50"
+                        class="inline-flex items-center gap-1.5 text-ink-muted disabled:cursor-not-allowed disabled:opacity-50"
                         :disabled="isLoadingMore"
                         @click="loadMore"
                     >
-                        {{
-                            isLoadingMore
-                                ? t('Loading more...')
-                                : t('Load more')
-                        }}
+                        <Spinner v-if="isLoadingMore" class="size-3.5" />
+                        {{ t('Load more') }}
                     </button>
                     <p v-if="loadMoreError" class="text-destructive-ink">
                         {{ loadMoreError }}

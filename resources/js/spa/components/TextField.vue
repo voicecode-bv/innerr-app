@@ -11,6 +11,9 @@ const props = withDefaults(
         name?: string;
         placeholder?: string;
         autocomplete?: string;
+        /** Mobile keyboard capitalization, e.g. 'words' for names, 'none' for
+            usernames/emails. */
+        autocapitalize?: string;
         error?: string;
         transform?: (value: string) => string;
     }>(),
@@ -19,6 +22,7 @@ const props = withDefaults(
         name: undefined,
         placeholder: undefined,
         autocomplete: undefined,
+        autocapitalize: undefined,
         error: undefined,
         transform: undefined,
     },
@@ -51,6 +55,7 @@ function onInput(event: Event): void {
                 :name="name"
                 :placeholder="placeholder"
                 :autocomplete="autocomplete"
+                :autocapitalize="autocapitalize"
                 class="field"
                 :class="[
                     error

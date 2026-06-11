@@ -48,9 +48,14 @@ trait HandlesAuthenticatedSession
     }
 
     /**
+     * Presents the local user mirror for the SPA. `$apiUser` is the upstream
+     * /auth/me payload when available; fields that are not mirrored locally
+     * (onboarding_step) pass through from it directly.
+     *
+     * @param  array<string, mixed>|null  $apiUser
      * @return array<string, mixed>|null
      */
-    protected function presentUser(?User $user): ?array
+    protected function presentUser(?User $user, ?array $apiUser = null): ?array
     {
         if ($user === null) {
             return null;
@@ -66,6 +71,7 @@ trait HandlesAuthenticatedSession
             'locale' => $user->locale,
             'feed_layout' => $user->feed_layout,
             'onboarded' => $user->onboarded_at !== null,
+            'onboarding_step' => $apiUser['onboarding_step'] ?? null,
             'email_verified' => $user->email_verified_at !== null,
             // Accounts that existed before verification was enforced were
             // backfilled in the API, so locally this is simply "not verified".

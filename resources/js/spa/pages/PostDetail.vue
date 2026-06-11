@@ -29,6 +29,7 @@ import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { vPinchZoom } from '@/spa/directives/pinchZoom';
 import { vRevealOnScroll } from '@/spa/directives/revealOnScroll';
 import { externalApi } from '@/spa/http/externalApi';
+import { haptics } from '@/spa/services/haptics';
 import { closePostWithHeroTransition } from '@/spa/services/postHeroTransition';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useCirclesStore } from '@/spa/stores/circles';
@@ -497,6 +498,12 @@ async function toggleLike(): Promise<void> {
     post.value.is_liked = !wasLiked;
     post.value.likes_count += wasLiked ? -1 : 1;
 
+    if (wasLiked) {
+        haptics.impactLight();
+    } else {
+        haptics.impactMedium();
+    }
+
     try {
         if (wasLiked) {
             await externalApi.delete(`/posts/${post.value.id}/like`);
@@ -517,6 +524,49 @@ async function toggleLike(): Promise<void> {
 
 function openComments(): void {
     isCommentsSheetOpen.value = true;
+}
+
+// Double-tap on the media likes the post (never unlikes, Instagram style).
+// Unlike the feed cards a single tap has no action here, so we only track the
+// spacing between taps instead of delaying navigation. Mirrors PostCard.
+const DOUBLE_TAP_MS = 260;
+let lastTapAt = 0;
+
+// Large heart that springs in over the media after a double-tap like.
+const showHeartBurst = ref(false);
+
+function onMediaTap(): void {
+    if (isOwner.value) {
+        return;
+    }
+
+    const now = Date.now();
+
+    if (now - lastTapAt <= DOUBLE_TAP_MS) {
+        lastTapAt = 0;
+        likeFromDoubleTap();
+
+        return;
+    }
+
+    lastTapAt = now;
+}
+
+function likeFromDoubleTap(): void {
+    if (!post.value) {
+        return;
+    }
+
+    showHeartBurst.value = true;
+
+    if (post.value.is_liked) {
+        // Already liked: acknowledge the gesture without toggling it off.
+        haptics.impactLight();
+
+        return;
+    }
+
+    void toggleLike();
 }
 
 const circlesStore = useCirclesStore();
@@ -824,15 +874,16 @@ watch(
                             ? undefined
                             : { viewTransitionName: 'post-hero' }
                     "
+                    @click="onMediaTap"
                 >
                     <!-- Back button overlaid on the media; the overlay has no
                          header so the media sits edge-to-edge at the top. -->
                     <button
                         v-if="!isFullscreen"
                         type="button"
-                        class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] left-3 z-30 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                        class="hit-slop absolute top-[calc(var(--inset-top,0px)+0.75rem)] left-3 z-30 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                         :aria-label="t('Back')"
-                        @click="goBack"
+                        @click.stop="goBack"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -850,21 +901,37 @@ watch(
                         </svg>
                     </button>
 
+                    <div
+                        v-if="showHeartBurst && !isFullscreen"
+                        class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+                    >
+                        <span
+                            aria-hidden="true"
+                            class="heart-burst inline-block size-24 bg-white drop-shadow-lg"
+                            :style="iconMaskStyle(heartFilledIcon)"
+                            @animationend="showHeartBurst = false"
+                        ></span>
+                    </div>
+
                     <MediaCarousel
                         v-if="hasMultipleMedia && !isFullscreen"
                         :items="carouselItems"
                         :active-index="activeMediaIndex"
+                        indicator-class="bottom-12"
                         @update:active-index="activeMediaIndex = $event"
                     />
 
+                    <!-- Stays mounted while the photo fades in on top, so the
+                         hero never flashes the bare background. Once loaded the
+                         shimmer swaps to a static background to stop animating. -->
                     <div
                         v-if="
                             !hasMultipleMedia &&
                             post.media_type === 'image' &&
-                            !mediaLoaded &&
                             !isFullscreen
                         "
-                        class="absolute inset-0 shimmer"
+                        class="absolute inset-0"
+                        :class="mediaLoaded ? 'bg-surface' : 'shimmer'"
                     />
                     <img
                         v-if="!hasMultipleMedia && post.media_type === 'image'"
@@ -876,7 +943,7 @@ watch(
                                 ? 'max-h-full max-w-full object-contain'
                                 : 'size-full object-cover',
                             mediaLoaded ? 'opacity-100' : 'opacity-0',
-                            'transition-opacity duration-300',
+                            'relative transition-opacity duration-300',
                         ]"
                         decoding="async"
                         @load="mediaLoaded = true"
@@ -961,7 +1028,7 @@ watch(
                         class="absolute top-[calc(var(--inset-top,0px)+0.75rem)] right-3 z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
                         :aria-label="t('Save to photos')"
                         :disabled="isDownloading"
-                        @click="downloadMedia"
+                        @click.stop="downloadMedia"
                     >
                         <span
                             aria-hidden="true"
@@ -988,7 +1055,7 @@ watch(
                             class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm disabled:opacity-60"
                             :aria-label="t('Save to photos')"
                             :disabled="isDownloading"
-                            @click="downloadMedia"
+                            @click.stop="downloadMedia"
                         >
                             <span
                                 aria-hidden="true"
@@ -998,7 +1065,7 @@ watch(
                         </button>
                         <button
                             class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-                            @click="toggleMute"
+                            @click.stop="toggleMute"
                         >
                             <svg
                                 v-if="isMuted"
@@ -1033,7 +1100,7 @@ watch(
                         </button>
                         <button
                             class="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-                            @click="toggleFullscreen"
+                            @click.stop="toggleFullscreen"
                         >
                             <svg
                                 v-if="!isFullscreen"
@@ -1071,6 +1138,7 @@ watch(
                     <div
                         v-if="!isFullscreen"
                         class="absolute inset-x-0 bottom-0 z-10 flex items-center gap-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pt-12 pb-3"
+                        @click.stop
                     >
                         <div class="flex items-center gap-1">
                             <button

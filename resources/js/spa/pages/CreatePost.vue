@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
+import Spinner from '@/components/Spinner.vue';
 import { readExif } from '@/composables/useExif';
 import type { ExifData } from '@/composables/useExif';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
@@ -436,7 +437,7 @@ const stepSubtitle = computed(() => {
 
 const primaryLabel = computed(() => {
     if (currentStep.value === TOTAL_STEPS - 1) {
-        return form.processing ? t('Sharing...') : t('Share');
+        return t('Share');
     }
 
     if (currentStep.value === 1 && !form.data.caption.trim()) {
@@ -1155,6 +1156,7 @@ const activeItemIsImage = computed(() => {
                         <MediaCarousel
                             :items="carouselItems"
                             :active-index="activeIndex"
+                            :indicators="false"
                             @update:active-index="activeIndex = $event"
                         />
 
@@ -1172,7 +1174,7 @@ const activeItemIsImage = computed(() => {
 
                         <button
                             v-if="activeItemIsImage"
-                            class="absolute top-3 left-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                            class="hit-slop absolute top-3 left-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                             :aria-label="t('Crop photo')"
                             :disabled="uploading"
                             @click="openCropModal"
@@ -1184,7 +1186,7 @@ const activeItemIsImage = computed(() => {
                             ></span>
                         </button>
                         <button
-                            class="absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
+                            class="hit-slop absolute top-3 right-3 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
                             :aria-label="t('Remove this photo')"
                             :disabled="uploading"
                             @click="removeItem(activeIndex)"
@@ -1526,10 +1528,11 @@ const activeItemIsImage = computed(() => {
                     </button>
                     <button
                         type="button"
-                        class="rounded-lg bg-action px-7 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
+                        class="inline-flex items-center gap-2 rounded-lg bg-action px-7 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
                         :disabled="!canAdvance || form.processing"
                         @click="goNext"
                     >
+                        <Spinner v-if="form.processing" class="size-4" />
                         {{ primaryLabel }}
                     </button>
                 </div>

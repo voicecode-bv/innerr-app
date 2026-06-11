@@ -22,7 +22,13 @@ export function useChildFeedQuery() {
         params.set('sort', 'taken_at');
 
         try {
-            const persons = await personsStore.ensureLoaded();
+            // The server-stored filter loads alongside the persons list so the
+            // first feed build already uses the account-level selection;
+            // ensureLoaded falls back to the warm cache when offline.
+            const [persons] = await Promise.all([
+                personsStore.ensureLoaded(),
+                childFilter.ensureLoaded(),
+            ]);
             const childIds = persons
                 .filter((person) => !person.user_id)
                 .map((person) => person.id);

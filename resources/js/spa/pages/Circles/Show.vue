@@ -633,7 +633,7 @@ function maskStyle(icon: string) {
                         name: 'spa.circles.map',
                         params: { circle: circle.id },
                     }"
-                    class="flex size-9 items-center justify-center rounded-full bg-surface/80 text-ink shadow-sm transition hover:bg-surface"
+                    class="hit-slop relative flex size-9 items-center justify-center rounded-full bg-surface/80 text-ink shadow-sm transition hover:bg-surface"
                     :aria-label="t('Open map')"
                 >
                     <svg
@@ -653,7 +653,7 @@ function maskStyle(icon: string) {
                 </RouterLink>
                 <button
                     v-if="canManageCircle"
-                    class="flex size-9 items-center justify-center rounded-full bg-surface/80 text-ink shadow-sm transition hover:bg-surface"
+                    class="hit-slop relative flex size-9 items-center justify-center rounded-full bg-surface/80 text-ink shadow-sm transition hover:bg-surface"
                     :aria-label="t('Edit circle')"
                     data-tour="circle.permissions"
                     @click="startEdit"
@@ -1093,7 +1093,7 @@ function maskStyle(icon: string) {
                             </RouterLink>
                             <button
                                 v-if="!member.is_owner && canManageCircle"
-                                class="flex size-9 shrink-0 items-center justify-center rounded-lg transition"
+                                class="hit-slop relative flex size-9 shrink-0 items-center justify-center rounded-lg transition"
                                 :class="
                                     member.role === 'administrator'
                                         ? 'bg-brand-yellow text-brand-blue hover:bg-brand-yellow/80 dark:bg-brand-yellow/20 dark:text-brand-yellow dark:hover:bg-brand-yellow/30'
@@ -1114,7 +1114,7 @@ function maskStyle(icon: string) {
                             </button>
                             <button
                                 v-if="!member.is_owner && canManageCircle"
-                                class="flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
+                                class="hit-slop relative flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
                                 :aria-label="t('Remove member')"
                                 @click="removeMember(member.id)"
                             >
@@ -1153,7 +1153,7 @@ function maskStyle(icon: string) {
                                 </p>
                             </div>
                             <button
-                                class="flex size-9 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
+                                class="hit-slop relative flex size-9 items-center justify-center rounded-lg text-ink-muted transition hover:bg-destructive-soft hover:text-destructive-ink"
                                 :aria-label="t('Cancel invitation')"
                                 @click="cancelInvitation(invitation.id)"
                             >

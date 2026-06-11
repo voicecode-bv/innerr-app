@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import CirclePicker from '@/components/CirclePicker.vue';
 import PersonPicker from '@/components/PersonPicker.vue';
+import Spinner from '@/components/Spinner.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import { useApiForm } from '@/spa/composables/useApiForm';
 import { uploadInChunks } from '@/spa/composables/useChunkedUpload';
@@ -234,7 +235,7 @@ const stepSubtitle = computed(() => {
 
 const primaryLabel = computed(() => {
     if (currentStep.value === TOTAL_STEPS - 1) {
-        return form.processing ? t('Sharing...') : t('Share');
+        return t('Share');
     }
 
     if (currentStep.value === 3 && form.data.person_ids.length === 0) {
@@ -704,10 +705,11 @@ async function submit(): Promise<void> {
                     </button>
                     <button
                         type="button"
-                        class="rounded-lg bg-action px-7 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
+                        class="inline-flex items-center gap-2 rounded-lg bg-action px-7 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
                         :disabled="!canAdvance || form.processing"
                         @click="goNext"
                     >
+                        <Spinner v-if="form.processing" class="size-4" />
                         {{ primaryLabel }}
                     </button>
                 </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
+import Spinner from '@/components/Spinner.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi, ApiError } from '@/spa/http/externalApi';
 
@@ -257,6 +258,15 @@ async function createTag(): Promise<void> {
                 />
             </div>
 
+            <!-- Character counter only when approaching the limit, so it does
+                 not add noise during normal typing. -->
+            <p
+                v-if="query.length >= 40"
+                class="mt-1 text-right text-xs text-ink-muted"
+            >
+                {{ query.length }}/50
+            </p>
+
             <ul
                 v-if="isOpen && optionsCount > 0"
                 class="absolute top-full right-0 left-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-xl bg-surface py-1 shadow-lg ring-1 ring-sand-200"
@@ -282,7 +292,9 @@ async function createTag(): Promise<void> {
                     @mouseenter="activeIndex = filteredTags.length"
                     @click="createTag"
                 >
+                    <Spinner v-if="isCreating" class="h-4 w-4" />
                     <svg
+                        v-else
                         viewBox="0 0 20 20"
                         fill="currentColor"
                         class="h-4 w-4"
@@ -291,11 +303,7 @@ async function createTag(): Promise<void> {
                             d="M10 3.75a.75.75 0 0 1 .75.75v4.75h4.75a.75.75 0 0 1 0 1.5h-4.75v4.75a.75.75 0 0 1-1.5 0V10.75H4.5a.75.75 0 0 1 0-1.5h4.75V4.5a.75.75 0 0 1 .75-.75Z"
                         />
                     </svg>
-                    {{
-                        isCreating
-                            ? t('Adding...')
-                            : t('Create ":name"', { name: trimmedQuery })
-                    }}
+                    {{ t('Create ":name"', { name: trimmedQuery }) }}
                 </li>
             </ul>
         </div>

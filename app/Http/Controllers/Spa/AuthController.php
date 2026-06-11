@@ -40,7 +40,7 @@ class AuthController extends Controller
         $this->primeSettingsCache($this->apiClient);
 
         return response()->json([
-            'user' => $this->presentUser(Auth::user()),
+            'user' => $this->presentUser(Auth::user(), $result['user']),
             'token' => $this->apiClient->getToken(),
             'redirect_to' => $this->resolveRedirect(),
         ]);
@@ -82,9 +82,9 @@ class AuthController extends Controller
         $this->bootstrapNewAccount();
 
         return response()->json([
-            'user' => $this->presentUser(Auth::user()),
+            'user' => $this->presentUser(Auth::user(), $result['user']),
             'token' => $this->apiClient->getToken(),
-            'redirect_to' => Auth::user()?->onboarded_at !== null ? '/' : '/onboarding/intro',
+            'redirect_to' => $this->resolveRedirect(),
         ]);
     }
 
@@ -161,21 +161,29 @@ class AuthController extends Controller
 
     protected function resolveRedirect(): string
     {
-        // Onboarding wordt gegated op onboarded_at, niet op het aantal kringen:
-        // elke nieuwe account krijgt bij registratie al een "Familie"-kring, dus
-        // de aanwezigheid van een kring zegt niets meer over de voortgang.
-        return Auth::user()?->onboarded_at !== null ? '/' : '/onboarding/intro';
+        // Verse accounts verifiëren eerst hun e-mail; daarna stuurt de SPA-router
+        // zelf door (inclusief het hervatten van een halve onboarding), dus alle
+        // overige gevallen landen gewoon op '/'.
+        return Auth::user()?->email_verified_at === null ? '/verify-email' : '/';
     }
 
     /**
      * Richt een verse account in via de API: maak de standaard "Familie"-kring
-     * aan. Best-effort: faalt de call, dan blijft registratie geslaagd en vangt
+     * aan en markeer die meteen als standaardkring voor nieuwe posts, zodat
+     * delen direct werkt zonder eerst langs de instellingen te moeten.
+     * Best-effort: faalt een call, dan blijft registratie geslaagd en vangt
      * de onboarding-flow de rest op.
      */
     protected function bootstrapNewAccount(): void
     {
         try {
-            $this->apiClient->post('/circles', ['name' => __('Family')]);
+            $response = $this->apiClient->post('/circles', ['name' => __('Family')]);
+
+            $circleId = $response->json('data.id');
+
+            if (is_string($circleId) && $circleId !== '') {
+                $this->apiClient->put('/default-circles', ['circle_ids' => [$circleId]]);
+            }
         } catch (\Throwable $e) {
             report($e);
         }

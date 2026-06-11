@@ -39,7 +39,19 @@ class AppServiceProvider extends ServiceProvider
 
     protected function detectDriver(): string
     {
-        return function_exists('nativephp_call') ? 'secure_storage' : 'session';
+        return $this->isRunningOnDevice() ? 'secure_storage' : 'session';
+    }
+
+    /**
+     * Since nativephp/mobile 3.3.6 a userland nativephp_call() fallback (Jump
+     * hybrid mode) is registered on dev machines, so mere existence no longer
+     * implies the native runtime. Only the on-device C extension defines it as
+     * an internal function.
+     */
+    protected function isRunningOnDevice(): bool
+    {
+        return function_exists('nativephp_call')
+            && (new \ReflectionFunction('nativephp_call'))->isInternal();
     }
 
     /**

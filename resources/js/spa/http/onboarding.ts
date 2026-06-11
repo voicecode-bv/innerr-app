@@ -2,7 +2,6 @@ import { externalApi } from '@/spa/http/externalApi';
 
 export type OnboardingStep =
     | 'intro'
-    | 'circle_permissions'
     | 'add_children'
     | 'invite_members'
     | 'notifications';

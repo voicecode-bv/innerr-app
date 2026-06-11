@@ -150,13 +150,10 @@ async function submit(): Promise<void> {
                                 size="lg"
                                 block
                                 class="mt-4"
-                                :disabled="processing || message.trim() === ''"
+                                :loading="processing"
+                                :disabled="message.trim() === ''"
                             >
-                                {{
-                                    processing
-                                        ? t('Sending...')
-                                        : t('Send message')
-                                }}
+                                {{ t('Send message') }}
                             </Button>
                         </form>
                     </Transition>

@@ -21,12 +21,18 @@ const props = withDefaults(
         rounded?: boolean;
         hint?: boolean;
         arrows?: boolean;
+        indicators?: boolean;
+        /** Positioning class for the indicator pill, e.g. 'bottom-12' when a
+            bottom overlay (action bar) would otherwise cover it. */
+        indicatorClass?: string;
     }>(),
     {
         activeIndex: 0,
         rounded: false,
         hint: true,
         arrows: true,
+        indicators: true,
+        indicatorClass: 'bottom-3',
     },
 );
 
@@ -272,12 +278,16 @@ onBeforeUnmount(() => {
                     crossorigin="anonymous"
                 />
                 <template v-else>
+                    <!-- Placeholder underlays stay mounted while the photo fades
+                         in on top (classic blur-up), so the slide never flashes
+                         the bare background mid-transition. Once loaded the
+                         shimmer swaps to a static background to stop animating. -->
                     <div
-                        v-if="!loadedItems[item.id]"
-                        class="absolute inset-0 shimmer"
+                        class="absolute inset-0"
+                        :class="loadedItems[item.id] ? 'bg-surface' : 'shimmer'"
                     />
                     <img
-                        v-if="item.thumbnailSmall && !loadedItems[item.id]"
+                        v-if="item.thumbnailSmall"
                         :src="item.thumbnailSmall"
                         alt=""
                         aria-hidden="true"
@@ -303,7 +313,7 @@ onBeforeUnmount(() => {
             <button
                 v-show="canGoPrev"
                 type="button"
-                class="absolute top-1/2 left-3 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-opacity active:bg-black/45"
+                class="hit-slop absolute top-1/2 left-3 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-opacity active:bg-black/45"
                 :aria-label="$slots.prevLabel ? undefined : 'Previous'"
                 @click.stop="goToPrev"
             >
@@ -326,7 +336,7 @@ onBeforeUnmount(() => {
             <button
                 v-show="canGoNext"
                 type="button"
-                class="absolute top-1/2 right-3 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-opacity active:bg-black/45"
+                class="hit-slop absolute top-1/2 right-3 z-10 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm transition-opacity active:bg-black/45"
                 aria-label="Next"
                 @click.stop="goToNext"
             >
@@ -346,6 +356,35 @@ onBeforeUnmount(() => {
                 </svg>
             </button>
         </template>
+
+        <!-- Slide position indicator: dots for a handful of slides, a compact
+             counter when there are too many dots to read at a glance. Purely
+             indicative (pointer-events-none) so it never steals media taps. -->
+        <div
+            v-if="indicators && items.length > 1"
+            class="pointer-events-none absolute left-1/2 z-10 flex -translate-x-1/2 items-center rounded-full bg-black/30 backdrop-blur-sm"
+            :class="[
+                indicatorClass,
+                items.length <= 10 ? 'gap-1.5 px-2.5 py-2' : 'px-2.5 py-1',
+            ]"
+            aria-hidden="true"
+        >
+            <template v-if="items.length <= 10">
+                <span
+                    v-for="(item, index) in items"
+                    :key="item.id"
+                    class="size-1.5 rounded-full transition-all duration-200"
+                    :class="
+                        index === internalIndex
+                            ? 'scale-125 bg-white'
+                            : 'bg-white/50'
+                    "
+                />
+            </template>
+            <span v-else class="text-xs font-medium text-white">
+                {{ internalIndex + 1 }}/{{ items.length }}
+            </span>
+        </div>
     </div>
 </template>
 

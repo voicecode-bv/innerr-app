@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Spinner from '@/components/Spinner.vue';
 import { useTranslations } from '@/spa/composables/useTranslations';
+import { externalApi } from '@/spa/http/externalApi';
 import { trackOnboardingStep } from '@/spa/http/onboarding';
 import { useCirclesStore } from '@/spa/stores/circles';
+import type { Circle } from '@/spa/stores/circles';
+import { useDefaultCirclesStore } from '@/spa/stores/defaultCircles';
 import cameraIcon from '../../../../svg/doodle-icons/camera.svg';
 import heartIcon from '../../../../svg/doodle-icons/heart.svg';
 import userIcon from '../../../../svg/doodle-icons/user.svg';
@@ -50,10 +54,39 @@ const steps = [
     },
 ];
 
+// Self-healing fallback: register normally creates the "Family" circle, but
+// OAuth signups never pass through that bootstrap and the register-time call
+// is best-effort. Creating it here (and marking it as the default circle for
+// new posts) keeps every signup path on the full onboarding.
+async function createFamilyCircle(): Promise<Circle | null> {
+    try {
+        const created = await externalApi.post<{ data: Circle }>('/circles', {
+            name: t('Family'),
+        });
+
+        circles.prepend(created.data);
+
+        try {
+            await externalApi.put('/default-circles', {
+                circle_ids: [created.data.id],
+            });
+            useDefaultCirclesStore().invalidate();
+        } catch {
+            // Default-circle assignment is a convenience; the circle itself
+            // is what the next steps need.
+        }
+
+        return created.data;
+    } catch {
+        return null;
+    }
+}
+
 // De "Familie"-kring wordt bij registratie al door de API aangemaakt, dus we
-// laden de kringen en springen direct naar de rechten-stap van die kring.
-// Lukt het laden niet (of bestaat er onverhoopt geen kring), dan slaan we de
-// kring-stappen over richting notificaties.
+// laden de kringen en springen direct naar de kinderen-stap van die kring.
+// Ontbreekt de kring (OAuth-signup of gefaalde register-bootstrap), dan maken
+// we hem hier alsnog aan; alleen als ook dat mislukt slaan we de kring-stappen
+// over richting notificaties.
 async function continueOnboarding(): Promise<void> {
     if (processing.value) {
         return;
@@ -64,11 +97,15 @@ async function continueOnboarding(): Promise<void> {
 
     try {
         const items = await circles.refresh();
-        const familyCircle = items[0];
+        // Only a circle the user OWNS will accept their children and rules; a
+        // fresh account can already be a member of someone else's circle
+        // (redeemed invite link, linked OAuth account).
+        const familyCircle =
+            items.find((c) => c.is_owner) ?? (await createFamilyCircle());
 
         if (familyCircle) {
             await router.push({
-                name: 'spa.onboarding.circle-permissions',
+                name: 'spa.onboarding.add-children',
                 params: { circle: familyCircle.id },
             });
         } else {
@@ -96,7 +133,7 @@ async function continueOnboarding(): Promise<void> {
                     {{ t('How it works') }}
                 </span>
                 <h1
-                    class="mt-3 font-display text-4xl font-semibold tracking-tight text-ink"
+                    class="mt-3 font-display text-4xl font-black tracking-tight text-ink"
                 >
                     {{ t('Welcome to innerr') }}
                 </h1>
@@ -145,11 +182,12 @@ async function continueOnboarding(): Promise<void> {
 
         <div class="relative pt-2 pb-8">
             <button
-                class="w-full rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:opacity-40"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-action py-3.5 font-semibold text-white shadow-sm transition-colors hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-40"
                 :disabled="processing"
                 @click="continueOnboarding"
             >
-                {{ processing ? t('Loading...') : t('Continue') }}
+                <Spinner v-if="processing" class="size-4" />
+                {{ t('Continue') }}
             </button>
         </div>
     </div>

@@ -29,6 +29,9 @@ export interface User {
     // to masonry and shows a one-time chooser.
     feed_layout: FeedLayout | null;
     onboarded: boolean;
+    // Furthest completed onboarding step (only set while not onboarded), so
+    // the router can resume mid-flow. Optional: an older BFF omits it.
+    onboarding_step?: string | null;
     email_verified: boolean;
     // Grandfathered accounts return false: they never have to verify.
     email_verification_required: boolean;

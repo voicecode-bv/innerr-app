@@ -182,9 +182,10 @@ async function submit(): Promise<void> {
                             variant="inverse"
                             size="lg"
                             block
-                            :disabled="form.processing || !form.data.email"
+                            :loading="form.processing"
+                            :disabled="!form.data.email"
                         >
-                            {{ form.processing ? '...' : t('Send reset link') }}
+                            {{ t('Send reset link') }}
                         </Button>
                     </form>
                 </div>

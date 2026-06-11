@@ -181,6 +181,16 @@ function openDetails(): void {
     );
 }
 
+// Double-tap on the tile likes the post (never unlikes, Instagram style).
+// Because a single tap opens the post detail, likeable posts wait one
+// double-tap window before navigating; own posts keep the instant tap.
+// Mirrors PostCard.
+const DOUBLE_TAP_MS = 260;
+let tapTimer: number | null = null;
+
+// Large heart that springs in over the media after a double-tap like.
+const showHeartBurst = ref(false);
+
 function onTileClick(): void {
     if (props.selectionMode) {
         if (isSelectable.value) {
@@ -190,7 +200,37 @@ function onTileClick(): void {
         return;
     }
 
-    openDetails();
+    if (isOwner.value) {
+        openDetails();
+
+        return;
+    }
+
+    if (tapTimer !== null) {
+        window.clearTimeout(tapTimer);
+        tapTimer = null;
+        likeFromDoubleTap();
+
+        return;
+    }
+
+    tapTimer = window.setTimeout(() => {
+        tapTimer = null;
+        openDetails();
+    }, DOUBLE_TAP_MS);
+}
+
+function likeFromDoubleTap(): void {
+    showHeartBurst.value = true;
+
+    if (isLiked.value) {
+        // Already liked: acknowledge the gesture without toggling it off.
+        haptics.impactLight();
+
+        return;
+    }
+
+    void toggleLike();
 }
 
 onMounted(() => {
@@ -222,6 +262,11 @@ onMounted(() => {
 onUnmounted(() => {
     intersectionObserver?.disconnect();
     intersectionObserver = null;
+
+    if (tapTimer !== null) {
+        window.clearTimeout(tapTimer);
+        tapTimer = null;
+    }
 });
 
 function iconMaskStyle(url: string) {
@@ -262,12 +307,18 @@ function iconMaskStyle(url: string) {
             "
             @click="onTileClick"
         >
-            <div v-if="!mediaLoaded" class="absolute inset-0 shimmer" />
+            <!-- Stays mounted while the poster fades in on top, so the tile
+                 never flashes the bare background mid-transition. Once loaded
+                 the shimmer swaps to a static background to stop animating. -->
+            <div
+                class="absolute inset-0"
+                :class="mediaLoaded ? 'bg-surface' : 'shimmer'"
+            />
             <img
                 v-if="posterSrc"
                 :src="posterSrc"
                 :alt="t('Photo')"
-                class="size-full object-cover transition-opacity duration-500"
+                class="relative size-full object-cover transition-opacity duration-500"
                 :class="mediaLoaded ? 'opacity-100' : 'opacity-0'"
                 loading="lazy"
                 @load="onMediaLoad"
@@ -285,6 +336,18 @@ function iconMaskStyle(url: string) {
                 @loadeddata="onVideoLoaded"
             />
         </button>
+
+        <div
+            v-if="showHeartBurst"
+            class="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+        >
+            <span
+                aria-hidden="true"
+                class="heart-burst inline-block size-16 bg-white drop-shadow-lg"
+                :style="iconMaskStyle(heartFilledIcon)"
+                @animationend="showHeartBurst = false"
+            ></span>
+        </div>
 
         <span
             v-if="isSelectable"

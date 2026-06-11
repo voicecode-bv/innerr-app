@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
+import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
@@ -31,6 +32,7 @@ defineEmits<{
 }>();
 
 const auth = useAuthStore();
+const { locale } = useTranslations();
 
 const isOwn = computed(() => props.comment.user.id === auth.user?.id);
 
@@ -50,7 +52,7 @@ function iconMaskStyle(url: string) {
 function chatTime(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();
-    const time = date.toLocaleTimeString([], {
+    const time = date.toLocaleTimeString(locale.value, {
         hour: '2-digit',
         minute: '2-digit',
     });
@@ -59,7 +61,7 @@ function chatTime(dateString: string): string {
         return time;
     }
 
-    const day = date.toLocaleDateString([], {
+    const day = date.toLocaleDateString(locale.value, {
         day: 'numeric',
         month: 'short',
     });

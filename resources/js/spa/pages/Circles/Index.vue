@@ -87,7 +87,7 @@ async function createCircle(): Promise<void> {
         </template>
         <template #header-right>
             <button
-                class="flex size-9 items-center justify-center rounded-full bg-action text-white shadow-sm transition hover:bg-action-hover"
+                class="hit-slop relative flex size-9 items-center justify-center rounded-full bg-action text-white shadow-sm transition hover:bg-action-hover"
                 :aria-label="t('Create circle')"
                 data-tour="circles.create"
                 @click="showCreateForm = !showCreateForm"

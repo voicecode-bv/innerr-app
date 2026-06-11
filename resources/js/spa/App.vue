@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
 import { RouterView, useRoute, useRouter } from 'vue-router';
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
@@ -7,6 +7,7 @@ import { usePushNotifications } from '@/composables/usePushNotifications';
 import BottomNav from '@/spa/components/BottomNav.vue';
 import FeatureTourMount from '@/spa/components/FeatureTourMount.vue';
 import ReconnectOverlay from '@/spa/components/ReconnectOverlay.vue';
+import UpdateRequiredOverlay from '@/spa/components/UpdateRequiredOverlay.vue';
 import {
     backgroundPathOnOverlayEnter,
     isPostDetailRoute,
@@ -26,6 +27,7 @@ import {
 } from '@/spa/composables/useNavDirection';
 import { prefersReducedMotion } from '@/spa/services/motion';
 import { overlayTransitionSuppressed } from '@/spa/services/postHeroTransition';
+import { useAppUpdateStore } from '@/spa/stores/appUpdate';
 import { useAuthStore } from '@/spa/stores/auth';
 
 useNetworkStatus();
@@ -34,6 +36,13 @@ usePushNotifications();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const appUpdate = useAppUpdateStore();
+
+// One store-version check per session (TTL-guarded): drives the dismissible
+// update card in the feeds and the blocking update-required screen below.
+onMounted(() => {
+    void appUpdate.ensureChecked();
+});
 const isGuestRoute = computed(() => route.meta.guest === true);
 
 // De post-detailpagina rendert als een overlay bovenop de achtergrondpagina.
@@ -61,13 +70,19 @@ const isPostOverlayOpen = computed(() => isPostDetailRoute(route));
 
 // The post detail overlay participates in the iOS card-stack effect: the
 // background page scales down behind it while it is open.
-watch(isPostOverlayOpen, (open) => {
-    if (open) {
-        acquireBackgroundScale();
-    } else {
-        releaseBackgroundScale();
-    }
-});
+// `immediate` covers a cold start that lands directly on a post route (deep
+// link, push notification): the overlay is then open on the very first run.
+watch(
+    isPostOverlayOpen,
+    (open, wasOpen) => {
+        if (open) {
+            acquireBackgroundScale();
+        } else if (wasOpen !== undefined) {
+            releaseBackgroundScale();
+        }
+    },
+    { immediate: true },
+);
 
 // Zolang de overlay open is, dwingen we de hoofd-RouterView om de
 // achtergrondlocatie te renderen i.p.v. de actieve (post-)route. Daardoor blijft
@@ -114,7 +129,7 @@ useEdgeSwipeBack(routeContainerRef);
 // naar een latere stap schuift van rechts in, terug van links.
 const ONBOARDING_ORDER = [
     'spa.onboarding.intro',
-    'spa.onboarding.circle-permissions',
+    'spa.onboarding.add-children',
     'spa.onboarding.invite-members',
     'spa.onboarding.notifications',
 ];
@@ -289,4 +304,9 @@ const showFeatureTour = computed(
  sessie nog niet bevestigd kon worden (externe API onbereikbaar). Dekt alles af
  en probeert het zelf opnieuw, i.p.v. de gebruiker naar login te sturen. -->
     <ReconnectOverlay v-if="auth.awaitingConnection && !auth.user" />
+
+    <!-- Verplichte update: de draaiende versie zit onder de minimum_version
+ van de API en is mogelijk niet langer compatibel. Dekt alles af; de enige
+ weg vooruit is de store. -->
+    <UpdateRequiredOverlay v-if="appUpdate.updateRequired" />
 </template>

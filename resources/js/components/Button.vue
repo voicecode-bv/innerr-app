@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import type { RouteLocationRaw } from 'vue-router';
+import Spinner from '@/components/Spinner.vue';
 
 type Variant = 'primary' | 'inverse' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -12,6 +13,8 @@ const props = withDefaults(
         size?: Size;
         type?: 'button' | 'submit' | 'reset';
         disabled?: boolean;
+        /** Shows a spinner before the label and disables the button. */
+        loading?: boolean;
         block?: boolean;
         to?: RouteLocationRaw;
         href?: string;
@@ -21,6 +24,7 @@ const props = withDefaults(
         size: 'md',
         type: 'button',
         disabled: false,
+        loading: false,
         block: false,
         to: undefined,
         href: undefined,
@@ -68,7 +72,13 @@ const classes = computed(() => [
     <a v-else-if="href" :href="href" :class="classes">
         <slot />
     </a>
-    <button v-else :type="type" :disabled="disabled" :class="classes">
+    <button
+        v-else
+        :type="type"
+        :disabled="disabled || loading"
+        :class="classes"
+    >
+        <Spinner v-if="loading" class="size-4 shrink-0" />
         <slot />
     </button>
 </template>

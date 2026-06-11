@@ -83,7 +83,7 @@ class BootstrapController extends Controller
         };
 
         return response()->json([
-            'user' => $this->presentUser($user),
+            'user' => $this->presentUser($user, $validatedUser),
             // Geef het token terug zolang we er nog één vasthouden (ook bij
             // unreachable), zodat de SPA zijn Bearer kan blijven gebruiken.
             'token' => $this->apiClient->hasToken() ? $this->apiClient->getToken() : null,
