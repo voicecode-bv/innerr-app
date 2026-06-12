@@ -85,6 +85,19 @@ export interface PostData {
 
 const props = defineProps<{
     post: PostData;
+    /**
+     * Selection mode is active: an overlay captures every tap on the card and
+     * toggles selection instead of the regular interactions.
+     */
+    selectionMode?: boolean;
+    /** Whether this card is currently part of the selection. */
+    selected?: boolean;
+    /**
+     * Overrides which cards can be selected. When omitted the card falls back
+     * to the owner check (the circle-assignment default); the print flow
+     * passes its own predicate result since any printable photo qualifies.
+     */
+    canSelect?: boolean;
 }>();
 
 interface FullPostCircle {
@@ -135,6 +148,7 @@ const emit = defineEmits<{
     (e: 'openLikes', postId: string): void;
     (e: 'postUpdated', postId: string): void;
     (e: 'postDeleted', postId: string): void;
+    (e: 'toggleSelect', postId: string): void;
 }>();
 
 function openLikes(): void {
@@ -148,6 +162,19 @@ const { maybeRequestReview } = useReviewPrompt();
 
 const authUserId = computed(() => auth.user?.id ?? null);
 const isOwner = computed(() => props.post.user.id === authUserId.value);
+
+// Cards that don't qualify for the active selection intent are dimmed and
+// inert. Without an explicit `canSelect` only own posts qualify (the
+// circle-assignment rule), mirroring PostTile.
+const isSelectable = computed(
+    () => (props.selectionMode ?? false) && (props.canSelect ?? isOwner.value),
+);
+
+function toggleSelect(): void {
+    if (isSelectable.value) {
+        emit('toggleSelect', props.post.id);
+    }
+}
 const canDownload = computed(() => {
     if (
         props.post.media_type !== 'image' &&
@@ -574,11 +601,13 @@ watch(
          edit sheet is unaffected: BottomSheet teleports to <body>. -->
     <article
         class="bg-sand pt-6"
-        :class="
+        :class="[
             isFullscreen
                 ? ''
-                : '[contain-intrinsic-size:auto_520px] [content-visibility:auto]'
-        "
+                : '[contain-intrinsic-size:auto_520px] [content-visibility:auto]',
+            selectionMode ? 'relative' : '',
+            selectionMode && !isSelectable ? 'opacity-40' : '',
+        ]"
     >
         <div class="flex items-start gap-3 px-4 py-3">
             <RouterLink
@@ -1231,6 +1260,48 @@ watch(
                 {{ likesSummary.text }}
             </span>
         </button>
+
+        <!-- Selection overlay: sits on top of the whole card so every tap
+             toggles selection instead of liking, swiping, or navigating.
+             Disabled (but still covering) on cards that don't qualify, so
+             their interactions stay blocked too. -->
+        <div v-if="selectionMode" class="absolute inset-0 z-30">
+            <button
+                type="button"
+                class="block size-full"
+                :disabled="!isSelectable"
+                :aria-label="selected ? t('Deselect photo') : t('Select photo')"
+                @click="toggleSelect"
+            >
+                <span
+                    aria-hidden="true"
+                    class="absolute inset-x-2 inset-y-1 rounded-2xl transition-colors"
+                    :class="selected ? 'bg-action/10 ring-2 ring-action' : ''"
+                ></span>
+            </button>
+            <span
+                v-if="isSelectable"
+                aria-hidden="true"
+                class="pointer-events-none absolute top-7 right-3 flex size-6 items-center justify-center rounded-full shadow-sm ring-2 ring-white transition-colors"
+                :class="selected ? 'bg-action' : 'bg-black/30'"
+            >
+                <svg
+                    v-if="selected"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="3"
+                    stroke="currentColor"
+                    class="size-3.5 text-white"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m4.5 12.75 6 6 9-13.5"
+                    />
+                </svg>
+            </span>
+        </div>
 
         <EditPostModal
             v-if="editPost && isOwner"

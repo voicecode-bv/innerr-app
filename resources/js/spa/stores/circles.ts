@@ -75,7 +75,7 @@ function writeWarmCache(items: Circle[] | null): void {
             window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(items));
         }
     } catch {
-        // negeren — quotum vol of private mode
+        // ignore — storage quota exceeded or private mode
     }
 }
 

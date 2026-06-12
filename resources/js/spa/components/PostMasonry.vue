@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import Button from '@/components/Button.vue';
 import BatchAssignCircleSheet from '@/spa/components/BatchAssignCircleSheet.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import LikesSheet from '@/spa/components/LikesSheet.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import PostTile from '@/spa/components/PostTile.vue';
+import SelectionActionBar from '@/spa/components/SelectionActionBar.vue';
 import { useMasonry } from '@/spa/composables/useMasonry';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { addPostsToCircles } from '@/spa/services/postCircles';
 import { useCirclesStore } from '@/spa/stores/circles';
 import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
+import { printablePhotos } from '@/spa/stores/printShop';
 import { Dialog } from '@nativephp/mobile';
 
 const props = withDefaults(
@@ -43,6 +44,17 @@ const selection = useFeedSelectionStore();
 const circlesStore = useCirclesStore();
 
 const selectionActive = computed(() => props.selectable && selection.active);
+
+// In print mode any post with at least one ready photo qualifies, regardless
+// of who posted it; circle assignment keeps its own-posts-only rule inside
+// PostTile (canSelect stays undefined there).
+function tileCanSelect(post: PostData): boolean | undefined {
+    if (selection.intent !== 'print') {
+        return undefined;
+    }
+
+    return printablePhotos(post).length > 0;
+}
 
 // Responsive column count from the grid's own width: 2 on phones, more on
 // wider tablets. Driven by a ResizeObserver so it adapts to rotation/split-view.
@@ -218,6 +230,7 @@ onUnmounted(() => {
                     :resolve-poster="resolvePoster"
                     :selection-mode="selectionActive"
                     :selected="selection.isSelected(post.id)"
+                    :can-select="tileCanSelect(post)"
                     @open-comments="openCommentsForPost"
                     @open-likes="openLikesForPost"
                     @toggle-select="selection.toggle"
@@ -243,32 +256,11 @@ onUnmounted(() => {
             @update:open="isLikesOpen = $event"
         />
 
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition duration-200 ease-out"
-                enter-from-class="translate-y-full"
-                enter-to-class="translate-y-0"
-                leave-active-class="transition duration-150 ease-in"
-                leave-from-class="translate-y-0"
-                leave-to-class="translate-y-full"
-            >
-                <div
-                    v-if="selectionActive && selection.count > 0"
-                    class="fixed inset-x-0 bottom-0 z-[60] flex items-center justify-between gap-3 border-t border-sand-200 bg-surface px-4 pt-3 pb-24 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]"
-                >
-                    <span class="font-medium text-ink">
-                        {{ t(':count selected', { count: selection.count }) }}
-                    </span>
-                    <Button
-                        variant="primary"
-                        size="md"
-                        @click="assignSheetOpen = true"
-                    >
-                        {{ t('Add to circle') }}
-                    </Button>
-                </div>
-            </Transition>
-        </Teleport>
+        <SelectionActionBar
+            v-if="selectable"
+            :posts="posts"
+            @add-to-circle="assignSheetOpen = true"
+        />
 
         <BatchAssignCircleSheet
             v-if="selectable"

@@ -39,7 +39,7 @@ async function loadCircles(force = false): Promise<void> {
 
         await circlesStore.ensureLoaded();
     } catch {
-        // negeren
+        // ignore — the page renders its empty state
     }
 }
 

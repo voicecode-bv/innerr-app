@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
+import {
+    computed,
+    onMounted,
+    onUnmounted,
+    ref,
+    useTemplateRef,
+    watch,
+} from 'vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import FeedHeader from '@/spa/components/FeedHeader.vue';
 import FeedLayoutChooser from '@/spa/components/FeedLayoutChooser.vue';
@@ -19,11 +26,13 @@ import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useChildFilterStore } from '@/spa/stores/childFilter';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 
 const { t } = useTranslations();
 const feedCache = useFeedCacheStore();
 const childFilter = useChildFilterStore();
+const feedSelection = useFeedSelectionStore();
 const notificationsStore = useNotificationsStore();
 const { childFeedQuery } = useChildFeedQuery();
 // Shares the list feed's cache key so toggling between views reuses the same
@@ -102,6 +111,12 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 
 onMounted(loadUnreadCount);
 
+// A selection (the print flow's photo picking) must not leak onto other
+// surfaces; the print shop already snapshots the photos before navigating.
+onUnmounted(() => {
+    feedSelection.disable();
+});
+
 async function onPushPermissionChanged(): Promise<void> {
     // After the user has answered the native prompt — granted or denied — we
     // want to show a fresh feed without a visual jolt.
@@ -155,6 +170,7 @@ async function onPushPermissionChanged(): Promise<void> {
                 class="pt-6"
                 :posts="feed.items"
                 :loading="feed.loading"
+                selectable
             />
 
             <div

@@ -76,8 +76,8 @@ function makePost(overrides: Partial<PostData> = {}): PostData {
     };
 }
 
-function mountCard(post: PostData) {
-    const app = createApp(PostCard, { post });
+function mountCard(post: PostData, extraProps: Record<string, unknown> = {}) {
+    const app = createApp(PostCard, { post, ...extraProps });
     app.use(createPinia());
 
     const host = document.createElement('div');
@@ -150,6 +150,62 @@ describe('PostCard video visibility gating', () => {
         unmount();
 
         expect(observer.disconnect).toHaveBeenCalled();
+    });
+});
+
+describe('PostCard selection mode', () => {
+    it('captures taps and toggles selection on selectable cards', () => {
+        const onToggleSelect = vi.fn();
+        const { host, unmount } = mountCard(
+            makePost({
+                media_type: 'image',
+                media_url: 'https://cdn.test/full.jpg',
+            }),
+            { selectionMode: true, canSelect: true, onToggleSelect },
+        );
+
+        const overlay = host.querySelector(
+            'button[aria-label="Select photo"]',
+        ) as HTMLButtonElement;
+        expect(overlay).not.toBeNull();
+        expect(overlay.disabled).toBe(false);
+
+        overlay.click();
+        expect(onToggleSelect).toHaveBeenCalledWith('post-1');
+
+        unmount();
+    });
+
+    it('dims cards that do not qualify and keeps their overlay inert', () => {
+        const onToggleSelect = vi.fn();
+        const { host, unmount } = mountCard(makePost(), {
+            selectionMode: true,
+            canSelect: false,
+            onToggleSelect,
+        });
+
+        const article = host.querySelector('article') as HTMLElement;
+        expect(article.className).toContain('opacity-40');
+
+        const overlay = host.querySelector(
+            'button[aria-label="Select photo"]',
+        ) as HTMLButtonElement;
+        expect(overlay.disabled).toBe(true);
+
+        overlay.click();
+        expect(onToggleSelect).not.toHaveBeenCalled();
+
+        unmount();
+    });
+
+    it('renders no overlay outside selection mode', () => {
+        const { host, unmount } = mountCard(makePost());
+
+        expect(
+            host.querySelector('button[aria-label="Select photo"]'),
+        ).toBeNull();
+
+        unmount();
     });
 });
 

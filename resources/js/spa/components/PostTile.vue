@@ -28,11 +28,19 @@ const props = withDefaults(
         selectionMode?: boolean;
         /** Whether this tile is currently part of the selection. */
         selected?: boolean;
+        /**
+         * Overrides which tiles can be selected. When omitted the tile falls
+         * back to the owner check (the circle-assignment default); the print
+         * flow passes its own predicate result since any printable photo in
+         * the feed qualifies there.
+         */
+        canSelect?: boolean;
     }>(),
     {
         resolvePoster: undefined,
         selectionMode: false,
         selected: false,
+        canSelect: undefined,
     },
 );
 
@@ -48,9 +56,12 @@ const auth = useAuthStore();
 
 const isOwner = computed(() => props.post.user?.id === auth.user?.id);
 
-// Only the user's own posts can be added to a circle, so in selection mode
-// other people's tiles are dimmed and inert.
-const isSelectable = computed(() => props.selectionMode && isOwner.value);
+// Tiles that don't qualify for the active selection intent are dimmed and
+// inert. Without an explicit `canSelect` only own posts qualify (the
+// circle-assignment rule).
+const isSelectable = computed(
+    () => props.selectionMode && (props.canSelect ?? isOwner.value),
+);
 
 const isVideo = computed(() => props.post.media_type === 'video');
 const isQuote = computed(() => props.post.type === 'quote');

@@ -1,13 +1,22 @@
 import { defineStore } from 'pinia';
 
 /**
- * Drives the "select photos and add them to a circle" flow on the masonry
- * surfaces (home grid, own profile). State is global but short-lived: pages
- * call `disable()` on unmount so a selection never leaks across navigation.
+ * What the current selection is for. The intent decides which posts are
+ * selectable (circle assignment needs own posts, printing needs ready photos)
+ * and which action bar the masonry shows.
+ */
+export type SelectionIntent = 'circle' | 'print';
+
+/**
+ * Drives the "select photos" flows on the masonry surfaces (home grid, own
+ * profile): adding photos to a circle and ordering printed products. State is
+ * global but short-lived: pages call `disable()` on unmount so a selection
+ * never leaks across navigation.
  */
 export const useFeedSelectionStore = defineStore('spa-feed-selection', {
     state: () => ({
         active: false,
+        intent: 'circle' as SelectionIntent,
         selectedIds: new Set<string>(),
     }),
     getters: {
@@ -18,18 +27,20 @@ export const useFeedSelectionStore = defineStore('spa-feed-selection', {
                 state.selectedIds.has(id),
     },
     actions: {
-        enable(): void {
+        enable(intent: SelectionIntent = 'circle'): void {
             this.active = true;
+            this.intent = intent;
         },
         disable(): void {
             this.active = false;
+            this.intent = 'circle';
             this.selectedIds = new Set();
         },
-        toggleActive(): void {
+        toggleActive(intent: SelectionIntent = 'circle'): void {
             if (this.active) {
                 this.disable();
             } else {
-                this.enable();
+                this.enable(intent);
             }
         },
         toggle(id: string): void {

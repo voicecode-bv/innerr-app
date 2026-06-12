@@ -9,13 +9,16 @@ import SettingsMenu from '@/spa/components/SettingsMenu.vue';
 import { useFeedLayout } from '@/spa/composables/useFeedLayout';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useAuthStore } from '@/spa/stores/auth';
+import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 import { useNotificationsStore } from '@/spa/stores/notifications';
 import bugIcon from '../../../svg/doodle-icons/bug.svg';
+import crossIcon from '../../../svg/doodle-icons/cross.svg';
 import listIcon from '../../../svg/doodle-icons/feed-list.svg';
 import masonryIcon from '../../../svg/doodle-icons/feed-masonry.svg';
 import heartFilledIcon from '../../../svg/doodle-icons/heart-filled.svg';
 import heartIcon from '../../../svg/doodle-icons/heart.svg';
 import menuIcon from '../../../svg/doodle-icons/menu.svg';
+import shopIcon from '../../../svg/doodle-icons/shop.svg';
 import userIcon from '../../../svg/doodle-icons/user.svg';
 import innerrLogoDark from '../../../svg/innerr-logo-on-blue.svg';
 import innerrLogo from '../../../svg/innerr-logo-on-sand.svg';
@@ -29,8 +32,23 @@ const props = defineProps<{
 const { t } = useTranslations();
 const router = useRouter();
 const auth = useAuthStore();
+const feedSelection = useFeedSelectionStore();
 const notificationsStore = useNotificationsStore();
 const { setLayout } = useFeedLayout();
+
+// "Select photos for printing" toggle; both feed layouts render the
+// selection checkboxes and print action bar.
+const printSelectionActive = computed(
+    () => feedSelection.active && feedSelection.intent === 'print',
+);
+
+function togglePrintSelection(): void {
+    if (printSelectionActive.value) {
+        feedSelection.disable();
+    } else {
+        feedSelection.enable('print');
+    }
+}
 
 const isDrawerOpen = ref(false);
 
@@ -167,27 +185,52 @@ function iconMaskStyle(url: string) {
             class="flex items-center justify-between border-t border-dark-sand px-4 py-2 pb-2"
         >
             <ChildTimelineMenu />
-            <button
-                type="button"
-                :aria-label="
-                    layout === 'list'
-                        ? t('Switch to grid view')
-                        : t('Switch to list view')
-                "
-                data-tour="feed.layout-toggle"
-                class="-my-1 flex size-11 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
-                @click="toggleLayout"
-            >
-                <span
-                    aria-hidden="true"
-                    class="inline-block size-6 bg-ink"
-                    :style="
-                        iconMaskStyle(
-                            layout === 'list' ? masonryIcon : listIcon,
-                        )
+            <div class="flex items-center gap-1">
+                <button
+                    type="button"
+                    :aria-label="
+                        printSelectionActive
+                            ? t('Cancel selection')
+                            : t('Print your photos')
                     "
-                ></span>
-            </button>
+                    class="-my-1 flex size-11 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                    @click="togglePrintSelection"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-6"
+                        :class="
+                            printSelectionActive ? 'bg-brand-orange' : 'bg-ink'
+                        "
+                        :style="
+                            iconMaskStyle(
+                                printSelectionActive ? crossIcon : shopIcon,
+                            )
+                        "
+                    ></span>
+                </button>
+                <button
+                    type="button"
+                    :aria-label="
+                        layout === 'list'
+                            ? t('Switch to grid view')
+                            : t('Switch to list view')
+                    "
+                    data-tour="feed.layout-toggle"
+                    class="-my-1 flex size-11 items-center justify-center rounded-full text-accent transition-colors hover:bg-sand-100"
+                    @click="toggleLayout"
+                >
+                    <span
+                        aria-hidden="true"
+                        class="inline-block size-6 bg-ink"
+                        :style="
+                            iconMaskStyle(
+                                layout === 'list' ? masonryIcon : listIcon,
+                            )
+                        "
+                    ></span>
+                </button>
+            </div>
         </div>
 
         <Drawer :open="isDrawerOpen" @update:open="isDrawerOpen = $event">

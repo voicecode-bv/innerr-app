@@ -187,6 +187,14 @@ const routes: RouteRecordRaw[] = [
         meta: { auth: true, onboarded: true, hideEdgeBar: true },
     },
 
+    // Print shop (guided flow) — hides the native bottom nav.
+    {
+        path: '/print/shop',
+        name: 'spa.print.shop',
+        component: () => import('@/spa/pages/PrintShop.vue'),
+        meta: { auth: true, onboarded: true, hideEdgeBar: true },
+    },
+
     // Notifications
     {
         path: '/notifications',

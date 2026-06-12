@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
+import {
+    computed,
+    onMounted,
+    onUnmounted,
+    ref,
+    useTemplateRef,
+    watch,
+} from 'vue';
 import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import CommentsSheet from '@/spa/components/CommentsSheet.vue';
 import FeedHeader from '@/spa/components/FeedHeader.vue';
@@ -9,6 +16,7 @@ import LikesSheet from '@/spa/components/LikesSheet.vue';
 import PostCard from '@/spa/components/PostCard.vue';
 import type { PostData } from '@/spa/components/PostCard.vue';
 import PushPermissionCard from '@/spa/components/PushPermissionCard.vue';
+import SelectionActionBar from '@/spa/components/SelectionActionBar.vue';
 import UpdateAvailableCard from '@/spa/components/UpdateAvailableCard.vue';
 import { useChildFeedQuery } from '@/spa/composables/useChildFeedQuery';
 import { useFeedDateBar } from '@/spa/composables/useFeedDateBar';
@@ -22,11 +30,14 @@ import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
 import { useChildFilterStore } from '@/spa/stores/childFilter';
 import { useFeedCacheStore } from '@/spa/stores/feedCache';
+import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
 import { useNotificationsStore } from '@/spa/stores/notifications';
+import { printablePhotos } from '@/spa/stores/printShop';
 
 const { t } = useTranslations();
 const feedCache = useFeedCacheStore();
 const childFilter = useChildFilterStore();
+const feedSelection = useFeedSelectionStore();
 const notificationsStore = useNotificationsStore();
 const { childFeedQuery } = useChildFeedQuery();
 const FEED_KEY = 'home';
@@ -150,6 +161,22 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 });
 
 onMounted(loadUnreadCount);
+
+// A selection (the print flow's photo picking) must not leak onto other
+// surfaces; the print shop already snapshots the photos before navigating.
+onUnmounted(() => {
+    feedSelection.disable();
+});
+
+// On this surface a selection is always the print flow, so any post with at
+// least one ready photo qualifies, regardless of who posted it.
+function cardCanSelect(post: PostData): boolean | undefined {
+    if (feedSelection.intent !== 'print') {
+        return undefined;
+    }
+
+    return printablePhotos(post).length > 0;
+}
 
 const commentsPostId = ref<string | null>(null);
 const isCommentsOpen = ref(false);
@@ -285,10 +312,14 @@ function bumpActivePostCommentsCount(delta: number): void {
                 :data-created-at="post.created_at"
                 :data-taken-at="post.taken_at ?? undefined"
                 :post="post"
+                :selection-mode="feedSelection.active"
+                :selected="feedSelection.isSelected(post.id)"
+                :can-select="cardCanSelect(post)"
                 @open-comments="openCommentsForPost"
                 @open-likes="openLikesForPost"
                 @post-updated="onPostUpdated"
                 @post-deleted="onPostDeleted"
+                @toggle-select="feedSelection.toggle"
             />
 
             <div
@@ -329,6 +360,8 @@ function bumpActivePostCommentsCount(delta: number): void {
             :initial-count="activeLikesCount()"
             @update:open="isLikesOpen = $event"
         />
+
+        <SelectionActionBar :posts="feed.items" />
 
         <FeedLayoutChooser />
     </AppLayout>

@@ -50,7 +50,7 @@ function writePersisted(intent: PersistedIntent | null): void {
             window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(intent));
         }
     } catch {
-        // negeren — quotum vol of private mode
+        // ignore — storage quota exceeded or private mode
     }
 }
 
