@@ -14,19 +14,19 @@ function destroyActive(): void {
         try {
             active.destroy();
         } catch {
-            // Driver.js gooit soms tijdens de eigen destroy-callback;
-            // negeer en laat de DOM opruimen door de volgende run.
+            // Driver.js sometimes throws during its own destroy callback;
+            // ignore and let the next run clean up the DOM.
         }
 
         active = null;
     }
 }
 
-// Poll tot een van de selectors in de DOM verschijnt of het timeout-budget op
-// is. Pages doen na route-mount nog een async fetch (kringen, leden, profiel)
-// waardoor `data-tour` elementen pas een paar honderd ms later aanwezig zijn —
-// zonder deze wait sloegen we steps over en zagen we centrale popovers in
-// plaats van highlights.
+// Poll until one of the selectors appears in the DOM or the timeout budget
+// runs out. Pages still do an async fetch after route mount (circles,
+// members, profile), so `data-tour` elements only show up a few hundred ms
+// later — without this wait we skipped steps and saw centered popovers
+// instead of highlights.
 async function waitForAnySelector(
     selectors: string[],
     timeoutMs = 2500,
@@ -63,15 +63,15 @@ export function useFeatureTour() {
 
         await waitForAnySelector(elementSelectors);
 
-        // Een nieuwere run() is gestart tijdens onze wait (bv. route-change) —
-        // staak deze run zodat we geen overlappende Driver-instanties krijgen.
+        // A newer run() started during our wait (e.g. route change) —
+        // abandon this run so we don't get overlapping Driver instances.
         if (token !== runToken) {
             return;
         }
 
-        // Filter steps waarvan het bijbehorende DOM-element nog steeds ontbreekt
-        // ná de wait. Steps zonder `element` (intro/outro popovers) blijven
-        // altijd staan — die toont Driver.js in het midden.
+        // Filter out steps whose corresponding DOM element is still missing
+        // after the wait. Steps without `element` (intro/outro popovers)
+        // always stay — Driver.js shows those centered.
         const usableSteps = segment.steps.filter((step) => {
             const selector = step.element;
 
@@ -90,8 +90,8 @@ export function useFeatureTour() {
             return exists;
         });
 
-        // Geen bruikbare stappen → markeer segment direct als voltooid en ga
-        // door naar het volgende; anders blijft de tour vastzitten.
+        // No usable steps → mark the segment as completed right away and
+        // move on to the next one; otherwise the tour gets stuck.
         if (usableSteps.length === 0) {
             store.markSegmentDone(segment.name);
 
@@ -127,9 +127,9 @@ export function useFeatureTour() {
                 if (completedNormally) {
                     store.markSegmentDone(segment.name);
                 } else {
-                    // Gebruiker klikte op X / Esc voordat de laatste stap was
-                    // bereikt — stop de tour zonder progress, zodat een restart
-                    // hem weer kan oppakken.
+                    // User clicked X / Esc before the last step was reached
+                    // — stop the tour without progress, so a restart can
+                    // pick it up again.
                     store.stop();
                 }
             },

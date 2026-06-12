@@ -12,8 +12,8 @@ export class ApiError extends Error {
     }
 }
 
-// Parse Retry-After header. Spec: ofwel een aantal seconden, ofwel een
-// HTTP-date. Geeft null bij ontbrekende of niet-parseerbare waarde.
+// Parse Retry-After header. Spec: either a number of seconds or an
+// HTTP-date. Returns null for a missing or unparseable value.
 export function parseRetryAfter(header: string | null): number | null {
     if (!header) {
         return null;
@@ -161,7 +161,7 @@ async function performCall<T>(
 }
 
 function call<T>(method: string, url: string, body?: unknown): Promise<T> {
-    // Alleen GETs retryen — mutaties zijn niet idempotent.
+    // Only retry GETs — mutations are not idempotent.
     if (method === 'GET') {
         return withRetry(() => performCall<T>(method, url, body), isTransient);
     }

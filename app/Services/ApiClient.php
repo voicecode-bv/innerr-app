@@ -326,8 +326,8 @@ class ApiClient
     }
 
     /**
-     * Fetch and cache the current user's circles. Used door Spa\AuthController
-     * om na login te beslissen of de SPA naar onboarding of de feed gaat.
+     * Fetch and cache the current user's circles. Used by Spa\AuthController
+     * to decide after login whether the SPA goes to onboarding or the feed.
      *
      * @return array<int, array<string, mixed>>
      */

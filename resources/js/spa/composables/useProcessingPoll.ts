@@ -69,14 +69,14 @@ export function useProcessingPoll<T extends ProcessingAware>(
 
         startedAt = Date.now();
         intervalHandle = setInterval(() => {
-            // Guard tegen overlappende refreshes: als de vorige nog loopt
-            // (langzame verbinding) wachten we tot 'ie klaar is.
+            // Guard against overlapping refreshes: if the previous one is
+            // still running (slow connection) we wait until it finishes.
             if (inFlight) {
                 return;
             }
 
-            // Globale veiligheidsstop: stoppen na de timeout, ook als de
-            // server nog niet klaar is — voorkomt een eeuwig draaiende timer.
+            // Global safety stop: stop after the timeout even if the server
+            // isn't done yet — prevents a timer that runs forever.
             if (Date.now() - startedAt > timeoutMs) {
                 stop();
 

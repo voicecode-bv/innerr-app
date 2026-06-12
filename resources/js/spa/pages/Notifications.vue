@@ -6,6 +6,7 @@ import PullToRefreshIndicator from '@/components/PullToRefreshIndicator.vue';
 import Spinner from '@/components/Spinner.vue';
 import SurfaceCard from '@/components/SurfaceCard.vue';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useRelativeTime } from '@/spa/composables/useRelativeTime';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { externalApi } from '@/spa/http/externalApi';
 import AppLayout from '@/spa/layouts/AppLayout.vue';
@@ -90,18 +91,19 @@ interface Meta {
 }
 
 const { t } = useTranslations();
+const { timeAgo } = useRelativeTime();
 const router = useRouter();
 const notificationsStore = useNotificationsStore();
 const localThumbnails = useLocalThumbnailsStore();
 
-// Voor video-posts bevat `post_media_url` de .m3u8-stream die niet als
-// <img>-src laadt. De 300x300 `post_thumbnail_small_url` bestaat alleen voor
-// image-posts, dus video-notificaties vielen altijd terug op de stream-URL en
-// toonden niets. Daarom pakken we daarna de `post_thumbnail_url` (de poster die
-// de backend wel synchroon voor video's genereert). Valt die ook weg (oude
-// notificaties of post nog in transcoding) dan pakken we de lokaal gegenereerde
-// JPEG-thumbnail uit de plugin-store, en pas als laatste de `post_media_url`
-// voor image-posts.
+// For video posts `post_media_url` contains the .m3u8 stream, which won't
+// load as an <img> src. The 300x300 `post_thumbnail_small_url` only exists
+// for image posts, so video notifications always fell back to the stream URL
+// and showed nothing. That's why we next take the `post_thumbnail_url` (the
+// poster the backend does generate synchronously for videos). If that is
+// also missing (old notifications or a post still transcoding) we take the
+// locally generated JPEG thumbnail from the plugin store, and only as a last
+// resort the `post_media_url` for image posts.
 function thumbnailFor(notification: Notification): string | null {
     const smallThumbnail = notification.data.post_thumbnail_small_url;
 
@@ -330,7 +332,7 @@ async function acceptInvitation(invitationId: number): Promise<void> {
         );
         notificationsStore.decrement();
     } catch {
-        // ignore — gebruiker kan opnieuw proberen
+        // ignore — the user can try again
     } finally {
         processingInvitations.value.delete(invitationId);
     }
@@ -351,7 +353,7 @@ async function declineInvitation(invitationId: number): Promise<void> {
         );
         notificationsStore.decrement();
     } catch {
-        // ignore — gebruiker kan opnieuw proberen
+        // ignore — the user can try again
     } finally {
         processingInvitations.value.delete(invitationId);
     }
@@ -374,7 +376,7 @@ async function acceptTransfer(transferId: number): Promise<void> {
         );
         notificationsStore.decrement();
     } catch {
-        // ignore — gebruiker kan opnieuw proberen
+        // ignore — the user can try again
     } finally {
         processingTransfers.value.delete(transferId);
     }
@@ -397,7 +399,7 @@ async function declineTransfer(transferId: number): Promise<void> {
         );
         notificationsStore.decrement();
     } catch {
-        // ignore — gebruiker kan opnieuw proberen
+        // ignore — the user can try again
     } finally {
         processingTransfers.value.delete(transferId);
     }
@@ -526,34 +528,6 @@ function maskStyleFor(icon: string) {
     };
 }
 
-function timeAgo(dateString: string): string {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMinutes = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    const diffWeeks = Math.floor(diffDays / 7);
-
-    if (diffMinutes < 1) {
-        return t('just now');
-    }
-
-    if (diffMinutes < 60) {
-        return t(':count min ago', { count: diffMinutes });
-    }
-
-    if (diffHours < 24) {
-        return t(':count hours ago', { count: diffHours });
-    }
-
-    if (diffDays < 7) {
-        return t(':count days ago', { count: diffDays });
-    }
-
-    return t(':count weeks ago', { count: diffWeeks });
-}
-
 interface NotificationGroup {
     key: 'today' | 'week' | 'earlier';
     label: string;
@@ -592,13 +566,12 @@ const groupedNotifications = computed<NotificationGroup[]>(() => {
     return Object.values(groups).filter((group) => group.items.length > 0);
 });
 
-// Sentinel-tokens zodat `t()`'s placeholder-substitutie niet de zinnen
-// kapot maakt voordat we ze splitsen — namen kunnen zelf placeholder-syntax
-// bevatten, dus we vervangen `:inviter` / `:circle` met onwaarschijnlijke
-// markers en splitsen de string vervolgens om gestylede spans te renderen.
-// We gebruiken U+E000 (Private Use Area), bewust geen NUL/control-chars: die
-// breken de Vue-parser (unexpected-null-character) en worden door tooling
-// gestript.
+// Sentinel tokens so `t()`'s placeholder substitution doesn't mangle the
+// sentences before we split them — names can themselves contain placeholder
+// syntax, so we substitute `:inviter` / `:circle` with unlikely markers and
+// then split the string to render styled spans. We use U+E000 (Private Use
+// Area), deliberately no NUL/control chars: those break the Vue parser
+// (unexpected-null-character) and get stripped by tooling.
 const INVITER_TOKEN = 'inv-inviter';
 const CIRCLE_TOKEN = 'inv-circle';
 

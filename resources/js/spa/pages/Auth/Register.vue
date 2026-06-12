@@ -12,6 +12,7 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
 import { useI18nStore } from '@/spa/stores/i18n';
+import arrowLeftIcon from '../../../../svg/doodle-icons/arrow-left.svg';
 import mailIcon from '../../../../svg/doodle-icons/mail.svg';
 import thumbsUpIcon from '../../../../svg/doodle-icons/thumbs-up.svg';
 import innerrLogo from '../../../../svg/innerr-logo-on-blue.svg';
@@ -227,9 +228,10 @@ function lowercase(value: string): string {
                         @click="showEmailForm = false"
                     >
                         <span
-                            class="transition-transform group-hover:-translate-x-0.5"
-                            >←</span
-                        >
+                            aria-hidden="true"
+                            class="inline-block size-4 bg-current transition-transform group-hover:-translate-x-0.5"
+                            :style="iconMaskStyle(arrowLeftIcon)"
+                        ></span>
                         <span>{{ t('Back') }}</span>
                     </button>
 

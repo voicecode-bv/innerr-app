@@ -134,15 +134,14 @@ function resetState(): void {
     loadError.value = null;
 }
 
-// Eén gecombineerde watcher op (open, postId) lost meerdere bugs in één keer
-// op:
-// - `immediate: true` zorgt dat de eerste mount (parent gebruikt v-if =
-// 'likesPostId !== null', dus het component bestaat nog niet vóór de
-// eerste tap) direct een fetch start.
-// - Als de gebruiker daarna een andere post opent verandert postId en/of
-// open opnieuw — deze watcher vuurt dan opnieuw zonder dat een tweede
-// losse postId-watcher dezelfde fetch dubbel triggert.
-// - Sluiten (open: true → false) gaat netjes door de early-return.
+// One combined watcher on (open, postId) fixes several bugs at once:
+// - `immediate: true` ensures the first mount (the parent uses v-if =
+// 'likesPostId !== null', so the component doesn't exist before the
+// first tap) kicks off a fetch right away.
+// - When the user then opens another post, postId and/or open changes
+// again — this watcher re-fires without a second separate postId
+// watcher double-triggering the same fetch.
+// - Closing (open: true → false) cleanly goes through the early return.
 watch(
     [() => props.open, () => props.postId],
     ([isOpen]) => {

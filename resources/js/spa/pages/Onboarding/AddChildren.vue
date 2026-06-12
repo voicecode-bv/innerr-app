@@ -259,8 +259,9 @@ async function addChild(): Promise<void> {
                     { photo_path: pendingPhotoPath.value },
                 );
             } catch {
-                // Foto-upload mag de onboarding niet blokkeren; het kind is al
-                // aangemaakt en de foto kan later in instellingen toegevoegd.
+                // The photo upload must not block onboarding; the child has
+                // already been created and the photo can be added later in
+                // settings.
                 preview = null;
                 photoWarning.value = t(
                     'The photo could not be uploaded. You can add it later.',

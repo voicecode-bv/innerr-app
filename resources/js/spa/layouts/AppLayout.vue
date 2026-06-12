@@ -20,10 +20,10 @@ const props = withDefaults(
     defineProps<{
         showHeader?: boolean;
         title?: string;
-        // Wanneer gezet onthoudt de layout de scroll-positie onder deze sleutel
-        // en herstelt 'm bij terugkeer (i.p.v. naar boven te resetten). Zo kom
-        // je na het openen van een detailpagina weer terug waar je was. Zonder
-        // sleutel blijft het oude gedrag: elke mount scrollt naar boven.
+        // When set, the layout remembers the scroll position under this key
+        // and restores it on return (instead of resetting to the top). That
+        // way you come back to where you were after opening a detail page.
+        // Without a key the old behavior remains: every mount scrolls to top.
         scrollKey?: string;
     }>(),
     {
@@ -43,11 +43,11 @@ const mainRef = ref<HTMLElement | null>(null);
 // (FeedHeader) follow along.
 const { elevated: headerElevated } = useScrollHeader(mainRef);
 
-// Bij elke nieuwe mount: zet de scroll-positie (hersteld of 0) én forceer een
-// paint-pass. vue-router's `scrollBehavior` werkt niet voor onze custom
-// scroll-container, en WKWebView toont na route-transities soms een lege pagina
-// tot er gescrollt wordt — beide opgelost door deze reset. Met een `scrollKey`
-// herstellen we de onthouden positie zodat je terugkomt waar je was.
+// On every fresh mount: set the scroll position (restored or 0) and force a
+// paint pass. vue-router's `scrollBehavior` doesn't work for our custom
+// scroll container, and WKWebView sometimes shows a blank page after route
+// transitions until the user scrolls; this reset fixes both. With a
+// `scrollKey` we restore the remembered position so you return where you were.
 function resetScroll(): void {
     const restored =
         props.scrollKey !== undefined
@@ -71,8 +71,8 @@ function resetScroll(): void {
     }
 }
 
-// Tik op de bottom-nav-tab waar je al bent (zie de visit-shim in main.ts):
-// scroll de huidige pagina vloeiend naar boven.
+// Tapping the bottom-nav tab you are already on (see the visit shim in
+// main.ts): smoothly scroll the current page to the top.
 function scrollToTop(): void {
     mainRef.value?.scrollTo({
         top: 0,
@@ -81,9 +81,9 @@ function scrollToTop(): void {
 }
 
 onMounted(async () => {
-    // Drie ronden: direct, na nextTick, na rAF — dekt zowel "DOM staat al klaar"
-    // als "transition rondt nog af". WKWebView reageert pas met een paint
-    // op één van deze.
+    // Three rounds: immediately, after nextTick, after rAF — covers both "DOM
+    // is already ready" and "transition is still finishing". WKWebView only
+    // responds with a paint on one of these.
     resetScroll();
     await nextTick();
     resetScroll();
@@ -104,8 +104,8 @@ onUnmounted(() => {
     window.removeEventListener('spa:tab-reselect', scrollToTop);
 });
 
-// Onthoud de huidige scroll-positie voordat de pagina verdwijnt (bv. bij het
-// openen van een postdetail), zodat we 'm bij terugkeer kunnen herstellen.
+// Remember the current scroll position before the page disappears (e.g. when
+// opening a post detail), so we can restore it on return.
 onBeforeUnmount(() => {
     if (props.scrollKey !== undefined && mainRef.value) {
         rememberScroll(props.scrollKey, mainRef.value.scrollTop);

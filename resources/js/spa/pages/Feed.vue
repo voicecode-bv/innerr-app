@@ -41,7 +41,7 @@ async function loadUnreadCount(): Promise<void> {
     try {
         await notificationsStore.refresh();
     } catch {
-        // negeren — badge blijft op laatst bekende waarde
+        // ignore — badge stays at the last known value
     }
 }
 
@@ -61,13 +61,14 @@ async function fetchFeed(page: number): Promise<PaginatedResponse<PostData>> {
     return response;
 }
 
-// Behoud client-side gegenereerde thumbnails (van NativeMedia.thumbnail, zit
-// op de optimistic post als `data:image/jpeg;base64,…`) zodra een verse
-// API-respons de optimistic vervangt door de echte post — of de bestaande
-// echte post nog op `processing` staat zonder CDN-poster. Zonder dit zou de
-// thumbnail wegvallen tijdens de eerste poll na een upload, want de PostCard
-// remount op de nieuwe id en de CDN-poster is op dat moment ofwel nog niet
-// klaar (`thumbnail_url === null`), ofwel haalbaar maar met netwerk-latentie.
+// Preserve client-side generated thumbnails (from NativeMedia.thumbnail,
+// stored on the optimistic post as `data:image/jpeg;base64,…`) when a fresh
+// API response replaces the optimistic post with the real one — or when the
+// existing real post is still `processing` without a CDN poster. Without
+// this the thumbnail would drop out during the first poll after an upload,
+// because the PostCard remounts on the new id and at that moment the CDN
+// poster is either not ready yet (`thumbnail_url === null`) or fetchable but
+// subject to network latency.
 function preserveLocalThumbnails(
     fresh: PostData[],
     existing: readonly PostData[],
@@ -86,9 +87,9 @@ function preserveLocalThumbnails(
             continue;
         }
 
-        // Optimistic→real swap: de verse post heeft een id die we nog niet
-        // kennen, en er staat nog een optimistic in de cache met dezelfde
-        // strekking. Verplaats z'n data-URL thumbnail naar de nieuwe post.
+        // Optimistic→real swap: the fresh post has an id we don't know yet,
+        // and the cache still holds an optimistic post for the same content.
+        // Move its data-URL thumbnail onto the new post.
         if (!known && !post.thumbnail_url && optimisticPool.length > 0) {
             const donor = optimisticPool.shift();
 
@@ -111,10 +112,11 @@ const feed = useInfiniteScroll<PostData>(fetchFeed, sentinelRef, {
 const { dateBarRef, currentDateLabel, headerBottom, recompute } =
     useFeedDateBar(containerRef, () => feed.items.length);
 
-// Zolang er posts in de feed staan met media_status='processing' (typisch een
-// vers ge-uploade video die nog getranscodeerd wordt), refreshen we de feed
-// elke 5s. Zodra de server status 'ready' meldt is de poll uitgeschakeld en
-// switcht de PostCard van spinner+poster naar de echte VideoPlayer.
+// As long as the feed contains posts with media_status='processing'
+// (typically a freshly uploaded video that is still being transcoded), we
+// refresh the feed every 5s. Once the server reports status 'ready' the poll
+// is disabled and the PostCard switches from spinner+poster to the real
+// VideoPlayer.
 useProcessingPoll(feed.items, () => feed.softRefresh());
 
 // Re-fetch when the child filter changes (shared with the grid view), then
@@ -129,7 +131,7 @@ watch(
 );
 
 onMounted(() => {
-    // Cache toonbaar maar verlopen → fetch op de achtergrond zonder lege flits.
+    // Cache showable but stale → fetch in the background without an empty flash.
     if (cached && !feedCache.isFresh(FEED_KEY)) {
         void feed.softRefresh();
     }
@@ -171,8 +173,8 @@ async function onPostUpdated(): Promise<void> {
 }
 
 async function onPushPermissionChanged(): Promise<void> {
-    // Nadat de gebruiker de native prompt heeft beantwoord — granted óf denied
-    // — willen we een verse feed tonen zonder visuele schok.
+    // After the user has answered the native prompt — granted or denied — we
+    // want to show a fresh feed without a visual jolt.
     feedCache.invalidate(FEED_KEY);
     await feed.softRefresh();
 }

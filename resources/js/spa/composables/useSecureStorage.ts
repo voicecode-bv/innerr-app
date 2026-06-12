@@ -1,23 +1,35 @@
+import { withTimeout } from '@/lib/withTimeout';
 import { isNativeRuntime } from '@/spa/composables/usePlatform';
 import { SecureStorage } from '@nativephp/mobile';
 
-// Keychain-entry waar de SPA het externe-API Bearer token opslaat. Moet
-// overeenkomen met `config/api-client.php#token_key` zodat de PHP-zijde
-// SecureStorageTokenStore dezelfde entry leest tijdens de migratie-fase.
+// Keychain entry where the SPA stores the external-API Bearer token. Must
+// match `config/api-client.php#token_key` so the PHP-side
+// SecureStorageTokenStore reads the same entry during the migration phase.
 export const TOKEN_KEY = 'api_token';
 
 const FALLBACK_PREFIX = 'spa.secure.';
 
-// Tijdens een cold-start kan de Keychain-bridge nog niet klaar zijn (bridge
-// nog niet opgezet, of Keychain-items met WhenUnlocked-accessibility zijn na
-// een reboot pas leesbaar ná de eerste unlock). We retryen daarom met
-// oplopende backoff voordat we opgeven, in plaats van een geldig token als
-// "afwezig" te behandelen en de gebruiker uit te loggen. Het totale budget
-// (~5,5s) valt volledig binnen de opstart-splash, dus de gebruiker merkt het
-// wachten niet.
+// During a cold start the Keychain bridge may not be ready yet (bridge not
+// set up, or Keychain items with WhenUnlocked accessibility are only
+// readable after the first unlock following a reboot). We therefore retry
+// with increasing backoff before giving up, instead of treating a valid
+// token as "absent" and logging the user out. The total budget (~5.5s)
+// falls entirely within the startup splash, so the user never notices the
+// wait.
 const NATIVE_RETRIES = 10;
 const NATIVE_RETRY_BASE_MS = 120;
 const NATIVE_RETRY_MAX_MS = 800;
+
+// A hung bridge call never settles on its own (BridgeCall has no client-side
+// timeout), so each attempt races a deadline; a hang then counts as a failed
+// attempt and feeds the same backoff machinery as an outright error.
+const NATIVE_ATTEMPT_TIMEOUT_MS = 1500;
+
+// Hard ceiling per call: instant rejections keep the original ~5.5s backoff
+// budget, but hanging attempts (1.5s each) would otherwise stretch the loop
+// far past the startup splash. Past the deadline we stop and report
+// unavailable; the reconnect overlay owns any further retries.
+const NATIVE_TOTAL_BUDGET_MS = 8000;
 
 function backoffDelayMs(attempt: number): number {
     return Math.min(NATIVE_RETRY_BASE_MS * 2 ** attempt, NATIVE_RETRY_MAX_MS);
@@ -35,6 +47,14 @@ export class SecureStorageUnavailableError extends Error {
         super('Secure storage bridge unavailable');
         this.name = 'SecureStorageUnavailableError';
     }
+}
+
+function attemptWithTimeout<T>(promise: Promise<T>): Promise<T> {
+    return withTimeout(
+        promise,
+        NATIVE_ATTEMPT_TIMEOUT_MS,
+        () => new SecureStorageUnavailableError(),
+    );
 }
 
 function fallbackKey(key: string): string {
@@ -93,28 +113,32 @@ async function migrateLegacyToken(key: string): Promise<string | null> {
         await SecureStorage.set(key, legacy);
         localDelete(key);
     } catch {
-        // Migratie mislukt, laat de localStorage-kopie staan voor de volgende
-        // poging.
+        // Migration failed, leave the localStorage copy in place for the
+        // next attempt.
     }
 
     return legacy;
 }
 
-// We detecteren de native context synchroon via `isNativeRuntime()` (php:// of
-// 127.0.0.1), niet via een window-vlag. Op het toestel is de Keychain de enige
-// duurzame store: een bridge-fout is een timing-probleem dat we retryen, we
-// vallen daar bewust NIET terug op het niet-duurzame WKWebView-localStorage,
-// want dat zou een geldig token als afwezig zien. Op web/desktop is
-// localStorage de enige store.
+// We detect the native context synchronously via `isNativeRuntime()`
+// (php:// or 127.0.0.1), not via a window flag. On device the Keychain is
+// the only durable store: a bridge error is a timing problem that we retry,
+// and we deliberately do NOT fall back to the non-durable WKWebView
+// localStorage there, because that would see a valid token as absent. On
+// web/desktop, localStorage is the only store.
 export const secureStorage = {
     async get(key: string): Promise<string | null> {
         if (!isNativeRuntime()) {
             return localGet(key);
         }
 
+        const startedAt = Date.now();
+
         for (let attempt = 0; attempt < NATIVE_RETRIES; attempt += 1) {
             try {
-                const result = (await SecureStorage.get(key)) as {
+                const result = (await attemptWithTimeout(
+                    SecureStorage.get(key),
+                )) as {
                     value?: string | null;
                 } | null;
                 const stored = result?.value;
@@ -123,21 +147,30 @@ export const secureStorage = {
                     return stored;
                 }
 
-                // Bridge antwoordde succesvol met een lege waarde: er staat echt
-                // niets in de Keychain. Migreer een eventueel legacy-token.
+                // Bridge responded successfully with an empty value: there
+                // really is nothing in the Keychain. Migrate any legacy token.
                 return await migrateLegacyToken(key);
             } catch {
-                // Bridge nog niet klaar: oplopend wachten en opnieuw proberen.
-                if (attempt < NATIVE_RETRIES - 1) {
-                    await delay(backoffDelayMs(attempt));
+                // Bridge not ready yet: wait with increasing backoff and
+                // retry, as long as the per-call budget allows another
+                // attempt.
+                const elapsed = Date.now() - startedAt;
+
+                if (
+                    attempt >= NATIVE_RETRIES - 1 ||
+                    elapsed + backoffDelayMs(attempt) >= NATIVE_TOTAL_BUDGET_MS
+                ) {
+                    break;
                 }
+
+                await delay(backoffDelayMs(attempt));
             }
         }
 
-        // Bridge bleef onbereikbaar; we hebben nooit een definitief antwoord
-        // gekregen. Gooi expliciet i.p.v. null terug te geven, zodat de
-        // aanroeper dit kan onderscheiden van een bevestigd-lege Keychain en de
-        // gebruiker niet uitlogt op een geldig-maar-onleesbaar token. Wis niets.
+        // Bridge stayed unreachable; we never got a definitive answer. Throw
+        // explicitly instead of returning null, so the caller can tell this
+        // apart from a confirmed-empty Keychain and doesn't log the user out
+        // on a valid-but-unreadable token. Erase nothing.
         throw new SecureStorageUnavailableError();
     },
 
@@ -148,15 +181,27 @@ export const secureStorage = {
             return;
         }
 
+        const startedAt = Date.now();
+
         for (let attempt = 0; attempt < NATIVE_RETRIES; attempt += 1) {
             try {
-                await SecureStorage.set(key, value);
+                await attemptWithTimeout(SecureStorage.set(key, value));
 
                 return;
             } catch {
-                if (attempt < NATIVE_RETRIES - 1) {
-                    await delay(backoffDelayMs(attempt));
+                const elapsed = Date.now() - startedAt;
+
+                if (
+                    attempt >= NATIVE_RETRIES - 1 ||
+                    elapsed + backoffDelayMs(attempt) >= NATIVE_TOTAL_BUDGET_MS
+                ) {
+                    // Existing semantics: give up silently. The token then
+                    // lives only in memory; the reconnect flow re-fetches it
+                    // via the BFF session on the next launch.
+                    return;
                 }
+
+                await delay(backoffDelayMs(attempt));
             }
         }
     },
@@ -169,12 +214,13 @@ export const secureStorage = {
         }
 
         try {
-            await SecureStorage.delete(key);
+            // Bounded so a hung bridge call can never stall the logout flow.
+            await attemptWithTimeout(SecureStorage.delete(key));
         } catch {
             // Best-effort delete.
         }
 
-        // Ruim ook een eventuele legacy localStorage-kopie op.
+        // Also clean up any legacy localStorage copy.
         localDelete(key);
     },
 };

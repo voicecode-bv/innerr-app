@@ -40,8 +40,8 @@ export const useI18nStore = defineStore('spa-i18n', {
             }
         },
         set(locale: string): void {
-            // Synchroon-pad voor bekende-cached locales (bv. na initial load).
-            // Voor nieuwe locales valt-back op async laden via load().
+            // Synchronous path for known-cached locales (e.g. after initial
+            // load). For new locales, falls back to async loading via load().
             const key = loaders[locale] ? locale : 'en';
 
             if (cache[key]) {

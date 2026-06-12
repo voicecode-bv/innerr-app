@@ -11,6 +11,7 @@ import { useInviteRedeem } from '@/spa/composables/useInviteRedeem';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { ApiError } from '@/spa/http/apiClient';
 import { useAuthStore } from '@/spa/stores/auth';
+import arrowLeftIcon from '../../../../svg/doodle-icons/arrow-left.svg';
 import handIcon from '../../../../svg/doodle-icons/hand.svg';
 import keyIcon from '../../../../svg/doodle-icons/key.svg';
 import mailIcon from '../../../../svg/doodle-icons/mail.svg';
@@ -62,10 +63,10 @@ const form = useApiForm({
 
 const showEmailForm = ref(false);
 
-// Verborgen gebaar: tik 10× op het innerr-logo om de (publieke) debugpagina te
-// openen. Bedoeld om token/secure-storage problemen te kunnen onderzoeken,
-// óók wanneer de gebruiker ogenschijnlijk uitgelogd is. De teller reset zodra
-// er even niet getikt wordt, zodat losse tikken niets doen.
+// Hidden gesture: tap the innerr logo 10 times to open the (public) debug
+// page. Meant for investigating token/secure-storage issues, even when the
+// user appears to be logged out. The counter resets after a short pause
+// without taps, so stray taps do nothing.
 const LOGO_TAPS_REQUIRED = 10;
 const LOGO_TAP_RESET_MS = 1500;
 
@@ -284,9 +285,10 @@ async function submit(): Promise<void> {
                         @click="showEmailForm = false"
                     >
                         <span
-                            class="transition-transform group-hover:-translate-x-0.5"
-                            >←</span
-                        >
+                            aria-hidden="true"
+                            class="inline-block size-4 bg-current transition-transform group-hover:-translate-x-0.5"
+                            :style="iconMaskStyle(arrowLeftIcon)"
+                        ></span>
                         <span>{{ t('Back') }}</span>
                     </button>
 

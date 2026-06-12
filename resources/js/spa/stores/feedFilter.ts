@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia';
 
 /**
- * Houdt de selectie van de begeleide feed-filter-flow vast over de losse
- * wizard-stappen (personen, circles, datum) heen. Wordt aan het begin van de
- * flow gereset en uitgelezen door de resultaten-pagina om de query op
- * `GET /feed` op te bouwen.
+ * Holds the selection of the guided feed-filter flow across the individual
+ * wizard steps (persons, circles, date). Reset at the start of the flow and
+ * read by the results page to build the query for `GET /feed`.
  */
 export const useFeedFilterStore = defineStore('spa-feed-filter', {
     state: () => ({
@@ -31,9 +30,9 @@ export const useFeedFilterStore = defineStore('spa-feed-filter', {
             this.dateTo = null;
         },
         /**
-         * Bouwt de query-string voor `GET /feed` op uit de actieve filters.
-         * Lege categorieën worden weggelaten, zodat een ongekozen filter de
-         * resultaten niet onnodig beperkt.
+         * Builds the query string for `GET /feed` from the active filters.
+         * Empty categories are omitted, so an unselected filter does not
+         * needlessly restrict the results.
          */
         buildQuery(page: number): string {
             const params = new URLSearchParams();

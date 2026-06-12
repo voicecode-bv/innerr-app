@@ -59,9 +59,9 @@ function iconMaskStyle(url: string) {
     };
 }
 
-// Circles met afgeschermde leden-lijst zijn alleen zichtbaar voor de owner —
-// een niet-eigenaar mag er niet naartoe posten omdat ze niet kunnen zien wie
-// er mee leest.
+// Circles with a hidden member list are only visible to the owner — a
+// non-owner may not post to them because they cannot see who is reading
+// along.
 const visibleCircles = computed(() =>
     props.circles.filter(
         (circle) =>

@@ -24,6 +24,7 @@ import VideoPlayer from '@/spa/components/VideoPlayer.vue';
 import { stackedOverlayScaled } from '@/spa/composables/useBackgroundScale';
 import { useProcessingPoll } from '@/spa/composables/useProcessingPoll';
 import { usePullToRefresh } from '@/spa/composables/usePullToRefresh';
+import { useRelativeTime } from '@/spa/composables/useRelativeTime';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
 import { vPinchZoom } from '@/spa/directives/pinchZoom';
@@ -120,6 +121,7 @@ interface Post {
 }
 
 const { t, locale } = useTranslations();
+const { timeAgo } = useRelativeTime();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -129,10 +131,10 @@ const post = ref<Post | null>(null);
 const isLoading = ref(true);
 const isDeleting = ref(false);
 
-// De detailpagina is een eigen full-screen overlay (fixed inset-0) met een
-// eigen scroll-container, los van AppLayout's gedeelde <main>. Dat haalt de
-// geneste scroll-context (en de WKWebView-quirks daarvan) weg en lost het
-// scroll-probleem op.
+// The detail page is its own full-screen overlay (fixed inset-0) with its
+// own scroll container, separate from AppLayout's shared <main>. That removes
+// the nested scroll context (and its WKWebView quirks) and fixes the
+// scrolling issue.
 const scrollRef = ref<HTMLElement | null>(null);
 
 const commentsSheetRef = useTemplateRef<{ reload: () => Promise<void> }>(
@@ -172,9 +174,10 @@ async function refresh(): Promise<void> {
     ]);
 }
 
-// Auto-refresh terwijl de post nog in `media_status='processing'` staat (bv.
-// vers ge-uploade video die nog getranscodeerd wordt). Zodra de server status
-// 'ready' meldt, switcht de UI van spinner+poster naar de echte VideoPlayer.
+// Auto-refresh while the post is still in `media_status='processing'` (e.g.
+// a freshly uploaded video that is still being transcoded). As soon as the
+// server reports 'ready', the UI switches from spinner+poster to the real
+// VideoPlayer.
 const postItems = computed(() => (post.value ? [post.value] : []));
 useProcessingPoll(postItems, loadPost);
 
@@ -183,10 +186,10 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
     containerRef: scrollRef,
 });
 
-// Scroll-reset bij mount. Vue-router's `scrollBehavior` raakt onze eigen
-// scroll-container niet, en WKWebView toont na een route-transitie soms een
-// lege pagina tot er gescrold wordt — beide opgelost door direct, na nextTick
-// en na een rAF-pass naar boven te resetten.
+// Scroll reset on mount. Vue-router's `scrollBehavior` doesn't touch our own
+// scroll container, and after a route transition WKWebView sometimes shows a
+// blank page until the user scrolls — both fixed by resetting to the top
+// immediately, after nextTick, and after a rAF pass.
 onMounted(() => {
     function resetScroll(): void {
         if (scrollRef.value) {
@@ -206,7 +209,7 @@ onMounted(() => {
 });
 
 onMounted(async () => {
-    // Stale-while-revalidate: render direct vanuit cache, fetch op de achtergrond.
+    // Stale-while-revalidate: render straight from cache, fetch in the background.
     const seeded = seedPostFromCache();
     isLoading.value = !seeded;
     await refresh();
@@ -241,11 +244,11 @@ async function performUntagSelf(): Promise<void> {
         );
         post.value = response.data;
         postCache.set(postId, response.data);
-        // Feed-caches kunnen nog de oude tag-lijst tonen — invalideren zodat
-        // ze bij volgende bezoek opnieuw fetchen.
+        // Feed caches may still show the old tag list — invalidate so they
+        // refetch on the next visit.
         useFeedCacheStore().clear();
     } catch {
-        // ignore — gebruiker blijft op de post staan
+        // ignore — the user stays on the post
     } finally {
         isUntaggingSelf.value = false;
     }
@@ -328,9 +331,9 @@ const carouselItems = computed(() =>
 const hasMultipleMedia = computed(() => carouselItems.value.length > 1);
 const activeMediaIndex = ref(0);
 
-// Diepe link vanuit de profiel-grid: `?media=<index>` opent de post op de
-// betreffende carousel-slide. Geclampt op het aantal geladen media-items;
-// valt terug op 0 (cover) bij ontbrekende, ongeldige of out-of-range waarde.
+// Deep link from the profile grid: `?media=<index>` opens the post on the
+// corresponding carousel slide. Clamped to the number of loaded media items;
+// falls back to 0 (cover) for a missing, invalid, or out-of-range value.
 function deepLinkedMediaIndex(): number {
     const raw = route.query.media;
     const value = Array.isArray(raw) ? raw[0] : raw;
@@ -375,8 +378,8 @@ async function downloadMedia(): Promise<void> {
         return;
     }
 
-    // Bij multi-photo posts downloaden we de slide die nu zichtbaar is — anders
-    // kan de gebruiker de andere foto's nooit opslaan.
+    // For multi-photo posts we download the slide that is currently visible —
+    // otherwise the user could never save the other photos.
     const activeItem = post.value.media?.[activeMediaIndex.value];
     const url = activeItem
         ? (activeItem.original_url ?? activeItem.url)
@@ -422,9 +425,9 @@ async function downloadMedia(): Promise<void> {
     }
 }
 
-// "X en N anderen vinden dit leuk" — first_visible_liker is de meest recente
-// liker uit een gedeelde circle. Bij geen visible liker maar wel likes
-// (alleen hidden) tonen we de placeholder-variant zonder naam.
+// "X and N others like this" — first_visible_liker is the most recent liker
+// from a shared circle. With no visible liker but existing likes (hidden
+// only) we show the placeholder variant without a name.
 const likesSummary = computed<{
     text: string;
     avatar: string | null;
@@ -476,9 +479,10 @@ const likesSummary = computed<{
 });
 
 const isLikesSheetOpen = ref(false);
-// Binnenkomst via een comment-push: de deep link draagt `?comment=<id>` mee
-// (zie API PostCommented/CommentLiked). Open dan meteen het comments-sheet zodat
-// de gebruiker direct bij de reacties uitkomt; de sheet laadt zelf de comments.
+// Arrival via a comment push: the deep link carries `?comment=<id>` (see API
+// PostCommented/CommentLiked). In that case open the comments sheet right
+// away so the user lands directly on the comments; the sheet loads them
+// itself.
 const isCommentsSheetOpen = ref(Boolean(route.query.comment));
 const isEditModalOpen = ref(false);
 const editAvailableCircles = ref<AvailableCircle[]>([]);
@@ -511,8 +515,8 @@ async function toggleLike(): Promise<void> {
             await externalApi.post(`/posts/${post.value.id}/like`);
         }
 
-        // Refresh shadow info zoals first_visible_liker — anders blijft de
-        // "X en N anderen" regel hangen op de oude liker.
+        // Refresh shadow info such as first_visible_liker — otherwise the
+        // "X and N others" line keeps showing the old liker.
         postCache.invalidate(post.value.id);
     } catch {
         if (post.value) {
@@ -631,12 +635,12 @@ async function handleButtonPressed(payload: {
         try {
             await externalApi.delete(`/posts/${postId.value}`);
             postCache.invalidate(postId.value);
-            // Feed-caches zijn nu stale (post is weg) — wis 'm zodat de
-            // volgende feed-bezoek opnieuw fetcht.
+            // Feed caches are now stale (the post is gone) — clear them so
+            // the next feed visit refetches.
             useFeedCacheStore().clear();
             router.push({ name: 'spa.home' });
         } catch {
-            // ignore — gebruiker blijft op de post staan
+            // ignore — the user stays on the post
         } finally {
             isDeleting.value = false;
         }
@@ -749,54 +753,6 @@ function ageAt(
     return t(years === 1 ? ':count year' : ':count years', { count: years });
 }
 
-function timeAgo(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) {
-        return t('just now');
-    }
-
-    if (seconds < 3600) {
-        return t(':count min ago', { count: Math.floor(seconds / 60) });
-    }
-
-    if (seconds < 86400) {
-        return t(':count hours ago', { count: Math.floor(seconds / 3600) });
-    }
-
-    if (seconds < 604800) {
-        const days = Math.floor(seconds / 86400);
-
-        return t(days === 1 ? ':count day ago' : ':count days ago', {
-            count: days,
-        });
-    }
-
-    if (seconds < 2592000) {
-        const weeks = Math.floor(seconds / 604800);
-
-        return t(weeks === 1 ? ':count week ago' : ':count weeks ago', {
-            count: weeks,
-        });
-    }
-
-    if (seconds < 31536000) {
-        const months = Math.floor(seconds / 2592000);
-
-        return t(months === 1 ? ':count month ago' : ':count months ago', {
-            count: months,
-        });
-    }
-
-    const years = Math.floor(seconds / 31536000);
-
-    return t(years === 1 ? ':count year ago' : ':count years ago', {
-        count: years,
-    });
-}
-
 watch(
     () => route.params.post,
     () => {
@@ -804,7 +760,7 @@ watch(
             return;
         }
 
-        // De overlay blijft bij post→post gemount, dus reset de scroll zelf.
+        // The overlay stays mounted on post→post navigation, so reset the scroll ourselves.
         if (scrollRef.value) {
             scrollRef.value.scrollTop = 0;
         }

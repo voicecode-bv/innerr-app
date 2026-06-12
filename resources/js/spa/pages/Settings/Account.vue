@@ -36,8 +36,8 @@ async function requestExport(): Promise<void> {
             },
         });
 
-        // 422-validatie wordt door useApiForm in `errors` gezet zonder te
-        // throwen — in dat geval is `onSuccess` niet gevuurd.
+        // 422 validation is put into `errors` by useApiForm without
+        // throwing — in that case `onSuccess` has not fired.
         if (!exportSuccess.value) {
             const fallback = t(
                 'We could not request your data export. Please try again later.',
@@ -79,7 +79,7 @@ async function handleButtonPressed(payload: {
         try {
             await auth.logout();
         } catch {
-            // BFF logout fails are non-fatal — externe API account is al weg.
+            // BFF logout failures are non-fatal — the external API account is already gone.
         }
     } catch (error) {
         accountError.value =

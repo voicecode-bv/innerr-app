@@ -161,18 +161,18 @@ class AuthController extends Controller
 
     protected function resolveRedirect(): string
     {
-        // Verse accounts verifiëren eerst hun e-mail; daarna stuurt de SPA-router
-        // zelf door (inclusief het hervatten van een halve onboarding), dus alle
-        // overige gevallen landen gewoon op '/'.
+        // Fresh accounts verify their email first; after that the SPA router
+        // handles redirects itself (including resuming a half-finished onboarding),
+        // so all other cases simply land on '/'.
         return Auth::user()?->email_verified_at === null ? '/verify-email' : '/';
     }
 
     /**
-     * Richt een verse account in via de API: maak de standaard "Familie"-kring
-     * aan en markeer die meteen als standaardkring voor nieuwe posts, zodat
-     * delen direct werkt zonder eerst langs de instellingen te moeten.
-     * Best-effort: faalt een call, dan blijft registratie geslaagd en vangt
-     * de onboarding-flow de rest op.
+     * Set up a fresh account via the API: create the default "Family" circle
+     * and immediately mark it as the default circle for new posts, so sharing
+     * works right away without having to visit the settings first.
+     * Best-effort: if a call fails, registration still succeeds and the
+     * onboarding flow picks up the rest.
      */
     protected function bootstrapNewAccount(): void
     {

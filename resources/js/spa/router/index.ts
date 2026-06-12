@@ -83,7 +83,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/spa/pages/Auth/OAuthCallback.vue'),
     },
 
-    // Invite landing (public — guest en ingelogd mogen erbij)
+    // Invite landing (public — both guests and logged-in users may access)
     {
         path: '/invite/:token',
         alias: '/join/:token',
@@ -168,12 +168,12 @@ const routes: RouteRecordRaw[] = [
         path: '/posts/:post',
         name: 'spa.posts.show',
         component: () => import('@/spa/pages/PostDetail.vue'),
-        // De detailpagina is een full-screen overlay; de bottom-nav hoort er
-        // niet onder door te schijnen.
+        // The detail page is a full-screen overlay; the bottom nav should not
+        // shine through underneath it.
         meta: { auth: true, onboarded: true, hideEdgeBar: true },
     },
 
-    // Feed filter (guided flow) — verbergt de native bottom-nav.
+    // Feed filter (guided flow) — hides the native bottom nav.
     {
         path: '/feed/filter',
         name: 'spa.feed-filter',
@@ -349,16 +349,17 @@ router.beforeEach(async (to) => {
     const auth = useAuthStore();
 
     if (to.meta.public) {
-        // Public routes (zoals invite landing) zijn voor zowel guests als ingelogde users.
+        // Public routes (such as the invite landing) serve both guests and logged-in users.
         return;
     }
 
     if (to.meta.auth && !auth.user) {
-        // Bij `awaitingConnection` (token aanwezig maar API onbereikbaar) landen
-        // we ook hier: we navigeren gewoon naar login/welkom, maar de
-        // ReconnectOverlay in App.vue dekt dat scherm volledig af en probeert het
-        // opnieuw. We aborten de navigatie bewust NIET — dat zou de initiële
-        // router-navigatie laten hangen en de splash nooit laten verdwijnen.
+        // With `awaitingConnection` (token present but API unreachable) we also
+        // land here: we simply navigate to login/welcome, but the
+        // ReconnectOverlay in App.vue fully covers that screen and retries.
+        // We deliberately do NOT abort the navigation — that would leave the
+        // initial router navigation hanging and the splash would never
+        // disappear.
         return guestLanding();
     }
 

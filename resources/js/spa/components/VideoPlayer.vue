@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue';
 
-// HLS-aware video element. iOS Safari/WKWebView speelt `.m3u8` native af, dus
-// daar zetten we gewoon `<video src>`. Andere browsers (Chrome/Firefox/Edge)
-// hebben hls.js nodig — die wordt lazy geïmporteerd zodat de iOS-bundle slank
-// blijft.
+// HLS-aware video element. iOS Safari/WKWebView plays `.m3u8` natively, so
+// there we simply set `<video src>`. Other browsers (Chrome/Firefox/Edge)
+// need hls.js, which is lazy-imported so the iOS bundle stays slim.
 //
-// Voor niet-HLS URLs (legacy `.mp4` posts of CDN poster paden) is dit een
-// dunne wrapper rondom een `<video>` element; alle event-handling delegeren
-// we via `<slot>` en attribute-binding zodat de wrapper drop-in vervangbaar is.
+// For non-HLS URLs (legacy `.mp4` posts or CDN poster paths) this is a thin
+// wrapper around a `<video>` element; all event handling is delegated via
+// `<slot>` and attribute binding so the wrapper is a drop-in replacement.
 
 const props = withDefaults(
     defineProps<{
@@ -43,7 +42,7 @@ defineExpose({ videoRef });
 let hlsInstance: { destroy: () => void } | null = null;
 
 function isHlsUrl(url: string): boolean {
-    // Match `.m3u8` met optionele query string (signed URLs voegen `?token=...` toe).
+    // Match `.m3u8` with an optional query string (signed URLs append `?token=...`).
     return /\.m3u8(\?|$)/i.test(url);
 }
 
@@ -51,9 +50,9 @@ async function attachSource(
     video: HTMLVideoElement,
     src: string,
 ): Promise<void> {
-    // Eerdere hls.js instance opruimen voordat we een nieuwe bron koppelen,
-    // anders blijven worker-threads draaien en groeit het geheugen elke
-    // route-wissel.
+    // Clean up the previous hls.js instance before attaching a new source,
+    // otherwise worker threads keep running and memory grows on every route
+    // change.
     if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
@@ -65,9 +64,9 @@ async function attachSource(
         return;
     }
 
-    // Safari en iOS WKWebView decoden HLS native via AVFoundation. We
-    // forceren `crossorigin="anonymous"` zodat seekable tracks ook werken
-    // bij signed Bunny URLs (zonder cookies); de signed token zit in de URL.
+    // Safari and iOS WKWebView decode HLS natively via AVFoundation. We
+    // force `crossorigin="anonymous"` so seekable tracks also work with
+    // signed Bunny URLs (without cookies); the signed token is in the URL.
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = src;
 
@@ -78,9 +77,9 @@ async function attachSource(
         const { default: Hls } = await import('hls.js');
 
         if (!Hls.isSupported()) {
-            // Geen native HLS en geen MSE — fallback naar directe src en hopen
-            // dat de browser er iets mee kan (zal meestal falen, maar dan vuurt
-            // tenminste het error-event ipv stille hang).
+            // No native HLS and no MSE: fall back to a direct src and hope
+            // the browser can do something with it (will usually fail, but
+            // at least the error event fires instead of a silent hang).
             video.src = src;
 
             return;

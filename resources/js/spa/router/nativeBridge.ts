@@ -1,17 +1,17 @@
 import type { Router } from 'vue-router';
 
 /**
- * Stelt `window.router.visit(path)` beschikbaar zodat de native shell
- * (DeepLinkRouter → ContentView.navigateWithInertia) een binnenkomende deeplink
- * SPA-side kan afhandelen terwijl de app al draait.
+ * Exposes `window.router.visit(path)` so the native shell
+ * (DeepLinkRouter → ContentView.navigateWithInertia) can handle an incoming
+ * deeplink SPA-side while the app is already running.
  *
- * Belangrijk voor o.a. de OAuth-callback: `Browser.auth`
- * (ASWebAuthenticationSession) houdt de app warm, dus de callback
- * `innerrapp://oauth-callback?token=…` komt binnen via deze visit-aanroep i.p.v.
- * een volledige reload. Ontbreekt deze shim, dan valt de native code terug op
- * `window.location.href`, wat onder het iOS `php://`-scheme met memory-history de
- * SPA niet op de juiste route landt en de gebruiker terug op het inlogscherm
- * achterlaat.
+ * Important for, among others, the OAuth callback: `Browser.auth`
+ * (ASWebAuthenticationSession) keeps the app warm, so the callback
+ * `innerrapp://oauth-callback?token=…` arrives via this visit call instead of
+ * a full reload. Without this shim, the native code falls back to
+ * `window.location.href`, which under the iOS `php://` scheme with memory
+ * history does not land the SPA on the right route and leaves the user back
+ * on the login screen.
  */
 export function installNativeRouterBridge(router: Router): void {
     if (typeof window === 'undefined') {
@@ -22,8 +22,8 @@ export function installNativeRouterBridge(router: Router): void {
         window as unknown as { router: { visit: (path: string) => void } }
     ).router = {
         visit(path: string) {
-            // Tik op de route waar je al bent: geen (afgewezen) push, maar de
-            // huidige pagina naar boven scrollen — standaard mobiel gedrag.
+            // Tapping the route you are already on: no (rejected) push, but
+            // scroll the current page to the top — standard mobile behavior.
             if (router.resolve(path).path === router.currentRoute.value.path) {
                 window.dispatchEvent(new CustomEvent('spa:tab-reselect'));
 
@@ -31,7 +31,7 @@ export function installNativeRouterBridge(router: Router): void {
             }
 
             router.push(path).catch(() => {
-                /* navigatie geguard of dubbel */
+                /* navigation guarded or duplicate */
             });
         },
     };

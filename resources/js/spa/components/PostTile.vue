@@ -82,14 +82,24 @@ function onVideoLoaded(): void {
     videoLoaded.value = true;
 }
 
-// Image tiles render the display image at its natural ratio; video tiles use
-// the poster (also aspect-preserving). Both reserve their height up front from
-// the API dimensions so the grid never reflows while scrolling.
-const posterSrc = computed(
-    () =>
-        props.resolvePoster?.(props.post) ??
-        (isVideo.value ? props.post.thumbnail_url : props.post.media_url),
-);
+// Image tiles render the medium thumbnail: tiles are a couple hundred pixels
+// wide at most, so the full display rendition wastes bandwidth and decode
+// time. Video tiles use the poster. Both preserve the natural ratio and
+// reserve their height up front from the API dimensions so the grid never
+// reflows while scrolling.
+const posterSrc = computed(() => {
+    const override = props.resolvePoster?.(props.post);
+
+    if (override) {
+        return override;
+    }
+
+    if (isVideo.value) {
+        return props.post.thumbnail_url;
+    }
+
+    return props.post.thumbnail_url ?? props.post.media_url;
+});
 
 // Natural ratio read from the loaded image, used as a fallback when the API
 // has no stored dimensions yet (legacy posts pending backfill, or media we
@@ -284,9 +294,13 @@ function iconMaskStyle(url: string) {
 </script>
 
 <template>
+    <!-- content-visibility lets the browser skip layout/paint (and drop
+         decoded image bitmaps) for tiles far off-screen, which bounds memory
+         on infinite feeds. The explicit aspect-ratio below keeps the tile's
+         box size exact even while its contents are skipped. -->
     <div
         ref="rootRef"
-        class="relative w-full overflow-hidden rounded-2xl bg-sand shadow-sm transition-all"
+        class="relative w-full overflow-hidden rounded-2xl bg-sand shadow-sm transition-all [content-visibility:auto]"
         :class="[
             selected ? 'ring-2 ring-action' : 'ring-1 ring-sand-100',
             selectionMode && !isSelectable ? 'opacity-40' : '',

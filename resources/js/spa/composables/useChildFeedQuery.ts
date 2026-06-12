@@ -2,13 +2,13 @@ import { useChildFilterStore } from '@/spa/stores/childFilter';
 import { usePersonsStore } from '@/spa/stores/persons';
 
 /**
- * Bouwt de query-string voor de standaard-feed, gefilterd op alle beschikbare
- * kinderen. "Kinderen" = getagde personen zonder eigen app-account; linked
- * app-gebruikers (andere ouders) vallen weg.
+ * Builds the query string for the default feed, filtered to all available
+ * children. "Children" = tagged persons without their own app account;
+ * linked app users (other parents) are excluded.
  *
- * De personenlijst wordt eerst geladen zodat het filter compleet is voordat de
- * feed wordt opgehaald. Zijn er geen kinderen (of faalt het laden), dan valt de
- * feed terug op alle posts in plaats van een lege lijst.
+ * The persons list is loaded first so the filter is complete before the
+ * feed is fetched. If there are no children (or loading fails), the feed
+ * falls back to all posts instead of an empty list.
  */
 export function useChildFeedQuery() {
     const personsStore = usePersonsStore();
@@ -47,7 +47,7 @@ export function useChildFeedQuery() {
                 params.append('person_ids[]', id);
             }
         } catch {
-            // Personenlijst niet beschikbaar: ongefilterde feed als fallback.
+            // Persons list unavailable: unfiltered feed as fallback.
         }
 
         return params.toString();

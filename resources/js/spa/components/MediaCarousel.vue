@@ -74,8 +74,8 @@ function scrollToIndex(index: number): void {
 // final resting slide.
 let rafHandle = 0;
 function onScroll(): void {
-    // Negeer scroll-events tijdens de hint zodat de programmatische peek niet
-    // ten onrechte activeIndex op slide 1 zet voordat hij terugscrollt.
+    // Ignore scroll events during the hint so the programmatic peek doesn't
+    // wrongly set activeIndex to slide 1 before it scrolls back.
     if (hinting.value) {
         return;
     }
@@ -129,9 +129,9 @@ function goToNext(): void {
     scrollToIndex(internalIndex.value + 1);
 }
 
-// Swipe-hint: bij eerste keer dat de carousel >=50% in beeld komt, even naar
-// rechts peeken en terug. Geeft de gebruiker visueel mee dat er meer slides
-// zijn zonder een tutorial-overlay nodig te hebben.
+// Swipe hint: the first time the carousel comes >=50% into view, briefly peek
+// to the right and back. Visually tells the user there are more slides
+// without needing a tutorial overlay.
 let hintFired = false;
 let intersectionObserver: IntersectionObserver | null = null;
 
@@ -189,8 +189,8 @@ async function runSwipeHint(): Promise<void> {
     hintFired = true;
     hinting.value = true;
 
-    // scroll-snap-mandatory zou onze partial-peek terugklikken naar 0; tijdens
-    // de hint dus tijdelijk uitschakelen en daarna herstellen.
+    // scroll-snap-mandatory would snap our partial peek back to 0; so disable
+    // it temporarily during the hint and restore it afterwards.
     const previousSnap = el.style.scrollSnapType;
     el.style.scrollSnapType = 'none';
 
@@ -212,9 +212,9 @@ onMounted(() => {
         return;
     }
 
-    // Niet-nul start (bv. diepe link naar een specifieke slide): spring er
-    // direct heen zonder animatie. De `watch` op `activeIndex` doet dit alleen
-    // bij latere wijzigingen, dus de initiele positie zetten we hier zelf.
+    // Non-zero start (e.g. deep link to a specific slide): jump straight to
+    // it without animation. The `watch` on `activeIndex` only does this for
+    // later changes, so we set the initial position here ourselves.
     if (internalIndex.value > 0) {
         const slide = el.children[internalIndex.value] as
             | HTMLElement
@@ -224,7 +224,7 @@ onMounted(() => {
             el.scrollLeft = slide.offsetLeft;
         }
 
-        // Sla de swipe-hint over: die gaat uit van slide 0 en zou terugscrollen.
+        // Skip the swipe hint: it assumes slide 0 and would scroll back.
         hintFired = true;
 
         return;

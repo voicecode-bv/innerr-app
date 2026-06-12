@@ -11,13 +11,14 @@ const router = useRouter();
 const serviceKeys = useServiceKeysStore();
 
 const mapboxToken = computed(() => serviceKeys.mapboxToken);
-// Photo-map fetch blijft via BFF (session-cookie auth, PhotoMap voegt geen
-// bearer-headers toe). Alleen mapbox token direct via externe API.
+// The photo-map fetch stays on the BFF (session-cookie auth, PhotoMap adds
+// no bearer headers). Only the mapbox token comes directly from the external
+// API.
 const fetchUrl = '/photos/map';
 
 onMounted(() => {
     serviceKeys.ensureLoaded().catch(() => {
-        // ignore — token blijft null en PhotoMap rendert niet
+        // ignore — token stays null and PhotoMap does not render
     });
 });
 

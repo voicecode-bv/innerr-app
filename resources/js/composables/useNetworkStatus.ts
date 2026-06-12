@@ -4,9 +4,9 @@ import { Network } from '@nativephp/mobile';
 const POLL_INTERVAL_MS = 15_000;
 
 /**
- * Volgt de netwerkstatus via de NativePhp Network plugin (met fallback naar
- * `navigator.onLine` voor web). Levert alleen een reactive `isOnline` —
- * componenten kunnen daar zelf op reageren.
+ * Tracks the network status via the NativePhp Network plugin (with a
+ * fallback to `navigator.onLine` for web). Only exposes a reactive
+ * `isOnline` — components can react to it themselves.
  */
 export function useNetworkStatus() {
     const isOnline = ref(true);

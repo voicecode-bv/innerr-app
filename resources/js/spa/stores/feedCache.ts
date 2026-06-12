@@ -37,7 +37,7 @@ function writeStorage(value: Record<string, FeedCacheEntry<FeedItem>>): void {
     try {
         window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(value));
     } catch {
-        // negeren — quotum vol of private mode
+        // ignore — quota full or private mode
     }
 }
 
@@ -46,9 +46,9 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
         entries: readStorage(),
     }),
     actions: {
-        // Stale-while-revalidate: retourneert ook entries ouder dan TTL zodat de
-        // page meteen iets kan tonen. Caller checkt zelf `isFresh()` om te
-        // bepalen of een background refresh nodig is.
+        // Stale-while-revalidate: also returns entries older than the TTL so
+        // the page can show something immediately. The caller checks
+        // `isFresh()` itself to decide whether a background refresh is needed.
         get<T extends FeedItem>(key: string): FeedCacheEntry<T> | null {
             return (this.entries[key] as FeedCacheEntry<T> | undefined) ?? null;
         },
@@ -94,11 +94,11 @@ export const useFeedCacheStore = defineStore('spa-feed-cache', {
             };
             writeStorage(this.entries);
         },
-        // Vervang een item op zijn huidige positie door een nieuw item met
-        // (meestal) een andere id. Use case: een optimistic post heeft id
-        // `optimistic-…`; zodra de server de echte id retourneert willen we
-        // die zonder visuele remount van de PostCard erin substitueren —
-        // anders flikkert de thumbnail tijdens de eerstvolgende softRefresh.
+        // Replace an item at its current position with a new item that
+        // (usually) has a different id. Use case: an optimistic post has id
+        // `optimistic-…`; once the server returns the real id we want to
+        // substitute it without visually remounting the PostCard —
+        // otherwise the thumbnail flickers during the next softRefresh.
         replaceById<T extends FeedItem>(
             key: string,
             oldId: string,

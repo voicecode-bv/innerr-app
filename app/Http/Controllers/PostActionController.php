@@ -11,21 +11,21 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 /**
- * Server-side helpers voor media uit NativePhp Camera-paden:
- *   - serveMedia        leest file:// pad → data-url voor preview
- *   - storeCroppedMedia base64 cropped beeld → tijdelijk bestand op disk
+ * Server-side helpers for media from NativePhp Camera paths:
+ *   - serveMedia        reads file:// path → data URL for preview
+ *   - storeCroppedMedia base64 cropped image → temporary file on disk
  *
- * De daadwerkelijke post-create gaat via Spa\PostsController::store.
+ * The actual post-create goes through Spa\PostsController::store.
  */
 class PostActionController extends Controller
 {
     /**
-     * Cap voor `serveMedia` data-url responses. We accepteren tot ~50 MB
-     * inline omdat NativePHP iOS' PHPSchemeHandler PHP-output door een
-     * UTF-8 string round-trip jaagt; binaire bytes overleven dat niet, dus
-     * een base64 data-URL in JSON is de enige werkbare route voor zowel
-     * foto- als videopreviews. Boven deze cap geven we 413 zodat de SPA
-     * elegant kan terugvallen op een placeholder.
+     * Cap for `serveMedia` data URL responses. We accept up to ~50 MB
+     * inline because NativePHP iOS' PHPSchemeHandler pushes PHP output
+     * through a UTF-8 string round-trip; binary bytes don't survive that,
+     * so a base64 data URL in JSON is the only workable route for both
+     * photo and video previews. Above this cap we return 413 so the SPA
+     * can gracefully fall back to a placeholder.
      */
     private const SERVE_DATA_URL_MAX_BYTES = 50 * 1024 * 1024;
 
@@ -39,16 +39,16 @@ class PostActionController extends Controller
 
         abort_if($size > self::SERVE_DATA_URL_MAX_BYTES, 413, __('File too large for inline preview.'));
 
-        // display_errors uit zodat stray PHP warnings de JSON niet
-        // corrumperen.
+        // display_errors off so stray PHP warnings don't corrupt the
+        // JSON.
         @ini_set('display_errors', '0');
 
         $mime = File::mimeType($path) ?: 'application/octet-stream';
 
         // JSON envelope: `{"data_url":"data:<mime>;base64,<base64>"}`
-        // Pre-compute zodat we Content-Length kunnen meegeven en de client
-        // ziet of de body afgekapt wordt. base64-output is exact
-        // `4 * ceil(file_size / 3)` bytes; envelope is een vaste prefix+suffix.
+        // Pre-compute so we can send Content-Length and the client can
+        // tell if the body gets truncated. base64 output is exactly
+        // `4 * ceil(file_size / 3)` bytes; the envelope is a fixed prefix+suffix.
         $prefix = '{"data_url":"data:'.$mime.';base64,';
         $suffix = '"}';
         $base64Length = 4 * (int) ceil($size / 3);
@@ -62,11 +62,11 @@ class PostActionController extends Controller
             'ob_level' => ob_get_level(),
         ]);
 
-        // Streamed response: encodeer base64 in 192 KB-chunks (multiple of 3
-        // zodat we geen padding krijgen midden in de stream). Vermijdt dat we
-        // ooit het hele bestand + base64-kopie tegelijk in memory hebben — de
-        // vorige aanpak hield 4 kopieen vast (file + base64 + concat + json
-        // encode buffer) en werd op iOS gekilled bij videos van ~30 MB+.
+        // Streamed response: encode base64 in 192 KB chunks (multiple of 3
+        // so we don't get padding in the middle of the stream). Avoids ever
+        // holding the whole file + base64 copy in memory at once — the
+        // previous approach kept 4 copies (file + base64 + concat + json
+        // encode buffer) and got killed on iOS for videos of ~30 MB+.
         return new StreamedResponse(function () use ($path, $prefix, $suffix) {
             try {
                 echo $prefix;
@@ -101,8 +101,8 @@ class PostActionController extends Controller
                     'memory_peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 1),
                 ]);
             } catch (Throwable $e) {
-                // Headers zijn al verstuurd, dus de body wordt corrupt JSON.
-                // Loggen is het enige wat we nog kunnen doen.
+                // Headers have already been sent, so the body becomes corrupt JSON.
+                // Logging is the only thing left we can do.
                 Log::error('serveMedia stream threw', [
                     'exception' => $e::class,
                     'message' => $e->getMessage(),

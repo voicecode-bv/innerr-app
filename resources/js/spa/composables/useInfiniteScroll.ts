@@ -23,16 +23,16 @@ export function useInfiniteScroll<T>(
     sentinelRef: Ref<HTMLElement | null>,
     options: Options<T> = {},
 ) {
-    // Seed met optionele initial items uit een cache zodat de UI direct iets
-    // toont; bij `softRefresh()` swappen we 'm pas atomisch wanneer de verse
-    // data binnen is.
+    // Seed with optional initial items from a cache so the UI shows
+    // something immediately; on `softRefresh()` we only swap atomically
+    // once the fresh data has arrived.
     const initialItems = options.initialItems ?? [];
     const items = ref<T[]>([...initialItems]) as Ref<T[]>;
     const page = ref(initialItems.length > 0 ? 2 : 1);
     const lastPage = ref(options.initialLastPage ?? 1);
-    // Bij `immediate=true` zonder seed-data: markeer direct loading=true zodat
-    // het allereerste render-frame al de skeleton toont in plaats van de
-    // "geen-posts" empty state te flashen.
+    // With `immediate=true` and no seed data: mark loading=true right away
+    // so the very first render frame already shows the skeleton instead of
+    // flashing the "no posts" empty state.
     const willAutoLoad =
         options.immediate !== false && initialItems.length === 0;
     const loading = ref(willAutoLoad);
@@ -99,8 +99,9 @@ export function useInfiniteScroll<T>(
         await loadMore();
     }
 
-    // Achtergrond-refresh die page 1 ophaalt en items pas swapt zodra de
-    // response binnen is — voorkomt een lege flits tussen "stale toon" en "verse".
+    // Background refresh that fetches page 1 and only swaps items once the
+    // response has arrived — avoids an empty flash between "show stale" and
+    // "fresh".
     async function softRefresh(): Promise<PaginatedResponse<T> | null> {
         if (loading.value) {
             return null;
@@ -183,8 +184,8 @@ export function useInfiniteScroll<T>(
         );
 
         if (options.immediate !== false) {
-            // Loading was vooraf op true gezet voor de skeleton-render; reset
-            // hier zodat de loadMore-guard niet vroegtijdig uitstapt.
+            // Loading was set to true up front for the skeleton render;
+            // reset it here so the loadMore guard doesn't bail out early.
             loading.value = false;
             loadMore();
         }

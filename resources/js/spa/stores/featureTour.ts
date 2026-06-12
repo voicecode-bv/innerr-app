@@ -62,8 +62,8 @@ function writePersisted(state: PersistedState): void {
     try {
         window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
-        // Storage quota of private-mode — niet kritiek; server-state is leidend
-        // zodra het endpoint live is.
+        // Storage quota or private mode — not critical; server state is the
+        // source of truth once the endpoint is live.
     }
 }
 
@@ -75,13 +75,13 @@ export const useFeatureTourStore = defineStore('spa-feature-tour', {
             status: (persisted?.status ?? 'idle') as Status,
             completedSegments: persisted?.completedSegments ?? [],
             activeIndex: persisted?.activeIndex ?? 0,
-            // Sentinel zodat FeatureTourMount.vue eenmalig synct als de gebruiker
-            // verandert (bv. logout/login).
+            // Sentinel so FeatureTourMount.vue syncs once when the user
+            // changes (e.g. logout/login).
             hydrated: false,
-            // Wordt `true` zodra hydrate() de boot-beslissing heeft genomen
-            // (tour gestart, voltooid, of definitief niet meer aan de beurt).
-            // Consumers wachten hierop om "tour loopt nog niet" niet te verwarren
-            // met "tour is al afgehandeld" — die zijn bij mount allebei `idle`.
+            // Becomes `true` once hydrate() has made the boot decision (tour
+            // started, completed, or definitively no longer due). Consumers
+            // wait on this to avoid confusing "tour not running yet" with
+            // "tour already handled" — both are `idle` at mount.
             bootResolved: false,
         };
     },
@@ -118,9 +118,9 @@ export const useFeatureTourStore = defineStore('spa-feature-tour', {
                     return;
                 }
 
-                // Server is authoritatief zodra het endpoint bestaat: overschrijf
-                // localStorage maar laat een lopende client-side tour (status =
-                // running) ongemoeid. De gebruiker is dan midden in de tour.
+                // The server is authoritative once the endpoint exists:
+                // overwrite localStorage but leave a running client-side tour
+                // (status = running) untouched. The user is then mid-tour.
                 this.completedSegments = remote.segments;
 
                 if (remote.completed_at) {
@@ -131,9 +131,9 @@ export const useFeatureTourStore = defineStore('spa-feature-tour', {
                     return;
                 }
 
-                // Bestaande gebruikers die de tour nog nooit gezien hebben (geen
-                // server-side started_at, geen completed_at) en die nu niet midden
-                // in een tour zitten: één keer automatisch aanbieden.
+                // Existing users who have never seen the tour (no server-side
+                // started_at, no completed_at) and who are not currently
+                // mid-tour: offer it automatically once.
                 if (remote.started_at === null && this.status === 'idle') {
                     this.start();
 
@@ -142,9 +142,9 @@ export const useFeatureTourStore = defineStore('spa-feature-tour', {
 
                 this.persist();
             } finally {
-                // Boot-beslissing genomen: status is nu definitief 'running'
-                // (tour gestart) of een eindstaat. Pas hierna mogen consumers
-                // een idle-status als "tour afgehandeld" lezen.
+                // Boot decision made: the status is now definitively 'running'
+                // (tour started) or a final state. Only after this may
+                // consumers read an idle status as "tour handled".
                 this.bootResolved = true;
             }
         },

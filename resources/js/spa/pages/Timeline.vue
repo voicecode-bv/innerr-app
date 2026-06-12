@@ -16,13 +16,14 @@ const router = useRouter();
 const { t } = useTranslations();
 const personsStore = usePersonsStore();
 
-// Eén of meerdere kinderen, komma-gescheiden in de route-param. Zo werkt zowel
-// de losse chip-ingang (één id) als de multi-select uit de feed-dropdown.
+// One or more children, comma-separated in the route param. This serves both
+// the single chip entry point (one id) and the multi-select from the feed
+// dropdown.
 const personIds = String(route.params.person).split(',').filter(Boolean);
 const sentinelRef = ref<HTMLElement | null>(null);
 
-// De personenlijst wordt voor de naam/koptekst gebruikt. Lukt het laden niet,
-// dan tonen we de tijdlijn alsnog met een neutrale titel.
+// The persons list is used for the name/heading. If loading fails, the
+// timeline still renders with a neutral title.
 const persons = ref<Person[]>(
     (personsStore.items ?? []).filter((p) => personIds.includes(p.id)),
 );
@@ -44,9 +45,9 @@ const title = computed(() => {
 });
 
 /**
- * Bouwt de feed-query voor deze tijdlijn: gefilterd op de gekozen kinderen en
- * chronologisch gesorteerd op de opname-datum (`taken_at`) in plaats van de
- * upload-datum. De API valt voor posts zonder EXIF-datum terug op `created_at`.
+ * Builds the feed query for this timeline: filtered to the chosen children
+ * and sorted chronologically by capture date (`taken_at`) instead of upload
+ * date. The API falls back to `created_at` for posts without an EXIF date.
  */
 function buildQuery(page: number): string {
     const params = new URLSearchParams();

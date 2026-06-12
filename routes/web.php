@@ -17,9 +17,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-// SPA BFF — alleen wat technisch niet client-side kan: bootstrap-mirror,
-// auth-token-houder, en file-upload paden waarvoor NativePhp Camera een
-// file:// pad oplevert dat alleen serverside leesbaar is.
+// SPA BFF — only what technically cannot be done client-side: bootstrap mirror,
+// auth-token holder, and file-upload paths for which NativePhp Camera yields a
+// file:// path that is only readable server-side.
 Route::prefix('api/spa')->group(function () {
     Route::get('/bootstrap', SpaBootstrapController::class);
     Route::post('/auth/login', [SpaAuthController::class, 'login']);
@@ -27,11 +27,11 @@ Route::prefix('api/spa')->group(function () {
     Route::post('/auth/forgot-password', [SpaAuthController::class, 'forgotPassword']);
     Route::post('/auth/reset-password', [SpaAuthController::class, 'resetPassword']);
 
-    // Debug/test: vergeet alleen de Laravel-session (logout + invalidate) maar
-    // laat het token in de secure storage staan. Bootst "sessie weg, token nog
-    // geldig" na zodat de reconnect-flow op een echt toestel getest kan worden
-    // zonder de app te herinstalleren. Raakt uitsluitend de eigen sessie van de
-    // aanroeper. Bereikbaar via de verborgen debug-pagina.
+    // Debug/test: forgets only the Laravel session (logout + invalidate) but
+    // leaves the token in secure storage. Simulates "session gone, token still
+    // valid" so the reconnect flow can be tested on a real device without
+    // reinstalling the app. Touches only the caller's own session.
+    // Reachable via the hidden debug page.
     Route::post('/debug/forget-session', function (Request $request) {
         Auth::guard('web')->logout();
         $request->session()->invalidate();
@@ -72,15 +72,15 @@ Route::prefix('api/spa')->group(function () {
     });
 });
 
-// OAuth callback — externe API redirect terug naar deze BFF.
+// OAuth callback — external API redirects back to this BFF.
 Route::get('/oauth/callback', [SocialAuthController::class, 'callback'])->name('oauth.callback');
 
-// Public proxy: media-cache (signed image-URLs vanuit externe API gaan via deze
-// proxy zodat tokens niet in de client lekken).
+// Public proxy: media cache (signed image URLs from the external API go through
+// this proxy so tokens don't leak into the client).
 Route::get('/media-proxy', MediaProxyController::class)->name('media-proxy');
 
-// Session-cookie protected proxy paden. Reden voor BFF: NativePhp file://
-// paden of fetch-kant waar PhotoMap geen bearer-headers toevoegt.
+// Session-cookie protected proxy paths. Reason for the BFF: NativePhp file://
+// paths or the fetch side where PhotoMap adds no bearer headers.
 Route::middleware('auth.api')->group(function () {
     Route::get('/native-media', [PostActionController::class, 'serveMedia'])->name('native-media');
     Route::post('/posts/cropped-media', [PostActionController::class, 'storeCroppedMedia'])->name('posts.cropped-media');
@@ -94,7 +94,7 @@ Route::middleware('auth.api')->group(function () {
     Route::get('/circles/{circle}/photos/map', [MapController::class, 'circlePhotos'])->name('circles.photos.map')->whereUuid('circle');
 });
 
-// SPA shell — vangt alle overige routes (incl. /, /login, /spa-test/*, etc.).
+// SPA shell — catches all remaining routes (incl. /, /login, /spa-test/*, etc.).
 Route::get('/{any?}', fn () => view('spa'))
     ->where('any', '^(?!api/|oauth/|media-proxy|native-media|posts/cropped-media|posts/upload-session|photos/map|profiles/[^/]+/photos/map|circles/[^/]+/photos/map).*$')
     ->name('spa.shell');

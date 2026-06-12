@@ -131,8 +131,8 @@ function highlightComment(commentId: string): void {
     }, 1600);
 }
 
-// Groepeert opeenvolgende verborgen comments tot één compacte melding,
-// zodat de timeline-volgorde behouden blijft (visible — N verborgen — visible …).
+// Groups consecutive hidden comments into one compact notice, so the
+// timeline order is preserved (visible, N hidden, visible, ...).
 const renderItems = computed<RenderItem[]>(() => {
     const out: RenderItem[] = [];
     let hiddenRun: Comment[] = [];
@@ -466,7 +466,7 @@ async function toggleCommentLike(comment: Comment): Promise<void> {
             await externalApi.delete(`/comments/${comment.id}/like`);
         } else {
             await externalApi.post(`/comments/${comment.id}/like`);
-            // Like op een comment telt mee voor de review-drempel.
+            // Liking a comment counts toward the review threshold.
             void maybeRequestReview(auth.user?.username);
         }
     } catch {
@@ -555,7 +555,7 @@ async function submitComment(): Promise<void> {
         commentsCache.invalidate(props.postId);
         emit('commentAdded', created);
 
-        // Geplaatste comment telt mee voor de review-drempel.
+        // A posted comment counts toward the review threshold.
         void maybeRequestReview(auth.user?.username);
     } catch {
         comments.value = comments.value.filter((c) => c.id !== optimistic.id);

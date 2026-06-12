@@ -7,9 +7,9 @@ export type OnboardingStep =
     | 'invite_members'
     | 'notifications';
 
-// Fire-and-forget: het tracken van een stap mag de onboarding-flow niet
-// blokkeren. Bij netwerkfout / 5xx verloren we hoogstens één datapunt; de
-// gebruiker merkt er niets van.
+// Fire-and-forget: tracking a step must not block the onboarding flow. On a
+// network error / 5xx we lose at most one data point; the user notices
+// nothing.
 export function trackOnboardingStep(step: OnboardingStep): void {
     externalApi.post('/onboarding/steps', { step }).catch(() => {});
 }

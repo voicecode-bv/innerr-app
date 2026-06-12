@@ -251,10 +251,10 @@ async function verifyGooglePurchase(
 
         return true;
     } catch (err) {
-        // Een 403 betekent dat de aankoop bij een ander Innerr-account hoort
-        // (Google's obfuscatedAccountId ≠ de huidige gebruiker). Webhooks
-        // reconciliëren dit NIET, dus tonen we een duidelijke melding i.p.v.
-        // stil te falen.
+        // A 403 means the purchase belongs to a different Innerr account
+        // (Google's obfuscatedAccountId does not match the current user).
+        // Webhooks do NOT reconcile this, so show a clear message instead of
+        // failing silently.
         if (err instanceof ApiError && err.status === 403) {
             errorMessage.value = t(
                 'This purchase is linked to a different Innerr account. Sign in with that account to use it.',
@@ -263,9 +263,9 @@ async function verifyGooglePurchase(
             return false;
         }
 
-        // Andere fouten (netwerk e.d.): Google Play RTDN-webhooks vangen het
-        // uiteindelijk alsnog op, dus we falen niet hard — refreshEntitlement
-        // laat de juiste (mogelijk nog niet-paid) state zien.
+        // Other errors (network etc.): Google Play RTDN webhooks eventually
+        // catch up, so we don't fail hard — refreshEntitlement shows the
+        // correct (possibly not-yet-paid) state.
         return false;
     }
 }
@@ -277,8 +277,8 @@ async function verifyApplePurchase(
         return false;
     }
 
-    // De IAP-bridge exposeert geen JWS — we sturen alleen de originalId.
-    // De API doet de daadwerkelijke verificatie via de App Store Server API.
+    // The IAP bridge exposes no JWS — we only send the originalId. The API
+    // performs the actual verification via the App Store Server API.
     const rawId = transaction.originalId ?? transaction.id;
     const originalTransactionId =
         rawId === undefined || rawId === null ? '' : String(rawId);
@@ -294,10 +294,10 @@ async function verifyApplePurchase(
 
         return true;
     } catch (err) {
-        // Een 403 betekent dat de aankoop bij een ander Innerr-account hoort
-        // (Apple's appAccountToken ≠ de huidige gebruiker). Apple App Store
-        // Server Notifications reconciliëren dit NIET, dus tonen we een
-        // duidelijke melding i.p.v. stil te falen.
+        // A 403 means the purchase belongs to a different Innerr account
+        // (Apple's appAccountToken does not match the current user). Apple
+        // App Store Server Notifications do NOT reconcile this, so show a
+        // clear message instead of failing silently.
         if (err instanceof ApiError && err.status === 403) {
             errorMessage.value = t(
                 'This purchase is linked to a different Innerr account. Sign in with that account to use it.',
@@ -306,8 +306,8 @@ async function verifyApplePurchase(
             return false;
         }
 
-        // Andere fouten (netwerk e.d.): Apple App Store Server Notifications
-        // vangen het alsnog op.
+        // Other errors (network etc.): Apple App Store Server Notifications
+        // eventually catch up.
         return false;
     }
 }
@@ -317,13 +317,13 @@ async function refreshEntitlement(): Promise<void> {
         const result = (await checkEntitlement()) as EntitlementResponse;
         entitlements.value = result.entitlements ?? [];
     } catch {
-        // Niet kritiek voor de UI; laat huidige waarde staan.
+        // Not critical for the UI; keep the current value.
     }
 
-    // De native StoreKit/Billing-laag kan stale/sandbox/family-shared
-    // entitlements rapporteren die niet horen bij een echt abonnement.
-    // De backend is de single source of truth: een subscription wordt pas
-    // 'paid' nadat Apple/Google webhooks of receipt-verificatie bevestigen.
+    // The native StoreKit/Billing layer can report stale/sandbox/family-shared
+    // entitlements that do not belong to a real subscription. The backend is
+    // the single source of truth: a subscription only becomes 'paid' once
+    // Apple/Google webhooks or receipt verification confirm it.
     try {
         const sub =
             await externalApi.get<ApiSubscriptionResponse>('/subscription/me');

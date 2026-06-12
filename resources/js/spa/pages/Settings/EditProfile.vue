@@ -59,7 +59,7 @@ async function loadProfile(): Promise<void> {
         birthdate.value = response.data.birthdate ?? '';
         searchable.value = response.data.searchable ?? true;
     } catch {
-        // ignore — gebruiker krijgt lege velden
+        // ignore — the user gets empty fields
     } finally {
         isLoading.value = false;
     }

@@ -22,9 +22,9 @@ interface AuthLike {
     clear(): void;
 }
 
-// Resolver i.p.v. een vaste string: de base-url kan al uit de durable snapshot
-// komen vóór de bootstrap-call hem ververst, zodat externe calls ook werken
-// wanneer de bootstrap (offline) faalt.
+// Resolver instead of a fixed string: the base URL can already come from the
+// durable snapshot before the bootstrap call refreshes it, so external calls
+// also work when the bootstrap fails (offline).
 let baseUrlResolver: (() => string) | null = null;
 let authResolver: (() => AuthLike) | null = null;
 let localeResolver: (() => string) | null = null;
@@ -144,7 +144,7 @@ async function performCall<T>(
 }
 
 function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-    // Alleen GETs retryen — mutaties zijn niet idempotent.
+    // Only retry GETs — mutations are not idempotent.
     if (method === 'GET') {
         return withRetry(() => performCall<T>(method, path, body), isTransient);
     }

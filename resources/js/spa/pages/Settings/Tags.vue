@@ -35,13 +35,13 @@ async function loadTags(force = false): Promise<void> {
 
         await tagsStore.ensureLoaded();
     } catch {
-        // negeren
+        // ignore
     }
 }
 
 async function refresh(): Promise<void> {
-    // Sluit eventuele open edit/create-forms zodat de gebruiker een schone
-    // lijst ziet na refresh.
+    // Close any open edit/create forms so the user sees a clean list after
+    // the refresh.
     showCreateForm.value = false;
     editingTagId.value = null;
     createForm.reset();

@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 /**
- * Chunked upload van gecropte beelden. WKWebView strips multipart bodies dus
- * de SPA stuurt base64-chunks in JSON; deze controller plakt ze server-side
- * weer aan elkaar. Vervangt het base64-in-één-keer patroon van
- * `PostActionController::storeCroppedMedia` voor grote beelden.
+ * Chunked upload of cropped images. WKWebView strips multipart bodies, so
+ * the SPA sends base64 chunks in JSON; this controller stitches them back
+ * together server-side. Replaces the base64-in-one-go pattern of
+ * `PostActionController::storeCroppedMedia` for large images.
  *
  * Lifecycle:
  *   POST   /posts/upload-session                       → {upload_id, chunk_size}
- *   POST   /posts/upload-session/{upload_id}/chunk     → write chunk; final=true assembleert
+ *   POST   /posts/upload-session/{upload_id}/chunk     → write chunk; final=true assembles
  *   DELETE /posts/upload-session/{upload_id}           → abort + cleanup
  */
 class UploadSessionController extends Controller

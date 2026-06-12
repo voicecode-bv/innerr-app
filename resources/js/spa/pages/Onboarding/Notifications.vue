@@ -61,7 +61,7 @@ async function sendToken(token: string): Promise<void> {
     try {
         await externalApi.post('/device-token', { token });
     } catch {
-        // Niet kritiek voor onboarding flow.
+        // Not critical for the onboarding flow.
     }
 }
 
@@ -87,12 +87,13 @@ async function completeOnboarding(): Promise<void> {
     try {
         await externalApi.post('/onboarding/complete');
     } catch {
-        // Niet kritiek; bootstrap haalt straks alsnog onboarded-status op.
+        // Not critical; bootstrap will fetch the onboarded status shortly anyway.
     }
 
     await auth.bootstrap();
-    // Start de feature-tour zodra de gebruiker op het hoofdscherm landt; de
-    // FeatureTourMount in App.vue mount nu omdat `auth.user.onboarded` true is.
+    // Start the feature tour as soon as the user lands on the main screen;
+    // the FeatureTourMount in App.vue mounts now because `auth.user.onboarded`
+    // is true.
     featureTourStore.start();
     router.push('/');
 }
@@ -106,14 +107,14 @@ async function enableNotifications(): Promise<void> {
 
     try {
         await PushNotifications.enroll();
-        // getToken() levert de token-string zelf op (of null) — geen { token }.
+        // getToken() yields the token string itself (or null) — not { token }.
         const token = await PushNotifications.getToken();
 
         if (token) {
             await sendToken(token);
         }
     } catch {
-        // Permission denied of niet beschikbaar — door naar complete.
+        // Permission denied or unavailable — continue to complete.
     }
 
     try {

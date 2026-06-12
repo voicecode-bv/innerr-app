@@ -6,9 +6,9 @@ export interface FeatureTourStatus {
     segments: string[];
 }
 
-// Fire-and-forget: tour-tracking mag de UX nooit blokkeren. Bij netwerk- of
-// 5xx-fouten verliezen we hoogstens één datapunt en valt de SPA terug op de
-// localStorage-state in `stores/featureTour.ts`.
+// Fire-and-forget: tour tracking must never block the UX. On network or 5xx
+// errors we lose at most one data point and the SPA falls back to the
+// localStorage state in `stores/featureTour.ts`.
 export function trackFeatureTourStarted(): void {
     externalApi.post('/feature-tour/started').catch(() => {});
 }
@@ -23,8 +23,8 @@ export function trackFeatureTourCompleted(): void {
     externalApi.post('/feature-tour/completed').catch(() => {});
 }
 
-// Returns null wanneer het endpoint nog niet bestaat (404) of bij netwerkfout;
-// caller valt dan terug op localStorage-state.
+// Returns null when the endpoint does not exist yet (404) or on network
+// error; the caller then falls back to localStorage state.
 export async function fetchFeatureTourStatus(): Promise<FeatureTourStatus | null> {
     try {
         return await externalApi.get<FeatureTourStatus>('/feature-tour/status');

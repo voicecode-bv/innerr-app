@@ -6,9 +6,10 @@ import { useTranslations } from '@/spa/composables/useTranslations';
 import { haptics } from '@/spa/services/haptics';
 import { useAuthStore } from '@/spa/stores/auth';
 
-// Periodieke retry-backstop: dekt het geval waarin er wél internet is maar de
-// externe API plat ligt (dan vuurt de online-watcher niet). De `isOnline`-watcher
-// triggert daarnaast een directe retry zodra het toestel weer verbinding ziet.
+// Periodic retry backstop: covers the case where internet is available but the
+// external API is down (the online watcher does not fire then). The `isOnline`
+// watcher additionally triggers an immediate retry as soon as the device sees
+// a connection again.
 const RETRY_INTERVAL_MS = 8_000;
 
 const router = useRouter();
@@ -27,31 +28,31 @@ async function retry(): Promise<void> {
     retrying.value = true;
 
     try {
-        // Belandden we hier omdat de Keychain bij de cold-start onleesbaar was,
-        // probeer hem dan eerst opnieuw te lezen: lukt dat, dan stuurt de
-        // bootstrap hieronder alsnog een geldig Bearer mee i.p.v. de gebruiker
-        // (onterecht) uit te loggen.
+        // If we ended up here because the Keychain was unreadable at cold
+        // start, try reading it again first: if that succeeds, the bootstrap
+        // below still sends a valid Bearer instead of (wrongly) logging the
+        // user out.
         if (auth.storageUnavailable) {
             await auth.restoreFromStorage();
         }
 
         await auth.bootstrap();
     } catch {
-        // Nog steeds onbereikbaar: blijf op het reconnect-scherm en probeer het
-        // bij de volgende tik of online-event opnieuw.
+        // Still unreachable: stay on the reconnect screen and try again on
+        // the next tap or online event.
     } finally {
         retrying.value = false;
     }
 
     if (auth.user) {
-        // Sessie bevestigd: door naar de app.
+        // Session confirmed: proceed into the app.
         await router.replace({ name: 'spa.home' }).catch(() => {});
 
         return;
     }
 
     if (!auth.awaitingConnection) {
-        // Token definitief afgewezen (echte 401): naar het welkomstscherm.
+        // Token definitively rejected (real 401): go to the welcome screen.
         await router.replace({ name: 'spa.welcome' }).catch(() => {});
     }
 }
@@ -63,9 +64,9 @@ function retryFromTap(): void {
     void retry();
 }
 
-// Ontsnappingsluik: bij een aanhoudende upstream-storing kan reconnect nooit
-// slagen. Dan mag de gebruiker er bewust uit stappen via een schone logout
-// (token + sessie weg) i.p.v. eindeloos op dit scherm vast te zitten.
+// Escape hatch: during a prolonged upstream outage reconnect can never
+// succeed. The user may then deliberately step out via a clean logout
+// (token + session removed) instead of being stuck on this screen forever.
 const loggingOut = ref(false);
 
 async function logOut(): Promise<void> {

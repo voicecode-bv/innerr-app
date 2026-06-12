@@ -1,18 +1,18 @@
 import { defineStore } from 'pinia';
 
 /**
- * Client-side store van lokaal gegenereerde post-thumbnails (data-URLs uit
- * `NativeMedia.thumbnail`), geïndexeerd op de echte post-id zoals de server
- * die teruggeeft.
+ * Client-side store of locally generated post thumbnails (data URLs from
+ * `NativeMedia.thumbnail`), indexed by the real post id as returned by the
+ * server.
  *
- * Use case: het backend kan op het moment van een notificatie of profiel-grid
- * nog geen CDN-poster hebben voor een net ge-uploade video (transcoding loopt
- * nog). Pakken we de lokaal gegenereerde JPEG-thumbnail als fallback, dan
- * tonen die views direct iets bruikbaars in plaats van een leeg vakje.
+ * Use case: at the time of a notification or profile grid the backend may
+ * not yet have a CDN poster for a just-uploaded video (transcoding still in
+ * progress). By using the locally generated JPEG thumbnail as a fallback,
+ * those views immediately show something usable instead of an empty box.
  *
- * Beperkt tot 64 entries (FIFO) zodat de store niet ongebonden groeit; bij
- * een fresh app-start is de store leeg en valt elk client terug op de echte
- * server-thumbnails — die zijn dan inmiddels klaar.
+ * Capped at 64 entries (FIFO) so the store does not grow unbounded; on a
+ * fresh app start the store is empty and every client falls back to the real
+ * server thumbnails — which are ready by then.
  */
 
 const STORAGE_KEY = 'spa.local-thumbnails.v1';
@@ -47,7 +47,7 @@ function writeStorage(value: Record<string, LocalThumbnailEntry>): void {
     try {
         window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(value));
     } catch {
-        // negeer — quotum vol of private mode
+        // ignore — quota full or private mode
     }
 }
 
@@ -62,7 +62,7 @@ export const useLocalThumbnailsStore = defineStore('spa-local-thumbnails', {
         set(postId: string, dataUrl: string): void {
             this.entries[postId] = { dataUrl, createdAt: Date.now() };
 
-            // FIFO trim — verwijder de oudste entries zodra we boven de cap zitten.
+            // FIFO trim — remove the oldest entries once we exceed the cap.
             const ids = Object.keys(this.entries);
 
             if (ids.length > MAX_ENTRIES) {

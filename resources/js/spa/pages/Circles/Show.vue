@@ -259,7 +259,7 @@ async function addMember(): Promise<void> {
             inviteSent.value = false;
         }, 3000);
 
-        // Refetch circle om de bijgewerkte pending_invitations op te halen.
+        // Refetch the circle to get the updated pending_invitations.
         try {
             const response = await externalApi.get<{ data: Circle }>(
                 `/circles/${circleId.value}`,
@@ -482,7 +482,7 @@ async function handleButtonPressed(payload: {
     ) {
         const id = pendingInvitationId;
         pendingInvitationId = null;
-        // Optimistic: verwijder direct uit lijst, rollback bij fout.
+        // Optimistic: remove from the list immediately, roll back on error.
         const previous = invitations.value;
         invitations.value = invitations.value.filter((i) => i.id !== id);
 
@@ -507,7 +507,8 @@ async function handleButtonPressed(payload: {
             return;
         }
 
-        // Optimistic: verwijder member direct uit lijst, rollback bij fout.
+        // Optimistic: remove the member from the list immediately, roll back
+        // on error.
         const previousMembers = circle.value.members;
         const previousCount = circle.value.members_count;
         circle.value.members = (circle.value.members ?? []).filter(
@@ -548,7 +549,7 @@ async function handleButtonPressed(payload: {
             circlesStore.remove(circleId.value);
             router.push({ name: 'spa.circles.index' });
         } catch {
-            // ignore — gebruiker blijft op de huidige kring
+            // ignore, the user stays in the current circle
         } finally {
             isLeaving.value = false;
         }
@@ -562,7 +563,7 @@ async function handleButtonPressed(payload: {
             circlesStore.remove(circleId.value);
             router.push({ name: 'spa.circles.index' });
         } catch {
-            // ignore — kring blijft staan
+            // ignore, the circle remains
         } finally {
             isDeleting.value = false;
         }

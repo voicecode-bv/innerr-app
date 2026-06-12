@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Controleerbare Keychain-bridge mock. Per test stellen we get/set/delete in.
+// Controllable Keychain bridge mock. We configure get/set/delete per test.
 const get = vi.fn();
 const set = vi.fn();
 const del = vi.fn();
@@ -13,8 +13,8 @@ vi.mock('@nativephp/mobile', () => ({
     },
 }));
 
-// Stuurt of de storage-laag het native (Keychain) of web (localStorage) pad
-// kiest, los van de jsdom-locatie.
+// Controls whether the storage layer takes the native (Keychain) or web
+// (localStorage) path, independent of the jsdom location.
 let native = false;
 
 vi.mock('@/spa/composables/usePlatform', () => ({
@@ -102,6 +102,42 @@ describe('secureStorage on a device (Keychain bridge available)', () => {
 
         // The durable copy is never wiped as a side-effect of a failed read.
         expect(del).not.toHaveBeenCalled();
+        vi.useRealTimers();
+    });
+
+    it('treats a hanging bridge call as a failed attempt and retries', async () => {
+        vi.useFakeTimers();
+        // First call never settles (BridgeCall has no timeout of its own);
+        // the per-attempt deadline must convert it into a retry instead of
+        // leaving the app stuck behind the splash.
+        get.mockImplementationOnce(
+            () => new Promise(() => {}),
+        ).mockResolvedValue({ value: 'keychain-token' });
+
+        const promise = secureStorage.get(TOKEN_KEY);
+        const expectation = expect(promise).resolves.toBe('keychain-token');
+        await vi.runAllTimersAsync();
+        await expectation;
+
+        expect(get).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('gives up within the total budget when every bridge call hangs', async () => {
+        vi.useFakeTimers();
+        get.mockImplementation(() => new Promise(() => {}));
+
+        const promise = secureStorage.get(TOKEN_KEY);
+        const expectation = expect(promise).rejects.toBeInstanceOf(
+            SecureStorageUnavailableError,
+        );
+        await vi.runAllTimersAsync();
+        await expectation;
+
+        // The ~8s budget cuts the loop well short of the full retry count:
+        // hanging attempts cost 1.5s each instead of failing instantly.
+        expect(get.mock.calls.length).toBeLessThan(10);
+        expect(get.mock.calls.length).toBeGreaterThanOrEqual(2);
         vi.useRealTimers();
     });
 

@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Validation\ValidationException;
 
 /**
- * BFF-only endpoints voor settings — alleen de file-upload paden blijven hier.
- * Alle andere settings (bio, tags, notifications, default circles, account
- * export/delete, locale) gaan vanuit de SPA direct naar de externe API.
+ * BFF-only endpoints for settings — only the file-upload paths remain here.
+ * All other settings (bio, tags, notifications, default circles, account
+ * export/delete, locale) go from the SPA directly to the external API.
  */
 class SettingsController extends Controller
 {

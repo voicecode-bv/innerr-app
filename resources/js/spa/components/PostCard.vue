@@ -5,6 +5,7 @@ import AnimatedCount from '@/components/AnimatedCount.vue';
 import EditPostModal from '@/spa/components/EditPostModal.vue';
 import MediaCarousel from '@/spa/components/MediaCarousel.vue';
 import VideoPlayer from '@/spa/components/VideoPlayer.vue';
+import { useRelativeTime } from '@/spa/composables/useRelativeTime';
 import { useReviewPrompt } from '@/spa/composables/useReviewPrompt';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { useVideoFullscreen } from '@/spa/composables/useVideoFullscreen';
@@ -141,6 +142,7 @@ function openLikes(): void {
 }
 
 const { t } = useTranslations();
+const { timeAgo } = useRelativeTime();
 const auth = useAuthStore();
 const { maybeRequestReview } = useReviewPrompt();
 
@@ -164,8 +166,8 @@ async function downloadMedia(): Promise<void> {
         return;
     }
 
-    // Bij multi-photo posts downloaden we de slide die nu zichtbaar is, niet
-    // altijd item 0 — anders kan de gebruiker de andere foto's nooit opslaan.
+    // For multi-photo posts we download the slide currently visible, not
+    // always item 0 — otherwise the user can never save the other photos.
     const activeItem = props.post.media?.[activeMediaIndex.value];
     const url = activeItem
         ? (activeItem.original_url ?? activeItem.url)
@@ -229,9 +231,9 @@ const isLiked = ref(props.post.is_liked);
 const likesCount = ref(props.post.likes_count);
 const commentsCount = ref(props.post.comments_count);
 
-// "X en N anderen vinden dit leuk" — first_visible_liker is de meest recente
-// liker uit een gedeelde circle. Bij geen visible liker maar wel likes (alleen
-// hidden) tonen we de placeholder-variant.
+// "X and N others like this" — first_visible_liker is the most recent liker
+// from a shared circle. With no visible liker but likes present (hidden
+// only) we show the placeholder variant.
 const likesSummary = computed<{
     text: string;
     avatar: string | null;
@@ -314,7 +316,7 @@ async function openEditModal(event: Event): Promise<void> {
         editAvailablePersons.value = persons as AvailablePerson[];
         isEditModalOpen.value = true;
     } catch {
-        // ignore — gebruiker blijft op de feed staan
+        // ignore — the user simply stays on the feed
     } finally {
         isLoadingEdit.value = false;
     }
@@ -335,8 +337,8 @@ const isCaptionOverflowing = ref(false);
 const mediaLoaded = ref(false);
 
 // VideoPlayer wrapper exposes its underlying <video> via `videoRef`. We
-// proxieren dat zodat useVideoFullscreen z'n eigen reactive Ref behoudt en
-// blijft re-evalueren als de gebruiker een andere post in beeld scrolt.
+// proxy that so useVideoFullscreen keeps its own reactive Ref and keeps
+// re-evaluating as the user scrolls another post into view.
 const videoPlayerRef = ref<{ videoRef: HTMLVideoElement | null } | null>(null);
 const videoRef = ref<HTMLVideoElement | undefined>(undefined);
 watch(
@@ -351,6 +353,22 @@ const {
     toggleMute: toggleMuteRaw,
     toggleFullscreen: toggleFullscreenRaw,
 } = useVideoFullscreen(videoRef);
+
+// Autoplay is gated on visibility, mirroring PostTile: an IntersectionObserver
+// mounts the VideoPlayer only while the card's media is on (or near) screen
+// and unmounts it on the way out, so a feed full of videos never keeps dozens
+// of players buffering off-screen. Fullscreen keeps the player alive
+// regardless: the in-DOM fullscreen fallback takes the container out of flow,
+// which would otherwise report it as off-screen and kill playback.
+const videoContainerRef = ref<HTMLElement | null>(null);
+const isVideoInView = ref(false);
+let videoObserver: IntersectionObserver | null = null;
+
+const showVideo = computed(
+    () =>
+        props.post.media_status === 'ready' &&
+        (isVideoInView.value || isFullscreen.value),
+);
 
 function toggleMute(event: Event): void {
     event.preventDefault();
@@ -384,6 +402,33 @@ async function measureCaptionOverflow(): Promise<void> {
 
 onMounted(() => {
     measureCaptionOverflow();
+
+    if (
+        typeof IntersectionObserver === 'undefined' ||
+        !videoContainerRef.value
+    ) {
+        // The ref only exists for single-video cards. Without observer support
+        // the card stays on its poster rather than eagerly mounting a player.
+        return;
+    }
+
+    videoObserver = new IntersectionObserver(
+        (entries) => {
+            isVideoInView.value = entries[0]?.isIntersecting ?? false;
+
+            if (!isVideoInView.value && !isFullscreen.value) {
+                // Reset so the freshly mounted player fades in over the poster
+                // again when the card scrolls back into view.
+                mediaLoaded.value = false;
+            }
+        },
+        // Start buffering just before the card reaches the viewport so
+        // playback begins without a visible gap, but keep the margin tight to
+        // avoid mounting players that are still well off-screen.
+        { rootMargin: '100px 0px', threshold: 0.1 },
+    );
+
+    videoObserver.observe(videoContainerRef.value);
 });
 
 watch(
@@ -446,8 +491,8 @@ async function toggleLike(): Promise<void> {
             await externalApi.delete(`/posts/${props.post.id}/like`);
         } else {
             await externalApi.post(`/posts/${props.post.id}/like`);
-            // Alleen bij het toevoegen van een like telt de activiteit mee voor
-            // de review-drempel.
+            // Only adding a like counts the activity toward the review
+            // threshold.
             void maybeRequestReview(auth.user?.username);
         }
     } catch {
@@ -503,6 +548,9 @@ function likeFromDoubleTap(): void {
 }
 
 onUnmounted(() => {
+    videoObserver?.disconnect();
+    videoObserver = null;
+
     if (tapTimer !== null) {
         window.clearTimeout(tapTimer);
         tapTimer = null;
@@ -515,58 +563,23 @@ watch(
         commentsCount.value = next;
     },
 );
-
-function timeAgo(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) {
-        return t('just now');
-    }
-
-    if (seconds < 3600) {
-        return t(':count min ago', { count: Math.floor(seconds / 60) });
-    }
-
-    if (seconds < 86400) {
-        return t(':count hours ago', { count: Math.floor(seconds / 3600) });
-    }
-
-    if (seconds < 604800) {
-        const days = Math.floor(seconds / 86400);
-
-        return t(days === 1 ? ':count day ago' : ':count days ago', {
-            count: days,
-        });
-    }
-
-    if (seconds < 2592000) {
-        const weeks = Math.floor(seconds / 604800);
-
-        return t(weeks === 1 ? ':count week ago' : ':count weeks ago', {
-            count: weeks,
-        });
-    }
-
-    if (seconds < 31536000) {
-        const months = Math.floor(seconds / 2592000);
-
-        return t(months === 1 ? ':count month ago' : ':count months ago', {
-            count: months,
-        });
-    }
-
-    const years = Math.floor(seconds / 31536000);
-
-    return t(years === 1 ? ':count year ago' : ':count years ago', {
-        count: years,
-    });
-}
 </script>
 
 <template>
-    <article class="bg-sand pt-6">
+    <!-- content-visibility lets the browser skip layout/paint (and drop
+         decoded image bitmaps) for cards far off-screen, bounding memory on
+         infinite feeds. Its paint containment makes the card the containing
+         block for fixed descendants, which would clip the in-DOM fullscreen
+         fallback to the card's box, so it is lifted while fullscreen. The
+         edit sheet is unaffected: BottomSheet teleports to <body>. -->
+    <article
+        class="bg-sand pt-6"
+        :class="
+            isFullscreen
+                ? ''
+                : '[contain-intrinsic-size:auto_520px] [content-visibility:auto]'
+        "
+    >
         <div class="flex items-start gap-3 px-4 py-3">
             <RouterLink
                 :to="{
@@ -754,6 +767,7 @@ function timeAgo(dateString: string): string {
                     alt=""
                     aria-hidden="true"
                     class="absolute inset-0 size-full scale-105 object-cover blur-md"
+                    loading="lazy"
                 />
                 <img
                     v-if="post.media_url"
@@ -877,7 +891,7 @@ function timeAgo(dateString: string): string {
             </div>
         </div>
 
-        <div v-else-if="post.media_type === 'video'">
+        <div v-else-if="post.media_type === 'video'" ref="videoContainerRef">
             <div
                 :class="[
                     isFullscreen
@@ -906,8 +920,22 @@ function timeAgo(dateString: string): string {
                     "
                     class="absolute inset-0 shimmer"
                 />
+                <!-- Poster stays mounted underneath so scrolled-past cards
+                     (whose player is unmounted) keep showing their frame and
+                     the player fades in on top when it returns to view. -->
+                <img
+                    v-if="
+                        post.media_status === 'ready' &&
+                        !isFullscreen &&
+                        post.thumbnail_url
+                    "
+                    :src="post.thumbnail_url"
+                    :alt="post.caption ?? t('Moment')"
+                    class="absolute inset-0 size-full object-cover"
+                    loading="lazy"
+                />
                 <VideoPlayer
-                    v-if="post.media_status === 'ready'"
+                    v-if="showVideo"
                     ref="videoPlayerRef"
                     v-pinch-zoom
                     :src="post.media_url"

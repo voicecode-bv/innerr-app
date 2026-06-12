@@ -21,7 +21,7 @@
         "nativephp/mobile": "^3.0",
         "nativephp/mobile-background-tasks": "^0.0.3",
         "nativephp/mobile-browser": "^1.0",
-        "nativephp/mobile-camera": "^1.0",
+        "nativephp/mobile-camera": "1.0.999",
         "nativephp/mobile-dialog": "^1.0",
         "nativephp/mobile-firebase": "^1.1",
         "nativephp/mobile-network": "^1.0",

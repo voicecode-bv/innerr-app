@@ -33,7 +33,7 @@ async function loadPreferences(force = false): Promise<void> {
 
         await prefsStore.ensureLoaded();
     } catch {
-        // negeren — UI valt terug op skeleton
+        // ignore; the UI falls back to the skeleton
     }
 }
 
@@ -71,7 +71,7 @@ async function togglePreference(key: keyof Preferences): Promise<void> {
     try {
         await prefsStore.toggle(key);
     } catch {
-        // Stille rollback in de store; geen toast.
+        // Silent rollback in the store; no toast.
     }
 }
 </script>

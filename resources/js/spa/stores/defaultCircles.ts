@@ -29,8 +29,8 @@ export const useDefaultCirclesStore = defineStore('spa-default-circles', {
                     const resp = await externalApi.get<{
                         data: Array<string | { id: string }>;
                     }>('/default-circles');
-                    // Externe API kan IDs als strings OF als objecten met `id` retourneren —
-                    // normaliseer naar strings.
+                    // The external API may return IDs as strings OR as objects
+                    // with `id` — normalize to strings.
                     this.ids = (resp.data ?? [])
                         .map((entry) =>
                             typeof entry === 'object' ? entry.id : entry,

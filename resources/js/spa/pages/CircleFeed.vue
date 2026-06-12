@@ -66,9 +66,9 @@ async function fetchCircleFeed(
     return response;
 }
 
-// Zie Feed.vue voor de motivatie. Behoudt de lokale data-URL thumbnail van
-// een optimistic of een nog-processing post zodat de PostCard tijdens een
-// poll niet leeg flikkert terwijl de CDN-poster nog laadt of ontbreekt.
+// See Feed.vue for the rationale. Preserves the local data-URL thumbnail of
+// an optimistic or still-processing post so the PostCard doesn't flicker
+// empty during a poll while the CDN poster is still loading or missing.
 function preserveLocalThumbnails(
     fresh: PostData[],
     existing: readonly PostData[],
@@ -104,8 +104,8 @@ const feed = useInfiniteScroll<PostData>(fetchCircleFeed, sentinelRef, {
     initialLastPage: cached?.lastPage,
 });
 
-// Auto-refresh terwijl een post nog in `media_status='processing'` staat — zie
-// de comment in Feed.vue voor de motivatie.
+// Auto-refresh while a post is still in `media_status='processing'` — see
+// the comment in Feed.vue for the rationale.
 useProcessingPoll(feed.items, () => feed.softRefresh());
 
 const { pullDistance, isRefreshing } = usePullToRefresh({

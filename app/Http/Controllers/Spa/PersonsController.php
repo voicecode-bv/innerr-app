@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Validation\ValidationException;
 
 /**
- * BFF-only endpoint voor person-photo upload — NativePhp Camera levert een
- * file:// pad dat alleen serverside leesbaar is. Alle andere person-CRUD
- * gaat vanuit de SPA direct naar de externe API.
+ * BFF-only endpoint for person-photo upload — NativePhp Camera delivers a
+ * file:// path that is only readable server-side. All other person CRUD
+ * goes from the SPA directly to the external API.
  */
 class PersonsController extends Controller
 {

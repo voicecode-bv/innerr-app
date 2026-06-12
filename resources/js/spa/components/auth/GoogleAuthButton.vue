@@ -15,9 +15,9 @@ const src = computed(() =>
     i18n.locale === 'nl' ? googleButtonNl : googleButtonEn,
 );
 
-// Browser.auth is fire-and-forget: de native shell start de auth-sessie en
-// geeft het callback-resultaat terug via de deeplink scheme, niet via deze
-// promise. We negeren bewust de teruggegeven waarde.
+// Browser.auth is fire-and-forget: the native shell starts the auth session
+// and returns the callback result via the deeplink scheme, not via this
+// promise. We deliberately ignore the returned value.
 async function go(): Promise<void> {
     await Browser.auth(props.url);
 }

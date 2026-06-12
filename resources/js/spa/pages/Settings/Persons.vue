@@ -103,7 +103,8 @@ async function loadData(force = false): Promise<void> {
 }
 
 async function refresh(): Promise<void> {
-    // Sluit edit-sheet zodat we geen stale draft tonen na server-state-update.
+    // Close the edit sheet so no stale draft shows after the server state
+    // updates.
     sheetOpen.value = false;
     await loadData(true);
 }
@@ -469,7 +470,7 @@ async function handleButtonPressed(payload: {
 
         await loadData(true);
     } catch {
-        // ignore — gebruiker blijft op de huidige lijst
+        // ignore — the user stays on the current list
     }
 }
 
@@ -489,7 +490,7 @@ async function deletePhoto(): Promise<void> {
         await externalApi.delete(`/persons/${editingPerson.value.id}/avatar`);
         await loadData(true);
     } catch {
-        // ignore — foto blijft staan
+        // ignore — the photo stays as-is
     }
 }
 

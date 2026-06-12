@@ -45,17 +45,17 @@ onMounted(() => {
 });
 const isGuestRoute = computed(() => route.meta.guest === true);
 
-// De post-detailpagina rendert als een overlay bovenop de achtergrondpagina.
-// We laden hem lazy (zelfde chunk als de route) zodat de initiële bundel klein
-// blijft; bij het openen van een post heeft de router de chunk al opgehaald.
+// The post detail page renders as an overlay on top of the background page.
+// We load it lazily (same chunk as the route) so the initial bundle stays
+// small; by the time a post is opened the router has already fetched the chunk.
 const PostDetail = defineAsyncComponent(
     () => import('@/spa/pages/PostDetail.vue'),
 );
 
-// De locatie die áchter de overlay zichtbaar blijft. Onthouden zodra we de
-// overlay openen, zodat de feed (of welke pagina dan ook) gemount blijft en zijn
-// scroll-positie behoudt. Bij een directe deeplink is dit `null` → val terug op
-// de feed.
+// The location that stays visible behind the overlay. Remembered the moment we
+// open the overlay, so the feed (or whatever page) stays mounted and keeps its
+// scroll position. On a direct deeplink this is `null` → fall back to the
+// feed.
 const postBackgroundPath = ref<string | null>(null);
 
 router.beforeEach((to, from) => {
@@ -84,15 +84,15 @@ watch(
     { immediate: true },
 );
 
-// Zolang de overlay open is, dwingen we de hoofd-RouterView om de
-// achtergrondlocatie te renderen i.p.v. de actieve (post-)route. Daardoor blijft
-// de achtergrond exact zoals hij was; de overlay zelf rendert los hieronder.
+// While the overlay is open, we force the main RouterView to render the
+// background location instead of the active (post) route. That keeps the
+// background exactly as it was; the overlay itself renders separately below.
 const postBackgroundRoute = computed<RouteLocationNormalizedLoaded | undefined>(
     () =>
         isPostOverlayOpen.value
-            ? // `resolve()` levert een RouteLocationResolved; RouterView's `route`
-              // verwacht een genormaliseerde loaded-locatie. Runtime-compatibel,
-              // dus we casten het verschil in de `matched`-array weg.
+            ? // `resolve()` returns a RouteLocationResolved; RouterView's `route`
+              // expects a normalized loaded location. Runtime-compatible, so we
+              // cast away the difference in the `matched` array.
               (router.resolve(
                   postBackgroundPath.value ?? '/',
               ) as unknown as RouteLocationNormalizedLoaded)
@@ -125,8 +125,8 @@ const showBottomNav = computed(() => bottomNavVisibleFor(route, auth.user));
 const routeContainerRef = ref<HTMLElement | null>(null);
 useEdgeSwipeBack(routeContainerRef);
 
-// Volgorde van de onboarding-stappen, gebruikt om de slide-richting te bepalen:
-// naar een latere stap schuift van rechts in, terug van links.
+// Order of the onboarding steps, used to determine the slide direction:
+// moving to a later step slides in from the right, going back from the left.
 const ONBOARDING_ORDER = [
     'spa.onboarding.intro',
     'spa.onboarding.add-children',
@@ -242,9 +242,9 @@ const routeTransition = computed(() => {
         ? POP_TRANSITION
         : PUSH_TRANSITION;
 });
-// Feature-tour pas mounten als de gebruiker is ingelogd én voorbij de
-// onboarding. Anders zou de tour kunnen proberen te starten op een lazy
-// onboarding-route waar de bijbehorende selectors niet bestaan.
+// Only mount the feature tour once the user is logged in and past onboarding.
+// Otherwise the tour could try to start on a lazy onboarding route where the
+// matching selectors don't exist.
 const showFeatureTour = computed(
     () =>
         auth.user !== null &&
@@ -255,8 +255,8 @@ const showFeatureTour = computed(
 </script>
 
 <template>
-    <!-- Persistente achtergrond zodat er nooit een wit/leeg-frame zichtbaar is
- tijdens route-transities of het laden van een lazy chunk. -->
+    <!-- Persistent background so a white/empty frame is never visible during
+ route transitions or while a lazy chunk is loading. -->
     <div
         aria-hidden="true"
         class="pointer-events-none fixed inset-0 -z-20 bg-sand"
@@ -290,9 +290,9 @@ const showFeatureTour = computed(
         </RouterView>
     </div>
 
-    <!-- Post-detail als full-screen overlay bovenop de achtergrondpagina. Nog
- steeds een echte route (URL/back-knop/deeplinks blijven werken), maar de feed
- eronder blijft gemount i.p.v. weg te navigeren. -->
+    <!-- Post detail as a full-screen overlay on top of the background page.
+ Still a real route (URL/back button/deeplinks keep working), but the feed
+ underneath stays mounted instead of navigating away. -->
     <Transition v-bind="postOverlayTransition">
         <PostDetail v-if="isPostOverlayOpen" />
     </Transition>
@@ -301,13 +301,13 @@ const showFeatureTour = computed(
 
     <FeatureTourMount v-if="showFeatureTour" />
 
-    <!-- Reconnect-scherm: getoond wanneer we een geldig token vasthouden maar de
- sessie nog niet bevestigd kon worden (externe API onbereikbaar). Dekt alles af
- en probeert het zelf opnieuw, i.p.v. de gebruiker naar login te sturen. -->
+    <!-- Reconnect screen: shown when we hold a valid token but the session
+ could not be confirmed yet (external API unreachable). Covers everything and
+ retries by itself, instead of sending the user to login. -->
     <ReconnectOverlay v-if="auth.awaitingConnection && !auth.user" />
 
-    <!-- Verplichte update: de draaiende versie zit onder de minimum_version
- van de API en is mogelijk niet langer compatibel. Dekt alles af; de enige
- weg vooruit is de store. -->
+    <!-- Forced update: the running version is below the API's minimum_version
+ and may no longer be compatible. Covers everything; the only way forward is
+ the store. -->
     <UpdateRequiredOverlay v-if="appUpdate.updateRequired" />
 </template>

@@ -366,11 +366,11 @@ const showSourcePicker = ref(false);
 const showCropModal = ref(false);
 const cropTargetIndex = ref(0);
 const uploading = ref(false);
-// Houdt de laatste failure-reason vast zodat we 'm in de Dialog kunnen tonen
-// als appendItem voor een video stilletjes faalt op een echt device.
+// Keeps the latest failure reason so we can show it in the Dialog when
+// appendItem fails silently for a video on a real device.
 const videoFailureReason = ref<string | null>(null);
 
-// Wizard-stappen: 0=media, 1=caption, 2=cirkels, 3=tags & personen.
+// Wizard steps: 0=media, 1=caption, 2=circles, 3=tags & persons.
 const TOTAL_STEPS = 4;
 const currentStep = ref(0);
 
@@ -525,10 +525,10 @@ async function selectFromGallery(): Promise<void> {
         return;
     }
 
-    // Chain volgt het patroon uit de mobile-camera README: images() ipv all()
-    // omdat het iOS PHPicker filter `.any(of:)` icm selectionLimit > 1 op
-    // sommige iOS-versies onbetrouwbaar in multi-select valt. Video's pakken
-    // we via een aparte flow.
+    // The chain follows the pattern from the mobile-camera README: images()
+    // instead of all(), because the iOS PHPicker filter `.any(of:)` combined
+    // with selectionLimit > 1 is unreliable in multi-select on some iOS
+    // versions. Videos go through a separate flow.
     await Camera.pickImages().images().multiple(true).maxItems(remaining);
 }
 
@@ -544,8 +544,9 @@ async function selectVideoFromGallery(): Promise<void> {
         return;
     }
 
-    // Video uit camera roll: single-select via .videos() — combineren met
-    // photos in één picker is op iOS te onbetrouwbaar (zie selectFromGallery).
+    // Video from the camera roll: single-select via .videos() — combining it
+    // with photos in one picker is too unreliable on iOS (see
+    // selectFromGallery).
     await Camera.pickImages().videos().multiple(false).maxItems(1);
 }
 
@@ -569,22 +570,25 @@ async function recordVideo(): Promise<void> {
     await Camera.recordVideo();
 }
 
-// Native staging: kopieert/hardlinkt het bestand naar `Documents/app/public/_media/`
-// zodat de WebView het via de bestaande `/_assets/...` fast-path streamt
-// (range-aware, chunked, no PHP roundtrip). Voorkomt de OOM-kill van het
-// PHP-proces die optrad toen we videos als base64 door PHP probeerden te jagen.
+// Native staging: copies/hardlinks the file to `Documents/app/public/_media/`
+// so the WebView streams it through the existing `/_assets/...` fast path
+// (range-aware, chunked, no PHP roundtrip). Prevents the OOM kill of the PHP
+// process that occurred when we tried to push videos through PHP as base64.
 async function stageMedia(
     path: string,
     mimeType: string,
 ): Promise<{ url: string; token: string } | null> {
     try {
         const result = await NativeMedia.stage(path, mimeType || undefined);
-        console.log('[CreatePost media] staged', {
-            path,
-            url: result.url,
-            mime: result.mime,
-            sizeMb: +(result.size / 1024 / 1024).toFixed(2),
-        });
+
+        if (import.meta.env.DEV) {
+            console.log('[CreatePost media] staged', {
+                path,
+                url: result.url,
+                mime: result.mime,
+                sizeMb: +(result.size / 1024 / 1024).toFixed(2),
+            });
+        }
 
         return { url: result.url, token: result.token };
     } catch (error) {
@@ -678,12 +682,15 @@ async function appendItem(
     nativeMeta?: NativeMediaMetadata,
 ): Promise<void> {
     const isVideo = mimeType.startsWith('video/');
-    console.log('[CreatePost media] appendItem', {
-        path,
-        mimeType,
-        isVideo,
-        existingItems: items.value.length,
-    });
+
+    if (import.meta.env.DEV) {
+        console.log('[CreatePost media] appendItem', {
+            path,
+            mimeType,
+            isVideo,
+            existingItems: items.value.length,
+        });
+    }
 
     videoFailureReason.value = null;
     const staged = await stageMedia(path, mimeType);
@@ -704,11 +711,11 @@ async function appendItem(
     if (isVideo) {
         thumbnail = await generateThumbnail(path);
     } else {
-        // De native camera-/galerijlaag levert taken_at en GPS rechtstreeks mee
-        // en is autoritatief: die leest PHAsset/MediaStore/EXIF vóór her-encoden.
-        // Alleen als native niets aanleverde (browsercontext) lezen we de EXIF
-        // zelf via een fetch op de staged URL — de WebView's asset fast-path
-        // streamt het bestand zonder PHP-roundtrip.
+        // The native camera/gallery layer delivers taken_at and GPS directly
+        // and is authoritative: it reads PHAsset/MediaStore/EXIF before any
+        // re-encode. Only when native supplied nothing (browser context) do
+        // we read the EXIF ourselves via a fetch on the staged URL — the
+        // WebView's asset fast path streams the file without a PHP roundtrip.
         const provided = nativeMeta ? nativeExif(nativeMeta) : null;
 
         if (provided) {
@@ -725,11 +732,14 @@ async function appendItem(
     items.value.push(
         makeItem(path, mimeType, staged.url, exif, staged.token, thumbnail),
     );
-    console.log('[CreatePost media] item pushed', {
-        isVideo,
-        totalItems: items.value.length,
-        hasThumbnail: thumbnail !== undefined,
-    });
+
+    if (import.meta.env.DEV) {
+        console.log('[CreatePost media] item pushed', {
+            isVideo,
+            totalItems: items.value.length,
+            hasThumbnail: thumbnail !== undefined,
+        });
+    }
 }
 
 async function handlePhotoTaken(
@@ -749,11 +759,13 @@ async function handleVideoRecorded(payload: {
     path: string;
     mimeType: string;
 }): Promise<void> {
-    console.log('[CreatePost video] VideoRecorded event', {
-        path: payload?.path,
-        mimeType: payload?.mimeType,
-        existingItems: items.value.length,
-    });
+    if (import.meta.env.DEV) {
+        console.log('[CreatePost video] VideoRecorded event', {
+            path: payload?.path,
+            mimeType: payload?.mimeType,
+            existingItems: items.value.length,
+        });
+    }
 
     if (items.value.length > 0) {
         console.warn(
@@ -852,10 +864,10 @@ async function handleCropped(
 
     uploading.value = true;
 
-    // De native metadata op het item is autoritatief; canvas.toBlob in de
-    // crop-modal her-encodeert en strip't EXIF, dus de modal kan taken_at/GPS
-    // verloren zijn. Houd de reeds bekende waarden aan en vul alleen ontbrekende
-    // velden aan met wat de modal nog uit de bron wist te lezen.
+    // The native metadata on the item is authoritative; canvas.toBlob in the
+    // crop modal re-encodes and strips EXIF, so the modal may have lost
+    // taken_at/GPS. Keep the values we already know and only fill missing
+    // fields with whatever the modal still managed to read from the source.
     const mergedExif: ExifData = {
         taken_at: target.exif.taken_at ?? exif.taken_at,
         latitude: target.exif.latitude ?? exif.latitude,
@@ -865,9 +877,9 @@ async function handleCropped(
     try {
         const path = await uploadInChunks(blob, mergedExif);
 
-        // De originele staged kopie hoort niet meer bij het zichtbare beeld;
-        // gooi 'm weg. De gecropte data-URL is klein genoeg om als preview te
-        // gebruiken zonder nieuwe stage-call.
+        // The original staged copy no longer matches the visible image; throw
+        // it away. The cropped data URL is small enough to use as a preview
+        // without a new stage call.
         if (target.stagedToken) {
             void NativeMedia.release(target.stagedToken);
             target.stagedToken = undefined;
@@ -899,8 +911,8 @@ onUnmounted(() => {
     Off(Events.Camera.VideoRecorded, handleVideoRecorded);
     Off(Events.Gallery.MediaSelected, handleMediaSelected);
 
-    // Vrijgeven van eventuele resterende staged kopieen — als de gebruiker de
-    // pagina verlaat zonder te posten, anders blijven ze op disk staan.
+    // Release any remaining staged copies — when the user leaves the page
+    // without posting, they would otherwise linger on disk.
     for (const item of items.value) {
         if (item.stagedToken) {
             void NativeMedia.release(item.stagedToken);
@@ -913,9 +925,9 @@ function buildOptimisticPost(): PostData {
     const first = items.value[0];
     const isVideo = first?.isVideo ?? false;
     const previewUrl = first?.preview ?? '';
-    // Voor video gebruiken we de native gegenereerde JPEG-thumbnail als
-    // poster terwijl de server de upload nog verwerkt — de video-URL zelf
-    // kan op dat moment nog niet als afbeelding renderen.
+    // For video we use the natively generated JPEG thumbnail as the poster
+    // while the server is still processing the upload — the video URL itself
+    // cannot render as an image at that point.
     const firstPoster = isVideo ? (first?.thumbnail ?? previewUrl) : previewUrl;
     const selectedCircles = circles.value
         .filter((c) => form.data.circle_ids.includes(c.id))
@@ -992,11 +1004,11 @@ async function submit(): Promise<void> {
     }
 
     try {
-        // Pak de echte post-id uit de response en swap die in de cache zodat
-        // de PostCard zijn id (de v-for key) behoudt over de eerstvolgende
-        // softRefresh heen. Zonder deze swap remount Vue de hele PostCard van
-        // `optimistic-…` naar `019e…` en flikkert de thumbnail weg tijdens
-        // het laden van de CDN poster.
+        // Take the real post id from the response and swap it into the cache
+        // so the PostCard keeps its id (the v-for key) across the next
+        // softRefresh. Without this swap Vue remounts the entire PostCard
+        // from `optimistic-…` to `019e…` and the thumbnail flickers away
+        // while the CDN poster loads.
         let realPostId: string | undefined;
 
         await form.post<{ data: { id: string } }>('/api/spa/posts', {
@@ -1007,9 +1019,9 @@ async function submit(): Promise<void> {
 
         haptics.notifySuccess();
 
-        // Vraag, zodra de gebruiker meer dan 5 posts heeft geplaatst, eenmalig
-        // om een app-review. Leest de echte posts_count van het profiel; de
-        // zojuist geplaatste post is daarin al meegeteld. Faalt stil.
+        // Once the user has shared more than 5 posts, ask for an app review a
+        // single time. Reads the real posts_count from the profile; the post
+        // that was just shared is already counted in it. Fails silently.
         void maybeRequestReview(auth.user?.username);
 
         if (optimistic && realPostId) {
@@ -1024,19 +1036,20 @@ async function submit(): Promise<void> {
                 );
             }
 
-            // Bewaar de native gegenereerde thumbnail onder de echte post-id
-            // zodat views die niet uit de feed-cache lezen (Profile, Notifications)
-            // 'm als fallback kunnen pakken zolang de CDN poster nog niet
-            // klaar is. Eerste item is bewust gekozen: Profile/Notifications
-            // tonen één representatieve thumbnail per post.
+            // Store the natively generated thumbnail under the real post id
+            // so views that don't read from the feed cache (Profile,
+            // Notifications) can use it as a fallback while the CDN poster
+            // isn't ready yet. The first item is chosen deliberately:
+            // Profile/Notifications show one representative thumbnail per
+            // post.
             const firstThumbnail = items.value[0]?.thumbnail;
 
             if (firstThumbnail) {
                 localThumbnails.set(realPostId, firstThumbnail);
             }
         } else {
-            // Geen id terug? Val terug op het oude gedrag: cache leegmaken
-            // zodat de eerstvolgende mount een verse fetch doet.
+            // No id returned? Fall back to the old behavior: clear the cache
+            // so the next mount does a fresh fetch.
             feedCache.invalidate('home');
 
             for (const circleId of targetCircleIds) {
@@ -1060,7 +1073,7 @@ async function submit(): Promise<void> {
                     : t('Please try again in :count seconds.', {
                           count: seconds,
                       });
-            // Endpoint pad zonder query/host zodat de dialog leesbaar blijft.
+            // Endpoint path without query/host so the dialog stays readable.
             const endpoint = error.url
                 ? (() => {
                       try {

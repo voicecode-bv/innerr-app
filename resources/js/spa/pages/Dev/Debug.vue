@@ -107,9 +107,9 @@ async function loadSecureStorage(): Promise<void> {
     }
 }
 
-// Vergeet de BFF-session server-side maar laat het token in de Keychain staan.
-// Bootst "sessie weg, token nog geldig" na: zet hierna vliegtuigmodus aan en
-// herstart de app om het reconnect-scherm te testen zonder herinstall.
+// Forget the BFF session server-side but leave the token in the Keychain.
+// Mimics "session gone, token still valid": afterwards enable airplane mode
+// and relaunch the app to test the reconnect screen without reinstalling.
 const forgettingSession = ref(false);
 
 async function forgetSession(): Promise<void> {

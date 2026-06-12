@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Validation\ValidationException;
 
 /**
- * BFF-only endpoint voor circle-photo upload — NativePhp Camera levert een
- * file:// pad dat alleen serverside leesbaar is.
+ * BFF-only endpoint for circle-photo upload — NativePhp Camera delivers a
+ * file:// path that is only readable server-side.
  */
 class CircleMediaController extends Controller
 {

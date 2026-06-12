@@ -231,9 +231,9 @@ watch(
             return;
         }
 
-        // Refresh baseline-snapshots zodat hasChanges altijd vergelijkt met
-        // de actuele post-state (anders blijven oude tag/person ids hangen
-        // tussen edit-sessies in op dezelfde gemounte modal).
+        // Refresh baseline snapshots so hasChanges always compares against
+        // the current post state (otherwise stale tag/person ids linger
+        // between edit sessions on the same mounted modal).
         initialCaption.value = props.caption ?? '';
         initialCircleIds.value = props.circles.map((c) => c.id);
         initialTagIds.value = (props.tags ?? []).map((tag) => tag.id);
@@ -299,7 +299,7 @@ async function handleButtonPressed(payload: {
         emit('deleted', props.postId);
         close();
     } catch {
-        // ignore — modal blijft open zodat de gebruiker opnieuw kan proberen
+        // ignore — the modal stays open so the user can try again
     } finally {
         isDeleting.value = false;
     }

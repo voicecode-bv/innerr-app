@@ -20,16 +20,16 @@ const circlesStore = useCirclesStore();
 const filter = useFeedFilterStore();
 
 const step = ref(1);
-// Bepaalt de richting van de slide-animatie: vooruit schuift de nieuwe stap
-// van rechts in, terug van links.
+// Determines the direction of the slide animation: forward slides the new
+// step in from the right, back from the left.
 const direction = ref<'forward' | 'back'>('forward');
 
 const persons = ref<Person[]>([]);
 const allCircles = ref<Circle[]>([]);
 
-// Begint op false zodat de balken op 0% renderen; na mount springt dit op true
-// en animeert ook de eerste stap zijn fill (een transition vanaf de
-// initiële render zelf vuurt niet).
+// Starts at false so the bars render at 0%; after mount this flips to true
+// and the first step animates its fill too (a transition from the initial
+// render itself doesn't fire).
 const indicatorReady = ref(false);
 
 const todayIso = new Date().toISOString().slice(0, 10);
@@ -54,8 +54,8 @@ onMounted(async () => {
     }
 });
 
-// Circle-ids waarin de in stap 1 gekozen personen daadwerkelijk zitten.
-// null = geen personen gekozen, dus geen beperking op de kringen.
+// Circle ids that the persons chosen in step 1 actually belong to.
+// null = no persons chosen, so no restriction on the circles.
 const allowedCircleIds = computed<Set<string> | null>(() => {
     if (filter.selectedPersonIds.length === 0) {
         return null;
@@ -85,8 +85,8 @@ const visibleCircles = computed<Circle[]>(() => {
     return allCircles.value.filter((circle) => allowed.has(circle.id));
 });
 
-// Deselecteer kringen die door de personen-filter zijn weggevallen, zodat we
-// niet op een kring filteren die niet meer in de lijst staat.
+// Deselect circles that the persons filter has dropped, so we never filter
+// on a circle that is no longer in the list.
 watch(visibleCircles, (circles) => {
     if (filter.selectedCircleIds.length === 0) {
         return;

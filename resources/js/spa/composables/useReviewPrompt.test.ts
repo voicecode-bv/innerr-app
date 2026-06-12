@@ -37,7 +37,7 @@ beforeEach(() => {
     window.localStorage.clear();
     bridgeCall.mockReset();
     apiGet.mockReset();
-    // Native runtime zodat de bridge-call überhaupt geprobeerd wordt.
+    // Native runtime so the bridge call is attempted at all.
     setUrl('http://127.0.0.1/feed');
 });
 

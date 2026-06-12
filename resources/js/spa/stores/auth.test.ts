@@ -24,8 +24,8 @@ vi.mock('@/spa/composables/useSecureStorage', () => ({
     },
 }));
 
-// Cache-stores die `clear()` aanroept; geïsoleerd weggemockt zodat deze test
-// niet afhangt van het badge-plugin of externalApi.
+// Cache stores that `clear()` calls; mocked away in isolation so this test
+// does not depend on the badge plugin or externalApi.
 const cacheStore = () => () => ({ clear: vi.fn() });
 
 vi.mock('@/spa/stores/circles', () => ({ useCirclesStore: cacheStore() }));

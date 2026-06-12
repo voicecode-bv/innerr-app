@@ -62,11 +62,11 @@ export function useVideoFullscreen(
         isFullscreen.value = !!document.fullscreenElement;
     }
 
-    // iOS' webkitEnterFullscreen() vuurt geen `fullscreenchange` op document,
-    // alleen `webkitbeginfullscreen` / `webkitendfullscreen` op het video-
-    // element zelf. Zonder deze sync blijft isFullscreen=true hangen wanneer
-    // iOS' eigen "Done"-knop fullscreen sluit, waardoor main.style.overflow
-    // op 'hidden' blijft staan en de feed niet meer scrollbaar is.
+    // iOS' webkitEnterFullscreen() does not fire `fullscreenchange` on
+    // document, only `webkitbeginfullscreen` / `webkitendfullscreen` on the
+    // video element itself. Without this sync, isFullscreen=true gets stuck
+    // when iOS' own "Done" button closes fullscreen, leaving
+    // main.style.overflow at 'hidden' and the feed no longer scrollable.
     function onWebkitBeginFullscreen(): void {
         isFullscreen.value = true;
     }

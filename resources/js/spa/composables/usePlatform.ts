@@ -7,12 +7,12 @@ const isMobile = ref(false);
 const isReady = ref(false);
 let detectionPromise: Promise<void> | null = null;
 
-// Synchroon native-runtime signaal voor code die niet op de async bridge-probe
-// kan wachten (zoals de router die de history-mode al bij module-load kiest).
-// De NativePHP-webview serveert de app via php://127.0.0.1 (iOS) of
-// http://127.0.0.1 (Android); web/desktop draait op een echt domein. We leunen
-// bewust niet op window.__nativephp — die vlag wordt in de huidige runtime niet
-// meer gezet.
+// Synchronous native-runtime signal for code that cannot wait for the async
+// bridge probe (such as the router, which picks the history mode at module
+// load). The NativePHP webview serves the app via php://127.0.0.1 (iOS) or
+// http://127.0.0.1 (Android); web/desktop runs on a real domain. We
+// deliberately do not rely on window.__nativephp — that flag is no longer
+// set in the current runtime.
 export function isNativeRuntime(): boolean {
     if (typeof window === 'undefined') {
         return false;
@@ -52,7 +52,7 @@ async function detect(): Promise<void> {
         isAndroid.value = android || fallback.android;
         isMobile.value = mobile || fallback.mobile;
     } catch {
-        // Geen NativePHP-bridge beschikbaar — val terug op user-agent-detectie.
+        // No NativePHP bridge available — fall back to user-agent detection.
         isIos.value = fallback.ios;
         isAndroid.value = fallback.android;
         isMobile.value = fallback.mobile;

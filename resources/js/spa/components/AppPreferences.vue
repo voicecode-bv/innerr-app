@@ -54,7 +54,7 @@ async function setLocale(locale: string): Promise<void> {
     try {
         await externalApi.put('/profile', { locale });
     } catch {
-        // i18n is al lokaal toegepast; volgende bootstrap synct met server.
+        // i18n is already applied locally; next bootstrap syncs with server.
     }
 }
 </script>

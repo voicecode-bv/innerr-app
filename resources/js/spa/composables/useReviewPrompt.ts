@@ -2,21 +2,21 @@ import { isNativeRuntime } from '@/spa/composables/usePlatform';
 import { externalApi } from '@/spa/http/externalApi';
 import { BridgeCall } from '@nativephp/mobile';
 
-// Drempels waarboven we de gebruiker om een review vragen:
-// - meer dan 5 geplaatste posts (dus vanaf 6), of
-// - 5 of meer gegeven likes, of
-// - 5 of meer geplaatste comments.
+// Thresholds above which we ask the user for a review:
+// - more than 5 published posts (so starting at 6), or
+// - 5 or more likes given, or
+// - 5 or more comments posted.
 const POSTS_THRESHOLD = 5;
 const LIKES_THRESHOLD = 5;
 const COMMENTS_THRESHOLD = 5;
 
-// Eenmalige vlag in localStorage. Zodra we de review hebben aangevraagd vragen
-// we het nooit meer aan en stoppen we ook met het ophalen van de tellingen.
+// One-time flag in localStorage. Once we have requested the review we never
+// ask again and we also stop fetching the counts.
 const REQUESTED_KEY = 'spa.review.requested';
 
 interface ProfileCounts {
     posts_count: number;
-    // Alleen aanwezig op het eigen profiel; ontbreekt bij een oudere API.
+    // Only present on the user's own profile; missing on an older API.
     likes_count?: number;
     comments_count?: number;
 }
@@ -42,22 +42,22 @@ function meetsThreshold(counts: ProfileCounts): boolean {
 }
 
 /**
- * Vraag de native in-app review flow aan (Google Play / App Store). De OS-laag
- * bepaalt zelf of en hoe vaak het dialoog daadwerkelijk verschijnt.
+ * Request the native in-app review flow (Google Play / App Store). The OS
+ * layer decides for itself whether and how often the dialog actually
+ * appears.
  */
 async function requestReview(): Promise<void> {
     await BridgeCall('InAppReviews.RequestReview', {});
 }
 
 /**
- * Vraag, op basis van de werkelijke activiteit van de gebruiker, eenmalig om een
- * app-review zodra die genoeg posts heeft geplaatst of genoeg heeft geliket /
- * gereageerd.
+ * Based on the user's actual activity, ask once for an app review as soon
+ * as they have published enough posts or liked / commented enough.
  *
- * Roep dit aan in het success-pad van posten, liken en reageren. De profielcall
- * gebeurt alleen zolang we nog niet hebben gevraagd én in de native runtime,
- * zodat web/desktop en al-geprompte gebruikers geen extra netwerkronde maken.
- * Faalt stil zodat het de actie nooit kan breken.
+ * Call this in the success path of posting, liking, and commenting. The
+ * profile call only happens while we haven't asked yet and in the native
+ * runtime, so web/desktop and already-prompted users don't make an extra
+ * network round trip. Fails silently so it can never break the action.
  */
 export async function maybeRequestReview(
     username: string | null | undefined,
@@ -73,12 +73,12 @@ export async function maybeRequestReview(
             return;
         }
 
-        // Markeer eerst als aangevraagd zodat een mislukte bridge-call niet bij
-        // elke volgende actie opnieuw probeert te promoten.
+        // Mark as requested first so a failed bridge call doesn't try to
+        // prompt again on every subsequent action.
         window.localStorage?.setItem(REQUESTED_KEY, '1');
         await requestReview();
     } catch {
-        // Geen native bridge, geen netwerk of geen storage: stil overslaan.
+        // No native bridge, no network, or no storage: skip silently.
     }
 }
 

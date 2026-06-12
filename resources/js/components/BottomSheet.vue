@@ -35,9 +35,9 @@ const keyboardOpen = ref(false);
 const dragOffset = ref(0);
 const isDragging = ref(false);
 const mounted = ref(false);
-// Aparte visuele open-state. We willen dat het sheet-element eerst een
-// frame in `translate-y-full` rendert voordat we naar 0 transitionen,
-// anders verschijnt de sheet op de allereerste open zonder animatie.
+// Separate visual open state. We want the sheet element to first render a
+// frame in `translate-y-full` before transitioning to 0, otherwise the
+// sheet appears without animation on the very first open.
 const displayOpen = ref(false);
 
 let dragStartY = 0;
@@ -72,13 +72,13 @@ function unlockBodyScroll() {
     document.documentElement.style.overflow = savedHtmlOverflow;
 }
 
-// iOS WKWebView blijft scroll-gestures door-routeren naar de achterliggende
-// pagina ondanks `overflow:hidden` en `overscroll-behavior:contain`. We
-// onderscheppen daarom alle touchmoves in capture-phase:
-// - Buiten de sheet → altijd blokkeren.
-// - Binnen de sheet → alleen blokkeren wanneer de gebruiker probeert verder
-// te scrollen dan de inhoud toelaat (iNoBounce-patroon), zodat de bounce
-// niet doorlekt naar de feed.
+// iOS WKWebView keeps routing scroll gestures through to the page behind
+// despite `overflow:hidden` and `overscroll-behavior:contain`. So we
+// intercept all touchmoves in the capture phase:
+// - Outside the sheet → always block.
+// - Inside the sheet → only block when the user tries to scroll beyond
+// what the content allows (iNoBounce pattern), so the bounce does not
+// leak through to the feed.
 let touchStartY = 0;
 let touchStartX = 0;
 
@@ -164,8 +164,8 @@ function blockBackgroundTouchMove(event: TouchEvent): void {
     const scrollEl = findScrollableAncestor(target);
 
     if (!scrollEl) {
-        // Target zit binnen de sheet maar in een niet-scrollbaar gedeelte
-        // (bv. footer met input) — niets bewegen.
+        // Target is inside the sheet but in a non-scrollable section
+        // (e.g. footer with input) — don't move anything.
         event.preventDefault();
 
         return;
@@ -393,10 +393,10 @@ watch(
             if (isOpen) {
                 savedMainOverflow = scrollContainer.style.overflow;
                 savedMainTouchAction = scrollContainer.style.touchAction;
-                // iOS WKWebView negeert `overflow: hidden` op een momentum-
-                // scrollend element. `touch-action: none` blokkeert wel
-                // betrouwbaar alle touch-gestuurde scroll en stopt ook lopende
-                // momentum-scroll, zodat de feed niet doorlekt onder de sheet.
+                // iOS WKWebView ignores `overflow: hidden` on a momentum-
+                // scrolling element. `touch-action: none` does reliably block
+                // all touch-driven scrolling and also stops in-flight
+                // momentum scroll, so the feed doesn't leak under the sheet.
                 scrollContainer.style.overflow = 'hidden';
                 scrollContainer.style.touchAction = 'none';
             } else {

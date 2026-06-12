@@ -5,9 +5,9 @@ import { useCirclesStore } from '@/spa/stores/circles';
 import { useInviteIntentStore } from '@/spa/stores/inviteIntent';
 
 /**
- * Roep `redirectAfterAuth(fallback)` aan na een succesvolle login/register/OAuth-callback.
- * Als er een pending invite-token is (stored in localStorage of als `?invite=` query),
- * wordt die geredeem'd en de gebruiker naar de circle gestuurd; anders gaat hij naar de fallback.
+ * Call `redirectAfterAuth(fallback)` after a successful login/register/OAuth callback.
+ * If there is a pending invite token (stored in localStorage or as `?invite=` query),
+ * it is redeemed and the user is sent to the circle; otherwise they go to the fallback.
  */
 export function useInviteRedeem() {
     const route = useRoute();
@@ -46,8 +46,8 @@ export function useInviteRedeem() {
             await circles.refresh();
             await router.replace(`/circles/${result.circle.id}`);
         } catch (error) {
-            // 410 (verlopen/ingetrokken/vol) of andere fout — val terug op normale redirect.
-            // Token expliciet schoonmaken zodat we niet eindeloos blijven retryen.
+            // 410 (expired/revoked/full) or another error — fall back to the normal redirect.
+            // Clear the token explicitly so we don't keep retrying forever.
             inviteIntent.clear();
 
             if (!(error instanceof ApiError)) {

@@ -10,8 +10,8 @@ const FRESH_TTL_MS = 2 * 60 * 1000;
 export const usePostCacheStore = defineStore('spa-post-cache', {
     state: () => ({
         // shape: Record<postId, CacheEntry<unknown>>
-        // Using `unknown` zodat de page zelf het type van Post bezit zonder
-        // hier te hoeven importeren — voorkomt circular deps.
+        // Using `unknown` so the page itself owns the Post type without
+        // having to import it here — prevents circular deps.
         entries: {} as Record<string, CacheEntry<unknown>>,
     }),
     actions: {

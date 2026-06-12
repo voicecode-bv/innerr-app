@@ -1,28 +1,29 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 
 /**
- * De post-detailpagina rendert als een overlay bovenop de pagina waarvandaan
- * hij geopend werd: de achtergrond (meestal de feed) blijft gemount zodat zijn
- * scroll-positie behouden blijft, terwijl de URL, de back-knop en deeplinks
- * gewoon blijven werken omdat het nog steeds een echte route is.
+ * The post detail page renders as an overlay on top of the page it was
+ * opened from: the background (usually the feed) stays mounted so its
+ * scroll position is preserved, while the URL, the back button, and
+ * deeplinks keep working because it is still a real route.
  */
 export const POST_DETAIL_ROUTE_NAME = 'spa.posts.show';
 
 type RouteNameLike = Pick<RouteLocationNormalizedLoaded, 'name'>;
 
-/** Of de gegeven route de post-detail-overlay is. */
+/** Whether the given route is the post detail overlay. */
 export function isPostDetailRoute(route: RouteNameLike): boolean {
     return route.name === POST_DETAIL_ROUTE_NAME;
 }
 
 /**
- * Welke achtergrond-locatie de overlay moet onthouden wanneer hij opent.
+ * Which background location the overlay should remember when it opens.
  *
- * - `undefined` → niets wijzigen: we openen geen overlay, of we springen van
- *   post naar post zonder de backdrop eronder te verstoren.
- * - een `string` → het `fullPath` van de pagina waarvandaan we de overlay openen.
- * - `null` → directe deeplink zonder echte vorige pagina; de overlay valt dan
- *   terug op de feed als backdrop (zie de `?? '/'`-fallback bij het renderen).
+ * - `undefined` → change nothing: we are not opening an overlay, or we jump
+ *   from post to post without disturbing the backdrop underneath.
+ * - a `string` → the `fullPath` of the page we open the overlay from.
+ * - `null` → direct deeplink without a real previous page; the overlay then
+ *   falls back to the feed as backdrop (see the `?? '/'` fallback when
+ *   rendering).
  */
 export function backgroundPathOnOverlayEnter(
     to: RouteNameLike,

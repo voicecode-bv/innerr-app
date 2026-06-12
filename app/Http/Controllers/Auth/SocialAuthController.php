@@ -25,9 +25,9 @@ class SocialAuthController extends Controller
             return $this->redirectToCallback(['error' => 'missing_token']);
         }
 
-        // Validatie hier zodat we duidelijk falen voordat de auth-sheet sluit.
-        // De SPA krijgt het token via de deeplink en bewaart het zelf in de
-        // Keychain — de WKWebView en deze auth-sessie delen geen cookies.
+        // Validate here so we fail clearly before the auth sheet closes.
+        // The SPA receives the token via the deeplink and stores it in the
+        // Keychain itself — the WKWebView and this auth session share no cookies.
         $this->apiClient->storeToken($token);
         $result = $this->apiClient->validateToken();
         $this->apiClient->clearToken();
@@ -47,8 +47,8 @@ class SocialAuthController extends Controller
         $scheme = config('nativephp.deeplink_scheme');
 
         if (! is_string($scheme) || $scheme === '') {
-            // Geen scheme geconfigureerd (bijv. web-omgeving) → val terug op
-            // een interne route zodat de browser-flow blijft werken.
+            // No scheme configured (e.g. web environment) → fall back to
+            // an internal route so the browser flow keeps working.
             return isset($params['error'])
                 ? redirect('/login?oauth_error='.urlencode($params['error']))
                 : redirect('/?oauth=success');

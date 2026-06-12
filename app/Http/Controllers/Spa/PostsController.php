@@ -14,19 +14,19 @@ use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 /**
- * BFF-only endpoint voor post-creation — NativePhp Camera levert een file://
- * pad dat alleen serverside leesbaar is en als multipart naar de externe API
- * moet (WKWebView strips multipart-bodies).
+ * BFF-only endpoint for post-creation — NativePhp Camera delivers a file://
+ * path that is only readable server-side and must go to the external API as
+ * multipart (WKWebView strips multipart bodies).
  *
- * Ondersteunt zowel single (legacy `media_path`) als multi (`media_paths[]` +
- * optioneel `media_metadata[]`). EXIF per item komt uit `media_metadata` of
- * valt terug op de `.exif.json` sidecar naast het bestand.
+ * Supports both single (legacy `media_path`) and multi (`media_paths[]` +
+ * optional `media_metadata[]`). Per-item EXIF comes from `media_metadata` or
+ * falls back to the `.exif.json` sidecar next to the file.
  *
- * Videos lopen via een chunked upload flow: het BFF stream-leest het lokale
- * file:// pad in `UPLOAD_CHUNK_BYTES`-stukjes naar `/api/uploads/{id}/chunk`,
- * wisselt op finalize het verkregen `upload_token` in via het `media_token(s)`
- * veld op `/api/posts`. Zo blijft elk individueel HTTP-request klein genoeg
- * voor de huidige api-client timeout en geheugens, ook bij 200+ MB clips.
+ * Videos go through a chunked upload flow: the BFF stream-reads the local
+ * file:// path in `UPLOAD_CHUNK_BYTES` pieces to `/api/uploads/{id}/chunk`,
+ * and on finalize redeems the obtained `upload_token` via the `media_token(s)`
+ * field on `/api/posts`. This keeps each individual HTTP request small enough
+ * for the current api-client timeout and memory limits, even for 200+ MB clips.
  */
 class PostsController extends Controller
 {
@@ -35,17 +35,17 @@ class PostsController extends Controller
     private const EXIF_KEYS = ['taken_at', 'latitude', 'longitude'];
 
     /**
-     * Per-chunk timeout voor BFF → externe API. Op trage cellulaire netwerken
-     * kan een 4 MB chunk een paar tientallen seconden duren; we geven ruim
-     * budget zodat één hapering geen abort triggert. De `api-client.timeout`
-     * config blijft 15s voor reguliere requests.
+     * Per-chunk timeout for BFF → external API. On slow cellular networks
+     * a 4 MB chunk can take a few dozen seconds; we give ample budget so
+     * a single hiccup doesn't trigger an abort. The `api-client.timeout`
+     * config stays at 15s for regular requests.
      */
     private const CHUNK_HTTP_TIMEOUT = 120;
 
     /**
-     * Mime types die we via chunked upload routen ipv multipart-attach. Foto's
-     * passen meestal in één request en de bestaande multipart code is daar al
-     * op afgestemd; chunked uploaden voor foto's voegt enkel overhead toe.
+     * Mime types we route via chunked upload instead of multipart attach. Photos
+     * usually fit in a single request and the existing multipart code is already
+     * tuned for that; chunked uploading for photos only adds overhead.
      */
     private const CHUNKED_MIME_PREFIXES = ['video/'];
 
@@ -77,7 +77,7 @@ class PostsController extends Controller
             'person_ids.*' => ['uuid'],
         ]);
 
-        // Normaliseer naar array — interne logica heeft één codepad.
+        // Normalize to an array — internal logic has a single code path.
         $isLegacySingle = ! isset($validated['media_paths']);
         $paths = $isLegacySingle ? [$validated['media_path']] : array_values($validated['media_paths']);
         $inlineMetadata = $validated['media_metadata'] ?? [];
@@ -111,9 +111,9 @@ class PostsController extends Controller
             $data['quote_author'] = $validated['quote_author'] ?? null;
         }
 
-        // Single-file pad behoudt de huidige externe API-shape (top-level
-        // EXIF + single `media` veld) zodat dit blijft werken zonder dat de
-        // externe API direct multi-support nodig heeft.
+        // Single-file path keeps the current external API shape (top-level
+        // EXIF + single `media` field) so this keeps working without the
+        // external API needing multi-support right away.
         if (count($paths) === 1) {
             foreach (self::EXIF_KEYS as $key) {
                 if ($perItemExif[0][$key] ?? null) {
@@ -176,7 +176,7 @@ class PostsController extends Controller
     }
 
     /**
-     * Multipart attach path — voor afbeeldingen die in één request passen.
+     * Multipart attach path — for images that fit in a single request.
      *
      * @param  list<string>  $paths
      * @param  array<string, mixed>  $data
@@ -215,8 +215,8 @@ class PostsController extends Controller
     }
 
     /**
-     * Chunked upload path: chunked POST naar `/api/uploads/{id}/chunk`,
-     * verzilver de upload_token(s) via `/api/posts` zonder een multipart body.
+     * Chunked upload path: chunked POST to `/api/uploads/{id}/chunk`,
+     * redeem the upload_token(s) via `/api/posts` without a multipart body.
      *
      * @param  list<string>  $paths
      * @param  list<string>  $mimeTypes
@@ -241,8 +241,8 @@ class PostsController extends Controller
 
             $response = $this->apiClient->authenticated()->post('/posts', $data);
 
-            // De API ruimt geconsumeerde sessions zelf op bij een 2xx; alleen
-            // bij non-2xx moeten wij hier nog een abort sturen.
+            // The API cleans up consumed sessions itself on a 2xx; only
+            // on a non-2xx do we still need to send an abort here.
             if (! $response->successful()) {
                 $this->abortSessions($sessionIdsToAbort);
             }
@@ -256,10 +256,10 @@ class PostsController extends Controller
     }
 
     /**
-     * Initialiseer een upload-session bij de externe API en stream `$path` in
-     * chunks van `chunk_size` bytes naar `/api/uploads/{id}/chunk`. Geeft
-     * `[upload_token, session_id]` terug; bij faal wordt de session aan de
-     * binnenkant al geaborted.
+     * Initialize an upload session with the external API and stream `$path` in
+     * chunks of `chunk_size` bytes to `/api/uploads/{id}/chunk`. Returns
+     * `[upload_token, session_id]`; on failure the session is already aborted
+     * internally.
      *
      * @return array{0: string, 1: string}
      */
@@ -344,9 +344,9 @@ class PostsController extends Controller
 
     private function postChunk(string $uploadId, int $sequence, string $bytes, bool $isFinal, string $mimeType): Response
     {
-        // Wrap raw bytes in een memory-resource zodat we geen tempfile per chunk
-        // hoeven te schrijven. Het PendingRequest gebruikt Guzzle multipart en
-        // verbruikt de stream lazy.
+        // Wrap raw bytes in a memory resource so we don't have to write a
+        // tempfile per chunk. The PendingRequest uses Guzzle multipart and
+        // consumes the stream lazily.
         $stream = fopen('php://temp', 'r+');
 
         if ($stream === false) {
@@ -382,7 +382,7 @@ class PostsController extends Controller
             try {
                 $this->apiClient->authenticated()->delete("/uploads/{$id}");
             } catch (\Throwable) {
-                // Best-effort; serverside GC ruimt anders later op.
+                // Best-effort; otherwise server-side GC cleans up later.
             }
         }
     }
@@ -469,8 +469,8 @@ class PostsController extends Controller
             return $isLegacySingle ? 'media_path' : 'media_paths.0';
         }
 
-        // External API returns errors like `media.0` / `media.0.foo` — map naar
-        // `media_paths.0` zodat de client de juiste slide kan markeren.
+        // External API returns errors like `media.0` / `media.0.foo` — map to
+        // `media_paths.0` so the client can flag the correct slide.
         if (str_starts_with($field, 'media.')) {
             return 'media_paths.'.substr($field, strlen('media.'));
         }

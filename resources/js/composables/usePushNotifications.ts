@@ -33,7 +33,7 @@ async function sendToken(token: string): Promise<void> {
 
         await externalApi.post('/device-token', payload);
     } catch {
-        // Niet kritiek; volgende app-launch of token-rotatie probeert opnieuw.
+        // Not critical; the next app launch or token rotation retries.
     }
 }
 
@@ -52,14 +52,14 @@ export function usePushNotifications(): void {
         }
 
         try {
-            // Returns de token-string zelf (of null) — niet een { token } object.
+            // Returns the token string itself (or null) — not a { token } object.
             const token = await PushNotifications.getToken();
 
             if (token) {
                 await sendToken(token);
             }
         } catch {
-            // Geen permission of bridge niet beschikbaar — niets te doen.
+            // No permission or bridge unavailable — nothing to do.
         }
     }
 
@@ -68,8 +68,8 @@ export function usePushNotifications(): void {
         void syncCurrentToken();
     });
 
-    // Login binnen dezelfde session: zodra er een user verschijnt, alsnog token
-    // doorzetten zonder dat de gebruiker opnieuw door onboarding hoeft.
+    // Login within the same session: as soon as a user appears, forward the
+    // token anyway without the user having to go through onboarding again.
     const stopWatcher = watch(
         () => auth.user?.id ?? null,
         (newId, oldId) => {

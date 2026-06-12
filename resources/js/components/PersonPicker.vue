@@ -154,7 +154,7 @@ function toggle(personId: string) {
         </div>
 
         <div v-if="!isCollapsed && persons.length === 0" class="text-ink-muted">
-            {{ t('No persons yet. Add them in Settings → Persons.') }}
+            {{ t('No persons yet. Add them in Settings under Children.') }}
         </div>
 
         <template v-else-if="!isCollapsed">
@@ -309,7 +309,7 @@ function toggle(personId: string) {
     scrollbar-width: none;
 }
 
-/* Verberg de native zoek-clear-knop; we tonen onze eigen clear-knop. */
+/* Hide the native search clear button; we show our own clear button. */
 input[type='search']::-webkit-search-cancel-button {
     -webkit-appearance: none;
     appearance: none;

@@ -40,7 +40,7 @@ async function loadUnreadCount(): Promise<void> {
     try {
         await notificationsStore.refresh();
     } catch {
-        // negeren — badge blijft op laatst bekende waarde
+        // ignore — badge stays at the last known value
     }
 }
 
@@ -103,8 +103,8 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 onMounted(loadUnreadCount);
 
 async function onPushPermissionChanged(): Promise<void> {
-    // Nadat de gebruiker de native prompt heeft beantwoord — granted óf denied
-    // — willen we een verse feed tonen zonder visuele schok.
+    // After the user has answered the native prompt — granted or denied — we
+    // want to show a fresh feed without a visual jolt.
     feedCache.invalidate(FEED_KEY);
     await feed.softRefresh();
 }

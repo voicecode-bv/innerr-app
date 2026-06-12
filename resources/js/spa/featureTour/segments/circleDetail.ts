@@ -12,9 +12,9 @@ export function circleDetailSegment(): TourSegment {
             const circlesStore = useCirclesStore();
             const first = circlesStore.items?.[0];
 
-            // Geen kringen → segment overslaan. Onboarding zorgt normaal voor
-            // minstens één kring, maar dit beschermt tegen edge-cases zoals
-            // verlaten-en-niet-vervangen.
+            // No circles → skip the segment. Onboarding normally ensures at
+            // least one circle, but this guards against edge cases such as
+            // left-and-not-replaced.
             if (!first) {
                 return null;
             }

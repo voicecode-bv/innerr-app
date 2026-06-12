@@ -8,8 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Photo-map JSON proxies — PhotoMap component fetcht zonder bearer-headers,
- * dus session-cookie auth via deze BFF is hier het simpelste pad.
+ * Photo-map JSON proxies — the PhotoMap component fetches without bearer headers,
+ * so session-cookie auth via this BFF is the simplest path here.
  */
 class MapController extends Controller
 {

@@ -42,12 +42,12 @@ type AuthStatus = 'authenticated' | 'unreachable' | 'unauthenticated';
 interface BootstrapPayload {
     user: User | null;
     token: string | null;
-    // 'authenticated'   -> user bevestigd, render de app.
-    // 'unreachable'      -> token nog geldig maar externe API onbereikbaar; toon
-    //                       het reconnect-scherm i.p.v. uitloggen.
-    // 'unauthenticated'  -> definitief uitgelogd (geen/afgewezen token).
-    // Optioneel voor forward-compat: ontbreekt het veld, dan leiden we het af
-    // uit de aanwezigheid van `user`.
+    // 'authenticated'   -> user confirmed, render the app.
+    // 'unreachable'      -> token still valid but external API unreachable; show
+    //                       the reconnect screen instead of logging out.
+    // 'unauthenticated'  -> definitively logged out (no/rejected token).
+    // Optional for forward-compat: if the field is missing, we derive it from
+    // the presence of `user`.
     auth_status?: AuthStatus;
     locale: string;
     api_base: string;
@@ -62,30 +62,30 @@ export const useAuthStore = defineStore('spa-auth', {
         apiBase: '' as string,
         appVersion: '' as string,
         socialAuthUrls: { google: '', apple: '' },
-        // True wanneer we een token vasthouden maar de bootstrap de gebruiker
-        // niet kon bevestigen omdat de externe API onbereikbaar was. De app
-        // toont dan het reconnect-scherm i.p.v. de gebruiker naar login te
-        // sturen; een geldig token leidt nooit tot een gedwongen re-login.
+        // True when we hold a token but the bootstrap could not confirm the
+        // user because the external API was unreachable. The app then shows
+        // the reconnect screen instead of sending the user to login; a valid
+        // token never leads to a forced re-login.
         awaitingConnection: false,
-        // True wanneer de Keychain-bridge bij een cold-start geen definitief
-        // antwoord gaf: er kan een geldig token bestaan dat we (nog) niet konden
-        // lezen. We behandelen dit NOOIT als "uitgelogd" maar tonen het
-        // reconnect-scherm, dat de Keychain-lees opnieuw probeert.
+        // True when the Keychain bridge gave no definitive answer during a
+        // cold start: a valid token may exist that we could not (yet) read.
+        // We NEVER treat this as "logged out" but show the reconnect screen,
+        // which retries the Keychain read.
         storageUnavailable: false,
     }),
     actions: {
-        // Leest het token uit de Keychain en zet `storageUnavailable` als de
-        // bridge geen definitief antwoord gaf. Wordt vroeg in `main.ts`
-        // aangeroepen (vóór de BFF bootstrap) en opnieuw door het reconnect-
-        // scherm, zodat een aanvankelijk mislukte lees alsnog kan herstellen
-        // i.p.v. de gebruiker uit te loggen.
+        // Reads the token from the Keychain and sets `storageUnavailable` if
+        // the bridge gave no definitive answer. Called early in `main.ts`
+        // (before the BFF bootstrap) and again by the reconnect screen, so an
+        // initially failed read can still recover instead of logging the user
+        // out.
         async restoreFromStorage(): Promise<void> {
             this.storageUnavailable = false;
             await this.restoreToken();
         },
-        // Wordt vroeg aangeroepen zodat externalApi al een Bearer kan sturen
-        // tijdens cold-start. Een onleesbare bridge zet `storageUnavailable`
-        // i.p.v. het token als afwezig te behandelen.
+        // Called early so externalApi can already send a Bearer during cold
+        // start. An unreadable bridge sets `storageUnavailable` instead of
+        // treating the token as absent.
         async restoreToken(): Promise<void> {
             try {
                 const stored = await secureStorage.get(TOKEN_KEY);
@@ -106,45 +106,45 @@ export const useAuthStore = defineStore('spa-auth', {
         async bootstrap(): Promise<BootstrapPayload> {
             const data = await api.get<BootstrapPayload>('/api/spa/bootstrap');
 
-            // api_base/app_version/social_auth_urls komen uit server-config en
-            // zijn er altijd, ongeacht auth-status; meteen overnemen.
+            // api_base/app_version/social_auth_urls come from server config and
+            // are always present regardless of auth status; adopt immediately.
             this.apiBase = data.api_base;
             this.appVersion = data.app_version;
             this.socialAuthUrls = data.social_auth_urls;
 
-            // Forward-compat: leid de status af als de BFF het veld (nog) niet
-            // meestuurt.
+            // Forward-compat: derive the status if the BFF does not (yet) send
+            // the field.
             const status: AuthStatus =
                 data.auth_status ??
                 (data.user ? 'authenticated' : 'unauthenticated');
 
-            // Token nooit hier wissen: bij een cold-start kan `restoreToken()`
-            // even gefaald hebben (Keychain nog niet leesbaar). Alleen bij een
-            // expliciete logout of een definitieve afwijzing verdwijnt het token.
+            // Never clear the token here: on a cold start `restoreToken()` may
+            // have failed briefly (Keychain not yet readable). The token only
+            // disappears on an explicit logout or a definitive rejection.
             if (data.token) {
                 this.token = data.token;
                 await secureStorage.set(TOKEN_KEY, data.token);
             }
 
             if (status === 'unreachable') {
-                // Externe API onbereikbaar maar token nog geldig. Niet uitloggen:
-                // markeer dat we op verbinding wachten zodat de app het reconnect-
-                // scherm toont en het opnieuw probeert.
+                // External API unreachable but token still valid. Do not log
+                // out: mark that we are waiting for a connection so the app
+                // shows the reconnect screen and retries.
                 this.awaitingConnection = !!this.token;
 
                 return data;
             }
 
-            // authenticated of unauthenticated: de status is definitief bevestigd.
+            // authenticated or unauthenticated: the status is definitively confirmed.
             this.awaitingConnection = false;
 
             if (status === 'unauthenticated') {
                 this.user = null;
 
-                // Konden we de Keychain niet lezen, dan is deze "unauthenticated"
-                // niet te vertrouwen: er ging geen Bearer mee. Blijf in reconnect-
-                // stand zodat het overlay de Keychain-lees blijft proberen i.p.v.
-                // de gebruiker naar welkom/login te sturen.
+                // If we could not read the Keychain, this "unauthenticated" is
+                // not to be trusted: no Bearer was sent along. Stay in reconnect
+                // mode so the overlay keeps retrying the Keychain read instead
+                // of sending the user to welcome/login.
                 if (this.storageUnavailable) {
                     this.awaitingConnection = true;
                 }
@@ -206,23 +206,22 @@ export const useAuthStore = defineStore('spa-auth', {
             try {
                 await api.post('/api/spa/auth/logout');
             } finally {
-                // Expliciete logout: het durable token mag nu wel weg.
+                // Explicit logout: the durable token may now be removed.
                 this.clear(true);
             }
         },
-        // Houden we sync zodat http-client `clear: () => void` callbacks blijven
-        // werken; de Keychain-wipe is fire-and-forget.
+        // Kept sync so http-client `clear: () => void` callbacks keep working;
+        // the Keychain wipe is fire-and-forget.
         //
-        // `forgetToken` wist het token uit de Keychain. Standaard false: een 401
-        // (transient of door een verlopen token) mag het durable token NIET
-        // verwijderen, anders verandert een tijdelijke leesfout na een herstart
-        // in een permanente uitlog. Alleen een expliciete logout zet dit op true.
+        // `forgetToken` erases the token from the Keychain. Default false: a 401
+        // (transient or due to an expired token) must NOT delete the durable
+        // token, otherwise a temporary read failure after a restart turns into
+        // a permanent logout. Only an explicit logout sets this to true.
         clear(forgetToken = false): void {
             this.user = null;
             this.token = null;
-            // Een 401 (of logout) is een definitieve auth-uitkomst, geen
-            // verbindings- of opslagprobleem: nooit in reconnect-stand blijven
-            // hangen.
+            // A 401 (or logout) is a definitive auth outcome, not a connection
+            // or storage problem: never stay stuck in reconnect mode.
             this.awaitingConnection = false;
             this.storageUnavailable = false;
 
@@ -230,8 +229,8 @@ export const useAuthStore = defineStore('spa-auth', {
                 void secureStorage.delete(TOKEN_KEY);
             }
 
-            // Resource-caches leegmaken zodat een volgende sessie/gebruiker
-            // niet stale data ziet.
+            // Empty resource caches so a next session/user does not see stale
+            // data.
             useCirclesStore().clear();
             usePersonsStore().clear();
             useTagsStore().clear();

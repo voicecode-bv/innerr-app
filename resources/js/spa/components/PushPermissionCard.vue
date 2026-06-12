@@ -17,16 +17,16 @@ type PermissionStatus =
 
 const props = withDefaults(
     defineProps<{
-        // Wanneer true verschijnt een sluitknop en wordt de keuze in localStorage
-        // bewaard, zodat de card op die plek niet meer terugkomt. Ergens als de
-        // pagina zelf het primaire onderwerp is (bv. Settings) hou je dit op false.
+        // When true a close button appears and the choice is persisted in
+        // localStorage, so the card never returns in that spot. Where the
+        // page itself is the primary subject (e.g. Settings) keep this false.
         dismissible?: boolean;
     }>(),
     { dismissible: false },
 );
 
-// Vuurt nadat de gebruiker de native permission-prompt heeft beantwoord
-// (granted óf denied) zodat een parent kan reageren — bv. een feed verversen.
+// Fires after the user has answered the native permission prompt (granted
+// or denied) so a parent can react — e.g. refresh a feed.
 const emit = defineEmits<{
     'permission-changed': [PermissionStatus];
 }>();
@@ -58,8 +58,8 @@ function dismiss(): void {
     try {
         window.localStorage?.setItem(DISMISSED_STORAGE_KEY, '1');
     } catch {
-        // localStorage kan in private-mode of bij quota-issues falen — alleen
-        // de in-memory state blijft dan over, voor deze sessie is dat genoeg.
+        // localStorage can fail in private mode or on quota issues — only the
+        // in-memory state remains then, which is enough for this session.
     }
 }
 
@@ -127,30 +127,30 @@ async function enablePushNotifications(): Promise<void> {
 
     try {
         await PushNotifications.enroll();
-        // getToken() levert de token-string zelf op (of null) — geen { token }.
+        // getToken() yields the token string itself (or null) — not { token }.
         const token = await PushNotifications.getToken();
 
         if (token) {
             try {
                 await externalApi.post('/device-token', { token });
             } catch {
-                // Niet kritiek; usePushNotifications probeert opnieuw bij volgende launch.
+                // Not critical; usePushNotifications retries on the next launch.
             }
 
-            // Een token wordt door FCM alleen afgegeven nadat de gebruiker de
-            // permissie heeft verleend. De native checkPermission-status is
-            // direct na enroll soms nog niet bijgewerkt ('not_determined'),
-            // waardoor de banner bleef staan tot een volgende refresh. Met een
-            // token weten we zeker dat push aanstaat, dus zetten we de status
-            // hier zelf zodat de banner meteen verdwijnt.
+            // FCM only issues a token after the user has granted permission.
+            // The native checkPermission status is sometimes not yet updated
+            // right after enroll ('not_determined'), which left the banner in
+            // place until a later refresh. With a token we know for sure push
+            // is on, so we set the status ourselves here so the banner
+            // disappears immediately.
             permissionStatus.value = 'granted';
         } else {
-            // Geen token: geweigerd of nog onbeslist — lees de echte status.
+            // No token: denied or still undecided — read the real status.
             await refreshStatus();
             scheduleStatusRetries();
         }
     } catch {
-        // Gebruiker heeft geweigerd of bridge niet beschikbaar.
+        // The user denied or the bridge is unavailable.
         await refreshStatus();
         scheduleStatusRetries();
     } finally {
@@ -159,8 +159,8 @@ async function enablePushNotifications(): Promise<void> {
     }
 }
 
-// Status hercontroleren wanneer de gebruiker terugkomt uit de native
-// instellingen, zodat de banner zich aanpast zonder app-restart.
+// Re-check the status when the user returns from the native settings, so
+// the banner adapts without an app restart.
 function onVisibilityChange(): void {
     if (typeof document !== 'undefined' && !document.hidden) {
         void refreshStatus();

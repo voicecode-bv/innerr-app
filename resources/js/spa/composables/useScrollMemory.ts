@@ -1,12 +1,12 @@
 /**
- * Onthoudt de scroll-positie van een pagina, gekoppeld aan een vrij te kiezen
- * sleutel (meestal de route-naam). De opslag leeft op module-niveau, dus de
- * waarde overleeft het unmounten/remounten van een component: tik je een post
- * aan en kom je via "terug" weer op de feed, dan kan de pagina herstellen waar
- * je gebleven was in plaats van naar boven te springen.
+ * Remembers a page's scroll position, keyed by a freely chosen key (usually
+ * the route name). The storage lives at module level, so the value survives
+ * a component unmount/remount: tap a post and return to the feed via
+ * "back", and the page can restore where you left off instead of jumping
+ * to the top.
  *
- * Bewust géén Pinia-store: dit is pure UI-state zonder reactiviteit nodig — de
- * waarde wordt alleen geschreven bij verlaten en gelezen bij terugkeer.
+ * Deliberately not a Pinia store: this is pure UI state with no need for
+ * reactivity — the value is only written on leave and read on return.
  */
 const positions = new Map<string, number>();
 

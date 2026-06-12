@@ -15,11 +15,11 @@ class SetLocale
     {
         $supported = ['en', 'nl', 'fr'];
 
-        // Accept-Language wint van user.locale: de SPA stuurt deze header op
-        // élke call met de actueel-gekozen taal. user.locale wordt alleen op
-        // bootstrap gesynct, dus die loopt achter zodra de gebruiker tijdens
-        // een sessie van taal wisselt — wat de Edge bottom-nav labels stale
-        // zou maken tot de volgende cold-start.
+        // Accept-Language wins over user.locale: the SPA sends this header on
+        // every call with the currently selected language. user.locale is only
+        // synced on bootstrap, so it lags as soon as the user switches language
+        // mid-session — which would leave the Edge bottom-nav labels stale
+        // until the next cold start.
         $headerLocale = $request->hasHeader('Accept-Language')
             ? $request->getPreferredLanguage($supported)
             : null;

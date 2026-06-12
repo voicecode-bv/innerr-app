@@ -1,5 +1,6 @@
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
+import { withTimeout } from '@/lib/withTimeout';
 import App from '@/spa/App.vue';
 import { usePlatform } from '@/spa/composables/usePlatform';
 import {
@@ -49,6 +50,13 @@ const splashConfig: ResolvedSplashConfig | null =
         : null;
 
 let splashShownAt = 0;
+
+// auth.bootstrap() is a fetch against the local BFF without a client-side
+// timeout. If it hangs, the app would sit behind the splash forever. Bounded,
+// a hang behaves like an unreachable server: the reconnect screen when a
+// token exists, the normal login flow otherwise. The late result of the
+// original fetch is ignored; the reconnect overlay re-bootstraps on retry.
+const BOOTSTRAP_TIMEOUT_MS = 10000;
 
 /**
  * Show the native splash overlay and hold the logo on its first frame while the
@@ -111,16 +119,16 @@ async function bootstrap(): Promise<void> {
     const initialLocale = inferInitialLocale();
     await i18n.load(initialLocale);
 
-    // Trigger NativePHP platform-detectie zo vroeg mogelijk zodat iOS-only
-    // routes en links direct kunnen renderen zonder flicker.
+    // Trigger NativePHP platform detection as early as possible so iOS-only
+    // routes and links can render immediately without flicker.
     usePlatform()
         .ensureDetected()
         .catch(() => null);
 
-    // Lees het token uit de Keychain (of localStorage-fallback) zodat
-    // externalApi al een Bearer kan sturen vóór de BFF bootstrap-call. Voorkomt
-    // uitloggen wanneer de Laravel-session verlopen is maar het token nog wél
-    // geldig is. Een onleesbare bridge zet `auth.storageUnavailable`.
+    // Read the token from the Keychain (or localStorage fallback) so
+    // externalApi can already send a Bearer before the BFF bootstrap call.
+    // Prevents logging out when the Laravel session has expired but the token
+    // is still valid. An unreadable bridge sets `auth.storageUnavailable`.
     await auth.restoreFromStorage();
 
     configureApiClient({
@@ -134,9 +142,9 @@ async function bootstrap(): Promise<void> {
         },
     });
 
-    // externalApi vooraf configureren met een lui-gelezen base-url (snapshot of
-    // bootstrap). Buiten de try, zodat externe calls ook werken wanneer de
-    // bootstrap-call zelf (offline) faalt.
+    // Configure externalApi up front with a lazily-read base URL (snapshot or
+    // bootstrap). Outside the try, so external calls also work when the
+    // bootstrap call itself fails (offline).
     configureExternalApi({
         baseUrl: () => auth.apiBase,
         auth: () => ({ token: auth.token, clear: () => auth.clear() }),
@@ -148,40 +156,44 @@ async function bootstrap(): Promise<void> {
     });
 
     try {
-        const data = await auth.bootstrap();
+        const data = await withTimeout(
+            auth.bootstrap(),
+            BOOTSTRAP_TIMEOUT_MS,
+            () => new NetworkError('Bootstrap timed out'),
+        );
 
         if (data.locale && data.locale !== i18n.locale) {
             await i18n.load(data.locale);
         }
 
-        // Pre-warm service-keys (Mapbox token etc.) parallel zodat de eerste
-        // Map-page bezoek niet hoeft te wachten op een netwerk-roundtrip.
+        // Pre-warm service keys (Mapbox token etc.) in parallel so the first
+        // Map page visit doesn't have to wait on a network round trip.
         if (auth.user) {
             useServiceKeysStore()
                 .ensureLoaded()
                 .catch(() => null);
         }
     } catch (error) {
-        // Alleen een echte netwerkfout (BFF onbereikbaar) is een verbindings-
-        // probleem dat we via het reconnect-scherm opvangen. Een server-fout
-        // (500 e.d.) is een bug, geen hik: die laten we vallen zodat de guards
-        // normaal naar login gaan i.p.v. de gebruiker op het reconnect-scherm
-        // vast te zetten.
+        // Only a real network error (BFF unreachable) is a connectivity
+        // problem we handle via the reconnect screen. A server error (500
+        // etc.) is a bug, not a hiccup: we let it fall through so the guards
+        // go to login as usual instead of trapping the user on the reconnect
+        // screen.
         if (auth.token && error instanceof NetworkError) {
             auth.awaitingConnection = true;
         }
     }
 
-    // Kon de Keychain niet gelezen worden, dan kan er een geldig token bestaan
-    // dat we (nog) niet zagen. Niet naar welkom/login vallen: ga in reconnect-
-    // stand zodat het overlay de Keychain-lees opnieuw probeert.
+    // If the Keychain could not be read, a valid token may exist that we
+    // didn't see (yet). Don't fall back to welcome/login: enter reconnect
+    // mode so the overlay retries the Keychain read.
     if (auth.storageUnavailable && !auth.user) {
         auth.awaitingConnection = true;
     }
 
-    // Globale error-tap: validation/auth errors worden door pages zelf
-    // afgehandeld en niet hier doorgesluisd. Onverwachte network/server
-    // fouten alleen loggen in dev.
+    // Global error tap: validation/auth errors are handled by the pages
+    // themselves and not funneled through here. Unexpected network/server
+    // errors are only logged in dev.
     app.config.errorHandler = (err) => {
         if (err instanceof NetworkError || err instanceof ApiError) {
             return;
@@ -194,19 +206,19 @@ async function bootstrap(): Promise<void> {
 
     app.use(router);
 
-    // Maak `window.router.visit` beschikbaar zodat de native shell binnenkomende
-    // deeplinks (o.a. de OAuth-callback op een warme app) SPA-side kan
-    // afhandelen. Zie installNativeRouterBridge voor de details.
+    // Expose `window.router.visit` so the native shell can handle incoming
+    // deeplinks (including the OAuth callback on a warm app) on the SPA side.
+    // See installNativeRouterBridge for the details.
     installNativeRouterBridge(router);
 
     await router.isReady();
 
     if (typeof window !== 'undefined') {
-        // In NativePhp gebruikt de router createMemoryHistory(), die altijd op
-        // '/' start en de WebView-URL negeert. Bij een cold-start deeplink
-        // (bv. /join/<token>) moeten we de router expliciet naar de echte
-        // path duwen, anders ziet de gebruiker de Feed/Login i.p.v. het
-        // invite-landing-scherm.
+        // In NativePhp the router uses createMemoryHistory(), which always
+        // starts at '/' and ignores the WebView URL. On a cold-start deeplink
+        // (e.g. /join/<token>) we have to push the router to the real path
+        // explicitly, otherwise the user sees the Feed/Login instead of the
+        // invite landing screen.
         const initialPath = window.location.pathname + window.location.search;
 
         if (
@@ -214,7 +226,7 @@ async function bootstrap(): Promise<void> {
             router.currentRoute.value.fullPath !== initialPath
         ) {
             await router.replace(initialPath).catch(() => {
-                /* guarded/dubbele navigatie negeren */
+                /* ignore guarded/duplicate navigation */
             });
         }
 

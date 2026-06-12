@@ -20,9 +20,9 @@ class BootstrapController extends Controller
         $user = $request->user();
         $apiBase = rtrim((string) config('api-client.base_url'), '/');
 
-        // Onthoudt of de externe API onbereikbaar was tijdens deze bootstrap. Dan
-        // konden we de user niet bevestigen, maar het token is nog wél geldig: de
-        // SPA mag op die signaal de gebruiker NIET naar login sturen.
+        // Remembers whether the external API was unreachable during this bootstrap.
+        // In that case we could not confirm the user, but the token is still valid:
+        // on that signal the SPA must NOT send the user to login.
         $upstreamUnreachable = false;
 
         // Adopt the Bearer token the SPA forwards in the Authorization header
@@ -73,9 +73,9 @@ class BootstrapController extends Controller
             $user->refresh();
         }
 
-        // Expliciet auth-signaal voor de SPA zodat die "echt uitgelogd" kan
-        // onderscheiden van "even niet bereikbaar". Bij `unreachable` houdt de SPA
-        // de laatst bekende user uit zijn snapshot vast i.p.v. naar login te gaan.
+        // Explicit auth signal for the SPA so it can distinguish "actually logged
+        // out" from "temporarily unreachable". On `unreachable` the SPA keeps the
+        // last known user from its snapshot instead of going to login.
         $authStatus = match (true) {
             $user !== null => 'authenticated',
             $upstreamUnreachable && $this->apiClient->hasToken() => 'unreachable',
@@ -84,8 +84,8 @@ class BootstrapController extends Controller
 
         return response()->json([
             'user' => $this->presentUser($user, $validatedUser),
-            // Geef het token terug zolang we er nog één vasthouden (ook bij
-            // unreachable), zodat de SPA zijn Bearer kan blijven gebruiken.
+            // Return the token as long as we still hold one (also when
+            // unreachable), so the SPA can keep using its Bearer.
             'token' => $this->apiClient->hasToken() ? $this->apiClient->getToken() : null,
             'auth_status' => $authStatus,
             'locale' => app()->getLocale(),

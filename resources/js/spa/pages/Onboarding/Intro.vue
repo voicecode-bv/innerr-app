@@ -90,11 +90,11 @@ async function createFamilyCircle(): Promise<Circle | null> {
     }
 }
 
-// De "Familie"-kring wordt bij registratie al door de API aangemaakt, dus we
-// laden de kringen en springen direct naar de kinderen-stap van die kring.
-// Ontbreekt de kring (OAuth-signup of gefaalde register-bootstrap), dan maken
-// we hem hier alsnog aan; alleen als ook dat mislukt slaan we de kring-stappen
-// over richting notificaties.
+// The "Family" circle is already created by the API at registration, so we
+// load the circles and jump straight to the children step for that circle.
+// If the circle is missing (OAuth signup or a failed register bootstrap), we
+// create it here after all; only if that fails too do we skip the circle
+// steps towards notifications.
 async function continueOnboarding(): Promise<void> {
     if (processing.value) {
         return;

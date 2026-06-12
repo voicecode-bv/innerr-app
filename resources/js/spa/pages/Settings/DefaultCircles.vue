@@ -16,9 +16,9 @@ const router = useRouter();
 const circlesStore = useCirclesStore();
 const defaultCirclesStore = useDefaultCirclesStore();
 
-// Filter kringen waar de gebruiker niet in mag posten: bij
-// `auto_add_new_users` kunnen alleen de eigenaar en beheerders posten, dus
-// die kringen horen voor reguliere leden niet in de defaults-lijst.
+// Filter out circles the user is not allowed to post in: with
+// `auto_add_new_users` only the owner and administrators can post, so for
+// regular members those circles don't belong in the defaults list.
 const circles = computed(() =>
     (circlesStore.items ?? []).filter(
         (c) =>
@@ -63,9 +63,9 @@ const { pullDistance, isRefreshing } = usePullToRefresh({
 onMounted(() => loadDefaults());
 
 async function toggleCircle(circleId: string): Promise<void> {
-    // Intersect met de zichtbare kringen zodat eventuele stale IDs (kring
-    // verwijderd of lidmaatschap opgezegd) niet meer in de payload komen —
-    // de externe API valideert dat ieder ID nog geldig is.
+    // Intersect with the visible circles so that any stale IDs (circle
+    // deleted or membership ended) no longer end up in the payload — the
+    // external API validates that every ID is still valid.
     const validIds = new Set(circles.value.map((c) => c.id));
     const current = (defaultCirclesStore.ids ?? []).filter((id) =>
         validIds.has(id),
@@ -77,8 +77,8 @@ async function toggleCircle(circleId: string): Promise<void> {
     try {
         await defaultCirclesStore.setIds(next);
     } catch {
-        // Stille rollback in de store; geen toast — net als bij
-        // NotificationPreferences blijft de toggle UI de waarheid tonen.
+        // Silent rollback in the store; no toast — just like in
+        // NotificationPreferences the toggle UI keeps showing the truth.
     }
 }
 </script>

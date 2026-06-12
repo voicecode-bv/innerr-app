@@ -16,9 +16,9 @@ const open = ref(false);
 // Working selection while the sheet is open; committed to the store on "apply".
 const draftIds = ref<string[]>([]);
 
-// "Kinderen" = de personen die je tagt en die zelf geen app-account hebben.
-// Linked app-gebruikers (eigen account, andere ouders) vallen weg; die hebben
-// een eigen profiel in plaats van een tijdlijn.
+// "Children" = the persons you tag who don't have an app account themselves.
+// Linked app users (own account, other parents) are excluded; they have a
+// profile of their own instead of a timeline.
 const children = computed<Person[]>(() =>
     [...(personsStore.items ?? [])]
         .filter((person) => !person.user_id)
@@ -44,8 +44,8 @@ const appliedIds = computed<string[]>(() =>
         : allChildIds.value,
 );
 
-// De trigger-knop toont de avatars van de eerste drie toegepaste kinderen
-// (overlappend) gevolgd door hun namen.
+// The trigger button shows the avatars of the first three applied children
+// (overlapping) followed by their names.
 const appliedChildren = computed<Person[]>(() =>
     children.value.filter((child) => appliedIds.value.includes(child.id)),
 );

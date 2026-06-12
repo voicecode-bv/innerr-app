@@ -1,6 +1,6 @@
 /**
- * Retry-with-backoff voor transient failures: netwerkfouten en 5xx server-errors.
- * 4xx blijven direct doorgegooid omdat retry geen zin heeft (validation, 401, etc).
+ * Retry-with-backoff for transient failures: network errors and 5xx server errors.
+ * 4xx are still rethrown immediately because retrying is pointless (validation, 401, etc).
  */
 export interface RetryOptions {
     retries?: number;

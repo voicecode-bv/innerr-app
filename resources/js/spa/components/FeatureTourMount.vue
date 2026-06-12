@@ -9,8 +9,8 @@ const router = useRouter();
 const store = useFeatureTourStore();
 const { run, abort } = useFeatureTour();
 
-// Hydrate eenmalig server-state (graceful fallback naar localStorage in de
-// store als het endpoint nog niet bestaat).
+// Hydrate server state once (graceful fallback to localStorage in the store
+// if the endpoint doesn't exist yet).
 void store.hydrate();
 
 async function maybeProgress(): Promise<void> {
@@ -26,8 +26,9 @@ async function maybeProgress(): Promise<void> {
         return;
     }
 
-    // Mismatch tussen actief segment en huidige route → navigeer er heen.
-    // De watcher vuurt opnieuw na de route-change en valt dan in de "match"-tak.
+    // Mismatch between the active segment and the current route → navigate
+    // there. The watcher fires again after the route change and then takes
+    // the "match" branch.
     if (route.name !== segment.routeName) {
         abort();
 
@@ -37,8 +38,8 @@ async function maybeProgress(): Promise<void> {
             params = segment.resolveParams();
 
             if (params === null) {
-                // Vereiste data nog niet beschikbaar (bv. nog geen kringen) →
-                // sla dit segment over zodat de tour niet vastloopt.
+                // Required data not available yet (e.g. no circles yet) →
+                // skip this segment so the tour doesn't get stuck.
                 store.markSegmentDone(segment.name);
 
                 return;
@@ -51,15 +52,16 @@ async function maybeProgress(): Promise<void> {
                 params: params ?? {},
             });
         } catch {
-            // Guard heeft genavigeerd (bv. naar login) — laat de volgende
-            // route-change de tour-state opnieuw evalueren.
+            // A guard navigated away (e.g. to login) — let the next route
+            // change re-evaluate the tour state.
         }
 
         return;
     }
 
-    // Twee nextTicks geven lazy-loaded page-components ruimte om hun refs te
-    // plaatsen; ontbrekende selectors filteren we daarna alsnog in useFeatureTour.
+    // Two nextTicks give lazy-loaded page components room to place their
+    // refs; missing selectors are still filtered out afterwards in
+    // useFeatureTour.
     await nextTick();
     await nextTick();
 
