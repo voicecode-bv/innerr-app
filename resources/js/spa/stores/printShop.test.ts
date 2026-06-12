@@ -1,7 +1,18 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PostData } from '@/spa/components/PostCard.vue';
-import { printablePhotos, usePrintShopStore } from './printShop';
+
+const apiGet = vi.fn();
+const apiPost = vi.fn();
+
+vi.mock('@/spa/http/externalApi', () => ({
+    externalApi: {
+        get: (path: string) => apiGet(path),
+        post: (path: string, body: unknown) => apiPost(path, body),
+    },
+}));
+
+const { printablePhotos, usePrintShopStore } = await import('./printShop');
 
 function makePost(overrides: Partial<PostData> = {}): PostData {
     return {
@@ -14,6 +25,15 @@ function makePost(overrides: Partial<PostData> = {}): PostData {
         media_status: 'ready',
         width: 1200,
         height: 900,
+        media: [
+            {
+                id: 'm1',
+                url: 'https://cdn.test/full.jpg',
+                type: 'image',
+                status: 'ready',
+                thumbnail_url: 'https://cdn.test/thumb.jpg',
+            },
+        ],
         caption: null,
         location: null,
         created_at: '2026-06-01T10:00:00Z',
@@ -25,32 +45,76 @@ function makePost(overrides: Partial<PostData> = {}): PostData {
     };
 }
 
+function catalogResponse() {
+    return {
+        data: [
+            {
+                id: 'offering-album',
+                app_product: 'album',
+                name: { 'nl-NL': 'Fotoalbum', 'en-EN': 'Photo album' },
+                price_minor: 2495,
+                currency: 'EUR',
+                min_photos: 1,
+                max_photos: 50,
+                user_options: [],
+                available: true,
+            },
+            {
+                id: 'offering-basic-tee',
+                app_product: 'tshirt',
+                name: { 'en-EN': 'Basic T-shirt' },
+                price_minor: 1995,
+                currency: 'EUR',
+                min_photos: 1,
+                max_photos: 1,
+                user_options: [{ attribute: 'Size', values: ['S', 'M', 'L'] }],
+                available: true,
+            },
+            {
+                id: 'offering-premium-tee',
+                app_product: 'tshirt',
+                name: { 'en-EN': 'Premium T-shirt' },
+                price_minor: 2995,
+                currency: 'EUR',
+                min_photos: 1,
+                max_photos: 1,
+                user_options: [{ attribute: 'Size', values: ['S', 'M', 'L'] }],
+                available: false,
+            },
+        ],
+        shipping_countries: ['NL', 'BE'],
+        return_url: 'https://innerr.app/print',
+    };
+}
+
+async function makeLoadedStore() {
+    apiGet.mockResolvedValue(catalogResponse());
+    const store = usePrintShopStore();
+    await store.ensureCatalog();
+
+    return store;
+}
+
 beforeEach(() => {
     setActivePinia(createPinia());
+    apiGet.mockReset();
+    apiPost.mockReset();
 });
 
 describe('printablePhotos', () => {
-    it('maps a single-image post to one photo', () => {
+    it('maps ready images with their media ids', function () {
         const photos = printablePhotos(makePost());
 
         expect(photos).toHaveLength(1);
         expect(photos[0]).toMatchObject({
-            id: 'post-1:cover',
+            id: 'post-1:m1',
             postId: 'post-1',
-            url: 'https://cdn.test/full.jpg',
+            mediaId: 'm1',
             previewUrl: 'https://cdn.test/thumb.jpg',
         });
     });
 
-    it('prefers the original rendition when available', () => {
-        const photos = printablePhotos(
-            makePost({ original_media_url: 'https://cdn.test/original.jpg' }),
-        );
-
-        expect(photos[0].url).toBe('https://cdn.test/original.jpg');
-    });
-
-    it('keeps only ready images from a multi-media post', () => {
+    it('keeps only ready images and excludes quotes and empty posts', () => {
         const photos = printablePhotos(
             makePost({
                 media: [
@@ -77,79 +141,123 @@ describe('printablePhotos', () => {
         );
 
         expect(photos.map((photo) => photo.id)).toEqual(['post-1:m1']);
-    });
-
-    it('excludes quotes, videos, and processing posts', () => {
         expect(printablePhotos(makePost({ type: 'quote' }))).toEqual([]);
-        expect(printablePhotos(makePost({ media_type: 'video' }))).toEqual([]);
-        expect(
-            printablePhotos(makePost({ media_status: 'processing' })),
-        ).toEqual([]);
+        expect(printablePhotos(makePost({ media: [] }))).toEqual([]);
     });
 });
 
 describe('print shop store', () => {
-    it('flattens selected posts into photos and resets the product', () => {
-        const store = usePrintShopStore();
-        store.productId = 'mug';
+    it('loads offerings, including multiple per app product', async () => {
+        const store = await makeLoadedStore();
 
-        store.setPhotosFromPosts([
-            makePost(),
-            makePost({ id: 'post-2', type: 'quote' }),
-        ]);
-
-        expect(store.photoCount).toBe(1);
-        expect(store.productId).toBeNull();
+        expect(apiGet).toHaveBeenCalledWith('/print/products');
+        expect(store.offerings).toHaveLength(3);
+        expect(
+            store.offerings.filter((o) => o.appProduct === 'tshirt'),
+        ).toHaveLength(2);
+        expect(store.shippingCountries).toEqual(['NL', 'BE']);
+        expect(store.returnUrl).toBe('https://innerr.app/print');
     });
 
-    it('offers every product for a single photo', () => {
-        const store = usePrintShopStore();
+    it('only lets selectable offerings be selected', async () => {
+        const store = await makeLoadedStore();
+        store.setPhotosFromPosts([makePost(), makePost({ id: 'post-2' })]);
+
+        // Two photos: t-shirts (max 1) do not qualify.
+        store.selectOffering('offering-basic-tee');
+        expect(store.selectedOfferingId).toBeNull();
+
+        store.selectOffering('offering-album');
+        expect(store.selectedOfferingId).toBe('offering-album');
+
+        // Unavailable offerings never qualify.
         store.setPhotosFromPosts([makePost()]);
-
-        const available = store.products
-            .filter((product) => store.isAvailable(product))
-            .map((product) => product.id);
-
-        expect(available).toEqual(['calendar', 'album', 'mug', 'tshirt']);
+        store.selectOffering('offering-premium-tee');
+        expect(store.selectedOfferingId).toBeNull();
     });
 
-    it('limits multiple photos to calendar and album', () => {
-        const store = usePrintShopStore();
-        store.setPhotosFromPosts([makePost(), makePost({ id: 'post-2' })]);
+    it('collects multiple products in the cart without losing earlier ones', async () => {
+        const store = await makeLoadedStore();
 
-        const available = store.products
-            .filter((product) => store.isAvailable(product))
-            .map((product) => product.id);
+        store.setPhotosFromPosts([makePost()]);
+        store.selectOffering('offering-album');
+        store.addToCart('Fotoalbum', {});
 
-        expect(available).toEqual(['calendar', 'album']);
-    });
-
-    it('refuses to select an unavailable product', () => {
-        const store = usePrintShopStore();
-        store.setPhotosFromPosts([makePost(), makePost({ id: 'post-2' })]);
-
-        store.selectProduct('mug');
-
-        expect(store.productId).toBeNull();
-    });
-
-    it('keeps a valid product but drops one invalidated by removal', () => {
-        const store = usePrintShopStore();
-        store.setPhotosFromPosts([makePost(), makePost({ id: 'post-2' })]);
-        store.selectProduct('album');
-
-        store.removePhoto('post-2:cover');
-
-        // One photo still satisfies the album's minimum.
-        expect(store.productId).toBe('album');
-
-        store.selectProduct('mug');
-        store.setPhotosFromPosts([makePost(), makePost({ id: 'post-2' })]);
-        store.selectProduct('album');
-        store.removePhoto('post-1:cover');
-        store.removePhoto('post-2:cover');
-
+        expect(store.cart).toHaveLength(1);
+        // The pick is consumed; the next product starts fresh.
         expect(store.photoCount).toBe(0);
-        expect(store.productId).toBeNull();
+        expect(store.selectedOfferingId).toBeNull();
+
+        store.setPhotosFromPosts([makePost({ id: 'post-2' })]);
+        store.selectOffering('offering-basic-tee');
+        store.addToCart('Basic T-shirt', { Size: 'M' });
+
+        expect(store.cart).toHaveLength(2);
+        expect(store.cart[0].name).toBe('Fotoalbum');
+        expect(store.cart[1].options).toEqual({ Size: 'M' });
+        expect(store.cartTotalMinor).toBe(2495 + 1995);
+
+        store.removeCartItem(store.cart[0].id);
+        expect(store.cart).toHaveLength(1);
+        expect(store.cartTotalMinor).toBe(1995);
+    });
+
+    it('keeps the cart when a new photo pick starts', async () => {
+        const store = await makeLoadedStore();
+        store.setPhotosFromPosts([makePost()]);
+        store.selectOffering('offering-album');
+        store.addToCart('Fotoalbum', {});
+
+        store.setPhotosFromPosts([makePost({ id: 'post-2' })]);
+        store.resetPick();
+
+        expect(store.cart).toHaveLength(1);
+        expect(store.photoCount).toBe(0);
+    });
+
+    it('submits the whole cart as one order and clears it', async () => {
+        apiPost.mockResolvedValue({
+            data: { id: 'order-1', status: 'pending_payment', items: [] },
+            checkout_url: 'https://mollie.test/checkout/abc',
+        });
+
+        const store = await makeLoadedStore();
+        store.setPhotosFromPosts([makePost()]);
+        store.selectOffering('offering-album');
+        store.addToCart('Fotoalbum', {});
+        store.setPhotosFromPosts([makePost({ id: 'post-2' })]);
+        store.selectOffering('offering-basic-tee');
+        store.addToCart('Basic T-shirt', { Size: 'M' });
+
+        const checkoutUrl = await store.submitOrder({
+            firstName: 'Michael',
+            lastName: 'Blijleven',
+            street: 'Hoofdstraat',
+            houseNumber: '1',
+            postalCode: '1234AB',
+            city: 'Amsterdam',
+            country: 'NL',
+        });
+
+        expect(checkoutUrl).toBe('https://mollie.test/checkout/abc');
+        expect(store.placedOrder?.id).toBe('order-1');
+        expect(store.cart).toHaveLength(0);
+        expect(apiPost).toHaveBeenCalledWith(
+            '/print/orders',
+            expect.objectContaining({
+                items: [
+                    expect.objectContaining({
+                        offering_id: 'offering-album',
+                        photos: [{ post_id: 'post-1', media_id: 'm1' }],
+                        options: undefined,
+                    }),
+                    expect.objectContaining({
+                        offering_id: 'offering-basic-tee',
+                        options: { Size: 'M' },
+                    }),
+                ],
+                redirect_url: 'https://innerr.app/print',
+            }),
+        );
     });
 });
