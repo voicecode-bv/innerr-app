@@ -194,6 +194,15 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/spa/pages/PrintShop.vue'),
         meta: { auth: true, onboarded: true, hideEdgeBar: true },
     },
+    {
+        path: '/print/orders',
+        // The website redirects to /orders after a successful payment (and the
+        // AASA registers /orders*), so the deeplink lands here via this alias.
+        alias: '/orders',
+        name: 'spa.print.orders',
+        component: () => import('@/spa/pages/PrintOrders.vue'),
+        meta: { auth: true, onboarded: true },
+    },
 
     // Notifications
     {

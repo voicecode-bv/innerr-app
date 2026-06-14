@@ -16,6 +16,7 @@ import foldedHandsIcon from '../../../svg/doodle-icons/folded-hands.svg';
 import headphoneIcon from '../../../svg/doodle-icons/headphone.svg';
 import lockIcon from '../../../svg/doodle-icons/lock.svg';
 import questionIcon from '../../../svg/doodle-icons/question.svg';
+import shopIcon from '../../../svg/doodle-icons/shop.svg';
 import tagIcon from '../../../svg/doodle-icons/tag.svg';
 import usersIcon from '../../../svg/doodle-icons/user.svg';
 
@@ -54,6 +55,12 @@ const menuGroups = computed(() => [
                 icon: tagIcon,
                 label: 'Tags',
                 tone: 'teal' as const,
+            },
+            {
+                routeName: 'spa.print.orders',
+                icon: shopIcon,
+                label: 'Print orders',
+                tone: 'yellow' as const,
             },
             {
                 routeName: 'spa.settings.storage',

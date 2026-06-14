@@ -58,6 +58,7 @@ function catalogResponse() {
                 max_photos: 50,
                 user_options: [],
                 available: true,
+                format: { width: 210, height: 210, orientation: 'fixed' },
             },
             {
                 id: 'offering-basic-tee',
@@ -69,6 +70,7 @@ function catalogResponse() {
                 max_photos: 1,
                 user_options: [{ attribute: 'Size', values: ['S', 'M', 'L'] }],
                 available: true,
+                format: { width: 210, height: 297, orientation: 'fixed' },
             },
             {
                 id: 'offering-premium-tee',
@@ -80,6 +82,7 @@ function catalogResponse() {
                 max_photos: 1,
                 user_options: [{ attribute: 'Size', values: ['S', 'M', 'L'] }],
                 available: false,
+                format: { width: 210, height: 297, orientation: 'fixed' },
             },
         ],
         shipping_countries: ['NL', 'BE'],
@@ -159,6 +162,31 @@ describe('print shop store', () => {
         expect(store.returnUrl).toBe('https://innerr.app/print');
     });
 
+    it('maps the artwork format for each offering', async () => {
+        const store = await makeLoadedStore();
+
+        expect(
+            store.offerings.find((o) => o.id === 'offering-album')?.format,
+        ).toEqual({ width: 210, height: 210, orientation: 'fixed' });
+    });
+
+    it('refreshes an already loaded catalog in the background', async () => {
+        const store = await makeLoadedStore();
+
+        // Admin made the premium tee orderable since the first load.
+        const updated = catalogResponse();
+        updated.data[2].available = true;
+        apiGet.mockResolvedValue(updated);
+
+        await store.ensureCatalog();
+
+        expect(apiGet).toHaveBeenCalledTimes(2);
+        expect(
+            store.offerings.find((o) => o.id === 'offering-premium-tee')
+                ?.available,
+        ).toBe(true);
+    });
+
     it('only lets selectable offerings be selected', async () => {
         const store = await makeLoadedStore();
         store.setPhotosFromPosts([makePost(), makePost({ id: 'post-2' })]);
@@ -215,6 +243,26 @@ describe('print shop store', () => {
         expect(store.photoCount).toBe(0);
     });
 
+    it('quotes option-dependent prices and uses them in the cart', async () => {
+        apiPost.mockResolvedValue({ data: { price_minor: 3300 } });
+
+        const store = await makeLoadedStore();
+        store.setPhotosFromPosts([makePost()]);
+        store.selectOffering('offering-basic-tee');
+
+        const quoted = await store.quotePrice('offering-basic-tee', {
+            Size: 'L',
+        });
+        store.addToCart('Basic T-shirt', { Size: 'L' }, quoted);
+
+        expect(apiPost).toHaveBeenCalledWith('/print/quote', {
+            offering_id: 'offering-basic-tee',
+            options: { Size: 'L' },
+        });
+        expect(store.cart[0].priceMinor).toBe(3300);
+        expect(store.cartTotalMinor).toBe(3300);
+    });
+
     it('submits the whole cart as one order and clears it', async () => {
         apiPost.mockResolvedValue({
             data: { id: 'order-1', status: 'pending_payment', items: [] },
@@ -242,6 +290,15 @@ describe('print shop store', () => {
         expect(checkoutUrl).toBe('https://mollie.test/checkout/abc');
         expect(store.placedOrder?.id).toBe('order-1');
         expect(store.cart).toHaveLength(0);
+        // Snapshotted before the cart cleared, so the confirmation screen keeps
+        // its mockups (photos + format) the API summary does not return.
+        expect(store.placedItems).toHaveLength(2);
+        expect(store.placedItems[0].photos).toHaveLength(1);
+        expect(store.placedItems[0].format).toEqual({
+            width: 210,
+            height: 210,
+            orientation: 'fixed',
+        });
         expect(apiPost).toHaveBeenCalledWith(
             '/print/orders',
             expect.objectContaining({
@@ -259,5 +316,81 @@ describe('print shop store', () => {
                 redirect_url: 'https://innerr.app/print',
             }),
         );
+    });
+
+    it('exposes a saved address from the catalog for prefilling', async () => {
+        const response = catalogResponse();
+        const savedAddress = {
+            firstName: 'Michael',
+            lastName: 'Blijleven',
+            street: 'Hoofdstraat',
+            houseNumber: '1',
+            postalCode: '1234AB',
+            city: 'Amsterdam',
+            country: 'NL',
+        };
+        apiGet.mockResolvedValue({ ...response, saved_address: savedAddress });
+
+        const store = usePrintShopStore();
+        await store.ensureCatalog();
+
+        expect(store.savedAddress).toEqual(savedAddress);
+    });
+
+    it('forwards the save-address opt-in and remembers it locally', async () => {
+        apiPost.mockResolvedValue({
+            data: { id: 'order-1', status: 'pending_payment', items: [] },
+            checkout_url: 'https://mollie.test/checkout/abc',
+        });
+
+        const store = await makeLoadedStore();
+        store.setPhotosFromPosts([makePost()]);
+        store.selectOffering('offering-album');
+        store.addToCart('Fotoalbum', {});
+
+        const address = {
+            firstName: 'Michael',
+            lastName: 'Blijleven',
+            street: 'Hoofdstraat',
+            houseNumber: '1',
+            postalCode: '1234AB',
+            city: 'Amsterdam',
+            country: 'NL',
+        };
+        await store.submitOrder(address, true);
+
+        expect(apiPost).toHaveBeenCalledWith(
+            '/print/orders',
+            expect.objectContaining({ save_address: true }),
+        );
+        expect(store.savedAddress).toEqual(address);
+    });
+
+    it('defaults to not saving the address', async () => {
+        apiPost.mockResolvedValue({
+            data: { id: 'order-1', status: 'pending_payment', items: [] },
+            checkout_url: 'https://mollie.test/checkout/abc',
+        });
+
+        const store = await makeLoadedStore();
+        store.setPhotosFromPosts([makePost()]);
+        store.selectOffering('offering-album');
+        store.addToCart('Fotoalbum', {});
+
+        await store.submitOrder({
+            firstName: 'Michael',
+            lastName: 'Blijleven',
+            street: 'Hoofdstraat',
+            houseNumber: '1',
+            postalCode: '1234AB',
+            city: 'Amsterdam',
+            country: 'NL',
+        });
+
+        expect(apiPost).toHaveBeenCalledWith(
+            '/print/orders',
+            expect.objectContaining({ save_address: false }),
+        );
+        expect(store.savedAddress).toBeNull();
     });
 });

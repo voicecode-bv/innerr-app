@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import BottomSheet from '@/components/BottomSheet.vue';
 import Button from '@/components/Button.vue';
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import SheetHeader from '@/components/SheetHeader.vue';
+import ProductMockup from '@/spa/components/ProductMockup.vue';
 import TextField from '@/spa/components/TextField.vue';
+import { usePrintTerms } from '@/spa/composables/usePrintTerms';
 import { useTranslations } from '@/spa/composables/useTranslations';
 import { haptics } from '@/spa/services/haptics';
 import { useFeedSelectionStore } from '@/spa/stores/feedSelection';
-import { usePrintShopStore } from '@/spa/stores/printShop';
+import { printOrderStatusKey, usePrintShopStore } from '@/spa/stores/printShop';
 import type { AppProductId, PrintOffering } from '@/spa/stores/printShop';
 import { Browser, Dialog } from '@nativephp/mobile';
 import calendarIcon from '../../../svg/doodle-icons/calendar.svg';
 import coffeeCupIcon from '../../../svg/doodle-icons/coffee-cup-1.svg';
 import crossIcon from '../../../svg/doodle-icons/cross.svg';
+import frameIcon from '../../../svg/doodle-icons/frame.svg';
 import photoIcon from '../../../svg/doodle-icons/photo.svg';
 import puzzleIcon from '../../../svg/doodle-icons/puzzle.svg';
 import tShirtIcon from '../../../svg/doodle-icons/t-shirt.svg';
@@ -23,6 +26,7 @@ import truckIcon from '../../../svg/doodle-icons/truck.svg';
 
 const router = useRouter();
 const { t, locale } = useTranslations();
+const { printTerm } = usePrintTerms();
 const printShop = usePrintShopStore();
 const feedSelection = useFeedSelectionStore();
 
@@ -70,6 +74,12 @@ const categoryMeta: Record<
         description: () =>
             t('Piece your favourite moment together, again and again.'),
     },
+    canvas: {
+        icon: frameIcon,
+        tile: 'bg-brand-blue text-brand-sand',
+        label: () => t('Photo canvas'),
+        description: () => t('Your favourite moment as art on the wall.'),
+    },
 };
 
 const categoryOrder: AppProductId[] = [
@@ -78,6 +88,7 @@ const categoryOrder: AppProductId[] = [
     'mug',
     'tshirt',
     'puzzle',
+    'canvas',
 ];
 
 function displayName(
@@ -101,8 +112,13 @@ interface CategoryCard {
 
 // One card per category; tapping it opens the product chooser for that
 // category. Categories without any offering render as "coming soon".
-const categories = computed<CategoryCard[]>(() =>
-    categoryOrder.map((appProduct) => {
+//
+// Ordered so the user sees what they can act on first: products orderable
+// with the current photo selection lead, then products that exist but don't
+// fit the current photos, and the "coming soon" placeholders come last.
+// Within each tier the fixed categoryOrder is kept (sort is stable).
+const categories = computed<CategoryCard[]>(() => {
+    const cards = categoryOrder.map((appProduct) => {
         const offerings = printShop.offerings.filter(
             (offering) => offering.appProduct === appProduct,
         );
@@ -122,8 +138,18 @@ const categories = computed<CategoryCard[]>(() =>
                   )
                 : null,
         };
-    }),
-);
+    });
+
+    const rank = (card: CategoryCard): number => {
+        if (card.selectable.length > 0) {
+            return 0;
+        }
+
+        return card.offerings.some((offering) => offering.available) ? 1 : 2;
+    };
+
+    return cards.sort((a, b) => rank(a) - rank(b));
+});
 
 function categoryUnavailableReason(category: CategoryCard): string {
     if (category.offerings.every((offering) => !offering.available)) {
@@ -186,8 +212,36 @@ const openCategoryOfferings = computed(() =>
           ),
 );
 
+// Preview the first picked photo on the product. The trim size and
+// orientation policy are the same for every offering in a category, so the
+// selected (or first) offering's format drives the mockup.
+const mockupPhoto = computed(() => printShop.photos[0] ?? null);
+
+const mockupFormat = computed(
+    () =>
+        printShop.selectedOffering?.format ??
+        openCategoryOfferings.value[0]?.format ??
+        null,
+);
+
 function clearChosenOptions(): void {
     Object.keys(chosenOptions).forEach((key) => delete chosenOptions[key]);
+}
+
+/**
+ * Reset the option choices for the currently selected offering, pre-filling
+ * any option that has only one possible value so the user never has to pick
+ * the obvious (e.g. a single printing process).
+ */
+function resetChosenOptions(): void {
+    clearChosenOptions();
+
+    for (const option of printShop.selectedOffering?.userOptions ?? []) {
+        // Single-value options are pre-filled; the rest start on the empty
+        // placeholder so the select shows "Choose..." and counts as unchosen.
+        chosenOptions[option.attribute] =
+            option.values.length === 1 ? option.values[0] : '';
+    }
 }
 
 function showCategory(category: CategoryCard): void {
@@ -196,10 +250,10 @@ function showCategory(category: CategoryCard): void {
     }
 
     haptics.impactLight();
-    clearChosenOptions();
     // A single product needs no extra tap; preselect it.
     printShop.selectedOfferingId =
         category.selectable.length === 1 ? category.selectable[0].id : null;
+    resetChosenOptions();
     openCategory.value = category.appProduct;
 }
 
@@ -217,8 +271,8 @@ function pickOffering(offering: PrintOffering): void {
     }
 
     haptics.impactLight();
-    clearChosenOptions();
     printShop.selectOffering(offering.id);
+    resetChosenOptions();
 }
 
 const allOptionsChosen = computed(() =>
@@ -227,28 +281,91 @@ const allOptionsChosen = computed(() =>
     ),
 );
 
+// Options such as a puzzle's size change the price, so a complete choice is
+// quoted live; the catalog price only covers option-less products.
+const quotedPriceMinor = ref<number | null>(null);
+const quoteLoading = ref(false);
+const quoteError = ref(false);
+
+const needsQuote = computed(
+    () => (printShop.selectedOffering?.userOptions.length ?? 0) > 0,
+);
+
+function quoteFingerprint(): string {
+    return JSON.stringify({
+        offering: printShop.selectedOfferingId,
+        options: { ...chosenOptions },
+    });
+}
+
+async function refreshQuote(): Promise<void> {
+    quotedPriceMinor.value = null;
+    quoteError.value = false;
+
+    const offering = printShop.selectedOffering;
+
+    if (offering === null || !needsQuote.value || !allOptionsChosen.value) {
+        return;
+    }
+
+    const requested = quoteFingerprint();
+    quoteLoading.value = true;
+
+    try {
+        const price = await printShop.quotePrice(offering.id, {
+            ...chosenOptions,
+        });
+
+        // The user may have switched options while the quote was in flight.
+        if (quoteFingerprint() === requested) {
+            quotedPriceMinor.value = price;
+        }
+    } catch {
+        if (quoteFingerprint() === requested) {
+            quoteError.value = true;
+        }
+    } finally {
+        quoteLoading.value = false;
+    }
+}
+
+watch(
+    [() => printShop.selectedOfferingId, () => ({ ...chosenOptions })],
+    () => {
+        void refreshQuote();
+    },
+);
+
 const canAddToOrder = computed(
-    () => printShop.selectedOffering !== null && allOptionsChosen.value,
+    () =>
+        printShop.selectedOffering !== null &&
+        allOptionsChosen.value &&
+        (!needsQuote.value || quotedPriceMinor.value !== null),
 );
 
 function confirmAddToOrder(): void {
     const offering = printShop.selectedOffering;
 
-    if (offering === null || !allOptionsChosen.value) {
+    if (offering === null || !canAddToOrder.value) {
         return;
     }
 
     haptics.impactMedium();
-    printShop.addToCart(displayName(offering.name, offering.appProduct), {
-        ...chosenOptions,
-    });
+    printShop.addToCart(
+        displayName(offering.name, offering.appProduct),
+        { ...chosenOptions },
+        quotedPriceMinor.value ?? undefined,
+    );
     openCategory.value = null;
     clearChosenOptions();
 }
 
 function optionsLabel(options: Record<string, string>): string {
     return Object.entries(options)
-        .map(([attribute, value]) => `${attribute} ${value}`)
+        .map(
+            ([attribute, value]) =>
+                `${printTerm(attribute)} ${printTerm(value)}`,
+        )
         .join(', ');
 }
 
@@ -286,6 +403,30 @@ const canSubmit = computed(
         address.city.trim() !== '',
 );
 
+// Opt-in to remember this address; pre-checked when one is already saved so
+// confirming the (possibly edited) address keeps it up to date.
+const saveAddress = ref(false);
+
+// Prefill from the saved address once it arrives with the catalog, but never
+// clobber what the user is already typing.
+watch(
+    () => printShop.savedAddress,
+    (saved) => {
+        const pristine = Object.values(address).every(
+            (value) => value === '' || value === 'NL',
+        );
+
+        if (saved && pristine) {
+            Object.assign(address, {
+                houseNumberAddition: '',
+                ...saved,
+            });
+            saveAddress.value = true;
+        }
+    },
+    { immediate: true },
+);
+
 async function openExternal(url: string): Promise<void> {
     try {
         await Browser.open(url);
@@ -302,17 +443,20 @@ async function submitCheckout(): Promise<void> {
     }
 
     try {
-        const checkoutUrl = await printShop.submitOrder({
-            firstName: address.firstName.trim(),
-            lastName: address.lastName.trim(),
-            street: address.street.trim(),
-            houseNumber: address.houseNumber.trim(),
-            houseNumberAddition:
-                address.houseNumberAddition.trim() || undefined,
-            postalCode: address.postalCode.trim(),
-            city: address.city.trim(),
-            country: address.country,
-        });
+        const checkoutUrl = await printShop.submitOrder(
+            {
+                firstName: address.firstName.trim(),
+                lastName: address.lastName.trim(),
+                street: address.street.trim(),
+                houseNumber: address.houseNumber.trim(),
+                houseNumberAddition:
+                    address.houseNumberAddition.trim() || undefined,
+                postalCode: address.postalCode.trim(),
+                city: address.city.trim(),
+                country: address.country,
+            },
+            saveAddress.value,
+        );
 
         checkoutOpen.value = false;
         await openExternal(checkoutUrl);
@@ -324,22 +468,11 @@ async function submitCheckout(): Promise<void> {
     }
 }
 
-const statusLabel = computed(() => {
-    switch (printShop.placedOrder?.status) {
-        case 'pending_payment':
-            return t('Waiting for your payment');
-        case 'paid':
-            return t('Payment received');
-        case 'submitted':
-            return t('Sent to the printer');
-        case 'failed':
-            return t('Something went wrong, we are on it');
-        case 'canceled':
-            return t('Payment not completed');
-        default:
-            return '';
-    }
-});
+const statusLabel = computed(() =>
+    printShop.placedOrder
+        ? t(printOrderStatusKey(printShop.placedOrder.status))
+        : '',
+);
 
 const refreshingStatus = ref(false);
 
@@ -451,6 +584,16 @@ function iconMaskStyle(url: string) {
             >
                 {{ t('Your order is in') }}
             </h1>
+            <p
+                class="rise-in mt-1 text-sm font-semibold text-ink-muted"
+                style="--rise: 1"
+            >
+                {{
+                    t('Order #:number', {
+                        number: printShop.placedOrder.number,
+                    })
+                }}
+            </p>
             <p class="rise-in mt-2 max-w-xs text-ink-muted" style="--rise: 2">
                 {{
                     t(
@@ -458,6 +601,23 @@ function iconMaskStyle(url: string) {
                     )
                 }}
             </p>
+
+            <div
+                v-if="printShop.placedItems.length > 0"
+                class="rise-in mt-6 flex flex-wrap items-end justify-center gap-3"
+                style="--rise: 2"
+            >
+                <ProductMockup
+                    v-for="item in printShop.placedItems"
+                    :key="item.id"
+                    :photo="item.photos[0] ?? null"
+                    :format="item.format"
+                    :app-product="item.appProduct"
+                    :max-width="96"
+                    :max-height="96"
+                    :surface="false"
+                />
+            </div>
 
             <div
                 class="rise-in mt-6 w-full max-w-xs rounded-2xl bg-surface p-4 text-left ring-1 ring-sand-100"
@@ -489,7 +649,7 @@ function iconMaskStyle(url: string) {
                     class="mt-2 text-sm text-ink-muted"
                 >
                     {{
-                        t('Order number: :number', {
+                        t('Printer reference: :number', {
                             number: printShop.placedOrder
                                 .printdeal_order_number,
                         })
@@ -506,8 +666,12 @@ function iconMaskStyle(url: string) {
                 >
                     {{ t('Refresh status') }}
                 </Button>
-                <Button variant="primary" size="md" @click="goBack">
-                    {{ t('Back to the feed') }}
+                <Button
+                    variant="primary"
+                    size="md"
+                    @click="router.push({ name: 'spa.print.orders' })"
+                >
+                    {{ t('View orders') }}
                 </Button>
             </div>
         </div>
@@ -533,7 +697,7 @@ function iconMaskStyle(url: string) {
             <p class="mt-2 max-w-xs text-ink-muted">
                 {{
                     t(
-                        'Select photos in your feed and turn them into a calendar, album, mug, t-shirt or puzzle.',
+                        'Select photos in your feed and turn them into a calendar, album, mug, t-shirt, puzzle or canvas.',
                     )
                 }}
             </p>
@@ -577,20 +741,15 @@ function iconMaskStyle(url: string) {
                             :key="item.id"
                             class="flex items-center gap-3 p-3"
                         >
-                            <span
-                                aria-hidden="true"
-                                class="flex size-10 shrink-0 items-center justify-center rounded-xl"
-                                :class="categoryMeta[item.appProduct].tile"
-                            >
-                                <span
-                                    class="inline-block size-6 bg-current"
-                                    :style="
-                                        iconMaskStyle(
-                                            categoryMeta[item.appProduct].icon,
-                                        )
-                                    "
-                                ></span>
-                            </span>
+                            <ProductMockup
+                                :photo="item.photos[0] ?? null"
+                                :format="item.format"
+                                :app-product="item.appProduct"
+                                :max-width="44"
+                                :max-height="44"
+                                :surface="false"
+                                class="size-11 shrink-0 items-center justify-center"
+                            />
                             <div class="min-w-0 flex-1">
                                 <p class="truncate font-semibold text-ink">
                                     {{ item.name }}
@@ -762,7 +921,9 @@ function iconMaskStyle(url: string) {
                                         class="mt-3 text-sm font-semibold text-ink"
                                     >
                                         {{
-                                            category.selectable.length === 1
+                                            category.selectable.length === 1 &&
+                                            category.selectable[0].userOptions
+                                                .length === 0
                                                 ? formatPrice(
                                                       category.fromPriceMinor ??
                                                           0,
@@ -848,6 +1009,27 @@ function iconMaskStyle(url: string) {
             </template>
 
             <div class="space-y-5 px-4 py-4">
+                <div
+                    v-if="openCategory && mockupFormat && mockupPhoto"
+                    class="space-y-2"
+                >
+                    <ProductMockup
+                        :photo="mockupPhoto"
+                        :format="mockupFormat"
+                        :app-product="openCategory"
+                    />
+                    <p
+                        v-if="printShop.photos.length > 1"
+                        class="text-center text-xs text-ink-muted"
+                    >
+                        {{
+                            t('Preview shows the first of :count photos', {
+                                count: printShop.photos.length,
+                            })
+                        }}
+                    </p>
+                </div>
+
                 <div class="space-y-2">
                     <button
                         v-for="offering in openCategoryOfferings"
@@ -889,7 +1071,15 @@ function iconMaskStyle(url: string) {
                             </p>
                         </div>
                         <span class="shrink-0 text-sm font-semibold text-ink">
-                            {{ formatPrice(offering.priceMinor ?? 0) }}
+                            {{
+                                offering.userOptions.length > 0
+                                    ? t('from :price', {
+                                          price: formatPrice(
+                                              offering.priceMinor ?? 0,
+                                          ),
+                                      })
+                                    : formatPrice(offering.priceMinor ?? 0)
+                            }}
                         </span>
                         <span
                             aria-hidden="true"
@@ -926,28 +1116,73 @@ function iconMaskStyle(url: string) {
                     []"
                     :key="option.attribute"
                 >
-                    <p class="mb-2 text-sm font-semibold text-ink">
-                        {{ option.attribute }}
-                    </p>
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="value in option.values"
-                            :key="value"
-                            type="button"
-                            class="rounded-full px-4 py-2 text-sm font-semibold transition-colors"
-                            :class="
-                                chosenOptions[option.attribute] === value
-                                    ? 'bg-action text-white'
-                                    : 'bg-surface text-ink ring-1 ring-sand-200'
-                            "
-                            :aria-pressed="
-                                chosenOptions[option.attribute] === value
-                            "
-                            @click="chosenOptions[option.attribute] = value"
+                    <label
+                        :for="`print-option-${option.attribute}`"
+                        class="mb-2 block text-sm font-semibold text-ink"
+                    >
+                        {{ printTerm(option.attribute) }}
+                    </label>
+                    <div class="relative">
+                        <select
+                            :id="`print-option-${option.attribute}`"
+                            v-model="chosenOptions[option.attribute]"
+                            class="field appearance-none pr-12"
                         >
-                            {{ value }}
-                        </button>
+                            <option value="" disabled>
+                                {{ t('Choose...') }}
+                            </option>
+                            <option
+                                v-for="value in option.values"
+                                :key="value"
+                                :value="value"
+                            >
+                                {{ printTerm(value) }}
+                            </option>
+                        </select>
+                        <span
+                            aria-hidden="true"
+                            class="pointer-events-none absolute top-1/2 right-5 -translate-y-1/2 text-ink-muted"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="2.5"
+                                stroke="currentColor"
+                                class="size-4"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="m19.5 8.25-7.5 7.5-7.5-7.5"
+                                />
+                            </svg>
+                        </span>
                     </div>
+                </div>
+
+                <!-- The live price for the chosen configuration; options
+                     such as the puzzle size change what it costs. -->
+                <div
+                    v-if="needsQuote && allOptionsChosen"
+                    class="flex items-center justify-between rounded-2xl bg-surface p-3 ring-1 ring-sand-100"
+                >
+                    <p class="text-sm font-bold text-ink">{{ t('Price') }}</p>
+                    <LoadingSpinner v-if="quoteLoading" class="size-5" />
+                    <span
+                        v-else-if="quotedPriceMinor !== null"
+                        class="font-bold text-ink"
+                    >
+                        {{ formatPrice(quotedPriceMinor) }}
+                    </span>
+                    <button
+                        v-else
+                        type="button"
+                        class="text-sm text-ink-muted underline-offset-2 hover:underline"
+                        @click="refreshQuote"
+                    >
+                        {{ t('Could not load the price. Try again.') }}
+                    </button>
                 </div>
             </div>
 
@@ -1079,6 +1314,18 @@ function iconMaskStyle(url: string) {
                                 }}
                             </button>
                         </div>
+                        <label
+                            class="flex cursor-pointer items-center gap-3 pt-1"
+                        >
+                            <input
+                                v-model="saveAddress"
+                                type="checkbox"
+                                class="size-5 shrink-0 rounded border-sand-200 text-action focus:ring-action focus:ring-offset-0"
+                            />
+                            <span class="text-sm text-ink">
+                                {{ t('Save my address for next time') }}
+                            </span>
+                        </label>
                     </div>
                 </div>
 

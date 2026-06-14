@@ -18,12 +18,29 @@ export interface PrintPhoto {
 }
 
 /** Product family in the app; decides icon, copy, and photo limits. */
-export type AppProductId = 'calendar' | 'album' | 'mug' | 'tshirt' | 'puzzle';
+export type AppProductId =
+    | 'calendar'
+    | 'album'
+    | 'mug'
+    | 'tshirt'
+    | 'puzzle'
+    | 'canvas';
 
 /** An option the user picks per product, e.g. Size with S/M/L. */
 export interface PrintUserOption {
     attribute: string;
     values: string[];
+}
+
+/**
+ * The artwork's trim size (mm) and orientation policy, straight from the API
+ * so a mockup matches the printed result. 'auto' products (canvas, puzzle)
+ * follow the photo's orientation; 'fixed' ones keep the size as written.
+ */
+export interface PrintFormat {
+    width: number;
+    height: number;
+    orientation: 'auto' | 'fixed';
 }
 
 /**
@@ -41,6 +58,7 @@ export interface PrintOffering {
     maxPhotos: number | null;
     userOptions: PrintUserOption[];
     available: boolean;
+    format: PrintFormat;
 }
 
 /** A product added to the order: photos + offering + chosen options. */
@@ -53,6 +71,8 @@ export interface PrintCartItem {
     priceMinor: number;
     photos: PrintPhoto[];
     options: Record<string, string>;
+    /** Trim size + orientation, snapshotted so mockups survive a checkout. */
+    format: PrintFormat;
 }
 
 export interface PrintShippingAddress {
@@ -69,6 +89,8 @@ export interface PrintShippingAddress {
 /** Order payload as the API returns it (snake_case, matching the backend). */
 export interface PrintOrderSummary {
     id: string;
+    /** Sequential, human-friendly order number shown to the user. */
+    number: number;
     amount_minor: number;
     currency: string;
     status: 'pending_payment' | 'paid' | 'submitted' | 'failed' | 'canceled';
@@ -98,14 +120,38 @@ interface CatalogResponse {
         max_photos: number | null;
         user_options: PrintUserOption[];
         available: boolean;
+        format: PrintFormat;
     }[];
     shipping_countries: string[];
     return_url: string;
+    /** The user's saved address, if they opted to store one before. */
+    saved_address?: PrintShippingAddress | null;
 }
 
 interface CreateOrderResponse {
     data: PrintOrderSummary;
     checkout_url: string;
+}
+
+/**
+ * Translation key for an order status; shared by the shop's "order placed"
+ * view and the orders overview so the wording never diverges.
+ */
+export function printOrderStatusKey(
+    status: PrintOrderSummary['status'],
+): string {
+    switch (status) {
+        case 'pending_payment':
+            return 'Waiting for your payment';
+        case 'paid':
+            return 'Payment received';
+        case 'submitted':
+            return 'Sent to the printer';
+        case 'failed':
+            return 'Something went wrong, we are on it';
+        case 'canceled':
+            return 'Payment not completed';
+    }
 }
 
 /**
@@ -153,6 +199,11 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
         returnUrl: 'https://innerr.app',
         submitting: false,
         placedOrder: null as PrintOrderSummary | null,
+        // What was just ordered, snapshotted before the cart clears so the
+        // confirmation screen can show mockups (the API summary has no photos).
+        placedItems: [] as PrintCartItem[],
+        /** The user's saved shipping address, used to prefill checkout. */
+        savedAddress: null as PrintShippingAddress | null,
     }),
     getters: {
         photoCount: (state): number => state.photos.length,
@@ -179,14 +230,23 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
     },
     actions: {
         /**
-         * Loads the offerings from the API once per shop visit; without a
-         * loaded catalog nothing can be ordered.
+         * Loads the offerings from the API. With a catalog already in hand
+         * the shop renders that immediately and refreshes in the background,
+         * so admin changes (a newly enabled product, a price change) show up
+         * on the next shop visit instead of after an app restart.
          */
         async ensureCatalog(): Promise<void> {
             if (this.catalog !== null) {
+                this.fetchCatalog().catch(() => {
+                    // Stale catalog stays usable when the refresh fails.
+                });
+
                 return;
             }
 
+            await this.fetchCatalog();
+        },
+        async fetchCatalog(): Promise<void> {
             const response =
                 await externalApi.get<CatalogResponse>('/print/products');
 
@@ -200,15 +260,18 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
                 maxPhotos: offering.max_photos,
                 userOptions: offering.user_options ?? [],
                 available: offering.available,
+                format: offering.format,
             }));
             this.shippingCountries = response.shipping_countries;
             this.returnUrl = response.return_url;
+            this.savedAddress = response.saved_address ?? null;
         },
         /** Starts a new photo pick; the cart is intentionally left alone. */
         setPhotosFromPosts(posts: PostData[]): void {
             this.photos = posts.flatMap(printablePhotos);
             this.selectedOfferingId = null;
             this.placedOrder = null;
+            this.placedItems = [];
         },
         removePhoto(id: string): void {
             this.photos = this.photos.filter((photo) => photo.id !== id);
@@ -230,16 +293,40 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
             }
         },
         /**
+         * The exact price for an offering with these options. Options like a
+         * puzzle's size change the price, so the server quotes the real
+         * configuration; the order endpoint recomputes the same amount.
+         */
+        async quotePrice(
+            offeringId: string,
+            options: Record<string, string>,
+        ): Promise<number> {
+            const response = await externalApi.post<{
+                data: { price_minor: number };
+            }>('/print/quote', {
+                offering_id: offeringId,
+                options: Object.keys(options).length > 0 ? options : undefined,
+            });
+
+            return response.data.price_minor;
+        },
+        /**
          * Moves the current photo pick plus the selected offering into the
          * cart. The caller is responsible for having collected a value for
-         * every user option of the offering.
+         * every user option, and passes the quoted price when options were
+         * involved (the base price covers option-less products).
          */
-        addToCart(name: string, options: Record<string, string>): void {
+        addToCart(
+            name: string,
+            options: Record<string, string>,
+            priceMinor?: number,
+        ): void {
             const offering = this.selectedOffering;
+            const price = priceMinor ?? offering?.priceMinor ?? null;
 
             if (
                 offering === null ||
-                offering.priceMinor === null ||
+                price === null ||
                 this.photos.length === 0
             ) {
                 return;
@@ -250,9 +337,10 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
                 offeringId: offering.id,
                 appProduct: offering.appProduct,
                 name,
-                priceMinor: offering.priceMinor,
+                priceMinor: price,
                 photos: this.photos,
                 options,
+                format: offering.format,
             });
 
             this.photos = [];
@@ -265,7 +353,10 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
          * Creates the order for the whole cart and its Mollie payment;
          * resolves to the checkout URL the user must finish in the browser.
          */
-        async submitOrder(address: PrintShippingAddress): Promise<string> {
+        async submitOrder(
+            address: PrintShippingAddress,
+            saveAddress = false,
+        ): Promise<string> {
             if (this.cart.length === 0 || this.submitting) {
                 throw new Error('The order is empty.');
             }
@@ -288,11 +379,20 @@ export const usePrintShopStore = defineStore('spa-print-shop', {
                                     : undefined,
                         })),
                         shipping_address: address,
+                        save_address: saveAddress,
                         redirect_url: this.returnUrl,
                     },
                 );
 
+                // Reflect the opt-in locally so a follow-up order in the same
+                // session prefills without waiting for a catalog refresh.
+                if (saveAddress) {
+                    this.savedAddress = address;
+                }
+
                 this.placedOrder = response.data;
+                // Snapshot before clearing so the confirmation can show mockups.
+                this.placedItems = [...this.cart];
                 this.cart = [];
                 this.photos = [];
                 this.selectedOfferingId = null;
